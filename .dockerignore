@@ -1,0 +1,32 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+venv/
+__pycache__/
+
+# Version Control
+.git
+.gitignore
+
+# IDEs
+.idea
+.vscode
+*.swp
+
+# Build Output
+dist
+build
+out
+.next
+
+# Documentation
+docs/
+
+# Testing
+coverage
+
+# Env Vars (Don't bake secrets into images unless necessary)
+.env
+.env.local
+.env.*
