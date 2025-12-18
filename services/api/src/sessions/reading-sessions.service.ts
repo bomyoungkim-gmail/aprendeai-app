@@ -4,6 +4,7 @@ import { ProfileService } from '../profiles/profile.service';
 import { GamificationService } from '../gamification/gamification.service';
 import { VocabService } from '../vocab/vocab.service';
 import { OutcomesService } from '../outcomes/outcomes.service';
+import { GatingService } from '../gating/gating.service';
 import { PrePhaseDto } from './dto/reading-sessions.dto';
 
 @Injectable()
@@ -16,6 +17,7 @@ export class ReadingSessionsService {
     private gamificationService: GamificationService,
     private vocabService: VocabService,
     private outcomesService: OutcomesService,
+    private gatingService: GatingService,
   ) {}
 
   async startSession(userId: string, contentId: string) {
@@ -31,14 +33,19 @@ export class ReadingSessionsService {
       throw new NotFoundException('Content not found');
     }
 
-    // 3. Create session with phase=PRE
+    // 3. Determine appropriate layer based on user eligibility
+    const assetLayer = await this.gatingService.determineLayer(userId, contentId);
+    
+    this.logger.log(`Starting session for user ${userId}, content ${contentId}, layer: ${assetLayer}`);
+    
+    // 4. Create session with phase=PRE
     const session = await this.prisma.readingSession.create({
       data: {
         userId,
         contentId,
         phase: 'PRE',
         modality: 'READING',
-        assetLayer: 'L1',
+        assetLayer,
       },
       include: {
         content: {
