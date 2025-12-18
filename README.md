@@ -1,6 +1,6 @@
 # AprendeAI Admin Console
 
-Enterprise-grade admin console with complete control over users, features, secrets, and observability.
+Enterprise-grade admin console with complete control over users, features, secrets, observability, and **SaaS billing**.
 
 ## 🚀 Features
 
@@ -10,7 +10,30 @@ Enterprise-grade admin console with complete control over users, features, secre
 - 🔑 **Secret Management**: AES-256-GCM encrypted secrets
 - 📊 **Observability**: Real-time metrics, errors, and costs
 - ⚙️ **Configuration**: Environment-specific app settings
+- 💳 **SaaS Billing**: Complete subscription & usage management ✨ **NEW**
 - 📝 **Audit Trail**: Complete compliance logging
+
+## 💳 SaaS Billing System (NEW!)
+
+### Features
+
+- ✅ **Plans**: FREE, PRO, INSTITUTION with entitlements
+- ✅ **Auto-Subscription**: FREE plan created automatically on signup
+- ✅ **Entitlements**: Feature flags & usage limits per plan
+- ✅ **Enforcement**: Automatic limit checking (throws LIMIT_EXCEEDED)
+- ✅ **Usage Tracking**: Real-time telemetry with cost tracking
+- ✅ **Admin Management**: Manual upgrade/downgrade
+- ✅ **User Dashboard**: Current plan, usage metrics, upgrade CTAs
+- ✅ **Paywall**: Beautiful modal when limits reached
+- ✅ **Payment Provider Ready**: Pluggable architecture (Stripe/MercadoPago)
+
+### Architecture Highlights
+
+- **No Implicit Fallback**: Fails fast if subscription missing (fail-secure)
+- **Transaction-Safe**: User + subscription created atomically
+- **Self-Healing**: Auto-creates FREE subscription on login if missing
+- **Audit Logged**: All plan changes recorded
+- **Provider-Agnostic**: Ready for any payment processor
 
 ## 📚 API Documentation
 
@@ -266,7 +289,35 @@ Triggers on:
 - `POST /admin/config/validate/:provider` - Test provider
 - `GET /admin/config/category/:category` - Query helper
 
-**Total**: 34+ admin endpoints
+### Billing (14 endpoints) ✨ **NEW**
+
+**Admin - Plans**
+
+- `GET /admin/billing/plans` - List active plans
+- `POST /admin/billing/plans` - Create plan
+- `PUT /admin/billing/plans/:id` - Update plan
+- `DELETE /admin/billing/plans/:id` - Deactivate plan
+
+**Admin - Subscriptions**
+
+- `GET /admin/billing/subscriptions` - List subscriptions
+- `GET /admin/billing/subscriptions/:id` - Get details
+- `POST /admin/billing/subscriptions/assign` - Upgrade/downgrade
+- `POST /admin/billing/subscriptions/cancel` - Cancel
+
+**Admin - Entitlements & Overrides**
+
+- `GET /admin/billing/entitlements/preview` - Preview entitlements
+- `POST /admin/billing/overrides` - Set overrides
+- `DELETE /admin/billing/overrides/:scopeType/:scopeId` - Remove
+
+**User - Billing**
+
+- `GET /me/subscription` - My subscription
+- `GET /me/entitlements` - My entitlements
+- `GET /me/usage?range=today|7d|30d` - My usage stats
+
+**Total**: **48+ endpoints** (was 34)
 
 ## 📊 Observability
 
