@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ProfileService } from '../profiles/profile.service';
 import { GamificationService } from '../gamification/gamification.service';
 import { VocabService } from '../vocab/vocab.service';
+import { OutcomesService } from '../outcomes/outcomes.service';
 import { PrePhaseDto } from './dto/reading-sessions.dto';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class ReadingSessionsService {
     private profileService: ProfileService,
     private gamificationService: GamificationService,
     private vocabService: VocabService,
+    private outcomesService: OutcomesService,
   ) {}
 
   async startSession(userId: string, contentId: string) {
@@ -158,18 +160,24 @@ export class ReadingSessionsService {
 
     // If finishing, compute outcomes and integrate with gamification
     if (toPhase === 'FINISHED') {
-      await this.computeOutcome(sessionId);
       await this.integrateWithGamification(updated);
       
-      // Auto-create vocabulary items from target words (Script 4/5 integration)
+      // Auto-create vocabulary from target words on session finish
       if (updated.targetWordsJson && Array.isArray(updated.targetWordsJson) && updated.targetWordsJson.length > 0) {
         try {
           this.logger.log(`Auto-creating vocab from ${updated.targetWordsJson.length} target words for session ${sessionId}`);
           await this.vocabService.createFromTargetWords(sessionId);
-        } catch (error) {
-          // Non-critical: log error but don't fail session completion
-          this.logger.error(`Failed to auto-create vocab for session ${sessionId}:`, error);
+        } catch (vocabError) {
+          this.logger.error(`Failed to create vocabulary for session ${sessionId}:`, vocabError);
         }
+      }
+      
+      // Auto-calculate session outcomes on finish
+      try {
+        await this.outcomesService.computeSessionOutcomes(sessionId);
+        this.logger.log(`Computed outcomes for session ${sessionId}`);
+      } catch (outcomesError) {
+        this.logger.error(`Failed to compute outcomes for session ${sessionId}:`, outcomesError);
       }
     }
 
