@@ -1,25 +1,95 @@
 import amqp from 'amqplib';
-import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import axios from 'axios';
+import { parseStringPromise } from 'xml2js';
 
 dotenv.config();
 
 const QUEUE = 'arxiv.fetch';
+const API_URL = process.env.API_URL || 'http://localhost:4000';
+
+type CreateContentDto = {
+  title: string;
+  type: 'ARXIV';
+  originalLanguage: 'EN'; // Arxiv is mostly EN
+  rawText: string;
+  sourceId: string;
+  metadata: any;
+};
 
 async function start() {
-  const connection = await amqp.connect(process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672');
-  const channel = await connection.createChannel();
+  const rabbitUrl = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
   
+  let connection;
+  try {
+    connection = await amqp.connect(rabbitUrl);
+  } catch (err) {
+    console.error("Failed to connect to RabbitMQ, retrying in 5s...", err);
+    setTimeout(start, 5000);
+    return;
+  }
+
+  const channel = await connection.createChannel();
   await channel.assertQueue(QUEUE, { durable: true });
-  console.log(`[*] Waiting for messages in ${QUEUE}.`);
+  
+  console.log(`[*] Arxiv Ingestor waiting for messages in ${QUEUE}.`);
 
   channel.consume(QUEUE, async (msg) => {
     if (msg !== null) {
-      console.log(`[x] Received ${msg.content.toString()}`);
-      // TODO: Fetch arXiv logic
+      const content = msg.content.toString();
+      console.log(`[x] Received Task: ${content}`);
+      
+      try {
+        const { query, max_results } = JSON.parse(content);
+        const searchQuery = query || 'cat:cs.AI';
+        const limit = max_results || 5;
+
+        console.log(`Searching Arxiv for: ${searchQuery}...`);
+        
+        const response = await axios.get(`http://export.arxiv.org/api/query?search_query=${searchQuery}&start=0&max_results=${limit}`);
+        const result = await parseStringPromise(response.data);
+        
+        if (!result.feed.entry) {
+            console.log("No entries found.");
+            channel.ack(msg);
+            return;
+        }
+
+        for (const entry of result.feed.entry) {
+            const title = entry.title[0].replace(/\n/g, ' ').trim();
+            const summary = entry.summary[0].trim();
+            const id = entry.id[0];
+            const authors = entry.author.map((a: any) => a.name[0]);
+            
+            const payload: CreateContentDto = {
+                title: title,
+                type: 'ARXIV',
+                originalLanguage: 'EN',
+                rawText: summary, // Storing summary as rawText for now
+                sourceId: id,
+                metadata: {
+                    authors,
+                    published: entry.published[0],
+                    link: id
+                }
+            };
+            
+             // Post to API
+             try {
+                await axios.post(`${API_URL}/content`, payload);
+                console.log(`saved: ${title}`);
+             } catch (apiErr) {
+                console.error(`Failed to save content: ${title}`, apiErr instanceof Error ? apiErr.message : apiErr);
+             }
+        }
+
+      } catch (err) {
+        console.error("Error processing message", err);
+      }
+      
       channel.ack(msg);
     }
   });
 }
 
-start().catch(console.error);
+start();

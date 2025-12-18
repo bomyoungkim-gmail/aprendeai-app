@@ -21,7 +21,11 @@ O projeto é um Monorepo organizado da seguinte forma:
 │
 └── services/               # Serviços de Backend
     ├── api/                # API Principal (NestJS)
-    │   └── src/            # Código fonte da API (Módulos, Services, Controllers)
+    │   └── src/            # Código fonte da API
+    │       ├── auth/       # Autenticação
+    │       ├── content/    # Gestão de Conteúdos
+    │       ├── gamification/ # Gamificação (Streaks, Metas)
+    │       └── analytics/  # Analytics (Habilidades, Vocabulário)
     │
     ├── ai/                 # Serviço de IA (FastAPI/Python)
     │   └── main.py         # Entrypoint da API Python

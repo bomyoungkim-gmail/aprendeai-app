@@ -1,10 +1,10 @@
-version: '3.8'
+name: socrates
 
 services:
   # Infrastructure Services
   postgres:
     image: postgres:16-alpine
-    container_name: aprendeai-postgres
+    container_name: socrates-postgres
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
@@ -14,7 +14,7 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - aprendeai-network
+      - socrates-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -23,11 +23,11 @@ services:
 
   redis:
     image: redis:alpine
-    container_name: aprendeai-redis
+    container_name: socrates-redis
     ports:
       - "6379:6379"
     networks:
-      - aprendeai-network
+      - socrates-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -36,7 +36,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: aprendeai-rabbitmq
+    container_name: socrates-rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -44,7 +44,7 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
     networks:
-      - aprendeai-network
+      - socrates-network
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
@@ -56,7 +56,8 @@ services:
     build:
       context: .
       dockerfile: infra/docker/api.Dockerfile
-    container_name: aprendeai-api
+    image: socrates/api
+    container_name: socrates-api
     ports:
       - "4000:4000"
     volumes:
@@ -73,7 +74,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - aprendeai-network
+      - socrates-network
     command: npm run start:dev
 
   # AI Service
@@ -81,7 +82,8 @@ services:
     build:
       context: .
       dockerfile: infra/docker/ai.Dockerfile
-    container_name: aprendeai-ai
+    image: socrates/ai
+    container_name: socrates-ai
     ports:
       - "8000:8000"
     volumes:
@@ -89,7 +91,7 @@ services:
     environment:
       PORT: 8000
     networks:
-      - aprendeai-network
+      - socrates-network
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
   # Workers
@@ -97,7 +99,8 @@ services:
     build:
       context: .
       dockerfile: infra/docker/news_ingestor.Dockerfile
-    container_name: aprendeai-news-ingestor
+    image: socrates/news-ingestor
+    container_name: socrates-news-ingestor
     volumes:
       - ./services/workers/news_ingestor:/app
       - /app/node_modules
@@ -108,13 +111,14 @@ services:
       rabbitmq:
         condition: service_healthy
     networks:
-      - aprendeai-network
+      - socrates-network
 
   arxiv_ingestor:
     build:
       context: .
       dockerfile: infra/docker/arxiv_ingestor.Dockerfile
-    container_name: aprendeai-arxiv-ingestor
+    image: socrates/arxiv-ingestor
+    container_name: socrates-arxiv-ingestor
     volumes:
       - ./services/workers/arxiv_ingestor:/app
       - /app/node_modules
@@ -125,13 +129,14 @@ services:
       rabbitmq:
         condition: service_healthy
     networks:
-      - aprendeai-network
+      - socrates-network
 
   content_processor:
     build:
       context: .
       dockerfile: infra/docker/content_processor.Dockerfile
-    container_name: aprendeai-content-processor
+    image: socrates/content-processor
+    container_name: socrates-content-processor
     volumes:
       - ./services/workers/content_processor:/app
       - /app/node_modules
@@ -145,14 +150,15 @@ services:
       ai:
         condition: service_started
     networks:
-      - aprendeai-network
+      - socrates-network
 
   # Frontend
   frontend:
     build:
       context: .
       dockerfile: infra/docker/frontend.Dockerfile
-    container_name: aprendeai-frontend
+    image: socrates/frontend
+    container_name: socrates-frontend
     ports:
       - "3000:3000"
     volumes:
@@ -164,11 +170,11 @@ services:
       api:
         condition: service_started
     networks:
-      - aprendeai-network
+      - socrates-network
 
 volumes:
   pgdata:
 
 networks:
-  aprendeai-network:
+  socrates-network:
     driver: bridge

@@ -10,6 +10,8 @@ O sistema permite a ingestão de conteúdos reais (notícias, artigos científic
 - Traduções contextuais.
 - Avaliações de compreensão automáticas.
 - Ferramentas de estudo ativo (Método Cornell).
+- Gamificação (Metas Diárias, Streaks).
+- Analytics de Aprendizado (Pontos Fortes/Fracos, Vocabulário).
 
 ## 🛠 Stack Tecnológica
 
@@ -37,6 +39,8 @@ Para detalhes técnicos, guias de instalação e arquitetura, consulte a pasta [
 - [Guia de Início Rápido (Local & Prod)](./docs/README.md)
 - [Tecnologias Utilizadas](./docs/TECNOLOGIA.md)
 - [Arquitetura e Estrutura](./docs/ESTRUTURA.md)
+- [Funcionalidades](docs/FUNCIONALIDADES.md)
+- [Walkthrough (MVP)](docs/WALKTHROUGH.md)
 - [Plano de Implementação](./docs/PLANO_IMPLEMENTACAO.md)
 
 ## ⚡ Como Rodar Localmente
