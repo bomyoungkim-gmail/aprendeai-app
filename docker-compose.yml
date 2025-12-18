@@ -62,6 +62,7 @@ services:
       - "4000:4000"
     volumes:
       - ./services/api:/app
+      - ./db/schema.prisma:/app/prisma/schema.prisma
       - /app/node_modules
     environment:
       NODE_ENV: development

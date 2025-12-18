@@ -1,27 +1,30 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsOptional, IsEnum } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, MaxLength, IsOptional, IsEnum } from 'class-validator';
 import { UserRole } from '@prisma/client';
 
 export class RegisterDto {
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Name is required' })
   @IsString()
+  @MinLength(2, { message: 'Name must be at least 2 characters' })
+  @MaxLength(100, { message: 'Name cannot exceed 100 characters' })
   name!: string;
 
-  @IsEmail()
+  @IsEmail({}, { message: 'Please provide a valid email address' })
   email!: string;
 
-  @IsNotEmpty()
-  @MinLength(6)
+  @IsNotEmpty({ message: 'Password is required' })
+  @MinLength(8, { message: 'Password must be at least 8 characters for security' })
+  @MaxLength(100, { message: 'Password is too long' })
   password!: string;
 
   @IsOptional()
-  @IsEnum(UserRole)
+  @IsEnum(UserRole, { message: 'Invalid user role' })
   role?: UserRole; // Default should be COMMON_USER if not provided
 }
 
 export class LoginDto {
-  @IsEmail()
+  @IsEmail({}, { message: 'Please provide a valid email address' })
   email!: string;
 
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Password is required' })
   password!: string;
 }

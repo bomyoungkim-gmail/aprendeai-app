@@ -1,0 +1,103 @@
+name: socrates
+
+services:
+  # Production services (no volumes, optimized builds)
+  postgres:
+    image: postgres:16-alpine
+    container_name: socrates-postgres-prod
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - socrates-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: socrates-redis-prod
+    ports:
+      - "6379:6379"
+    networks:
+      - socrates-network
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: socrates-rabbitmq-prod
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    networks:
+      - socrates-network
+    restart: unless-stopped
+
+  # Backend API (Production build)
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+      target: production
+    image: socrates/api:latest
+    container_name: socrates-api-prod
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - socrates-network
+    restart: unless-stopped
+
+  # AI Service (Production)
+  ai:
+    build:
+      context: .
+      dockerfile: infra/docker/ai.Dockerfile
+    image: socrates/ai:latest
+    container_name: socrates-ai-prod
+    ports:
+      - "8000:8000"
+    environment:
+      PORT: 8000
+    networks:
+      - socrates-network
+    restart: unless-stopped
+
+  # Frontend (Production build)
+  frontend:
+    build:
+      context: .
+      dockerfile: infra/docker/frontend.Dockerfile
+      target: production
+    image: socrates/frontend:latest
+    container_name: socrates-frontend-prod
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: ${API_URL}
+    depends_on:
+      - api
+    networks:
+      - socrates-network
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+
+networks:
+  socrates-network:
+    driver: bridge

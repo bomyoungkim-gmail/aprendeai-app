@@ -164,3 +164,107 @@ async def generate_assessment(req: AssessmentRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# -- Academic Papers Endpoints (OpenAlex + KCI) --
+
+@app.get("/api/papers/search")
+async def search_papers(
+    q: str, 
+    page: int = 1, 
+    per_page: int = 25,
+    filter: Optional[str] = None
+):
+    """
+    Search academic papers via OpenAlex API.
+    
+    Args:
+        q: Search query
+        page: Page number (1-indexed)
+        per_page: Results per page (max 200)
+        filter: Optional filter (e.g., "publication_year:2024")
+    """
+    from clients.openalex_client import search_works
+    from schemas.papers import PaperSearchResponse, PaperResult
+    
+    try:
+        data = await search_works(q, page, per_page, filter)
+        
+        # Convert to response model
+        results = [PaperResult(**paper) for paper in data["results"]]
+        
+        response = PaperSearchResponse(
+            source="openalex",
+            page=page,
+            per_page=per_page,
+            total_results=data["meta"].get("count"),
+            results=results
+        )
+        
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/papers/{arti_id}/references")
+async def get_paper_references(
+    arti_id: str,
+    page: int = 1,
+    record_cnt: int = 50
+):
+    """
+    Get bibliography/references for a KCI paper by ARTIID.
+    
+    Args:
+        arti_id: KCI Article ID
+        page: Page number (1-indexed)
+        record_cnt: Records per page
+    """
+    from clients.kci_client import get_references
+    from schemas.papers import KCIReferencesResponse, KCIReference
+    
+    try:
+        data = await get_references(arti_id, page, record_cnt)
+        
+        # Convert to response model
+        references = [KCIReference(**ref) for ref in data["references"]]
+        
+        response = KCIReferencesResponse(
+            arti_id=arti_id,
+            page=page,
+            per_page=record_cnt,
+            total_count=data["total_count"],
+            references=references
+        )
+        
+        return response
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/papers/{arti_id}/metadata")
+async def get_paper_metadata(arti_id: str):
+    """
+    Get detailed metadata for a KCI paper by ARTIID.
+    
+    Args:
+        arti_id: KCI Article ID
+    """
+    from clients.kci_client import get_thesis_info
+    from schemas.papers import KCIThesisInfo
+    
+    try:
+        data = await get_thesis_info(arti_id)
+        
+        if not data:
+            raise HTTPException(status_code=404, detail=f"Paper not found: {arti_id}")
+        
+        return KCIThesisInfo(**data)
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

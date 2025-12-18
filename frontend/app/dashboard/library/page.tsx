@@ -47,7 +47,7 @@ export default function LibraryPage() {
         {/* <Button>Adicionar Conteúdo</Button> */}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
         {contents?.map((content) => (
           <Link 
             key={content.id} 
