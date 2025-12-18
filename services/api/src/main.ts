@@ -1,9 +1,9 @@
-import { NestFactory } from "@nestjs/core";
-import { AppModule } from "./app.module";
-import { ValidationPipe, Logger } from "@nestjs/common";
-import { GlobalExceptionFilter } from "./common/filters/global-exception.filter";
-import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
-import * as Sentry from "@sentry/node";
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe, Logger } from '@nestjs/common';
+import { AppModule } from './app.module';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import * as Sentry from '@sentry/node';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -32,12 +32,11 @@ async function bootstrap() {
   // Setup Swagger API Documentation
   const config = new DocumentBuilder()
     .setTitle('AprendeAI API')
-    .setDescription('Educational platform API for reading and vocabulary enhancement')
+    .setDescription('Educational platform API with Admin Console')
     .setVersion('1.0')
     .addTag('auth', 'Authentication endpoints')
-    .addTag('content', 'Content management')
+    .addTag('admin', 'Admin Console endpoints')
     .addTag('gamification', 'Gamification features')
-    .addTag('analytics', 'Analytics and progress tracking')
     .addBearerAuth()
     .build();
   
@@ -53,8 +52,10 @@ async function bootstrap() {
     credentials: true,
   });
   
-  await app.listen(4000);
-  logger.log("API is running on http://localhost:4000");
-  logger.log("API Docs: http://localhost:4000/api/docs");
+  const port = process.env.PORT || 4000;
+  await app.listen(port);
+  logger.log(`🚀 API running on http://localhost:${port}`);
+  logger.log(`📚 API Docs: http://localhost:${port}/api/docs`);
 }
+
 bootstrap();

@@ -1,0 +1,51 @@
+
+}
+
+// ========================================
+// Admin Console - Phase 1: RBAC & Audit
+// ========================================
+
+enum Environment {
+  DEV
+  STAGING
+  PROD
+}
+
+model UserRoleAssignment {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+user        User      @relation("UserRoles", fields: [userId], references: [id], onDelete: Cascade)
+  role        UserRole
+  scopeType   ScopeType? @map("scope_type")
+  scopeId     String?    @map("scope_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  createdBy   String?   @map("created_by")
+
+  @@unique([userId, role, scopeType, scopeId])
+  @@index([userId])
+  @@index([role])
+  @@map("user_role_assignments")
+}
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  actorUserId    String?  @map("actor_user_id")
+  actorRole      UserRole? @map("actor_role")
+  action         String   // CREATE, UPDATE, DELETE, IMPERSONATE, etc.
+  resourceType   String   @map("resource_type") // USER, INTEGRATION, FLAG, etc.
+  resourceId     String?  @map("resource_id")
+  requestId      String?  @map("request_id")
+  ip             String?
+  userAgent      String?  @map("user_agent")
+  beforeJson     Json?    @map("before_json")
+  afterJson      Json?    @map("after_json")
+  reason         String?  // Required for sensitive operations
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([actorUserId])
+  @@index([action])
+  @@index([resourceType])
+  @@index([createdAt])
+  @@index([requestId])
+  @@map("audit_logs")
+}

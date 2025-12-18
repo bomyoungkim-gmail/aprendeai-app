@@ -2,36 +2,35 @@ import { Module } from '@nestjs/common';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 
-const logFormat = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  winston.format.errors({ stack: true }),
-  winston.format.splat(),
-  winston.format.json(),
-);
-
 @Module({
   imports: [
     WinstonModule.forRoot({
       transports: [
-        // Console transport para desenvolvimento
+        // Console transport for development
         new winston.transports.Console({
           format: winston.format.combine(
+            winston.format.timestamp(),
             winston.format.colorize(),
-            winston.format.printf(({ timestamp, level, message, context, stack }) => {
-              const ctx = context ? `[${context}]` : '';
-              return `${timestamp} ${level} ${ctx} ${message}${stack ? '\n' + stack : ''}`;
+            winston.format.printf(({ timestamp, level, message, context, trace }) => {
+              return `${timestamp} [${context}] ${level}: ${message}${trace ? `\n${trace}` : ''}`;
             }),
           ),
         }),
-        // File transport para produção
+        // File transport for production
         new winston.transports.File({
           filename: 'logs/error.log',
           level: 'error',
-          format: logFormat,
+          format: winston.format.combine(
+            winston.format.timestamp(),
+            winston.format.json(),
+          ),
         }),
         new winston.transports.File({
           filename: 'logs/combined.log',
-          format: logFormat,
+          format: winston.format.combine(
+            winston.format.timestamp(),
+            winston.format.json(),
+          ),
         }),
       ],
     }),

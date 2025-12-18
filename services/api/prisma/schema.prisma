@@ -1,0 +1,468 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ========================================
+// Enums
+// ========================================
+
+enum UserRole {
+  ADMIN               // Full system admin access
+  SUPPORT             // View dashboards, logs, impersonation
+  OPS                 // Dashboards, flags, limits, queues
+  INSTITUTION_ADMIN   // Manages own institution
+  TEACHER
+  STUDENT
+  COMMON_USER
+}
+
+enum ScopeType {
+  GLOBAL
+  INSTITUTION
+  USER
+}
+
+enum InstitutionType {
+  SCHOOL
+  UNIVERSITY
+  COURSE
+  OTHER
+}
+
+enum ContentType {
+  NEWS
+  ARXIV
+  SCHOOL_MATERIAL
+}
+
+enum Language {
+  PT_BR
+  EN
+  KO
+}
+
+enum LibraryStatus {
+  SAVED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+}
+
+enum LessonStatus {
+  LOCKED
+  AVAILABLE
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum DailyGoalType {
+  MINUTES
+  LESSONS
+}
+
+// ========================================
+// Core Models
+// ========================================
+
+model Institution {
+  id          String   @id @default(uuid())
+  name        String
+  type        InstitutionType
+  city        String?
+  state       String?
+  country     String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  users       User[]
+  classes     Class[]
+  contents    Content[]
+  assessments Assessment[]
+
+  @@map("institutions")
+}
+
+model User {
+  id                String   @id @default(uuid())
+  institutionId     String?  @map("institution_id")
+  institution       Institution? @relation(fields: [institutionId], references: [id])
+  name              String
+  email             String   @unique
+  passwordHash      String   @map("password_hash")
+  role              UserRole
+  schoolingLevel    String   @map("schooling_level")
+  age               Int?
+  sex               String?
+  preferredLanguages Json     @default("[]") @map("preferred_languages")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  enrollments       ClassStudent[]
+  createdContents   Content[]
+  libraryItems      UserLibraryItem[]
+  readingSessions   ReadingSession[]
+  assessmentAttempts AssessmentAttempt[]
+  dailyGoals        DailyGoal[]
+  dailyActivities   DailyActivity[]
+  streak            Streak?
+  cornellNotes      CornellNote[]
+  vocabularyEntries UserVocabulary[]
+  assignedBadges    UserBadge[]
+  
+  // Admin Console
+  roleAssignments   UserRoleAssignment[] @relation("UserRoles")
+  lastLoginAt       DateTime?       @map("last_login_at")
+  status            String          @default("ACTIVE")
+
+  @@map("users")
+}
+
+model Class {
+  id            String   @id @default(uuid())
+  institutionId String   @map("institution_id")
+  institution   Institution @relation(fields: [institutionId], references: [id])
+  name          String
+  gradeLevel    String   @map("grade_level")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  students      ClassStudent[]
+
+  @@map("classes")
+}
+
+model ClassStudent {
+  classId   String @map("class_id")
+  studentId String @map("student_id")
+  class     Class  @relation(fields: [classId], references: [id])
+  student   User   @relation(fields: [studentId], references: [id])
+
+  @@id([classId, studentId])
+  @@map("class_students")
+}
+
+model Course {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  lessons     Lesson[]
+
+  @@map("courses")
+}
+
+model Lesson {
+  id          String   @id @default(uuid())
+  courseId    String   @map("course_id")
+  course      Course   @relation(fields: [courseId], references: [id])
+  title       String
+  orderIndex  Int      @map("order_index")
+  estimatedMinutes Int @map("estimated_minutes")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  contentId   String?  @map("content_id")
+  content     Content? @relation(fields: [contentId], references: [id])
+  
+  progress    LessonProgress[]
+
+  @@map("lessons")
+}
+
+model LessonProgress {
+  id          String       @id @default(uuid())
+  userId      String       @map("user_id")
+  lessonId    String       @map("lesson_id")
+  lesson      Lesson       @relation(fields: [lessonId], references: [id])
+  status      LessonStatus @default(AVAILABLE)
+  progressPct Int          @default(0) @map("progress_pct")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@unique([userId, lessonId])
+  @@map("lesson_progress")
+}
+
+model Content {
+  id              String      @id @default(uuid())
+  institutionId   String?     @map("institution_id")
+  institution     Institution? @relation(fields: [institutionId], references: [id])
+  type            ContentType
+  sourceId        String?     @map("source_id")
+  title           String
+  originalLanguage Language   @map("original_language")
+  rawText         String      @map("raw_text") @db.Text
+  metadata        Json?
+  createdBy       String?     @map("created_by")
+  creator         User?       @relation(fields: [createdBy], references: [id])
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  versions        ContentVersion[]
+  libraryItems    UserLibraryItem[]
+  readingSessions ReadingSession[]
+  assessments     Assessment[]
+  lessons         Lesson[]
+
+  @@map("contents")
+}
+
+model ContentVersion {
+  id                  String   @id @default(uuid())
+  contentId           String   @map("content_id")
+  content             Content  @relation(fields: [contentId], references: [id])
+  targetLanguage      Language @map("target_language")
+  schoolingLevelTarget String  @map("schooling_level_target")
+  simplifiedText      String   @map("simplified_text") @db.Text
+  summary             String?  @db.Text
+  vocabularyGlossary  Json?    @map("vocabulary_glossary")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  libraryItems     UserLibraryItem[]
+  readingSessions  ReadingSession[]
+  assessments      Assessment[]
+
+  @@map("content_versions")
+}
+
+model UserLibraryItem {
+  id               String          @id @default(uuid())
+  userId           String          @map("user_id")
+  user             User            @relation(fields: [userId], references: [id])
+  contentId        String          @map("content_id")
+  content          Content         @relation(fields: [contentId], references: [id])
+  contentVersionId String?         @map("content_version_id")
+  contentVersion   ContentVersion? @relation(fields: [contentVersionId], references: [id])
+  status           LibraryStatus   @default(SAVED)
+  lastAccessedAt   DateTime        @default(now()) @map("last_accessed_at")
+  createdAt        DateTime        @default(now()) @map("created_at")
+
+  @@map("user_library_items")
+}
+
+model ReadingSession {
+  id               String          @id @default(uuid())
+  userId           String          @map("user_id")
+  user             User            @relation(fields: [userId], references: [id])
+  contentId        String          @map("content_id")
+  content          Content         @relation(fields: [contentId], references: [id])
+  contentVersionId String?         @map("content_version_id")
+  contentVersion   ContentVersion? @relation(fields: [contentVersionId], references: [id])
+  startedAt        DateTime        @default(now()) @map("started_at")
+  finishedAt       DateTime?       @map("finished_at")
+
+  cornellNotes     CornellNote[]
+
+  @@map("reading_sessions")
+}
+
+model CornellNote {
+  id               String         @id @default(uuid())
+  userId           String         @map("user_id")
+  user             User           @relation(fields: [userId], references: [id])
+  readingSessionId String         @map("reading_session_id")
+  readingSession   ReadingSession @relation(fields: [readingSessionId], references: [id])
+  mainNotes        Json           @map("main_notes")
+  cueColumn        String?        @map("cue_column") @db.Text
+  summary          String?        @db.Text
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  @@map("cornell_notes")
+}
+
+model Assessment {
+  id                   String          @id @default(uuid())
+  contentId            String          @map("content_id")
+  content              Content         @relation(fields: [contentId], references: [id])
+  contentVersionId     String?         @map("content_version_id")
+  contentVersion       ContentVersion? @relation(fields: [contentVersionId], references: [id])
+  institutionId        String?         @map("institution_id")
+  institution          Institution?    @relation(fields: [institutionId], references: [id])
+  schoolingLevelTarget String          @map("schooling_level_target")
+  createdAt            DateTime        @default(now()) @map("created_at")
+  updatedAt            DateTime        @updatedAt @map("updated_at")
+
+  questions            AssessmentQuestion[]
+  attempts             AssessmentAttempt[]
+
+  @@map("assessments")
+}
+
+model AssessmentQuestion {
+  id            String       @id @default(uuid())
+  assessmentId  String       @map("assessment_id")
+  assessment    Assessment   @relation(fields: [assessmentId], references: [id])
+  questionType  QuestionType @map("question_type")
+  questionText  String       @map("question_text") @db.Text
+  options       Json?
+  correctAnswer Json         @map("correct_answer")
+  skills        String[]     @default([])
+  
+  answers       AssessmentAnswer[]
+
+  @@map("assessment_questions")
+}
+
+model AssessmentAttempt {
+  id           String     @id @default(uuid())
+  assessmentId String     @map("assessment_id")
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+  userId       String     @map("user_id")
+  user         User       @relation(fields: [userId], references: [id])
+  startedAt    DateTime   @default(now()) @map("started_at")
+  finishedAt   DateTime?  @map("finished_at")
+  scoreRaw     Float?     @map("score_raw")
+  scorePercent Float?     @map("score_percent")
+
+  answers      AssessmentAnswer[]
+
+  @@map("assessment_attempts")
+}
+
+model AssessmentAnswer {
+  id                  String            @id @default(uuid())
+  assessmentAttemptId String            @map("assessment_attempt_id")
+  assessmentAttempt   AssessmentAttempt @relation(fields: [assessmentAttemptId], references: [id])
+  questionId          String            @map("question_id")
+  question            AssessmentQuestion @relation(fields: [questionId], references: [id])
+  userAnswer          Json              @map("user_answer")
+  isCorrect           Boolean           @map("is_correct")
+  timeSpentSeconds    Int?              @map("time_spent_seconds")
+
+  @@map("assessment_answers")
+}
+
+// ========================================
+// Gamification
+// ========================================
+
+model DailyGoal {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+  goalType  DailyGoalType @map("goal_type")
+  goalValue Int      @map("goal_value")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("daily_goals")
+}
+
+model DailyActivity {
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  user             User     @relation(fields: [userId], references: [id])
+  date             DateTime @db.Date
+  minutesSpent     Int      @default(0) @map("minutes_spent")
+  lessonsCompleted Int      @default(0) @map("lessons_completed")
+  goalMet          Boolean  @default(false) @map("goal_met")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, date])
+  @@map("daily_activities")
+}
+
+model Streak {
+  userId          String   @id @map("user_id")
+  user            User     @relation(fields: [userId], references: [id])
+  currentStreak   Int      @default(0) @map("current_streak")
+  bestStreak      Int      @default(0) @map("best_streak")
+  lastGoalMetDate DateTime? @map("last_goal_met_date") @db.Date
+  freezeTokens    Int      @default(1) @map("freeze_tokens")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("streaks")
+}
+
+model Badge {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  description String
+  imageUrl    String?  @map("image_url")
+
+  userBadges  UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id])
+  badgeId   String   @map("badge_id")
+  badge     Badge    @relation(fields: [badgeId], references: [id])
+  awardedAt DateTime @default(now()) @map("awarded_at")
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
+
+model UserVocabulary {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  user         User     @relation(fields: [userId], references: [id])
+  word         String
+  language     Language
+  masteryScore Int      @default(0) @map("mastery_score")
+  lastSeenAt   DateTime @default(now()) @map("last_seen_at")
+
+  @@unique([userId, word, language])
+  @@map("user_vocabularies")
+}
+
+// ========================================
+// Admin Console - Phase 1: RBAC & Audit
+// ========================================
+
+model UserRoleAssignment {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  user        User      @relation("UserRoles", fields: [userId], references: [id], onDelete: Cascade)
+  role        UserRole
+  scopeType   ScopeType? @map("scope_type")
+  scopeId     String?    @map("scope_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  createdBy   String?   @map("created_by")
+
+  @@unique([userId, role, scopeType, scopeId])
+  @@index([userId])
+  @@index([role])
+  @@map("user_role_assignments")
+}
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  actorUserId    String?  @map("actor_user_id")
+  actorRole      UserRole? @map("actor_role")
+  action         String
+  resourceType   String   @map("resource_type")
+  resourceId     String?  @map("resource_id")
+  requestId      String?  @map("request_id")
+  ip             String?
+  userAgent      String?  @map("user_agent")
+  beforeJson     Json?    @map("before_json")
+  afterJson      Json?    @map("after_json")
+  reason         String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([actorUserId])
+  @@index([action])
+  @@index([resourceType])
+  @@index([createdAt])
+  @@index([requestId])
+  @@map("audit_logs")
+}
