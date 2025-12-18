@@ -1,0 +1,145 @@
+
+> api@0.0.1 build
+> nest build
+
+src/admin/admin.controller.ts:7:67 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+
+7 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+                                                                    ~~~~~~~~~~~~~~~~~
+src/admin/config.controller.ts:14:54 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+
+14 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+                                                        ~~~~~~~~~~~~~~~~~
+src/admin/dashboard.controller.ts:6:54 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+
+6 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+                                                       ~~~~~~~~~~~~~~~~~
+src/admin/dto/config.dto.ts:2:50 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+
+2 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+                                                   ~~~~~~~~~~~~~~~~~
+src/admin/dto/dashboard.dto.ts:2:50 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+
+2 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+                                                   ~~~~~~~~~~~~~~~~~
+src/admin/dto/feature-flag.dto.ts:2:50 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+
+2 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+                                                   ~~~~~~~~~~~~~~~~~
+src/admin/dto/secret.dto.ts:2:50 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+
+2 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+                                                   ~~~~~~~~~~~~~~~~~
+src/admin/dto/user-management.dto.ts:4:50 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+
+4 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+                                                   ~~~~~~~~~~~~~~~~~
+src/auth/auth.controller.ts:5:76 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+
+5 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+                                                                             ~~~~~~~~~~~~~~~~~
+src/billing/billing.controller.ts:14:54 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+
+14 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+                                                        ~~~~~~~~~~~~~~~~~
+src/billing/dto/billing.dto.ts:2:50 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+
+2 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+                                                   ~~~~~~~~~~~~~~~~~
+src/billing/plan-limits.service.ts:51:38 - error TS2339: Property 'billingPlan' does not exist on type 'PrismaService'.
+
+51       const plan = await this.prisma.billingPlan.findUnique({
+                                        ~~~~~~~~~~~
+src/billing/user-billing.controller.ts:9:54 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+
+9 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+                                                       ~~~~~~~~~~~~~~~~~
+src/common/logger/logger.module.ts:2:31 - error TS2307: Cannot find module 'nest-winston' or its corresponding type declarations.
+
+2 import { WinstonModule } from 'nest-winston';
+                                ~~~~~~~~~~~~~~
+src/common/logger/logger.module.ts:3:26 - error TS2307: Cannot find module 'winston' or its corresponding type declarations.
+
+3 import * as winston from 'winston';
+                           ~~~~~~~~~
+src/cornell/services/storage.service.ts:26:7 - error TS2322: Type 'void' is not assignable to type '{ url: string; expiresAt: string; }'.
+
+26       return this.getS3SignedUrl(file);
+         ~~~~~~
+src/extraction/extraction.service.ts:32:47 - error TS2339: Property 'hasEntitlement' does not exist on type 'EntitlementsService'.
+
+32     const hasAccess = await this.entitlements.hasEntitlement(
+                                                 ~~~~~~~~~~~~~~
+src/extraction/extraction.service.ts:91:13 - error TS2353: Object literal may only specify known properties, and 'contentType' does not exist in type 'ContentSelect<DefaultArgs>'.
+
+91             contentType: true,
+               ~~~~~~~~~~~
+src/main.ts:5:48 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+
+5 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+                                                 ~~~~~~~~~~~~~~~~~
+src/main.ts:6:25 - error TS2307: Cannot find module '@sentry/node' or its corresponding type declarations.
+
+6 import * as Sentry from '@sentry/node';
+                          ~~~~~~~~~~~~~~
+src/observability/jobs.service.ts:2:38 - error TS2307: Cannot find module '@nestjs/schedule' or its corresponding type declarations.
+
+2 import { Cron, CronExpression } from '@nestjs/schedule';
+                                       ~~~~~~~~~~~~~~~~~~
+src/observability/observability.module.ts:2:32 - error TS2307: Cannot find module '@nestjs/schedule' or its corresponding type declarations.
+
+2 import { ScheduleModule } from '@nestjs/schedule';
+                                 ~~~~~~~~~~~~~~~~~~
+src/profiles/profile.service.ts:36:7 - error TS2322: Type 'UpdateProfileDto' is not assignable to type '(Without<LearnerProfileUpdateInput, LearnerProfileUncheckedUpdateInput> & LearnerProfileUncheckedUpdateInput) | (Without<...> & LearnerProfileUpdateInput)'.
+  Type 'UpdateProfileDto' is not assignable to type 'Without<LearnerProfileUncheckedUpdateInput, LearnerProfileUpdateInput> & LearnerProfileUpdateInput'.
+    Types of property 'educationLevel' are incompatible.
+      Type 'string' is not assignable to type 'EducationLevel | EnumEducationLevelFieldUpdateOperationsInput'.
+
+36       data,
+         ~~~~
+
+  node_modules/.prisma/client/index.d.ts:47713:5
+    47713     data: XOR<LearnerProfileUpdateInput, LearnerProfileUncheckedUpdateInput>
+              ~~~~
+    The expected type comes from property 'data' which is declared here on type '{ select?: LearnerProfileSelect<DefaultArgs>; include?: LearnerProfileInclude<DefaultArgs>; data: (Without<...> & LearnerProfileUncheckedUpdateInput) | (Without<...> & LearnerProfileUpdateInput); where: LearnerProfileWhereUniqueInput; }'
+src/queue/queue.service.ts:24:7 - error TS2739: Type 'ChannelModel' is missing the following properties from type 'Connection': serverProperties, expectSocketClose, sentSinceLastCheck, recvSinceLastCheck, sendMessage
+
+24       this.connection = await amqp.connect(url);
+         ~~~~~~~~~~~~~~~
+src/queue/queue.service.ts:25:44 - error TS2339: Property 'createChannel' does not exist on type 'Connection'.
+
+25       this.channel = await this.connection.createChannel();
+                                              ~~~~~~~~~~~~~
+src/queue/queue.service.ts:37:30 - error TS2339: Property 'close' does not exist on type 'Connection'.
+
+37       await this.connection?.close();
+                                ~~~~~
+src/sessions/reading-sessions.service.ts:44:13 - error TS2353: Object literal may only specify known properties, and 'contentType' does not exist in type 'ContentSelect<DefaultArgs>'.
+
+44             contentType: true,
+               ~~~~~~~~~~~
+src/sessions/reading-sessions.service.ts:65:13 - error TS2353: Object literal may only specify known properties, and 'contentType' does not exist in type 'ContentSelect<DefaultArgs>'.
+
+65             contentType: true,
+               ~~~~~~~~~~~
+src/sessions/reading-sessions.service.ts:108:9 - error TS2353: Object literal may only specify known properties, and 'updatedAt' does not exist in type '(Without<ReadingSessionUpdateInput, ReadingSessionUncheckedUpdateInput> & ReadingSessionUncheckedUpdateInput) | (Without<...> & ReadingSessionUpdateInput)'.
+
+108         updatedAt: new Date(),
+            ~~~~~~~~~
+
+  node_modules/.prisma/client/index.d.ts:17264:5
+    17264     data: XOR<ReadingSessionUpdateInput, ReadingSessionUncheckedUpdateInput>
+              ~~~~
+    The expected type comes from property 'data' which is declared here on type '{ select?: ReadingSessionSelect<DefaultArgs>; include?: ReadingSessionInclude<DefaultArgs>; data: (Without<...> & ReadingSessionUncheckedUpdateInput) | (Without<...> & ReadingSessionUpdateInput); where: ReadingSessionWhereUniqueInput; }'
+src/sessions/reading-sessions.service.ts:155:9 - error TS2353: Object literal may only specify known properties, and 'updatedAt' does not exist in type '(Without<ReadingSessionUpdateInput, ReadingSessionUncheckedUpdateInput> & ReadingSessionUncheckedUpdateInput) | (Without<...> & ReadingSessionUpdateInput)'.
+
+155         updatedAt: new Date(),
+            ~~~~~~~~~
+
+  node_modules/.prisma/client/index.d.ts:17264:5
+    17264     data: XOR<ReadingSessionUpdateInput, ReadingSessionUncheckedUpdateInput>
+              ~~~~
+    The expected type comes from property 'data' which is declared here on type '{ select?: ReadingSessionSelect<DefaultArgs>; include?: ReadingSessionInclude<DefaultArgs>; data: (Without<...> & ReadingSessionUncheckedUpdateInput) | (Without<...> & ReadingSessionUpdateInput); where: ReadingSessionWhereUniqueInput; }'
+
+Found 30 error(s).
+

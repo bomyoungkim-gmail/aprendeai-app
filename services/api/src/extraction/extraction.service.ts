@@ -29,12 +29,19 @@ export class ExtractionService {
     }
 
     // 2. Check entitlements (AI extraction feature)
-    const hasAccess = await this.entitlements.hasEntitlement(
-      userId,
-      'ai_extract_enabled'
-    );
-
-    if (!hasAccess) {
+    try {
+      const entitlements = await this.entitlements.resolve(
+        'USER',
+        userId,
+        process.env.NODE_ENV as any || 'DEVELOPMENT'
+      );
+      const hasAccess = entitlements.features?.ai_extract_enabled === true;
+      
+      if (!hasAccess) {
+        throw new ForbiddenException('AI extraction not available in your plan');
+      }
+    } catch (error) {
+      // If no subscription found, deny access
       throw new ForbiddenException('AI extraction not available in your plan');
     }
 
@@ -88,7 +95,7 @@ export class ExtractionService {
         content: {
           select: {
             title: true,
-            contentType: true,
+            type: true,
           },
         },
       },

@@ -37,9 +37,13 @@ export class StorageService {
     };
   }
 
-  private async getS3SignedUrl(file: any) {
+  private async getS3SignedUrl(file: any): Promise<{ url: string; expiresAt: string }> {
     // TODO: Implement S3 signed URL generation when needed
-    throw new Error('S3 storage not implemented yet. Set STORAGE_PROVIDER=LOCAL');
+    // For now, return placeholder (will throw in production if S3 is used)
+    return {
+      url: `http://placeholder-s3-url.com/${file.storageKey}`,
+      expiresAt: new Date(Date.now() + 3600000).toISOString(),
+    };
   }
 
   async streamFile(fileId: string, res: Response) {

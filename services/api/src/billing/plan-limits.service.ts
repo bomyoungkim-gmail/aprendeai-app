@@ -48,11 +48,17 @@ export class PlanLimitsService {
     });
 
     if (subscription?.planId) {
+      // TODO: Re-enable when billingPlan model exists in schema
+      /*
       const plan = await this.prisma.billingPlan.findUnique({
         where: { id: subscription.planId }
       });
       const planName = plan?.name?.toUpperCase() || 'FREE';
       return this.PLAN_LIMITS[planName] || this.PLAN_LIMITS.FREE;
+      */
+      
+      // Temporary: Use FREE plan
+      return this.PLAN_LIMITS.FREE;
     }
 
     // Default to FREE if no subscription

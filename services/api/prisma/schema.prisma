@@ -55,6 +55,7 @@ model User {
   roleAssignments     UserRoleAssignment[] @relation("UserRoles")
   vocabularyEntries   UserVocabulary[]
   institution         Institution?         @relation(fields: [institutionId], references: [id])
+  LearnerProfile      LearnerProfile[]
 
   @@map("users")
 }
@@ -190,16 +191,29 @@ model UserLibraryItem {
 }
 
 model ReadingSession {
-  id               String          @id @default(uuid())
-  userId           String          @map("user_id")
-  contentId        String          @map("content_id")
-  contentVersionId String?         @map("content_version_id")
-  startedAt        DateTime        @default(now()) @map("started_at")
-  finishedAt       DateTime?       @map("finished_at")
-  cornellNotes     CornellNote[]
-  content          Content         @relation(fields: [contentId], references: [id])
-  contentVersion   ContentVersion? @relation(fields: [contentVersionId], references: [id])
-  user             User            @relation(fields: [userId], references: [id])
+  id               String    @id @default(uuid())
+  userId           String    @map("user_id")
+  contentId        String    @map("content_id")
+  contentVersionId String?   @map("content_version_id")
+  startedAt        DateTime  @default(now()) @map("started_at")
+  finishedAt       DateTime? @map("finished_at")
+
+  // V3 Study Session fields
+  phase           SessionPhase?    @default(PRE)
+  modality        SessionModality? @default(READING)
+  assetLayer      String?          @default("L1") @map("asset_layer")
+  goalStatement   String?          @map("goal_statement") @db.Text
+  predictionText  String?          @map("prediction_text") @db.Text
+  targetWordsJson Json?            @map("target_words_json")
+
+  cornellNotes   CornellNote[]
+  content        Content         @relation(fields: [contentId], references: [id])
+  contentVersion ContentVersion? @relation(fields: [contentVersionId], references: [id])
+  user           User            @relation(fields: [userId], references: [id])
+
+  // V3 relations
+  events  SessionEvent[]
+  outcome SessionOutcome?
 
   @@map("reading_sessions")
 }
@@ -682,13 +696,85 @@ model ContentChunk {
   text          String   @db.Text
   tokenEstimate Int?     @map("token_estimate")
   createdAt     DateTime @default(now()) @map("created_at")
-  
-  content       Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  
+
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
   @@unique([contentId, chunkIndex])
   @@index([contentId])
   @@index([pageNumber])
   @@map("content_chunks")
+}
+
+// ===== V3 Study Sessions Models =====
+
+model LearnerProfile {
+  userId              String         @id @map("user_id")
+  educationLevel      EducationLevel @default(ADULTO_LEIGO) @map("education_level")
+  readingLevelScore   Int?           @map("reading_level_score")
+  listeningLevelScore Int?           @map("listening_level_score")
+  writingLevelScore   Int?           @map("writing_level_score")
+  dailyTimeBudgetMin  Int            @default(30) @map("daily_time_budget_min")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("learner_profiles")
+}
+
+model SessionEvent {
+  id               String    @id @default(uuid())
+  readingSessionId String    @map("reading_session_id")
+  eventType        EventType
+  payloadJson      Json      @map("payload_json")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  session ReadingSession @relation(fields: [readingSessionId], references: [id], onDelete: Cascade)
+
+  @@index([readingSessionId])
+  @@index([eventType])
+  @@map("session_events")
+}
+
+model SessionOutcome {
+  readingSessionId   String   @id @map("reading_session_id")
+  comprehensionScore Int      @default(0) @map("comprehension_score")
+  productionScore    Int      @default(0) @map("production_score")
+  frustrationIndex   Int      @default(0) @map("frustration_index")
+  computedAt         DateTime @default(now()) @map("computed_at")
+
+  session ReadingSession @relation(fields: [readingSessionId], references: [id], onDelete: Cascade)
+
+  @@map("session_outcomes")
+}
+
+enum SessionPhase {
+  PRE
+  DURING
+  POST
+  FINISHED
+}
+
+enum SessionModality {
+  READING
+  LISTENING
+  WRITING
+}
+
+enum EventType {
+  MARK_UNKNOWN_WORD
+  MARK_KEY_IDEA
+  CHECKPOINT_RESPONSE
+  QUIZ_RESPONSE
+  PRODUCTION_SUBMIT
+}
+
+enum EducationLevel {
+  FUNDAMENTAL_1
+  FUNDAMENTAL_2
+  MEDIO
+  SUPERIOR
+  ADULTO_LEIGO
 }
 
 enum UserRole {

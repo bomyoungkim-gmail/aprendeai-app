@@ -10,8 +10,8 @@ export interface ExtractionMessage {
 
 @Injectable()
 export class QueueService implements OnModuleInit, OnModuleDestroy {
-  private connection: amqp.Connection;
-  private channel: amqp.Channel;
+  private connection: any; // amqp.Connection
+  private channel: any; // amqp.Channel
   private readonly logger = new Logger(QueueService.name);
 
   constructor(private config: ConfigService) {}
