@@ -511,3 +511,73 @@ model IntegrationSecret {
   @@index([provider])
   @@map("integration_secrets")
 }
+
+model SystemMetric {
+  id        String   @id @default(uuid())
+  metric    String   // e.g., "api_latency", "api_requests", "errors"
+  value     Float    // Numeric value (count, avg, sum)
+  tags      Json?    // Additional metadata (endpoint, status, provider)
+  timestamp DateTime @default(now())
+  bucket    String   // Time bucket: "1m", "1h", "1d"
+
+  @@index([metric, timestamp])
+  @@index([bucket])
+  @@map("system_metrics")
+}
+
+model ErrorLog {
+  id         String   @id @default(uuid())
+  message    String
+  stack      String?  @db.Text
+  endpoint   String?
+  method     String?
+  statusCode Int?     @map("status_code")
+  userId     String?  @map("user_id")
+  requestId  String?  @map("request_id")
+  metadata   Json?    // Request body, headers, etc.
+  timestamp  DateTime @default(now())
+  resolved   Boolean  @default(false)
+
+  @@index([timestamp])
+  @@index([resolved])
+  @@index([endpoint])
+  @@map("error_logs")
+}
+
+model ProviderUsage {
+  id         String   @id @default(uuid())
+  provider   String   // "openai", "kci", "aws"
+  operation  String   // "completion", "embedding", "search"
+  tokens     Int?     // For LLM providers
+  cost       Float?   // Estimated cost in USD
+  latency    Int?     // Response time in ms
+  statusCode Int?     @map("status_code")
+  userId     String?  @map("user_id")
+  metadata   Json?    // Model, temperature, etc.
+  timestamp  DateTime @default(now())
+
+  @@index([provider, timestamp])
+  @@index([userId])
+  @@map("provider_usage")
+}
+
+model BackgroundJob {
+  id          String    @id @default(uuid())
+  jobName     String    @map("job_name")
+  status      JobStatus
+  startedAt   DateTime  @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  duration    Int?      // Duration in ms
+  error       String?   @db.Text
+  metadata    Json?
+
+  @@index([jobName, status])
+  @@index([startedAt])
+  @@map("background_jobs")
+}
+
+enum JobStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { AdminController } from './admin.controller';
+import { DashboardController } from './dashboard.controller';
 import { AdminService } from './admin.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { EncryptionService } from './services/encryption.service';
@@ -14,7 +15,7 @@ import { SecretService } from './services/secret.service';
       signOptions: { expiresIn: '60m' },
     }),
   ],
-  controllers: [AdminController],
+  controllers: [AdminController, DashboardController],
   providers: [AdminService, EncryptionService, SecretService],
   exports: [AdminService, EncryptionService, SecretService],
 })
