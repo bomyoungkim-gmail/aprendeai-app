@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { GamificationModule } from './gamification/gamification.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { AdminModule } from './admin/admin.module';
+import { BillingModule } from './billing/billing.module';
 import { ObservabilityModule } from './observability/observability.module';
 import { MetricsInterceptor } from './common/interceptors/metrics.interceptor';
 
@@ -14,6 +15,7 @@ import { MetricsInterceptor } from './common/interceptors/metrics.interceptor';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    BillingModule, // Global billing services
     ObservabilityModule, // Must be imported before others to track all requests
     GamificationModule,
     AnalyticsModule,

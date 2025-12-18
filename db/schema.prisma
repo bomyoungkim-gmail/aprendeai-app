@@ -609,3 +609,119 @@ enum ConfigType {
   JSON
   SECRET_REF
 }
+
+// ============================================
+// BILLING SYSTEM (SaaS Monetization)
+// ============================================
+
+model Plan {
+  id            String         @id @default(uuid())
+  code          String         @unique // FREE, PRO, INSTITUTION
+  name          String
+  description   String?
+  isActive      Boolean        @default(true) @map("is_active")
+  entitlements  Json           // {features: {...}, limits: {...}}
+  monthlyPrice  Float?         @map("monthly_price")
+  yearlyPrice   Float?         @map("yearly_price")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  
+  subscriptions Subscription[]
+  
+  @@index([code])
+  @@index([isActive])
+  @@map("plans")
+}
+
+model Subscription {
+  id                      String              @id @default(uuid())
+  scopeType               SubscriptionScope   @map("scope_type")
+  scopeId                 String              @map("scope_id")
+  planId                  String              @map("plan_id")
+  plan                    Plan                @relation(fields: [planId], references: [id])
+  status                  SubscriptionStatus
+  source                  SubscriptionSource
+  currentPeriodStart      DateTime?           @map("current_period_start")
+  currentPeriodEnd        DateTime?           @map("current_period_end")
+  cancelAtPeriodEnd       Boolean             @default(false) @map("cancel_at_period_end")
+  providerCode            String?             @map("provider_code")
+  providerCustomerId      String?             @map("provider_customer_id")
+  providerSubscriptionId  String?             @map("provider_subscription_id")
+  providerPriceId         String?             @map("provider_price_id")
+  createdAt               DateTime            @default(now()) @map("created_at")
+  updatedAt               DateTime            @updatedAt @map("updated_at")
+  
+  @@unique([scopeType, scopeId, status], name: "unique_active_subscription", map: "subscriptions_scope_status_unique")
+  @@index([scopeType, scopeId])
+  @@index([planId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model EntitlementOverride {
+  id          String            @id @default(uuid())
+  scopeType   SubscriptionScope @map("scope_type")
+  scopeId     String            @map("scope_id")
+  overrides   Json
+  reason      String
+  updatedBy   String            @map("updated_by")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+  
+  @@unique([scopeType, scopeId])
+  @@map("entitlement_overrides")
+}
+
+model UsageEvent {
+  id            String            @id @default(uuid())
+  environment   Environment
+  occurredAt    DateTime          @map("occurred_at")
+  scopeType     SubscriptionScope @map("scope_type")
+  scopeId       String            @map("scope_id")
+  providerCode  String?           @map("provider_code")
+  endpoint      String?
+  metric        String
+  quantity      Float
+  approxCostUsd Float?            @map("approx_cost_usd")
+  requestId     String?           @map("request_id")
+  userId        String?           @map("user_id")
+  metadata      Json?
+  createdAt     DateTime          @default(now()) @map("created_at")
+  
+  @@index([scopeType, scopeId, metric, occurredAt])
+  @@index([occurredAt])
+  @@index([metric])
+  @@map("usage_events")
+}
+
+model BillingEvent {
+  id              String    @id @default(uuid())
+  providerCode    String    @map("provider_code")
+  providerEventId String    @unique @map("provider_event_id")
+  eventType       String    @map("event_type")
+  payload         Json
+  processedAt     DateTime? @map("processed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  @@index([providerCode])
+  @@index([processedAt])
+  @@map("billing_events")
+}
+
+enum SubscriptionScope {
+  USER
+  INSTITUTION
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+}
+
+enum SubscriptionSource {
+  INTERNAL
+  PAYMENT_PROVIDER
+}
