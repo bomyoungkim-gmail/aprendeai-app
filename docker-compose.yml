@@ -80,20 +80,44 @@ services:
 
   # AI Service
   ai:
-    build:
-      context: .
-      dockerfile: infra/docker/ai.Dockerfile
-    image: socrates/ai
     container_name: socrates-ai
+    build:
+      context: ./services/ai
+      dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8001:8001"
     volumes:
       - ./services/ai:/app
     environment:
-      PORT: 8000
+      PORT: 8001
+      # Database for asset generation
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-aprendeai}
+      # RabbitMQ for queue processing
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+      # Run consumer by default
+      RUN_CONSUMER: "true"
+      # LLM Provider API Keys (set in .env)
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      # Provider configuration
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4-turbo}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-3-sonnet-20240229}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-1.5-flash}
+      # Tier model overrides
+      TIER_PREMIUM_MODEL: ${TIER_PREMIUM_MODEL:-gpt-4-turbo}
+      TIER_BALANCED_MODEL: ${TIER_BALANCED_MODEL:-claude-3-sonnet-20240229}
+      TIER_CHEAP_MODEL: ${TIER_CHEAP_MODEL:-gemini-1.5-flash}
     networks:
       - socrates-network
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
 
   # Workers
   news_ingestor:
