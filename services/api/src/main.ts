@@ -31,18 +31,57 @@ async function bootstrap() {
   
   // Setup Swagger API Documentation
   const config = new DocumentBuilder()
-    .setTitle('AprendeAI API')
-    .setDescription('Educational platform API with Admin Console')
-    .setVersion('1.0')
-    .addTag('auth', 'Authentication endpoints')
-    .addTag('admin', 'Admin Console endpoints')
-    .addTag('gamification', 'Gamification features')
-    .addBearerAuth()
+    .setTitle('AprendeAI Admin Console API')
+    .setDescription(`
+      **Enterprise-grade Admin Console API**
+      
+      Features:
+      - 🔐 RBAC (Role-Based Access Control)
+      - 🔒 AES-256-GCM Encryption
+      - 👥 User Management & Impersonation
+      - 🚩 Feature Flags
+      - 🔑 Secret Management
+      - 📊 Observability & Metrics
+      - ⚙️ Configuration Management
+      - 📝 Complete Audit Trail
+      
+      Authentication: Bearer JWT token required for all admin endpoints.
+    `)
+    .setVersion('2.0.0')
+    .setContact('AprendeAI Team', 'https://aprendeai.com', 'support@aprendeai.com')
+    .setLicense('MIT', 'https://opensource.org/licenses/MIT')
+    .addTag('auth', 'Authentication & Authorization')
+    .addTag('admin', 'Admin Core (RBAC & Audit)')
+    .addTag('admin-users', 'User Management & Impersonation')
+    .addTag('admin-secrets', 'Encrypted Secrets Management')
+    .addTag('admin-feature-flags', 'Feature Flags & Toggles')
+    .addTag('admin-audit', 'Audit Logs & Compliance')
+    .addTag('admin-dashboard', 'Observability & Metrics')
+    .addTag('admin-config', 'Configuration & Integrations')
+    .addTag('gamification', 'Gamification & Achievements')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Enter JWT token from /admin/login',
+      },
+      'JWT-auth',
+    )
     .build();
   
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
-  logger.log('Swagger documentation available at /api/docs');
+  SwaggerModule.setup('api/docs', app, document, {
+    customSiteTitle: 'AprendeAI API Docs',
+    customCss: '.swagger-ui .topbar { display: none }',
+    swaggerOptions: {
+      persistAuthorization: true,
+      docExpansion: 'none',
+      filter: true,
+      tagsSorter: 'alpha',
+    },
+  });
+  logger.log('📚 Swagger documentation available at /api/docs');
   
   // Enable CORS for frontend
   app.enableCors({
