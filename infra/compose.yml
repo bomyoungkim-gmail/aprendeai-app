@@ -1,0 +1,180 @@
+name: socrates
+
+services:
+  # Infrastructure Services
+  postgres:
+    image: postgres:16-alpine
+    container_name: socrates-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-aprendeai}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - socrates-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    container_name: socrates-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - socrates-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: socrates-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    networks:
+      - socrates-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+    image: socrates/api
+    container_name: socrates-api
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./services/api:/app
+      - /app/node_modules
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-aprendeai}
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - socrates-network
+    command: npm run start:dev
+
+  # AI Service
+  ai:
+    build:
+      context: .
+      dockerfile: infra/docker/ai.Dockerfile
+    image: socrates/ai
+    container_name: socrates-ai
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./services/ai:/app
+    environment:
+      PORT: 8000
+    networks:
+      - socrates-network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Workers
+  news_ingestor:
+    build:
+      context: .
+      dockerfile: infra/docker/news_ingestor.Dockerfile
+    image: socrates/news-ingestor
+    container_name: socrates-news-ingestor
+    volumes:
+      - ./services/workers/news_ingestor:/app
+      - /app/node_modules
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-aprendeai}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - socrates-network
+
+  arxiv_ingestor:
+    build:
+      context: .
+      dockerfile: infra/docker/arxiv_ingestor.Dockerfile
+    image: socrates/arxiv-ingestor
+    container_name: socrates-arxiv-ingestor
+    volumes:
+      - ./services/workers/arxiv_ingestor:/app
+      - /app/node_modules
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-aprendeai}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - socrates-network
+
+  content_processor:
+    build:
+      context: .
+      dockerfile: infra/docker/content_processor.Dockerfile
+    image: socrates/content-processor
+    container_name: socrates-content-processor
+    volumes:
+      - ./services/workers/content_processor:/app
+      - /app/node_modules
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-aprendeai}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+      AI_SERVICE_URL: http://ai:8000
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      ai:
+        condition: service_started
+    networks:
+      - socrates-network
+
+  # Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: infra/docker/frontend.Dockerfile
+    image: socrates/frontend
+    container_name: socrates-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - socrates-network
+
+volumes:
+  pgdata:
+
+networks:
+  socrates-network:
+    driver: bridge
