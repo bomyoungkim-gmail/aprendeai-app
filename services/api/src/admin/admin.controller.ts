@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Post, UseGuards, Request, Param, Query, Body } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, UseGuards, Request, Param, Query, Body } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminService } from './admin.service';
 import { Roles } from './decorators/roles.decorator';
@@ -11,6 +11,13 @@ import {
   UpdateUserRolesDto,
   ImpersonateUserDto,
 } from './dto/user-management.dto';
+import {
+  CreateFeatureFlagDto,
+  UpdateFeatureFlagDto,
+  ToggleFeatureFlagDto,
+  DeleteFeatureFlagDto,
+  FeatureFlagFilterDto,
+} from './dto/feature-flag.dto';
 
 @ApiTags('admin')
 @Controller('admin')
@@ -18,13 +25,15 @@ import {
 export class AdminController {
   constructor(private adminService: AdminService) {}
 
+  // ========================================
+  // Auth & Profile
+  // ========================================
+
   @Get('me')
   @Roles(UserRole.ADMIN, UserRole.SUPPORT, UserRole.OPS, UserRole.INSTITUTION_ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current admin user info with roles and permissions' })
   @ApiResponse({ status: 200, description: 'Returns user info with role assignments' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
   async getAdminMe(@Request() req) {
     const user = await this.adminService.getUserWithRoles(req.user.userId);
 
@@ -42,11 +51,14 @@ export class AdminController {
     };
   }
 
+  // ========================================
+  // User Management
+  // ========================================
+
   @Get('users')
   @Roles(UserRole.ADMIN, UserRole.SUPPORT, UserRole.OPS)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Search and list users with pagination' })
-  @ApiResponse({ status: 200, description: 'Returns paginated user list' })
   async searchUsers(@Query() searchDto: UserSearchDto) {
     const { page = 1, limit = 25, ...filters } = searchDto;
     return this.adminService.searchUsers({ ...filters, page, limit });
@@ -56,8 +68,6 @@ export class AdminController {
   @Roles(UserRole.ADMIN, UserRole.SUPPORT, UserRole.OPS)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get detailed user information' })
-  @ApiResponse({ status: 200, description: 'Returns user details' })
-  @ApiResponse({ status: 404, description: 'User not found' })
   async getUserDetail(@Param('id') id: string) {
     return this.adminService.getUserDetail(id);
   }
@@ -65,8 +75,7 @@ export class AdminController {
   @Put('users/:id/status')
   @Roles(UserRole.ADMIN, UserRole.SUPPORT)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update user status (ACTIVE/SUSPENDED/DELETED)' })
-  @ApiResponse({ status: 200, description: 'User status updated' })
+  @ApiOperation({ summary: 'Update user status' })
   async updateUserStatus(
     @Param('id') id: string,
     @Body() dto: UpdateUserStatusDto,
@@ -85,7 +94,6 @@ export class AdminController {
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update user role assignments (ADMIN only)' })
-  @ApiResponse({ status: 200, description: 'User roles updated' })
   async updateUserRoles(
     @Param('id') id: string,
     @Body() dto: UpdateUserRolesDto,
@@ -103,11 +111,7 @@ export class AdminController {
   @Post('users/:id/impersonate')
   @Roles(UserRole.ADMIN, UserRole.SUPPORT)
   @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Generate impersonation token for user',
-    description: 'Creates a short-lived JWT token to impersonate the target user. All actions are audited.',
-  })
-  @ApiResponse({ status: 200, description: 'Returns impersonation token' })
+  @ApiOperation({ summary: 'Generate impersonation token for user' })
   async impersonateUser(
     @Param('id') id: string,
     @Body() dto: ImpersonateUserDto,
@@ -121,6 +125,110 @@ export class AdminController {
       dto.durationMinutes || 15,
     );
   }
+
+  // ========================================
+  // Feature Flags
+  // ========================================
+
+  @Get('feature-flags')
+  @Roles(UserRole.ADMIN, UserRole.OPS)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List all feature flags' })
+  @ApiResponse({ status: 200, description: 'Returns list of feature flags' })
+  async listFeatureFlags(@Query() filter: FeatureFlagFilterDto) {
+    const convertedFilter: any = {};
+    if (filter.environment) {
+      convertedFilter.environment = filter.environment as any;
+    }
+    if (filter.enabled !== undefined) {
+      convertedFilter.enabled = filter.enabled;
+    }
+    return this.adminService.listFeatureFlags(convertedFilter);
+  }
+
+  @Get('feature-flags/:id')
+  @Roles(UserRole.ADMIN, UserRole.OPS)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get feature flag details' })
+  async getFeatureFlag(@Param('id') id: string) {
+    return this.adminService.getFeatureFlag(id);
+  }
+
+  @Post('feature-flags')
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create new feature flag (ADMIN only)' })
+  async createFeatureFlag(
+    @Body() dto: CreateFeatureFlagDto,
+    @Request() req,
+  ) {
+    return this.adminService.createFeatureFlag(
+      dto,
+      req.user.userId,
+      req.user.role,
+    );
+  }
+
+  @Put('feature-flags/:id')
+  @Roles(UserRole.ADMIN, UserRole.OPS)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update feature flag (OPS can only toggle enabled)' })
+  async updateFeatureFlag(
+    @Param('id') id: string,
+    @Body() dto: UpdateFeatureFlagDto,
+    @Request() req,
+  ) {
+    // OPS can only toggle enabled field
+    if (req.user.role === UserRole.OPS && Object.keys(dto).some(k => k !== 'enabled')) {
+      throw new Error('OPS role can only toggle enabled field');
+    }
+
+    return this.adminService.updateFeatureFlag(
+      id,
+      dto,
+      req.user.userId,
+      req.user.role,
+    );
+  }
+
+  @Post('feature-flags/:id/toggle')
+  @Roles(UserRole.ADMIN, UserRole.OPS)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Quick toggle feature flag on/off' })
+  async toggleFeatureFlag(
+    @Param('id') id: string,
+    @Body() dto: ToggleFeatureFlagDto,
+    @Request() req,
+  ) {
+    return this.adminService.toggleFeatureFlag(
+      id,
+      dto.enabled,
+      dto.reason,
+      req.user.userId,
+      req.user.role,
+    );
+  }
+
+  @Delete('feature-flags/:id')
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete feature flag (ADMIN only)' })
+  async deleteFeatureFlag(
+    @Param('id') id: string,
+    @Body() dto: DeleteFeatureFlagDto,
+    @Request() req,
+  ) {
+    return this.adminService.deleteFeatureFlag(
+      id,
+      dto.reason,
+      req.user.userId,
+      req.user.role,
+    );
+  }
+
+  // ========================================
+  // Helpers
+  // ========================================
 
   private getPermissionsForRole(role: UserRole): string[] {
     const permissions: Record<UserRole, string[]> = {

@@ -27,6 +27,12 @@ enum ScopeType {
   USER
 }
 
+enum Environment {
+  DEV
+  STAGING
+  PROD
+}
+
 enum InstitutionType {
   SCHOOL
   UNIVERSITY
@@ -465,4 +471,22 @@ model AuditLog {
   @@index([createdAt])
   @@index([requestId])
   @@map("audit_logs")
+}
+
+model FeatureFlag {
+  id          String       @id @default(uuid())
+  key         String       @unique
+  name        String
+  description String?
+  enabled     Boolean      @default(false)
+  environment Environment?
+  scopeType   ScopeType?   @map("scope_type")
+  scopeId     String?      @map("scope_id")
+  createdBy   String?      @map("created_by")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@index([key])
+  @@index([enabled])
+  @@map("feature_flags")
 }

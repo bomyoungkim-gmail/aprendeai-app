@@ -12,10 +12,10 @@ generator client {
 // ========================================
 
 enum UserRole {
-  ADMIN               // Full system admin access
-  SUPPORT             // View dashboards, logs, impersonation
-  OPS                 // Dashboards, flags, limits, queues
-  INSTITUTION_ADMIN   // Manages own institution
+  ADMIN // Full system admin access
+  SUPPORT // View dashboards, logs, impersonation
+  OPS // Dashboards, flags, limits, queues
+  INSTITUTION_ADMIN // Manages own institution
   TEACHER
   STUDENT
   COMMON_USER
@@ -25,6 +25,12 @@ enum ScopeType {
   GLOBAL
   INSTITUTION
   USER
+}
+
+enum Environment {
+  DEV
+  STAGING
+  PROD
 }
 
 enum InstitutionType {
@@ -75,14 +81,14 @@ enum DailyGoalType {
 // ========================================
 
 model Institution {
-  id          String   @id @default(uuid())
-  name        String
-  type        InstitutionType
-  city        String?
-  state       String?
-  country     String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id        String          @id @default(uuid())
+  name      String
+  type      InstitutionType
+  city      String?
+  state     String?
+  country   String?
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
 
   users       User[]
   classes     Class[]
@@ -93,51 +99,51 @@ model Institution {
 }
 
 model User {
-  id                String   @id @default(uuid())
-  institutionId     String?  @map("institution_id")
-  institution       Institution? @relation(fields: [institutionId], references: [id])
-  name              String
-  email             String   @unique
-  passwordHash      String   @map("password_hash")
-  role              UserRole
-  schoolingLevel    String   @map("schooling_level")
-  age               Int?
-  sex               String?
-  preferredLanguages Json     @default("[]") @map("preferred_languages")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  id                 String       @id @default(uuid())
+  institutionId      String?      @map("institution_id")
+  institution        Institution? @relation(fields: [institutionId], references: [id])
+  name               String
+  email              String       @unique
+  passwordHash       String       @map("password_hash")
+  role               UserRole
+  schoolingLevel     String       @map("schooling_level")
+  age                Int?
+  sex                String?
+  preferredLanguages Json         @default("[]") @map("preferred_languages")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
 
   // Relations
-  enrollments       ClassStudent[]
-  createdContents   Content[]
-  libraryItems      UserLibraryItem[]
-  readingSessions   ReadingSession[]
+  enrollments        ClassStudent[]
+  createdContents    Content[]
+  libraryItems       UserLibraryItem[]
+  readingSessions    ReadingSession[]
   assessmentAttempts AssessmentAttempt[]
-  dailyGoals        DailyGoal[]
-  dailyActivities   DailyActivity[]
-  streak            Streak?
-  cornellNotes      CornellNote[]
-  vocabularyEntries UserVocabulary[]
-  assignedBadges    UserBadge[]
-  
+  dailyGoals         DailyGoal[]
+  dailyActivities    DailyActivity[]
+  streak             Streak?
+  cornellNotes       CornellNote[]
+  vocabularyEntries  UserVocabulary[]
+  assignedBadges     UserBadge[]
+
   // Admin Console
-  roleAssignments   UserRoleAssignment[] @relation("UserRoles")
-  lastLoginAt       DateTime?       @map("last_login_at")
-  status            String          @default("ACTIVE")
+  roleAssignments UserRoleAssignment[] @relation("UserRoles")
+  lastLoginAt     DateTime?            @map("last_login_at")
+  status          String               @default("ACTIVE")
 
   @@map("users")
 }
 
 model Class {
-  id            String   @id @default(uuid())
-  institutionId String   @map("institution_id")
+  id            String      @id @default(uuid())
+  institutionId String      @map("institution_id")
   institution   Institution @relation(fields: [institutionId], references: [id])
   name          String
-  gradeLevel    String   @map("grade_level")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  gradeLevel    String      @map("grade_level")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
 
-  students      ClassStudent[]
+  students ClassStudent[]
 
   @@map("classes")
 }
@@ -159,25 +165,25 @@ model Course {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  lessons     Lesson[]
+  lessons Lesson[]
 
   @@map("courses")
 }
 
 model Lesson {
-  id          String   @id @default(uuid())
-  courseId    String   @map("course_id")
-  course      Course   @relation(fields: [courseId], references: [id])
-  title       String
-  orderIndex  Int      @map("order_index")
-  estimatedMinutes Int @map("estimated_minutes")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id               String   @id @default(uuid())
+  courseId         String   @map("course_id")
+  course           Course   @relation(fields: [courseId], references: [id])
+  title            String
+  orderIndex       Int      @map("order_index")
+  estimatedMinutes Int      @map("estimated_minutes")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
-  contentId   String?  @map("content_id")
-  content     Content? @relation(fields: [contentId], references: [id])
-  
-  progress    LessonProgress[]
+  contentId String?  @map("content_id")
+  content   Content? @relation(fields: [contentId], references: [id])
+
+  progress LessonProgress[]
 
   @@map("lessons")
 }
@@ -196,19 +202,19 @@ model LessonProgress {
 }
 
 model Content {
-  id              String      @id @default(uuid())
-  institutionId   String?     @map("institution_id")
-  institution     Institution? @relation(fields: [institutionId], references: [id])
-  type            ContentType
-  sourceId        String?     @map("source_id")
-  title           String
-  originalLanguage Language   @map("original_language")
-  rawText         String      @map("raw_text") @db.Text
-  metadata        Json?
-  createdBy       String?     @map("created_by")
-  creator         User?       @relation(fields: [createdBy], references: [id])
-  createdAt       DateTime    @default(now()) @map("created_at")
-  updatedAt       DateTime    @updatedAt @map("updated_at")
+  id               String       @id @default(uuid())
+  institutionId    String?      @map("institution_id")
+  institution      Institution? @relation(fields: [institutionId], references: [id])
+  type             ContentType
+  sourceId         String?      @map("source_id")
+  title            String
+  originalLanguage Language     @map("original_language")
+  rawText          String       @map("raw_text") @db.Text
+  metadata         Json?
+  createdBy        String?      @map("created_by")
+  creator          User?        @relation(fields: [createdBy], references: [id])
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
 
   versions        ContentVersion[]
   libraryItems    UserLibraryItem[]
@@ -220,19 +226,19 @@ model Content {
 }
 
 model ContentVersion {
-  id                  String   @id @default(uuid())
-  contentId           String   @map("content_id")
-  content             Content  @relation(fields: [contentId], references: [id])
-  targetLanguage      Language @map("target_language")
-  schoolingLevelTarget String  @map("schooling_level_target")
-  simplifiedText      String   @map("simplified_text") @db.Text
-  summary             String?  @db.Text
-  vocabularyGlossary  Json?    @map("vocabulary_glossary")
-  createdAt           DateTime @default(now()) @map("created_at")
+  id                   String   @id @default(uuid())
+  contentId            String   @map("content_id")
+  content              Content  @relation(fields: [contentId], references: [id])
+  targetLanguage       Language @map("target_language")
+  schoolingLevelTarget String   @map("schooling_level_target")
+  simplifiedText       String   @map("simplified_text") @db.Text
+  summary              String?  @db.Text
+  vocabularyGlossary   Json?    @map("vocabulary_glossary")
+  createdAt            DateTime @default(now()) @map("created_at")
 
-  libraryItems     UserLibraryItem[]
-  readingSessions  ReadingSession[]
-  assessments      Assessment[]
+  libraryItems    UserLibraryItem[]
+  readingSessions ReadingSession[]
+  assessments     Assessment[]
 
   @@map("content_versions")
 }
@@ -263,7 +269,7 @@ model ReadingSession {
   startedAt        DateTime        @default(now()) @map("started_at")
   finishedAt       DateTime?       @map("finished_at")
 
-  cornellNotes     CornellNote[]
+  cornellNotes CornellNote[]
 
   @@map("reading_sessions")
 }
@@ -295,8 +301,8 @@ model Assessment {
   createdAt            DateTime        @default(now()) @map("created_at")
   updatedAt            DateTime        @updatedAt @map("updated_at")
 
-  questions            AssessmentQuestion[]
-  attempts             AssessmentAttempt[]
+  questions AssessmentQuestion[]
+  attempts  AssessmentAttempt[]
 
   @@map("assessments")
 }
@@ -310,8 +316,8 @@ model AssessmentQuestion {
   options       Json?
   correctAnswer Json         @map("correct_answer")
   skills        String[]     @default([])
-  
-  answers       AssessmentAnswer[]
+
+  answers AssessmentAnswer[]
 
   @@map("assessment_questions")
 }
@@ -327,20 +333,20 @@ model AssessmentAttempt {
   scoreRaw     Float?     @map("score_raw")
   scorePercent Float?     @map("score_percent")
 
-  answers      AssessmentAnswer[]
+  answers AssessmentAnswer[]
 
   @@map("assessment_attempts")
 }
 
 model AssessmentAnswer {
-  id                  String            @id @default(uuid())
-  assessmentAttemptId String            @map("assessment_attempt_id")
-  assessmentAttempt   AssessmentAttempt @relation(fields: [assessmentAttemptId], references: [id])
-  questionId          String            @map("question_id")
+  id                  String             @id @default(uuid())
+  assessmentAttemptId String             @map("assessment_attempt_id")
+  assessmentAttempt   AssessmentAttempt  @relation(fields: [assessmentAttemptId], references: [id])
+  questionId          String             @map("question_id")
   question            AssessmentQuestion @relation(fields: [questionId], references: [id])
-  userAnswer          Json              @map("user_answer")
-  isCorrect           Boolean           @map("is_correct")
-  timeSpentSeconds    Int?              @map("time_spent_seconds")
+  userAnswer          Json               @map("user_answer")
+  isCorrect           Boolean            @map("is_correct")
+  timeSpentSeconds    Int?               @map("time_spent_seconds")
 
   @@map("assessment_answers")
 }
@@ -350,13 +356,13 @@ model AssessmentAnswer {
 // ========================================
 
 model DailyGoal {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  user      User     @relation(fields: [userId], references: [id])
+  id        String        @id @default(uuid())
+  userId    String        @map("user_id")
+  user      User          @relation(fields: [userId], references: [id])
   goalType  DailyGoalType @map("goal_type")
-  goalValue Int      @map("goal_value")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  goalValue Int           @map("goal_value")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
 
   @@map("daily_goals")
 }
@@ -376,25 +382,25 @@ model DailyActivity {
 }
 
 model Streak {
-  userId          String   @id @map("user_id")
-  user            User     @relation(fields: [userId], references: [id])
-  currentStreak   Int      @default(0) @map("current_streak")
-  bestStreak      Int      @default(0) @map("best_streak")
+  userId          String    @id @map("user_id")
+  user            User      @relation(fields: [userId], references: [id])
+  currentStreak   Int       @default(0) @map("current_streak")
+  bestStreak      Int       @default(0) @map("best_streak")
   lastGoalMetDate DateTime? @map("last_goal_met_date") @db.Date
-  freezeTokens    Int      @default(1) @map("freeze_tokens")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  freezeTokens    Int       @default(1) @map("freeze_tokens")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
   @@map("streaks")
 }
 
 model Badge {
-  id          String   @id @default(uuid())
-  code        String   @unique
+  id          String  @id @default(uuid())
+  code        String  @unique
   name        String
   description String
-  imageUrl    String?  @map("image_url")
+  imageUrl    String? @map("image_url")
 
-  userBadges  UserBadge[]
+  userBadges UserBadge[]
 
   @@map("badges")
 }
@@ -429,14 +435,14 @@ model UserVocabulary {
 // ========================================
 
 model UserRoleAssignment {
-  id          String    @id @default(uuid())
-  userId      String    @map("user_id")
-  user        User      @relation("UserRoles", fields: [userId], references: [id], onDelete: Cascade)
-  role        UserRole
-  scopeType   ScopeType? @map("scope_type")
-  scopeId     String?    @map("scope_id")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  createdBy   String?   @map("created_by")
+  id        String     @id @default(uuid())
+  userId    String     @map("user_id")
+  user      User       @relation("UserRoles", fields: [userId], references: [id], onDelete: Cascade)
+  role      UserRole
+  scopeType ScopeType? @map("scope_type")
+  scopeId   String?    @map("scope_id")
+  createdAt DateTime   @default(now()) @map("created_at")
+  createdBy String?    @map("created_by")
 
   @@unique([userId, role, scopeType, scopeId])
   @@index([userId])
@@ -445,19 +451,19 @@ model UserRoleAssignment {
 }
 
 model AuditLog {
-  id             String   @id @default(uuid())
-  actorUserId    String?  @map("actor_user_id")
-  actorRole      UserRole? @map("actor_role")
-  action         String
-  resourceType   String   @map("resource_type")
-  resourceId     String?  @map("resource_id")
-  requestId      String?  @map("request_id")
-  ip             String?
-  userAgent      String?  @map("user_agent")
-  beforeJson     Json?    @map("before_json")
-  afterJson      Json?    @map("after_json")
-  reason         String?
-  createdAt      DateTime @default(now()) @map("created_at")
+  id           String    @id @default(uuid())
+  actorUserId  String?   @map("actor_user_id")
+  actorRole    UserRole? @map("actor_role")
+  action       String
+  resourceType String    @map("resource_type")
+  resourceId   String?   @map("resource_id")
+  requestId    String?   @map("request_id")
+  ip           String?
+  userAgent    String?   @map("user_agent")
+  beforeJson   Json?     @map("before_json")
+  afterJson    Json?     @map("after_json")
+  reason       String?
+  createdAt    DateTime  @default(now()) @map("created_at")
 
   @@index([actorUserId])
   @@index([action])
@@ -465,4 +471,22 @@ model AuditLog {
   @@index([createdAt])
   @@index([requestId])
   @@map("audit_logs")
+}
+
+model FeatureFlag {
+  id          String       @id @default(uuid())
+  key         String       @unique
+  name        String
+  description String?
+  enabled     Boolean      @default(false)
+  environment Environment?
+  scopeType   ScopeType?   @map("scope_type")
+  scopeId     String?      @map("scope_id")
+  createdBy   String?      @map("created_by")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@index([key])
+  @@index([enabled])
+  @@map("feature_flags")
 }

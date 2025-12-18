@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { UserRole } from '@prisma/client';
+import { UserRole, Environment, ScopeType } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
@@ -10,6 +10,257 @@ export class AdminService {
     private jwtService: JwtService,
   ) {}
 
+  // ... existing methods (getUserWithRoles, searchUsers, etc.) ...
+
+  // Feature Flags Methods
+  async listFeatureFlags(filter?: { environment?: Environment; enabled?: boolean }) {
+    const where: any = {};
+    
+    if (filter?.environment) {
+      where.environment = filter.environment;
+    }
+    
+    if (filter?.enabled !== undefined) {
+      where.enabled = filter.enabled;
+    }
+
+    return this.prisma.featureFlag.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getFeatureFlag(id: string) {
+    const flag = await this.prisma.featureFlag.findUnique({
+      where: { id },
+    });
+
+    if (!flag) {
+      throw new NotFoundException(`Feature flag not found`);
+    }
+
+    return flag;
+  }
+
+  async getFeatureFlagByKey(key: string) {
+    return this.prisma.featureFlag.findUnique({
+      where: { key },
+    });
+  }
+
+  async createFeatureFlag(
+    data: {
+      key: string;
+      name: string;
+      description?: string;
+      enabled: boolean;
+      environment?: string;
+      scopeType?: string;
+      scopeId?: string;
+    },
+    createdBy: string,
+    actorRole: UserRole,
+  ) {
+    // Check if key already exists
+    const existing = await this.prisma.featureFlag.findUnique({
+      where: { key: data.key },
+    });
+
+    if (existing) {
+      throw new BadRequestException(`Feature flag with key "${data.key}" already exists`);
+    }
+
+    const flag = await this.prisma.featureFlag.create({
+      data: {
+        ...data,
+        environment: data.environment as Environment,
+        scopeType: data.scopeType as ScopeType,
+        createdBy,
+      },
+    });
+
+    // Audit log
+    await this.createAuditLog({
+      actorUserId: createdBy,
+      actorRole,
+      action: 'FEATURE_FLAG_CREATED',
+      resourceType: 'FEATURE_FLAG',
+      resourceId: flag.id,
+      afterJson: flag,
+    });
+
+    return flag;
+  }
+
+  async updateFeatureFlag(
+    id: string,
+    data: {
+      name?: string;
+      description?: string;
+      enabled?: boolean;
+      environment?: string;
+      scopeType?: string;
+      scopeId?: string;
+    },
+    actorUserId: string,
+    actorRole: UserRole,
+  ) {
+    const existing = await this.getFeatureFlag(id);
+
+    const updated = await this.prisma.featureFlag.update({
+      where: { id },
+      data: {
+        ...data,
+        environment: data.environment as Environment,
+        scopeType: data.scopeType as ScopeType,
+      },
+    });
+
+    // Audit log
+    await this.createAuditLog({
+      actorUserId,
+      actorRole,
+      action: 'FEATURE_FLAG_UPDATED',
+      resourceType: 'FEATURE_FLAG',
+      resourceId: id,
+      beforeJson: existing,
+      afterJson: updated,
+    });
+
+    return updated;
+  }
+
+  async toggleFeatureFlag(
+    id: string,
+    enabled: boolean,
+    reason: string | undefined,
+    actorUserId: string,
+    actorRole: UserRole,
+  ) {
+    const existing = await this.getFeatureFlag(id);
+
+    const updated = await this.prisma.featureFlag.update({
+      where: { id },
+      data: { enabled },
+    });
+
+    // Audit log
+    await this.createAuditLog({
+      actorUserId,
+      actorRole,
+      action: 'FEATURE_FLAG_TOGGLED',
+      resourceType: 'FEATURE_FLAG',
+      resourceId: id,
+      beforeJson: { enabled: existing.enabled },
+      afterJson: { enabled },
+      reason,
+    });
+
+    return updated;
+  }
+
+  async deleteFeatureFlag(
+    id: string,
+    reason: string,
+    actorUserId: string,
+    actorRole: UserRole,
+  ) {
+    const existing = await this.getFeatureFlag(id);
+
+    await this.prisma.featureFlag.delete({
+      where: { id },
+    });
+
+    // Audit log
+    await this.createAuditLog({
+      actorUserId,
+      actorRole,
+      action: 'FEATURE_FLAG_DELETED',
+      resourceType: 'FEATURE_FLAG',
+      resourceId: id,
+      beforeJson: existing,
+      reason,
+    });
+
+    return { deleted: true };
+  }
+
+  async evaluateFeatureFlag(
+    key: string,
+    userId?: string,
+    institutionId?: string,
+  ): Promise<{ enabled: boolean; reason?: string }> {
+    // Priority: USER > INSTITUTION > GLOBAL
+    
+    // Try user-scoped first
+    if (userId) {
+      const userFlag = await this.prisma.featureFlag.findFirst({
+        where: {
+          key,
+          scopeType: 'USER',
+          scopeId: userId,
+        },
+      });
+      
+      if (userFlag) {
+        return {
+          enabled: userFlag.enabled,
+          reason: `User-scoped: ${userFlag.name}`,
+        };
+      }
+    }
+
+    // Try institution-scoped
+    if (institutionId) {
+      const instFlag = await this.prisma.featureFlag.findFirst({
+        where: {
+          key,
+          scopeType: 'INSTITUTION',
+          scopeId: institutionId,
+        },
+      });
+      
+      if (instFlag) {
+        return {
+          enabled: instFlag.enabled,
+          reason: `Institution-scoped: ${instFlag.name}`,
+        };
+      }
+    }
+
+    // Fall back to global (or environment-specific global)
+    const currentEnv = (process.env.NODE_ENV?.toUpperCase() || 'DEV') as Environment;
+    
+    const globalFlag = await this.prisma.featureFlag.findFirst({
+      where: {
+        key,
+        scopeType: { equals: null },
+        OR: [
+          { environment: null }, // All environments
+          { environment: currentEnv }, // Current environment
+        ],
+      },
+      orderBy: {
+        environment: 'desc', // Prefer environment-specific over null
+      },
+    });
+
+    if (globalFlag) {
+      return {
+        enabled: globalFlag.enabled,
+        reason: `Global: ${globalFlag.name}`,
+      };
+    }
+
+    // Flag not found - default to disabled
+    return {
+      enabled: false,
+      reason: 'Flag not found - defaulting to disabled',
+    };
+  }
+
+  // ... existing methods continue below ...
+  
   async getUserWithRoles(userId: string) {
     return this.prisma.user.findUnique({
       where: { id: userId },
@@ -130,7 +381,6 @@ export class AdminService {
       data: { status },
     });
 
-    // Create audit log
     await this.createAuditLog({
       actorUserId,
       actorRole,
@@ -156,12 +406,10 @@ export class AdminService {
       where: { userId },
     });
 
-    // Delete all existing role assignments
     await this.prisma.userRoleAssignment.deleteMany({
       where: { userId },
     });
 
-    // Create new role assignments
     const newRoles = await this.prisma.userRoleAssignment.createMany({
       data: roles.map((r) => ({
         userId,
@@ -172,7 +420,6 @@ export class AdminService {
       })),
     });
 
-    // Audit log
     await this.createAuditLog({
       actorUserId,
       actorRole,
@@ -220,7 +467,6 @@ export class AdminService {
       expiresIn: `${durationMinutes}m`,
     });
 
-    // Audit log
     await this.createAuditLog({
       actorUserId,
       actorRole,
