@@ -268,3 +268,26 @@ async def get_paper_metadata(arti_id: str):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# Script 5/5: Asset generation worker
+if __name__ == "__main__":
+    import threading
+    import sys
+    
+    # Check if consumer should run
+    run_consumer = '--consumer' in sys.argv or os.getenv('RUN_CONSUMER', 'false').lower() == 'true'
+    
+    if run_consumer:
+        from consumers.rabbitmq import start_consumer
+        
+        # Start RabbitMQ consumer in background thread
+        consumer_thread = threading.Thread(target=start_consumer, daemon=True)
+        consumer_thread.start()
+        print("[MAIN] RabbitMQ consumer started in background")
+    
+    # Start FastAPI
+    import uvicorn
+    port = int(os.getenv('PORT', '8001'))
+    uvicorn.run(app, host="0.0.0.0", port=port)
+

@@ -3,6 +3,13 @@ uvicorn
 pydantic
 langchain
 langchain-openai
+langchain-anthropic
+langchain-google-genai
 python-dotenv
 httpx
 defusedxml
+# Script 5/5 dependencies
+pika
+sqlalchemy
+psycopg2-binary
+tiktoken
