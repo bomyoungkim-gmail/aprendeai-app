@@ -2,10 +2,12 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { AdminController } from './admin.controller';
 import { DashboardController } from './dashboard.controller';
+import { ConfigController } from './config.controller';
 import { AdminService } from './admin.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { EncryptionService } from './services/encryption.service';
 import { SecretService } from './services/secret.service';
+import { ConfigService } from './services/config.service';
 
 @Module({
   imports: [
@@ -15,8 +17,8 @@ import { SecretService } from './services/secret.service';
       signOptions: { expiresIn: '60m' },
     }),
   ],
-  controllers: [AdminController, DashboardController],
-  providers: [AdminService, EncryptionService, SecretService],
-  exports: [AdminService, EncryptionService, SecretService],
+  controllers: [AdminController, DashboardController, ConfigController],
+  providers: [AdminService, EncryptionService, SecretService, ConfigService],
+  exports: [AdminService, EncryptionService, SecretService, ConfigService],
 })
 export class AdminModule {}

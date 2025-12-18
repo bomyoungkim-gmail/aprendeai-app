@@ -581,3 +581,31 @@ enum JobStatus {
   COMPLETED
   FAILED
 }
+
+model AppConfig {
+  id          String      @id @default(uuid())
+  key         String      @unique // e.g., "openai.api_key", "app.max_upload_size"
+  value       String      @db.Text // JSON or simple value
+  type        ConfigType  // STRING, NUMBER, BOOLEAN, JSON, SECRET_REF
+  category    String      // "provider", "app", "feature"
+  environment Environment? // DEV, STAGING, PROD, null = all
+  description String?
+  metadata    Json?       // Validation rules, UI hints
+  createdBy   String?     @map("created_by")
+  updatedBy   String?     @map("updated_by")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  @@index([key])
+  @@index([category])
+  @@index([environment])
+  @@map("app_configs")
+}
+
+enum ConfigType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+  SECRET_REF
+}
