@@ -23,7 +23,10 @@ import {
 @Controller('admin')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class AdminController {
-  constructor(private adminService: AdminService) {}
+  constructor(
+    private adminService: AdminService,
+    private secretService: any, // SecretService
+  ) {}
 
   // ========================================
   // Auth & Profile
@@ -223,6 +226,82 @@ export class AdminController {
       dto.reason,
       req.user.userId,
       req.user.role,
+    );
+  }
+
+  // ========================================
+  // Secrets Management (Encrypted)
+  // ========================================
+
+  @Get('secrets')
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List secrets (metadata only, ADMIN only)' })
+  async listSecrets(@Query() filter: any) {
+    return this.secretService.listSecrets(filter);
+  }
+
+  @Get('secrets/:id')
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get secret with decrypted value (ADMIN only)' })
+  async getSecret(@Param('id') id: string, @Request() req) {
+    // Audit log for viewing secret
+    const secret = await this.secretService.getSecret(id);
+    await this.adminService.createAuditLog({
+      actorUserId: req.user.userId,
+      actorRole: req.user.role,
+      action: 'SECRET_VIEWED',
+      resourceType: 'SECRET',
+      resourceId: id,
+      afterJson: { key: secret.key },
+    });
+    return secret;
+  }
+
+  @Post('secrets')
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create encrypted secret (ADMIN only)' })
+  async createSecret(@Body() dto: any, @Request() req) {
+    const result = await this.secretService.createSecret(dto, req.user.userId);
+    await this.adminService.createAuditLog({
+      actorUserId: req.user.userId,
+      actorRole: req.user.role,
+      action: 'SECRET_CREATED',
+      resourceType: 'SECRET',
+      resourceId: result.id,
+      afterJson: { key: dto.key, provider: dto.provider },
+    });
+    return result;
+  }
+
+  @Put('secrets/:id')
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Rotate/update secret (ADMIN only)' })
+  async updateSecret(@Param('id') id: string, @Body() dto: any, @Request() req) {
+    return this.secretService.updateSecret(
+      id,
+      dto.value,
+      dto.reason,
+      req.user.userId,
+      req.user.role,
+      (data) => this.adminService.createAuditLog(data),
+    );
+  }
+
+  @Delete('secrets/:id')
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete secret (ADMIN only)' })
+  async deleteSecret(@Param('id') id: string, @Body() dto: any, @Request() req) {
+    return this.secretService.deleteSecret(
+      id,
+      dto.reason,
+      req.user.userId,
+      req.user.role,
+      (data) => this.adminService.createAuditLog(data),
     );
   }
 

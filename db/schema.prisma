@@ -490,3 +490,24 @@ model FeatureFlag {
   @@index([enabled])
   @@map("feature_flags")
 }
+
+model IntegrationSecret {
+  id             String       @id @default(uuid())
+  key            String       @unique
+  name           String
+  provider       String?
+  encryptedValue String       @map("encrypted_value") @db.Text
+  encryptedDek   String       @map("encrypted_dek")
+  iv             String
+  authTag        String       @map("auth_tag")
+  keyId          String       @map("key_id") @default("v1")
+  environment    Environment?
+  lastRotatedAt  DateTime?    @map("last_rotated_at")
+  createdBy      String?      @map("created_by")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@index([key])
+  @@index([provider])
+  @@map("integration_secrets")
+}
