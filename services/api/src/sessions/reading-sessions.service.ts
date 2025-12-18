@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException, ForbiddenException,
 import { PrismaService } from '../prisma/prisma.service';
 import { ProfileService } from '../profiles/profile.service';
 import { GamificationService } from '../gamification/gamification.service';
+import { VocabService } from '../vocab/vocab.service';
 import { PrePhaseDto } from './dto/reading-sessions.dto';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class ReadingSessionsService {
     private prisma: PrismaService,
     private profileService: ProfileService,
     private gamificationService: GamificationService,
+    private vocabService: VocabService,
   ) {}
 
   async startSession(userId: string, contentId: string) {
@@ -158,6 +160,17 @@ export class ReadingSessionsService {
     if (toPhase === 'FINISHED') {
       await this.computeOutcome(sessionId);
       await this.integrateWithGamification(updated);
+      
+      // Auto-create vocabulary items from target words (Script 4/5 integration)
+      if (updated.targetWordsJson && Array.isArray(updated.targetWordsJson) && updated.targetWordsJson.length > 0) {
+        try {
+          this.logger.log(`Auto-creating vocab from ${updated.targetWordsJson.length} target words for session ${sessionId}`);
+          await this.vocabService.createFromTargetWords(sessionId);
+        } catch (error) {
+          // Non-critical: log error but don't fail session completion
+          this.logger.error(`Failed to auto-create vocab for session ${sessionId}:`, error);
+        }
+      }
     }
 
     return updated;

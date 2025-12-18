@@ -18,6 +18,8 @@ import { MetricsInterceptor } from './common/interceptors/metrics.interceptor';
 import { SrsModule } from './srs/srs.module';
 import { VocabModule } from './vocab/vocab.module';
 import { ReviewModule } from './review/review.module';
+// V5 Assets Module
+import { AssetsModule } from './assets/assets.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { ReviewModule } from './review/review.module';
     SrsModule,
     VocabModule,
     ReviewModule,
+    // V5 Assets Module
+    AssetsModule,
   ],
   controllers: [AppController],
   providers: [

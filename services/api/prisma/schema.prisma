@@ -54,6 +54,7 @@ model User {
   libraryItems        UserLibraryItem[]
   roleAssignments     UserRoleAssignment[] @relation("UserRoles")
   vocabularyEntries   UserVocabulary[]
+  layerEligibility    LayerEligibility?
   institution         Institution?         @relation(fields: [institutionId], references: [id])
   LearnerProfile      LearnerProfile[]
 
@@ -151,9 +152,10 @@ model Content {
   cornellNotes     CornellNotes[]
   highlights       Highlight[]
   chunks           ContentChunk[]
+  learningAssets   LearningAsset[]
   lessons          Lesson[]
-  readingSessions  ReadingSession[]
-  libraryItems     UserLibraryItem[]
+  UserLibraryItem  UserLibraryItem[]
+  ReadingSession   ReadingSession[]
   UserVocabulary   UserVocabulary[]
 
   @@map("contents")
@@ -959,4 +961,52 @@ model VocabAttempt {
   @@index([vocabId])
   @@index([createdAt])
   @@map("vocab_attempts")
+}
+
+// Script 5/5: Learning Assets (AI-generated educational content)
+model LearningAsset {
+  id        String          @id @default(uuid())
+  contentId String          @map("content_id")
+  layer     AssetLayer
+  modality  SessionModality
+
+  bodyRef         String? @map("body_ref")
+  glossaryJson    Json?   @map("glossary_json")
+  cuesJson        Json?   @map("cues_json")
+  checkpointsJson Json?   @map("checkpoints_json")
+  quizPostJson    Json?   @map("quiz_post_json")
+
+  difficultyEstimate Int?   @map("difficulty_estimate")
+  lengthEstimate     Int?   @map("length_estimate")
+  promptVersion      String @map("prompt_version")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@unique([contentId, layer, modality, promptVersion])
+  @@index([contentId, layer])
+  @@index([promptVersion])
+  @@map("learning_assets")
+}
+
+// Script 5/5: Layer Eligibility (adaptive gating)
+model LayerEligibility {
+  userId     String   @id @map("user_id")
+  eligibleL2 Boolean  @default(false) @map("eligible_l2")
+  eligibleL3 Boolean  @default(false) @map("eligible_l3")
+  reasonJson Json?    @map("reason_json")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("layer_eligibility")
+}
+
+// Script 5/5: Asset complexity layers
+enum AssetLayer {
+  L1 // Simplified
+  L2 // Standard  
+  L3 // Advanced
 }
