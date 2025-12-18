@@ -44,6 +44,10 @@ enum ContentType {
   NEWS
   ARXIV
   SCHOOL_MATERIAL
+  PDF
+  IMAGE
+  DOCX
+  ARTICLE
 }
 
 enum Language {
@@ -115,14 +119,17 @@ model User {
 
   // Relations
   enrollments        ClassStudent[]
-  createdContents    Content[]
+  createdContents    Content[]         @relation("ContentCreator")
+  ownedContents      Content[]         @relation("ContentOwner")
   libraryItems       UserLibraryItem[]
   readingSessions    ReadingSession[]
   assessmentAttempts AssessmentAttempt[]
   dailyGoals         DailyGoal[]
   dailyActivities    DailyActivity[]
   streak             Streak?
-  cornellNotes       CornellNote[]
+  cornellNotes       CornellNote[]     // Legacy
+  cornellNotesEntries CornellNotes[]   @relation("UserCornellNotes")
+  highlights         Highlight[]       @relation("UserHighlights")
   vocabularyEntries  UserVocabulary[]
   assignedBadges     UserBadge[]
 
@@ -208,14 +215,30 @@ model Content {
   type             ContentType
   sourceId         String?      @map("source_id")
   title            String
+  sourceUrl        String?      @map("source_url")
   originalLanguage Language     @map("original_language")
   rawText          String       @map("raw_text") @db.Text
   metadata         Json?
+  
+  // Cornell Reader fields
+  ownerUserId      String?      @map("owner_user_id")
+  ownerUser        User?        @relation("ContentOwner", fields: [ownerUserId], references: [id])
+  scopeType        SubscriptionScope?
+  scopeId          String?      @map("scope_id")
+  fileId           String?      @map("file_id")
+  file             File?        @relation(fields: [fileId], references: [id])
+  languageGuess    String?      @map("language_guess")
+  
   createdBy        String?      @map("created_by")
-  creator          User?        @relation(fields: [createdBy], references: [id])
+  creator          User?        @relation("ContentCreator", fields: [createdBy], references: [id])
   createdAt        DateTime     @default(now()) @map("created_at")
   updatedAt        DateTime     @updatedAt @map("updated_at")
-
+  
+  // Cornell Reader relations
+  cornellNotes     CornellNotes[]
+  highlights       Highlight[]
+  extractions      ContentExtraction[]
+  
   versions        ContentVersion[]
   libraryItems    UserLibraryItem[]
   readingSessions ReadingSession[]
@@ -286,7 +309,7 @@ model CornellNote {
   createdAt        DateTime       @default(now()) @map("created_at")
   updatedAt        DateTime       @updatedAt @map("updated_at")
 
-  @@map("cornell_notes")
+  @@map("legacy_cornell_notes")
 }
 
 model Assessment {
@@ -724,4 +747,82 @@ enum SubscriptionStatus {
 enum SubscriptionSource {
   INTERNAL
   PAYMENT_PROVIDER
+}
+
+// ==========================================
+// Cornell Reader Models
+// ==========================================
+model File {
+  id               String    @id @default(uuid())
+  storageProvider  String
+  storageKey       String
+  mimeType         String
+  sizeBytes        BigInt
+  checksumSha256   String?
+  originalFilename String?
+  createdAt        DateTime  @default(now())
+  contents         Content[]
+  @@index([storageProvider, storageKey])
+  @@map("files")
+}
+model CornellNotes {
+  id           String   @id @default(uuid())
+  contentId    String
+  content      Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User     @relation("UserCornellNotes", fields: [userId], references: [id])
+  cuesJson     Json     @default("[]")
+  notesJson    Json     @default("[]")
+  summaryText  String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+  @@unique([contentId, userId])
+  @@index([contentId])
+  @@index([userId])
+  @@map("cornell_notes")
+}
+enum HighlightKind {
+  TEXT
+  AREA
+}
+enum TargetType {
+  PDF
+  IMAGE
+  DOCX
+}
+model Highlight {
+  id           String        @id @default(uuid())
+  contentId    String
+  content      Content       @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User          @relation("UserHighlights", fields: [userId], references: [id])
+  kind         HighlightKind
+  targetType   TargetType
+  pageNumber   Int?
+  anchorJson   Json
+  colorKey     String        @default("yellow")
+  commentText  String?
+  tagsJson     Json          @default("[]")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @default(now())
+  @@index([contentId])
+  @@index([userId])
+  @@map("highlights")
+}
+enum ExtractionStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+}
+model ContentExtraction {
+  id              String           @id @default(uuid())
+  contentId       String
+  content         Content          @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  status          ExtractionStatus @default(PENDING)
+  extractedTextRef String?
+  metadataJson    Json?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @default(now())
+  @@map("content_extractions")
 }

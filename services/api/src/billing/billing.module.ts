@@ -5,6 +5,7 @@ import { SubscriptionService } from './subscription.service';
 import { EntitlementsService } from './entitlements.service';
 import { EnforcementService } from './enforcement.service';
 import { UsageTrackingService } from './usage-tracking.service';
+import { PlanLimitsService } from './plan-limits.service';
 import { BillingController } from './billing.controller';
 import { UserBillingController } from './user-billing.controller';
 
@@ -18,6 +19,7 @@ import { UserBillingController } from './user-billing.controller';
     EntitlementsService,
     EnforcementService,
     UsageTrackingService,
+    PlanLimitsService,
   ],
   exports: [
     BillingService,
@@ -25,6 +27,7 @@ import { UserBillingController } from './user-billing.controller';
     EntitlementsService,
     EnforcementService,
     UsageTrackingService,
+    PlanLimitsService,
   ],
 })
 export class BillingModule {}

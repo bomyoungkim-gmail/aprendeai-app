@@ -153,6 +153,30 @@ services:
     networks:
       - socrates-network
 
+  extraction_worker:
+    build:
+      context: .
+      dockerfile: infra/docker/extraction_worker.Dockerfile
+    image: socrates/extraction-worker
+    container_name: socrates-extraction-worker
+    volumes:
+      - ./services/workers/extraction_worker:/app
+      - ./services/api/uploads:/app/uploads
+      - /app/node_modules
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-aprendeai}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+      OCR_ENABLED: false
+      OCR_PROVIDER: NONE
+      STORAGE_LOCAL_PATH: /app/uploads
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - socrates-network
+
   # Frontend
   frontend:
     build:

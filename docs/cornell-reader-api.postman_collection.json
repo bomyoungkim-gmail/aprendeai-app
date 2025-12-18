@@ -1,0 +1,366 @@
+{
+  "info": {
+    "name": "Cornell Reader V1 API",
+    "description": "Collection completa para testar todos os endpoints do Cornell Reader backend.\n\n**Setup:**\n1. Importe esta collection no Postman\n2. Configure environment variables (ver README abaixo)\n3. Execute 'Login' primeiro para obter token\n4. O token será salvo automaticamente em {{token}}\n5. Execute os demais requests na ordem\n\n**Environment Variables:**\n- baseUrl: http://localhost:3000\n- email: maria@example.com\n- password: demo123\n- token: (será preenchido automaticamente após login)\n- contentId: (copie de 'List My Contents' response)\n- highlightId: (copie de 'Create Highlight' response)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "cornell-reader-v1"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save token to environment variable",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('token', response.access_token);",
+                  "    pm.environment.set('userId', response.user.id);",
+                  "    console.log('✅ Token saved:', response.access_token.substring(0, 20) + '...');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login com credenciais demo. Salva token automaticamente."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Contents",
+      "item": [
+        {
+          "name": "List My Contents",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save first content ID",
+                  "if (pm.response.code === 200) {",
+                  "    const contents = pm.response.json();",
+                  "    if (contents.length > 0) {",
+                  "        pm.environment.set('contentId', contents[0].id);",
+                  "        pm.environment.set('fileId', contents[0].file?.id);",
+                  "        console.log('✅ Content ID saved:', contents[0].id);",
+                  "        console.log('📄 Title:', contents[0].title);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contents/my-contents",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contents", "my-contents"]
+            },
+            "description": "Lista todos os conteúdos do usuário logado. Salva primeiro ID automaticamente."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Content by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contents/{{contentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contents", "{{contentId}}"]
+            },
+            "description": "Obtém detalhes completos de um conteúdo específico."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Cornell Notes",
+      "item": [
+        {
+          "name": "Get or Create Cornell Notes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contents/{{contentId}}/cornell",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contents", "{{contentId}}", "cornell"]
+            },
+            "description": "Busca Cornell notes existentes ou cria entry vazio se não existir."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Cornell Notes",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cuesJson\": [\n    {\n      \"id\": \"cue-1\",\n      \"prompt\": \"What is the main concept?\",\n      \"linked_highlight_ids\": []\n    },\n    {\n      \"id\": \"cue-2\",\n      \"prompt\": \"Why is this important?\",\n      \"linked_highlight_ids\": []\n    }\n  ],\n  \"notesJson\": [\n    {\n      \"id\": \"note-1\",\n      \"body\": \"This is the main idea of the content.\",\n      \"linked_highlight_ids\": []\n    },\n    {\n      \"id\": \"note-2\",\n      \"body\": \"It's important because it connects to...\",\n      \"linked_highlight_ids\": []\n    }\n  ],\n  \"summaryText\": \"Overall summary of the content goes here.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/contents/{{contentId}}/cornell",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contents", "{{contentId}}", "cornell"]
+            },
+            "description": "Atualiza cues, notes e summary de um conteúdo."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Highlights",
+      "item": [
+        {
+          "name": "List Highlights",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contents/{{contentId}}/highlights",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contents", "{{contentId}}", "highlights"]
+            },
+            "description": "Lista todos os highlights de um conteúdo."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Highlight - PDF Text",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save highlight ID",
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const highlight = pm.response.json();",
+                  "    pm.environment.set('highlightId', highlight.id);",
+                  "    console.log('✅ Highlight ID saved:', highlight.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"kind\": \"TEXT\",\n  \"targetType\": \"PDF\",\n  \"pageNumber\": 1,\n  \"anchorJson\": {\n    \"type\": \"PDF_TEXT\",\n    \"position\": {\n      \"boundingRect\": {\n        \"x1\": 100,\n        \"y1\": 200,\n        \"x2\": 400,\n        \"y2\": 220,\n        \"width\": 300,\n        \"height\": 20\n      },\n      \"rects\": [\n        {\n          \"x1\": 100,\n          \"y1\": 200,\n          \"x2\": 400,\n          \"y2\": 220,\n          \"width\": 300,\n          \"height\": 20,\n          \"pageNumber\": 1\n        }\n      ],\n      \"pageNumber\": 1\n    },\n    \"quote\": \"This is the highlighted text from the PDF\"\n  },\n  \"colorKey\": \"yellow\",\n  \"commentText\": \"Important concept to remember!\",\n  \"tagsJson\": [\"important\", \"study\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/contents/{{contentId}}/highlights",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contents", "{{contentId}}", "highlights"]
+            },
+            "description": "Cria highlight de texto em PDF. Salva ID automaticamente."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Highlight - Image Area",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"kind\": \"AREA\",\n  \"targetType\": \"IMAGE\",\n  \"anchorJson\": {\n    \"type\": \"IMAGE_AREA\",\n    \"rect\": {\n      \"x\": 120,\n      \"y\": 80,\n      \"w\": 200,\n      \"h\": 150\n    },\n    \"zoom\": 1,\n    \"viewport\": {\n      \"width\": 800,\n      \"height\": 600\n    }\n  },\n  \"colorKey\": \"red\",\n  \"commentText\": \"Important region in the image\",\n  \"tagsJson\": [\"diagram\", \"key-concept\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/contents/{{contentId}}/highlights",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contents", "{{contentId}}", "highlights"]
+            },
+            "description": "Cria highlight de área em imagem."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Highlight",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"colorKey\": \"blue\",\n  \"commentText\": \"Updated comment - even more important!\",\n  \"tagsJson\": [\"important\", \"study\", \"exam\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/highlights/{{highlightId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "highlights", "{{highlightId}}"]
+            },
+            "description": "Atualiza cor, comentário ou tags de um highlight."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Highlight",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/highlights/{{highlightId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "highlights", "{{highlightId}}"]
+            },
+            "description": "Remove um highlight permanentemente."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Files",
+      "item": [
+        {
+          "name": "Get File View URL",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/files/{{fileId}}/view-url",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "files", "{{fileId}}", "view-url"]
+            },
+            "description": "Gera URL de visualização para arquivo (signed URL se S3)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Error Cases",
+      "item": [
+        {
+          "name": "401 - No Auth Token",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contents/my-contents",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contents", "my-contents"]
+            },
+            "description": "Teste de erro: requisição sem token deve retornar 401."
+          },
+          "response": []
+        },
+        {
+          "name": "404 - Content Not Found",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/contents/non-existent-uuid/cornell",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contents", "non-existent-uuid", "cornell"]
+            },
+            "description": "Teste de erro: conteúdo inexistente deve retornar 404."
+          },
+          "response": []
+        },
+        {
+          "name": "400 - Invalid DTO",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"kind\": \"INVALID_KIND\",\n  \"targetType\": \"PDF\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/contents/{{contentId}}/highlights",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contents", "{{contentId}}", "highlights"]
+            },
+            "description": "Teste de erro: DTO inválido deve retornar 400 com mensagens."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}

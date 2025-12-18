@@ -1,0 +1,33 @@
+{
+  "name": "Cornell Reader - Local",
+  "values": [
+    {
+      "name": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "name": "email",
+      "value": "maria@example.com"
+    },
+    {
+      "name": "password",
+      "value": "demo123"
+    },
+    {
+      "name": "token",
+      "value": ""
+    },
+    {
+      "name": "contentId",
+      "value": ""
+    },
+    {
+      "name": "fileId",
+      "value": ""
+    },
+    {
+      "name": "highlightId",
+      "value": ""
+    }
+  ]
+}
