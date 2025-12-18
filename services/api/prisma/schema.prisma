@@ -58,6 +58,11 @@ model User {
   institution         Institution?         @relation(fields: [institutionId], references: [id])
   LearnerProfile      LearnerProfile[]
 
+  // Study Groups relations
+  ownedGroups         StudyGroup[]         @relation("GroupOwner")
+  groupMemberships    StudyGroupMember[]
+  groupSessionMembers GroupSessionMember[]
+
   @@map("users")
 }
 
@@ -157,6 +162,10 @@ model Content {
   UserLibraryItem  UserLibraryItem[]
   ReadingSession   ReadingSession[]
   UserVocabulary   UserVocabulary[]
+
+  // Study Groups relations
+  groupContents GroupContent[]
+  groupSessions GroupSession[]
 
   @@map("contents")
 }
@@ -1009,4 +1018,181 @@ enum AssetLayer {
   L1 // Simplified
   L2 // Standard  
   L3 // Advanced
+}
+
+// ===== Study Groups Models (Script 1/3) =====
+
+model StudyGroup {
+  id          String             @id @default(uuid())
+  ownerUserId String             @map("owner_user_id")
+  scopeType   SubscriptionScope? @map("scope_type")
+  scopeId     String?            @map("scope_id")
+  name        String
+  createdAt   DateTime           @default(now()) @map("created_at")
+
+  owner    User               @relation("GroupOwner", fields: [ownerUserId], references: [id])
+  members  StudyGroupMember[]
+  contents GroupContent[]
+  sessions GroupSession[]
+
+  @@index([ownerUserId])
+  @@index([scopeType, scopeId])
+  @@map("study_groups")
+}
+
+model StudyGroupMember {
+  groupId  String            @map("group_id")
+  userId   String            @map("user_id")
+  role     GroupRole
+  status   GroupMemberStatus @default(ACTIVE)
+  joinedAt DateTime          @default(now()) @map("joined_at")
+
+  group StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User       @relation(fields: [userId], references: [id])
+
+  @@id([groupId, userId])
+  @@index([userId])
+  @@map("study_group_members")
+}
+
+model GroupContent {
+  groupId       String   @map("group_id")
+  contentId     String   @map("content_id")
+  addedByUserId String   @map("added_by_user_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  group   StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  content Content    @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, contentId])
+  @@map("group_contents")
+}
+
+model GroupSession {
+  id        String             @id @default(uuid())
+  groupId   String             @map("group_id")
+  contentId String             @map("content_id")
+  mode      GroupSessionMode   @default(PI_SPRINT)
+  layer     String             @default("L1")
+  status    GroupSessionStatus @default(CREATED)
+  startsAt  DateTime?          @map("starts_at")
+  endsAt    DateTime?          @map("ends_at")
+  createdAt DateTime           @default(now()) @map("created_at")
+
+  group   StudyGroup           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  content Content              @relation(fields: [contentId], references: [id])
+  members GroupSessionMember[]
+  rounds  GroupRound[]
+  events  GroupEvent[]
+
+  @@index([groupId])
+  @@index([status])
+  @@map("group_sessions")
+}
+
+model GroupSessionMember {
+  sessionId        String      @map("session_id")
+  userId           String      @map("user_id")
+  assignedRole     SessionRole @map("assigned_role")
+  attendanceStatus String      @default("JOINED") @map("attendance_status")
+
+  session GroupSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id])
+
+  @@id([sessionId, userId])
+  @@map("group_session_members")
+}
+
+model GroupRound {
+  id         String      @id @default(uuid())
+  sessionId  String      @map("session_id")
+  roundIndex Int         @map("round_index")
+  roundType  String      @default("PI") @map("round_type")
+  promptJson Json        @map("prompt_json")
+  timingJson Json        @map("timing_json")
+  status     RoundStatus @default(CREATED)
+  createdAt  DateTime    @default(now()) @map("created_at")
+
+  session    GroupSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  events     GroupEvent[]
+  sharedCard SharedCard?
+
+  @@unique([sessionId, roundIndex])
+  @@index([sessionId])
+  @@map("group_rounds")
+}
+
+model GroupEvent {
+  id          String   @id @default(uuid())
+  sessionId   String   @map("session_id")
+  roundId     String?  @map("round_id")
+  userId      String?  @map("user_id")
+  eventType   String   @map("event_type")
+  payloadJson Json     @map("payload_json")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  session GroupSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  round   GroupRound?  @relation(fields: [roundId], references: [id], onDelete: SetNull)
+
+  @@index([sessionId])
+  @@index([roundId])
+  @@index([eventType])
+  @@map("group_events")
+}
+
+model SharedCard {
+  id              String   @id @default(uuid())
+  sessionId       String   @map("session_id")
+  roundId         String   @unique @map("round_id")
+  createdByUserId String   @map("created_by_user_id")
+  cardJson        Json     @map("card_json")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  round GroupRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@map("shared_cards")
+}
+
+// ===== Study Groups Enums =====
+
+enum GroupRole {
+  OWNER
+  MOD
+  MEMBER
+}
+
+enum GroupMemberStatus {
+  ACTIVE
+  INVITED
+  REMOVED
+}
+
+enum GroupSessionMode {
+  PI_SPRINT
+  JIGSAW_MICRO
+  TBL_LITE
+}
+
+enum GroupSessionStatus {
+  CREATED
+  RUNNING
+  POST
+  FINISHED
+}
+
+enum SessionRole {
+  FACILITATOR
+  TIMEKEEPER
+  CLARIFIER
+  CONNECTOR
+  SCRIBE
+}
+
+enum RoundStatus {
+  CREATED
+  VOTING
+  DISCUSSING
+  REVOTING
+  EXPLAINING
+  DONE
 }
