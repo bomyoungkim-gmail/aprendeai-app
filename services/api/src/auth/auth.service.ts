@@ -1,6 +1,8 @@
 import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
+import { SubscriptionService } from '../billing/subscription.service';
+import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
 import { UserRole } from '@prisma/client';
@@ -10,6 +12,8 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private subscriptionService: SubscriptionService,
+    private prisma: PrismaService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
@@ -23,6 +27,14 @@ export class AuthService {
 
   async login(user: any) {
     const payload = { email: user.email, sub: user.id, role: user.role };
+    
+    // Validate user has subscription (self-heal if missing)
+    const hasSubscription = await this.subscriptionService.hasActiveSubscription('USER', user.id);
+    if (!hasSubscription) {
+      // Auto-heal: create FREE subscription
+      await this.subscriptionService.createFreeSubscription(user.id);
+    }
+    
     return {
       access_token: this.jwtService.sign(payload),
       user: user,
@@ -35,15 +47,24 @@ export class AuthService {
       throw new ConflictException('User already exists');
     }
 
-    const newUser = await this.usersService.createUser({
-      name: registerDto.name,
-      email: registerDto.email,
-      passwordHash: registerDto.password, // Will be hashed in createUser
-      role: registerDto.role || UserRole.COMMON_USER,
-      schoolingLevel: 'ADULT', // Default for now
-    });
+    // Create user + FREE subscription in transaction
+    return this.prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          name: registerDto.name,
+          email: registerDto.email,
+          passwordHash: await bcrypt.hash(registerDto.password, 10),
+          role: registerDto.role || UserRole.COMMON_USER,
+          schoolingLevel: 'ADULT',
+          status: 'ACTIVE',
+        },
+      });
 
-    const { passwordHash, ...result } = newUser;
-    return result;
+      // Create FREE subscription automatically
+      await this.subscriptionService.createFreeSubscription(newUser.id, tx);
+
+      const { passwordHash, ...result } = newUser;
+      return result;
+    });
   }
 }
