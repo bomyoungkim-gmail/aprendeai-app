@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { CornellLayout } from '@/components/cornell';
 import { PDFViewer, ImageViewer, DocxViewer } from '@/components/cornell/viewers';
+import { ReviewMode } from '@/components/cornell/review/ReviewMode';
 import { Toast, useToast } from '@/components/ui/Toast';
 import {
   useContent,
@@ -13,7 +14,7 @@ import {
   useCornellAutosave,
   useSaveStatusWithOnline,
 } from '@/hooks';
-import type { ViewMode, CueItem, NoteItem } from '@/lib/types/cornell';
+import type { ViewMode, CueItem, NoteItem, UpdateCornellDto } from '@/lib/types/cornell';
 
 interface ReaderPageProps {
   params: {
@@ -37,7 +38,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
   // Autosave
   const { save, status: baseStatus, lastSaved } = useCornellAutosave({
     onSave: async (data) => {
-      await updateMutation.mutateAsync(data);
+      await updateMutation.mutateAsync(data as UpdateCornellDto);
     },
     delay: 1000,
     onSuccess: () => {
@@ -88,7 +89,11 @@ export default function ReaderPage({ params }: ReaderPageProps) {
   );
 
   const handleModeToggle = useCallback(() => {
-    setMode((prev) => (prev === 'original' ? 'study' : 'original'));
+    setMode((prev) => {
+      if (prev === 'original') return 'study';
+      if (prev === 'study') return 'review';
+      return 'original';
+    });
   }, []);
 
   // Render viewer based on content type
@@ -184,6 +189,18 @@ export default function ReaderPage({ params }: ReaderPageProps) {
           </button>
         </div>
       </div>
+    );
+  }
+
+  // Review mode renders separately
+  if (mode === 'review') {
+    return (
+      <>
+        <ReviewMode />
+        {toast && (
+          <Toast type={toast.type} message={toast.message} onClose={hideToast} />
+        )}
+      </>
     );
   }
 

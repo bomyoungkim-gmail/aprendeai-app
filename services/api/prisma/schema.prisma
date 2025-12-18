@@ -154,6 +154,7 @@ model Content {
   lessons          Lesson[]
   readingSessions  ReadingSession[]
   libraryItems     UserLibraryItem[]
+  UserVocabulary   UserVocabulary[]
 
   @@map("contents")
 }
@@ -212,8 +213,9 @@ model ReadingSession {
   user           User            @relation(fields: [userId], references: [id])
 
   // V3 relations
-  events  SessionEvent[]
-  outcome SessionOutcome?
+  events       SessionEvent[]
+  outcome      SessionOutcome?
+  VocabAttempt VocabAttempt[]
 
   @@map("reading_sessions")
 }
@@ -360,9 +362,27 @@ model UserVocabulary {
   language     Language
   masteryScore Int      @default(0) @map("mastery_score")
   lastSeenAt   DateTime @default(now()) @map("last_seen_at")
-  user         User     @relation(fields: [userId], references: [id])
+
+  // V4 SRS Fields
+  srsStage       SrsStage @default(NEW) @map("srs_stage")
+  dueAt          DateTime @default(now()) @map("due_at")
+  lapsesCount    Int      @default(0) @map("lapses_count")
+  masteryForm    Int      @default(0) @map("mastery_form")
+  masteryMeaning Int      @default(0) @map("mastery_meaning")
+  masteryUse     Int      @default(0) @map("mastery_use")
+  contentId      String?  @map("content_id")
+  meaningNote    String?  @map("meaning_note") @db.Text
+  exampleNote    String?  @map("example_note") @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user     User           @relation(fields: [userId], references: [id])
+  content  Content?       @relation(fields: [contentId], references: [id], onDelete: SetNull)
+  attempts VocabAttempt[]
 
   @@unique([userId, word, language])
+  @@index([userId, dueAt])
+  @@index([srsStage])
   @@map("user_vocabularies")
 }
 
@@ -714,6 +734,7 @@ model LearnerProfile {
   listeningLevelScore Int?           @map("listening_level_score")
   writingLevelScore   Int?           @map("writing_level_score")
   dailyTimeBudgetMin  Int            @default(30) @map("daily_time_budget_min")
+  dailyReviewCap      Int            @default(20) @map("daily_review_cap")
   createdAt           DateTime       @default(now()) @map("created_at")
   updatedAt           DateTime       @updatedAt @map("updated_at")
 
@@ -894,4 +915,48 @@ enum ExtractionStatus {
   RUNNING
   DONE
   FAILED
+}
+
+// ===== V4 SRS Enums =====
+
+enum SrsStage {
+  NEW
+  D1
+  D3
+  D7
+  D14
+  D30
+  D60
+  MASTERED
+}
+
+enum VocabDimension {
+  FORM
+  MEANING
+  USE
+}
+
+enum AttemptResult {
+  FAIL
+  HARD
+  OK
+  EASY
+}
+
+// ===== V4 SRS Models =====
+
+model VocabAttempt {
+  id        String         @id @default(uuid())
+  vocabId   String         @map("vocab_id")
+  sessionId String?        @map("session_id")
+  dimension VocabDimension
+  result    AttemptResult
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  vocab   UserVocabulary  @relation(fields: [vocabId], references: [id], onDelete: Cascade)
+  session ReadingSession? @relation(fields: [sessionId], references: [id])
+
+  @@index([vocabId])
+  @@index([createdAt])
+  @@map("vocab_attempts")
 }

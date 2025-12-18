@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
+// Note: CSS imports disabled due to react-pdf export bug in v7/v8
+// Text selection still works via browser native API
+// May add custom CSS later if needed
+
+
+
+
+
 
 import type { Content, Highlight, ViewMode } from '@/lib/types/cornell';
+
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;

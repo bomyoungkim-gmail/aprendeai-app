@@ -14,6 +14,10 @@ import { AdminModule } from './admin/admin.module';
 import { BillingModule} from './billing/billing.module';
 import { ObservabilityModule } from './observability/observability.module';
 import { MetricsInterceptor } from './common/interceptors/metrics.interceptor';
+// V4 SRS Modules
+import { SrsModule } from './srs/srs.module';
+import { VocabModule } from './vocab/vocab.module';
+import { ReviewModule } from './review/review.module';
 
 @Module({
   imports: [
@@ -28,6 +32,10 @@ import { MetricsInterceptor } from './common/interceptors/metrics.interceptor';
     GamificationModule,
     AnalyticsModule,
     AdminModule,
+    // V4 SRS Modules
+    SrsModule,
+    VocabModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [

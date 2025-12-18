@@ -124,7 +124,7 @@ export interface UpdateHighlightDto {
 }
 
 // UI State
-export type ViewMode = 'original' | 'study';
+export type ViewMode = 'original' | 'study' | 'review';
 export type SaveStatus = 'saved' | 'saving' | 'offline' | 'error';
 
 export const HIGHLIGHT_COLORS = {
