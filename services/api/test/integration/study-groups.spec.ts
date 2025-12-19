@@ -1,12 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
+import { TestAuthHelper, createTestUser } from '../helpers/auth.helper';
 
 describe('Study Groups API (Integration)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let authHelper: TestAuthHelper;
   let authToken: string;
   let userId: string;
   let groupId: string;
@@ -22,8 +25,13 @@ describe('Study Groups API (Integration)', () => {
     await app.init();
 
     prisma = app.get<PrismaService>(PrismaService);
+    const configService = app.get<ConfigService>(ConfigService);
 
-    // Create test user and get auth token
+    // Initialize auth helper with real JWT secret
+    const jwtSecret = configService.get<string>('JWT_SECRET') || 'test-secret-key';
+    authHelper = new TestAuthHelper(jwtSecret);
+
+    // Create test user
     const testUser = await prisma.user.upsert({
       where: { email: 'test-groups@example.com' },
       create: {
@@ -36,7 +44,13 @@ describe('Study Groups API (Integration)', () => {
     });
 
     userId = testUser.id;
-    authToken = 'Bearer test-token'; // Mock token for testing
+
+    // Generate real JWT token
+    authToken = authHelper.generateAuthHeader({
+      id: testUser.id,
+      email: testUser.email,
+      name: testUser.name,
+    });
 
     // Create test content
     const testContent = await prisma.content.create({
@@ -388,7 +402,12 @@ describe('Study Groups API (Integration)', () => {
         },
       });
 
-      const memberToken = 'Bearer member-token'; // Mock
+      // Generate real JWT for member user
+      const memberToken = authHelper.generateAuthHeader({
+        id: memberUser.id,
+        email: memberUser.email,
+        name: memberUser.name,
+      });
 
       await request(app.getHttpServer())
         .post(`/groups/${groupId}/members/invite`)
@@ -401,6 +420,26 @@ describe('Study Groups API (Integration)', () => {
         where: { groupId_userId: { groupId, userId: memberUser.id } },
       });
       await prisma.user.delete({ where: { id: memberUser.id } });
+    });
+
+    it('should reject expired JWT token', async () => {
+      const expiredToken = authHelper.generateExpiredToken({
+        id: userId,
+        email: 'test-groups@example.com',
+        name: 'Test User',
+      });
+
+      await request(app.getHttpServer())
+        .get('/groups')
+        .set('Authorization', `Bearer ${expiredToken}`)
+        .expect(401);
+    });
+
+    it('should reject invalid JWT token', async () => {
+      await request(app.getHttpServer())
+        .get('/groups')
+        .set('Authorization', 'Bearer invalid-token-12345')
+        .expect(401);
     });
   });
 });
