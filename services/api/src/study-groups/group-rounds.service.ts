@@ -4,6 +4,8 @@ import { GroupSessionsService } from './group-sessions.service';
 import { UpdatePromptDto } from './dto/update-prompt.dto';
 import { SubmitEventDto } from './dto/submit-event.dto';
 import { RoundStatus } from '@prisma/client';
+import { StudyGroupsWebSocketGateway } from '../websocket/study-groups-ws.gateway';
+import { StudyGroupEvent } from '../websocket/events';
 
 @Injectable()
 export class GroupRoundsService {
@@ -12,6 +14,7 @@ export class GroupRoundsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly groupSessionsService: GroupSessionsService,
+    private readonly wsGateway: StudyGroupsWebSocketGateway,
   ) {}
 
   async updatePrompt(sessionId: string, roundIndex: number, userId: string, dto: UpdatePromptDto) {
@@ -28,7 +31,7 @@ export class GroupRoundsService {
       throw new BadRequestException('Round not found');
     }
 
-    return this.prisma.groupRound.update({
+    const updatedRound = await this.prisma.groupRound.update({
       where: { id: round.id },
       data: {
         promptJson: {
@@ -38,6 +41,16 @@ export class GroupRoundsService {
         },
       },
     });
+
+    // Emit WebSocket event for real-time update
+    this.wsGateway.emitToSession(sessionId, StudyGroupEvent.PROMPT_UPDATED, {
+      sessionId,
+      roundId: round.id,
+      roundIndex,
+      prompt: dto.promptText,
+    });
+
+    return updatedRound;
   }
 
   async advanceRound(sessionId: string, roundIndex: number, userId: string, toStatus: RoundStatus) {
@@ -57,10 +70,22 @@ export class GroupRoundsService {
     // Validate transition with accountability gates
     await this.validateTransition(sessionId, round.id, toStatus);
 
-    return this.prisma.groupRound.update({
+    const updatedRound = await this.prisma.groupRound.update({
       where: { id: round.id },
       data: { status: toStatus },
     });
+
+    // Emit WebSocket event for real-time update
+    this.wsGateway.emitToSession(sessionId, StudyGroupEvent.ROUND_ADVANCED, {
+      sessionId,
+      roundId: round.id,
+      roundIndex,
+      status: toStatus,
+    });
+
+    this.logger.log(`Round ${roundIndex} advanced to ${toStatus} in session ${sessionId}`);
+
+    return updatedRound;
   }
 
   async submitEvent(sessionId: string, userId: string, dto: SubmitEventDto) {
@@ -100,9 +125,31 @@ export class GroupRoundsService {
       },
     });
 
+    // Emit WebSocket event for real-time update
+    const wsEventType = dto.eventType === 'PI_VOTE_SUBMIT' 
+      ? StudyGroupEvent.VOTE_SUBMITTED 
+      : dto.eventType === 'PI_REVOTE_SUBMIT'
+      ? StudyGroupEvent.REVOTE_SUBMITTED
+      : StudyGroupEvent.SESSION_UPDATED;
+
+    this.wsGateway.emitToSession(sessionId, wsEventType, {
+      sessionId,
+      roundId: round.id,
+      roundIndex: dto.roundIndex,
+      userId,
+      eventType: dto.eventType,
+    });
+
     // Special handling for GROUP_EXPLANATION_SUBMIT
     if (dto.eventType === 'GROUP_EXPLANATION_SUBMIT') {
       await this.createSharedCard(sessionId, round.id, userId, dto.payload);
+      
+      // Emit shared card created event
+      this.wsGateway.emitToSession(sessionId, StudyGroupEvent.SHARED_CARD_CREATED, {
+        sessionId,
+        roundId: round.id,
+        roundIndex: dto.roundIndex,
+      });
     }
 
     this.logger.log(`Event ${dto.eventType} submitted for round ${round.id} by user ${userId}`);
