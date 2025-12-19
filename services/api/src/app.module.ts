@@ -22,6 +22,8 @@ import { ReviewModule } from './review/review.module';
 import { AssetsModule } from './assets/assets.module';
 // Study Groups Module
 import { StudyGroupsModule } from './study-groups/study-groups.module';
+// WebSocket Module
+import { WebSocketModule } from './websocket/websocket.module';
 
 @Module({
   imports: [
@@ -44,6 +46,8 @@ import { StudyGroupsModule } from './study-groups/study-groups.module';
     AssetsModule,
     // Study Groups Module
     StudyGroupsModule,
+    // WebSocket for real-time
+    WebSocketModule,
   ],
   controllers: [AppController],
   providers: [
