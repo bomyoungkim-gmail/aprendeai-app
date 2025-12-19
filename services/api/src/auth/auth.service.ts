@@ -3,6 +3,7 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { SubscriptionService } from '../billing/subscription.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 import * as bcrypt from 'bcrypt';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
 import { UserRole } from '@prisma/client';
@@ -14,6 +15,7 @@ export class AuthService {
     private jwtService: JwtService,
     private subscriptionService: SubscriptionService,
     private prisma: PrismaService,
+    private emailService: EmailService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
@@ -48,7 +50,7 @@ export class AuthService {
     }
 
     // Create user + FREE subscription in transaction
-    return this.prisma.$transaction(async (tx) => {
+    const user = await this.prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: {
           name: registerDto.name,
@@ -66,6 +68,16 @@ export class AuthService {
       const { passwordHash, ...result } = newUser;
       return result;
     });
+
+    // Send welcome email (async, don't wait)
+    this.emailService.sendWelcomeEmail({
+      email: user.email,
+      name: user.name,
+    }).catch(error => {
+      console.error('Failed to send welcome email:', error);
+    });
+
+    return user;
   }
 
   /**
