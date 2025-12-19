@@ -5,6 +5,8 @@ import { CornellLayout } from '@/components/cornell';
 import { PDFViewer, ImageViewer, DocxViewer } from '@/components/cornell/viewers';
 import { ReviewMode } from '@/components/cornell/review/ReviewMode';
 import { Toast, useToast } from '@/components/ui/Toast';
+import { VideoPlayer } from '@/components/media/VideoPlayer';
+import { AudioPlayer } from '@/components/media/AudioPlayer';
 import {
   useContent,
   useCornellNotes,
@@ -138,6 +140,40 @@ export default function ReaderPage({ params }: ReaderPageProps) {
             <p className="text-gray-600">Loading content...</p>
           </div>
         </div>
+      );
+    }
+
+    // Video content
+    if (content.contentType === 'VIDEO') {
+      const videoUrl = content.file?.storageKey
+        ? `/api/uploads/${content.file.storageKey}`
+        : content.sourceUrl || '';
+
+      return (
+        <VideoPlayer
+          src={videoUrl}
+          duration={content.duration}
+          onTimeUpdate={(time) => {
+            // TODO: Update annotations based on current timestamp
+          }}
+        />
+      );
+    }
+
+    // Audio content
+    if (content.contentType === 'AUDIO') {
+      const audioUrl = content.file?.storageKey
+        ? `/api/uploads/${content.file.storageKey}`
+        : content.sourceUrl || '';
+
+      return (
+        <AudioPlayer
+          src={audioUrl}
+          duration={content.duration}
+          onTimeUpdate={(time) => {
+            // TODO: Update annotations based on current timestamp
+          }}
+        />
       );
     }
 

@@ -1,39 +1,93 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from './storage.service';
 import { UploadContentDto } from '../dto/upload-content.dto';
 import { Content, ContentType, Language } from '@prisma/client';
+import { VideoService } from '../../video/video.service';
+import { TranscriptionService } from '../../transcription/transcription.service';
 import * as mammoth from 'mammoth';
+import * as path from 'path';
+import * as fs from 'fs';
 
 // Using require for pdf-parse due to TypeScript module resolution issues  
 const pdfParse = require('pdf-parse');
 
 @Injectable()
 export class ContentService {
+  private readonly logger = new Logger(ContentService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
+    private readonly videoService: VideoService,
+    private readonly transcriptionService: TranscriptionService,
   ) {}
 
   /**
-   * Upload a content file (PDF, DOCX, TXT) and extract text
+   * Upload a content file (PDF, DOCX, TXT, Video, Audio) and extract text/metadata
    */
   async uploadContent(
     file: Express.Multer.File,
     dto: UploadContentDto,
     userId: string,
   ): Promise<Content> {
-    // 1. Extract text based on file type
-    const rawText = await this.extractText(file);
+    const isVideo = this.videoService.isVideoFile(file.mimetype);
+    const isAudio = this.videoService.isAudioFile(file.mimetype);
 
-    if (!rawText || rawText.trim().length === 0) {
-      throw new BadRequestException('Could not extract text from file');
+    // 1. Save file to storage first
+    const storageKey = await this.storageService.saveFile(file);
+    let filePath = path.join('./uploads', storageKey);
+
+    let rawText = '';
+    let duration: number | undefined;
+    let thumbnailUrl: string | undefined;
+
+    if (isVideo || isAudio) {
+      // Handle video/audio upload
+      this.logger.log(`Processing ${isVideo ? 'video' : 'audio'}: ${file.originalname}`);
+
+      // Extract metadata
+      if (isVideo) {
+        const metadata = await this.videoService.extractVideoMetadata(filePath);
+        duration = metadata.duration;
+        
+        // Generate thumbnail
+        try {
+          const thumbnailPath = await this.videoService.generateThumbnail(filePath);
+          thumbnailUrl = `/uploads/thumbnails/${path.basename(thumbnailPath)}`;
+        } catch (error) {
+          this.logger.warn(`Failed to generate thumbnail: ${error.message}`);
+        }
+
+        // Extract audio for transcription
+        try {
+          const audioPath = await this.videoService.extractAudioFromVideo(filePath);
+          filePath = audioPath; // Use extracted audio for transcription
+        } catch (error) {
+          this.logger.warn(`Failed to extract audio: ${error.message}`);
+        }
+      } else {
+        const metadata = await this.videoService.extractAudioMetadata(filePath);
+        duration = metadata.duration;
+      }
+
+      // Start transcription (async - don't wait)
+      this.transcribeInBackground(filePath, file.originalname).catch(error => {
+        this.logger.error(`Background transcription failed: ${error.message}`);
+      });
+
+      // Use filename as placeholder text
+      rawText = `[${isVideo ? 'Video' : 'Audio'} file: ${file.originalname}]\nTranscription in progress...`;
+    } else {
+      // Handle document upload (existing logic)
+      rawText = await this.extractText(file);
+
+      if (!rawText || rawText.trim().length === 0) {
+        throw new BadRequestException('Could not extract text from file');
+      }
     }
 
-    // 2. Save file to storage
-    const storageKey = await this.storageService.saveFile(file);
-
-    // 3. Create File record
+    // 2. Create File record
     const fileRecord = await this.prisma.file.create({
       data: {
         originalFilename: file.originalname,
@@ -44,7 +98,7 @@ export class ContentService {
       },
     });
 
-    // 4. Create Content record
+    // 3. Create Content record
     return this.prisma.content.create({
       data: {
         title: dto.title,
@@ -55,6 +109,8 @@ export class ContentService {
         ownerUserId: userId,
         scopeType: dto.scopeType,
         scopeId: dto.scopeId,
+        duration,
+        thumbnailUrl,
       },
     });
   }
@@ -106,8 +162,34 @@ export class ContentService {
   private getContentType(mimeType: string): ContentType {
     if (mimeType === 'application/pdf') return 'PDF';
     if (mimeType.includes('wordprocessing')) return 'DOCX';
-    // For plain text, use PDF as default (schema doesn't have TEXT/TXT type)
+    if (mimeType.startsWith('video/')) return 'VIDEO' as ContentType;
+    if (mimeType.startsWith('audio/')) return 'AUDIO' as ContentType;
+    // For plain text, use PDF as default
     return 'PDF';
+  }
+
+  /**
+   * Background transcription process
+   */
+  private async transcribeInBackground(filePath: string, originalFilename: string): Promise<void> {
+    if (!this.transcriptionService.isAvailable()) {
+      this.logger.warn('Transcription service not available (OpenAI API key not configured)');
+      return;
+    }
+
+    try {
+      this.logger.log(`Starting background transcription for ${originalFilename}`);
+      
+      const transcription = await this.transcriptionService.transcribe(filePath);
+      
+      // TODO: Update Content record with transcription
+      // This would require getting the content ID, which we don't have here
+      // Better approach: Use a job queue (Bull, BullMQ) to handle this
+      
+      this.logger.log(`Transcription completed for ${originalFilename}`);
+    } catch (error) {
+      this.logger.error(`Transcription failed for ${originalFilename}: ${error.message}`);
+    }
   }
 
   /**
