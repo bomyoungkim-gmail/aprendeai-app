@@ -1,6 +1,8 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAnnotationDto, UpdateAnnotationDto } from './dto/annotation.dto';
+import { SearchAnnotationsDto } from './dto/search-annotations.dto';
+import { CreateReplyDto } from './dto/create-reply.dto';
 import { StudyGroupsWebSocketGateway } from '../websocket/study-groups-ws.gateway';
 
 @Injectable()
@@ -112,5 +114,145 @@ export class AnnotationService {
     }
 
     return { deleted: true };
+  }
+
+  /**
+   * Search annotations with multiple filters
+   */
+  async searchAnnotations(userId: string, params: SearchAnnotationsDto) {
+    const where: any = {
+      userId, // Only search user's own annotations
+      AND: [],
+    };
+
+    // Text search
+    if (params.query) {
+      where.AND.push({
+        OR: [
+          { text: { contains: params.query, mode: 'insensitive' } },
+          { selectedText: { contains: params.query, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    // Filter by type
+    if (params.type) {
+      where.AND.push({ type: params.type });
+    }
+
+    // Filter by content
+    if (params.contentId) {
+      where.AND.push({ contentId: params.contentId });
+    }
+
+    // Filter by group
+    if (params.groupId) {
+      where.AND.push({ groupId: params.groupId });
+    }
+
+    // Filter by color
+    if (params.color) {
+      where.AND.push({ color: params.color });
+    }
+
+    // Filter by favorite
+    if (params.isFavorite !== undefined) {
+      where.AND.push({ isFavorite: params.isFavorite });
+    }
+
+    // Date range filter
+    if (params.startDate || params.endDate) {
+      const dateFilter: any = {};
+      if (params.startDate) {
+        dateFilter.gte = new Date(params.startDate);
+      }
+      if (params.endDate) {
+        dateFilter.lte = new Date(params.endDate);
+      }
+      where.AND.push({ createdAt: dateFilter });
+    }
+
+    // Remove empty AND if no filters
+    if (where.AND.length === 0) {
+      delete where.AND;
+    }
+
+    return this.prisma.annotation.findMany({
+      where,
+      include: {
+        user: { select: { id: true, name: true } },
+        content: { select: { id: true, title: true } },
+        replies: {
+          include: {
+            user: { select: { id: true, name: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * Create reply to annotation
+   */
+  async createReply(parentId: string, userId: string, dto: CreateReplyDto) {
+    const parent = await this.prisma.annotation.findUnique({
+      where: { id: parentId },
+    });
+
+    if (!parent) {
+      throw new NotFoundException('Parent annotation not found');
+    }
+
+    const reply = await this.prisma.annotation.create({
+      data: {
+        contentId: parent.contentId,
+        userId,
+        type: 'COMMENT',
+        startOffset: parent.startOffset,
+        endOffset: parent.endOffset,
+        text: dto.content,
+        color: dto.color,
+        visibility: parent.visibility,
+        groupId: parent.groupId,
+        parentId,
+      },
+      include: {
+        user: { select: { id: true, name: true } },
+        parent: true,
+      },
+    });
+
+    // Real-time broadcast
+    if (parent.visibility === 'GROUP' && parent.groupId) {
+      this.wsGateway.emitToGroup(parent.groupId, 'annotation:reply', reply);
+    }
+
+    return reply;
+  }
+
+  /**
+   * Toggle favorite status
+   */
+  async toggleFavorite(id: string, userId: string) {
+    const annotation = await this.prisma.annotation.findUnique({
+      where: { id },
+    });
+
+    if (!annotation) {
+      throw new NotFoundException('Annotation not found');
+    }
+
+    if (annotation.userId !== userId) {
+      throw new ForbiddenException('Not your annotation');
+    }
+
+    return this.prisma.annotation.update({
+      where: { id },
+      data: { isFavorite: !annotation.isFavorite },
+      include: {
+        user: { select: { id: true, name: true } },
+      },
+    });
   }
 }
