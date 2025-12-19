@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { GroupSession, GroupRound } from '@/lib/types/study-groups';
 import { useSubmitEvent, useSessionEvents } from '@/hooks/use-sessions';
 import { useAuthStore } from '@/stores/auth-store';
+import { ChatPanel } from './ChatPanel';
 import { AlertCircle, ChevronRight } from 'lucide-react';
 
 interface RoundPanelProps {
@@ -167,7 +168,7 @@ export function RoundPanel({ session, currentRound, myRole, canAdvance, selected
       {currentRound.status === 'DISCUSSING' && (
         <div className="border-t pt-4">
           <h4 className="font-semibold mb-3">Discussion Phase</h4>
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 space-y-2 text-sm">
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 space-y-2 text-sm mb-4">
             {myRole === 'CLARIFIER' && (
               <div><strong>Your role (CLARIFIER):</strong> Ask clarifying questions</div>
             )}
@@ -178,6 +179,12 @@ export function RoundPanel({ session, currentRound, myRole, canAdvance, selected
               <div><strong>Your role (FACILITATOR):</strong> Ensure all voices are heard</div>
             )}
           </div>
+          
+          {/* ✨ NEW: Chat Panel */}
+          <ChatPanel 
+            sessionId={session.id}
+            currentRound={currentRound}
+          />
           
           {canAdvance && (
             <button
