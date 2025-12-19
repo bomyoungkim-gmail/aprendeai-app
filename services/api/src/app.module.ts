@@ -20,6 +20,8 @@ import { VocabModule } from './vocab/vocab.module';
 import { ReviewModule } from './review/review.module';
 // V5 Assets Module
 import { AssetsModule } from './assets/assets.module';
+// Study Groups Module
+import { StudyGroupsModule } from './study-groups/study-groups.module';
 
 @Module({
   imports: [
@@ -40,6 +42,8 @@ import { AssetsModule } from './assets/assets.module';
     ReviewModule,
     // V5 Assets Module
     AssetsModule,
+    // Study Groups Module
+    StudyGroupsModule,
   ],
   controllers: [AppController],
   providers: [
