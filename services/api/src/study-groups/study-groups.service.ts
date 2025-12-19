@@ -1,12 +1,22 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateGroupDto } from './dto/create-group.dto';
-import { InviteMemberDto } from './dto/invite-member.dto';
+import { WebSocketGateway } from '../websocket/websocket.gateway';
+import { EmailService } from '../email/email.service';
+import {
+  CreateGroupDto,
+  UpdateGroupDto,
+  InviteMemberDto,
+  UpdateMemberRoleDto,
+} from './dto/study-groups.dto';
 import { GroupRole, StudyGroup, StudyGroupMember } from '@prisma/client';
 
 @Injectable()
 export class StudyGroupsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private websocketGateway: WebSocketGateway,
+    private emailService: EmailService,
+  ) {}
 
   async createGroup(userId: string, dto: CreateGroupDto): Promise<StudyGroup> {
     // Create group and add creator as OWNER
