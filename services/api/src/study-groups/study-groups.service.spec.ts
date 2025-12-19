@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { StudyGroupsService } from '../study-groups.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { StudyGroupsService } from './study-groups.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 
 describe('StudyGroupsService', () => {

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { GroupSessionsService } from '../group-sessions.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { GroupSessionsService } from './group-sessions.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { BadRequestException } from '@nestjs/common';
 
 describe('GroupSessionsService', () => {

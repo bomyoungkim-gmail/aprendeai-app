@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { GroupRoundsService } from '../group-rounds.service';
-import { GroupSessionsService } from '../group-sessions.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { GroupRoundsService } from './group-rounds.service';
+import { GroupSessionsService } from './group-sessions.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { ConflictException, ForbiddenException } from '@nestjs/common';
 
 describe('GroupRoundsService', () => {
