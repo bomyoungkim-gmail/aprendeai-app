@@ -1,0 +1,406 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import * as request from 'supertest';
+import { AppModule } from '../../src/app.module';
+import { PrismaService } from '../../src/prisma/prisma.service';
+
+describe('Study Groups API (Integration)', () => {
+  let app: INestApplication;
+  let prisma: PrismaService;
+  let authToken: string;
+  let userId: string;
+  let groupId: string;
+  let contentId: string;
+  let sessionId: string;
+
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    await app.init();
+
+    prisma = app.get<PrismaService>(PrismaService);
+
+    // Create test user and get auth token
+    const testUser = await prisma.user.upsert({
+      where: { email: 'test-groups@example.com' },
+      create: {
+        email: 'test-groups@example.com',
+        name: 'Test User',
+        passwordHash: 'hash', // In real test, use bcrypt
+        role: 'USER',
+      },
+      update: {},
+    });
+
+    userId = testUser.id;
+    authToken = 'Bearer test-token'; // Mock token for testing
+
+    // Create test content
+    const testContent = await prisma.content.create({
+      data: {
+        title: 'Test Content for Groups',
+        type: 'PDF',
+        uploadedByUserId: userId,
+        storageUrl: 'test.pdf',
+      },
+    });
+
+    contentId = testContent.id;
+  });
+
+  afterAll(async () => {
+    // Cleanup
+    if (groupId) {
+      await prisma.groupEvent.deleteMany({ where: { sessionId: { in: await prisma.groupSession.findMany({ where: { groupId } }).then(s => s.map(x => x.id)) } } });
+      await prisma.sharedCard.deleteMany({ where: { sessionId: { in: await prisma.groupSession.findMany({ where: { groupId } }).then(s => s.map(x => x.id)) } } });
+      await prisma.groupRound.deleteMany({ where: { sessionId: { in: await prisma.groupSession.findMany({ where: { groupId } }).then(s => s.map(x => x.id)) } } });
+      await prisma.groupSessionMember.deleteMany({ where: { sessionId: { in: await prisma.groupSession.findMany({ where: { groupId } }).then(s => s.map(x => x.id)) } } });
+      await prisma.groupSession.deleteMany({ where: { groupId } });
+      await prisma.groupContent.deleteMany({ where: { groupId } });
+      await prisma.studyGroupMember.deleteMany({ where: { groupId } });
+      await prisma.studyGroup.delete({ where: { id: groupId } });
+    }
+    await prisma.content.delete({ where: { id: contentId } });
+    await prisma.user.delete({ where: { id: userId } });
+
+    await app.close();
+  });
+
+  describe('Groups Management', () => {
+    it('POST /groups - should create group', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/groups')
+        .set('Authorization', authToken)
+        .send({ name: 'Integration Test Group' })
+        .expect(201);
+
+      expect(res.body).toHaveProperty('id');
+      expect(res.body.name).toBe('Integration Test Group');
+      expect(res.body.ownerUserId).toBe(userId);
+
+      groupId = res.body.id;
+    });
+
+    it('GET /groups - should list user groups', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/groups')
+        .set('Authorization', authToken)
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBeGreaterThan(0);
+      expect(res.body.some((g: any) => g.id === groupId)).toBe(true);
+    });
+
+    it('GET /groups/:groupId - should get group details', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/groups/${groupId}`)
+        .set('Authorization', authToken)
+        .expect(200);
+
+      expect(res.body.id).toBe(groupId);
+      expect(res.body.name).toBe('Integration Test Group');
+      expect(res.body.members).toBeDefined();
+      expect(res.body.members.length).toBeGreaterThan(0);
+      expect(res.body.members[0].role).toBe('OWNER');
+    });
+
+    it('POST /groups/:groupId/members/invite - should invite member', async () => {
+      // Create another test user
+      const user2 = await prisma.user.create({
+        data: {
+          email: 'user2-groups@example.com',
+          name: 'User 2',
+          passwordHash: 'hash',
+          role: 'USER',
+        },
+      });
+
+      await request(app.getHttpServer())
+        .post(`/groups/${groupId}/members/invite`)
+        .set('Authorization', authToken)
+        .send({ userId: user2.id, role: 'MEMBER' })
+        .expect(201);
+
+      // Verify member was invited
+      const member = await prisma.studyGroupMember.findUnique({
+        where: { groupId_userId: { groupId, userId: user2.id } },
+      });
+
+      expect(member).toBeDefined();
+      expect(member!.status).toBe('INVITED');
+
+      // Cleanup
+      await prisma.user.delete({ where: { id: user2.id } });
+    });
+
+    it('POST /groups/:groupId/contents - should add content', async () => {
+      await request(app.getHttpServer())
+        .post(`/groups/${groupId}/contents`)
+        .set('Authorization', authToken)
+        .send({ contentId })
+        .expect(201);
+
+      // Verify content was added
+      const groupContent = await prisma.groupContent.findUnique({
+        where: { groupId_contentId: { groupId, contentId } },
+      });
+
+      expect(groupContent).toBeDefined();
+    });
+
+    it('DELETE /groups/:groupId/contents/:contentId - should remove content', async () => {
+      // Add another content first
+      const content2 = await prisma.content.create({
+        data: {
+          title: 'Content 2',
+          type: 'PDF',
+          uploadedByUserId: userId,
+          storageUrl: 'test2.pdf',
+        },
+      });
+
+      await prisma.groupContent.create({
+        data: { groupId, contentId: content2.id, addedByUserId: userId },
+      });
+
+      await request(app.getHttpServer())
+        .delete(`/groups/${groupId}/contents/${content2.id}`)
+        .set('Authorization', authToken)
+        .expect(200);
+
+      // Verify content was removed
+      const groupContent = await prisma.groupContent.findUnique({
+        where: { groupId_contentId: { groupId, contentId: content2.id } },
+      });
+
+      expect(groupContent).toBeNull();
+
+      // Cleanup
+      await prisma.content.delete({ where: { id: content2.id } });
+    });
+  });
+
+  describe('Group Sessions', () => {
+    beforeAll(async () => {
+      // Ensure we have at least 2 members for session creation
+      const user2 = await prisma.user.upsert({
+        where: { email: 'member2-groups@example.com' },
+        create: {
+          email: 'member2-groups@example.com',
+          name: 'Member 2',
+          passwordHash: 'hash',
+          role: 'USER',
+        },
+        update: {},
+      });
+
+      await prisma.studyGroupMember.upsert({
+        where: { groupId_userId: { groupId, userId: user2.id } },
+        create: {
+          groupId,
+          userId: user2.id,
+          role: 'MEMBER',
+          status: 'ACTIVE',
+        },
+        update: { status: 'ACTIVE' },
+      });
+    });
+
+    it('POST /group-sessions - should create session', async () => {
+      const res = await request(app.getHttpServer())
+        .post(`/group-sessions?groupId=${groupId}`)
+        .set('Authorization', authToken)
+        .send({
+          contentId,
+          mode: 'PI_SPRINT',
+          layer: 'L1',
+          roundsCount: 2,
+        })
+        .expect(201);
+
+      expect(res.body).toHaveProperty('id');
+      expect(res.body.groupId).toBe(groupId);
+      expect(res.body.contentId).toBe(contentId);
+      expect(res.body.status).toBe('CREATED');
+      expect(res.body.rounds).toBeDefined();
+      expect(res.body.rounds.length).toBe(2);
+      expect(res.body.members).toBeDefined();
+      expect(res.body.members.length).toBeGreaterThanOrEqual(2);
+
+      sessionId = res.body.id;
+
+      // Verify role assignments
+      const roles = res.body.members.map((m: any) => m.assignedRole);
+      expect(roles).toContain('FACILITATOR');
+    });
+
+    it('GET /group-sessions/:sessionId - should get session details', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/group-sessions/${sessionId}`)
+        .set('Authorization', authToken)
+        .expect(200);
+
+      expect(res.body.id).toBe(sessionId);
+      expect(res.body.rounds).toBeDefined();
+    });
+
+    it('PUT /group-sessions/:sessionId/start - should start session', async () => {
+      await request(app.getHttpServer())
+        .put(`/group-sessions/${sessionId}/start`)
+        .set('Authorization', authToken)
+        .expect(200);
+
+      // Verify session status changed
+      const session = await prisma.groupSession.findUnique({
+        where: { id: sessionId },
+      });
+
+      expect(session!.status).toBe('RUNNING');
+    });
+
+    it('POST /group-sessions/:sessionId/events - should submit vote', async () => {
+      await request(app.getHttpServer())
+        .post(`/group-sessions/${sessionId}/events`)
+        .set('Authorization', authToken)
+        .send({
+          roundIndex: 1,
+          eventType: 'PI_VOTE_SUBMIT',
+          payload: { choice: 'A', rationale: 'Because it makes sense' },
+        })
+        .expect(201);
+
+      // Verify event was created
+      const events = await prisma.groupEvent.findMany({
+        where: { sessionId, eventType: 'PI_VOTE_SUBMIT' },
+      });
+
+      expect(events.length).toBeGreaterThan(0);
+    });
+
+    it('POST /group-sessions/:sessionId/rounds/:roundIndex/advance - should block with 409 if incomplete', async () => {
+      const res = await request(app.getHttpServer())
+        .post(`/group-sessions/${sessionId}/rounds/1/advance`)
+        .set('Authorization', authToken)
+        .send({ toStatus: 'DISCUSSING' })
+        .expect(409);
+
+      expect(res.body.statusCode).toBe(409);
+      expect(res.body.message).toContain("haven't PI_VOTE_SUBMIT");
+      expect(res.body).toHaveProperty('required');
+      expect(res.body).toHaveProperty('current');
+      expect(res.body).toHaveProperty('missing');
+    });
+
+    it('POST /group-sessions/:sessionId/rounds/:roundIndex/advance - should advance after all vote', async () => {
+      // Get all members and submit votes for them
+      const session = await prisma.groupSession.findUnique({
+        where: { id: sessionId },
+        include: { members: true },
+      });
+
+      // Submit votes for all members who haven't voted
+      for (const member of session!.members) {
+        const hasVoted = await prisma.groupEvent.findFirst({
+          where: {
+            sessionId,
+            userId: member.userId,
+            eventType: 'PI_VOTE_SUBMIT',
+            round: { roundIndex: 1 },
+          },
+        });
+
+        if (!hasVoted) {
+          await prisma.groupEvent.create({
+            data: {
+              sessionId,
+              userId: member.userId,
+              roundId: session!.rounds[0].id,
+              eventType: 'PI_VOTE_SUBMIT',
+              payloadJson: { choice: 'A' },
+            },
+          });
+        }
+      }
+
+      await request(app.getHttpServer())
+        .post(`/group-sessions/${sessionId}/rounds/1/advance`)
+        .set('Authorization', authToken)
+        .send({ toStatus: 'DISCUSSING' })
+        .expect(200);
+
+      // Verify round status changed
+      const round = await prisma.groupRound.findFirst({
+        where: { sessionId, roundIndex: 1 },
+      });
+
+      expect(round!.status).toBe('DISCUSSING');
+    });
+
+    it('GET /group-sessions/:sessionId/events - should get events', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/group-sessions/${sessionId}/events?roundIndex=1`)
+        .set('Authorization', authToken)
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBeGreaterThan(0);
+    });
+
+    it('GET /group-sessions/:sessionId/shared-cards - should get shared cards', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/group-sessions/${sessionId}/shared-cards`)
+        .set('Authorization', authToken)
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      // May be empty if no explanation submitted yet
+    });
+  });
+
+  describe('Permission Tests', () => {
+    it('should reject unauthorized access (no token)', async () => {
+      await request(app.getHttpServer())
+        .get('/groups')
+        .expect(401);
+    });
+
+    it('should reject MEMBER trying to invite', async () => {
+      // Create a MEMBER user
+      const memberUser = await prisma.user.create({
+        data: {
+          email: 'member-only@example.com',
+          name: 'Member Only',
+          passwordHash: 'hash',
+          role: 'USER',
+        },
+      });
+
+      await prisma.studyGroupMember.create({
+        data: {
+          groupId,
+          userId: memberUser.id,
+          role: 'MEMBER',
+          status: 'ACTIVE',
+        },
+      });
+
+      const memberToken = 'Bearer member-token'; // Mock
+
+      await request(app.getHttpServer())
+        .post(`/groups/${groupId}/members/invite`)
+        .set('Authorization', memberToken)
+        .send({ userId: 'some-user-id', role: 'MEMBER' })
+        .expect(403);
+
+      // Cleanup
+      await prisma.studyGroupMember.delete({
+        where: { groupId_userId: { groupId, userId: memberUser.id } },
+      });
+      await prisma.user.delete({ where: { id: memberUser.id } });
+    });
+  });
+});

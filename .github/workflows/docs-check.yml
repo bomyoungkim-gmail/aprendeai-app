@@ -1,0 +1,45 @@
+name: Documentation Checks
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  check-docs:
+    name: Verify Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Run documentation checks
+        run: node scripts/check-docs.js
+      
+      - name: Check if schema changed without doc update
+        run: |
+          # Check if schema.prisma changed
+          git diff --name-only origin/main... | grep -q "services/api/prisma/schema.prisma" && SCHEMA_CHANGED=true || SCHEMA_CHANGED=false
+          
+          # Check if schema doc changed
+          git diff --name-only origin/main... | grep -q "docs/04-data/00-schema.md" && DOC_CHANGED=true || DOC_CHANGED=false
+          
+          if [ "$SCHEMA_CHANGED" = true ] && [ "$DOC_CHANGED" = false ]; then
+            echo "::warning::Schema changed but schema doc not updated. Please update docs/04-data/00-schema.md"
+          fi
+      
+      - name: Check if API changed without doc update
+        run: |
+          # Check if controllers changed
+          git diff --name-only origin/main... | grep -q "services/api/src/.*\.controller\.ts" && API_CHANGED=true || API_CHANGED=false
+          
+          # Check if API doc changed
+          git diff --name-only origin/main... | grep -q "docs/05-api/01-rest-contracts.md" && DOC_CHANGED=true || DOC_CHANGED=false
+          
+          if [ "$API_CHANGED" = true ] && [ "$DOC_CHANGED" = false ]; then
+            echo "::warning::API controllers changed but API doc not updated. Please update docs/05-api/01-rest-contracts.md"
+          fi
