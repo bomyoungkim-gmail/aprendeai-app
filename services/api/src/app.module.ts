@@ -28,6 +28,8 @@ import { HealthModule } from './health/health.module';
 import { AnnotationModule } from './annotations/annotation.module';
 // Activity Module
 import { ActivityModule } from './activity/activity.module';
+// Email Module
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -44,6 +46,7 @@ import { ActivityModule } from './activity/activity.module';
     AdminModule,
     HealthModule,
     ActivityModule, // Activity tracking & heatmap
+    EmailModule, // Email notifications
     // V4 SRS Modules
     SrsModule,
     VocabModule,

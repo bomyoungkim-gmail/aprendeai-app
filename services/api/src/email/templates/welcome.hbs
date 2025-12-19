@@ -1,0 +1,118 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background-color: #f3f4f6;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+      }
+      .header {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: #ffffff;
+        padding: 40px 30px;
+        text-align: center;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 700;
+      }
+      .content {
+        padding: 40px 30px;
+        color: #374151;
+        line-height: 1.6;
+      }
+      .content h2 {
+        color: #1f2937;
+        font-size: 20px;
+        margin-top: 0;
+      }
+      .content p {
+        margin: 16px 0;
+      }
+      .content ul {
+        margin: 20px 0;
+        padding-left: 20px;
+      }
+      .content li {
+        margin: 10px 0;
+      }
+      .button {
+        display: inline-block;
+        background: #3b82f6;
+        color: #ffffff !important;
+        padding: 14px 32px;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        margin: 20px 0;
+        transition: background 0.3s;
+      }
+      .button:hover {
+        background: #2563eb;
+      }
+      .footer {
+        background-color: #f9fafb;
+        padding: 30px;
+        text-align: center;
+        color: #6b7280;
+        font-size: 14px;
+        border-top: 1px solid #e5e7eb;
+      }
+      .footer a {
+        color: #3b82f6;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Bem-vindo ao AprendeAI! 🎉</h1>
+      </div>
+
+      <div class="content">
+        <p>Olá <strong>{{userName}}</strong>,</p>
+
+        <p>Estamos muito felizes em ter você conosco! O AprendeAI é sua
+          plataforma completa para estudos e aprendizado.</p>
+
+        <h2>Comece agora:</h2>
+        <ul>
+          <li>📚 Faça upload do seu primeiro conteúdo (PDF, vídeo, áudio)</li>
+          <li>✏️ Crie anotações e Cornell notes</li>
+          <li>👥 Participe de grupos de estudo colaborativos</li>
+          <li>🎯 Acompanhe seu progresso diário</li>
+        </ul>
+
+        <div style="text-align: center;">
+          <a href="{{dashboardUrl}}" class="button">Acessar Dashboard</a>
+        </div>
+
+        <p>Se tiver alguma dúvida, estamos sempre aqui para ajudar!</p>
+
+        <p>Bons estudos! 📖<br />
+          <strong>Equipe AprendeAI</strong></p>
+      </div>
+
+      <div class="footer">
+        <p>© {{year}} AprendeAI. Todos os direitos reservados.</p>
+        <p>
+          <a href="{{frontendUrl}}">Visitar site</a>
+          •
+          <a href="{{frontendUrl}}/settings/notifications">Preferências de email</a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
