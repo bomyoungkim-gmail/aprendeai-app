@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { GroupSession } from '@/lib/types/study-groups';
 import { useAuthStore } from '@/stores/auth-store';
 import { useRoundTimer } from '@/hooks/use-round-timer';
@@ -10,6 +10,7 @@ import { RoundPanel } from './RoundPanel';
 import { ReferencePanel } from './ReferencePanel';
 import { SharedCardsDrawer } from './SharedCardsDrawer';
 import { MobileTabBar } from './MobileTabBar';
+import { RoundNavigator } from './RoundNavigator';
 import { Timer, Play, List, Wifi, WifiOff } from 'lucide-react';
 
 interface PISprintInterfaceProps {
@@ -95,6 +96,41 @@ export function PISprintInterface({ session }: PISprintInterfaceProps) {
     };
     return colors[role as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
+
+  // Keyboard shortcuts for round navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input/textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      const totalRounds = session.rounds?.length || 1;
+
+      switch (e.key) {
+        case 'ArrowLeft':
+          if (currentRoundIndex > 1) {
+            setCurrentRoundIndex(prev => prev - 1);
+          }
+          break;
+        case 'ArrowRight':
+          if (currentRoundIndex < totalRounds) {
+            setCurrentRoundIndex(prev => prev + 1);
+          }
+          break;
+        case 'Home':
+          setCurrentRoundIndex(1);
+          break;
+        case 'End':
+          setCurrentRoundIndex(totalRounds);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentRoundIndex, session.rounds?.length]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-60px)]">
@@ -221,9 +257,21 @@ export function PISprintInterface({ session }: PISprintInterfaceProps) {
 
       {/* Main Content - Responsive */}
       <div className="flex-1 overflow-hidden">
-        {/* Desktop: 2-column grid */}
+        {/* Desktop: 2-column grid with round navigator */}
         <div className="hidden lg:grid lg:grid-cols-3 gap-6 p-6 h-full">
-          <div className="lg:col-span-2 overflow-y-auto">
+          <div className="lg:col-span-2 overflow-y-auto space-y-4">
+            {/* Round Navigator - Desktop */}
+            {(session.rounds?.length || 0) > 1 && (
+              <RoundNavigator
+                currentRound={currentRoundIndex}
+                totalRounds={session.rounds?.length || 1}
+                onPrev={() => setCurrentRoundIndex(prev => Math.max(1, prev - 1))}
+                onNext={() => setCurrentRoundIndex(prev => 
+                  Math.min(session.rounds?.length || 1, prev + 1)
+                )}
+              />
+            )}
+            
             <RoundPanel 
               session={session}
               currentRound={currentRound || null}
@@ -244,8 +292,23 @@ export function PISprintInterface({ session }: PISprintInterfaceProps) {
         </div>
 
         {/* Mobile/Tablet: Single panel based on active tab */}
-        <div className="lg:hidden h-full overflow-y-auto p-3 md:p-4">
-          {mobileActiveTab === 'round' && (
+        <div className="lg:hidden h-full overflow-y-auto">
+          {/* Round Navigator - Mobile (only for Round tab) */}
+          {mobileActiveTab === 'round' && (session.rounds?.length || 0) > 1 && (
+            <div className="sticky top-0 bg-white border-b px-3 py-3 z-10">
+              <RoundNavigator
+                currentRound={currentRoundIndex}
+                totalRounds={session.rounds?.length || 1}
+                onPrev={() => setCurrentRoundIndex(prev => Math.max(1, prev - 1))}
+                onNext={() => setCurrentRoundIndex(prev => 
+                  Math.min(session.rounds?.length || 1, prev + 1)
+                )}
+              />
+            </div>
+          )}
+          
+          <div className="p-3 md:p-4">
+            {mobileActiveTab === 'round' && (
             <RoundPanel 
               session={session}
               currentRound={currentRound || null}
@@ -269,6 +332,7 @@ export function PISprintInterface({ session }: PISprintInterfaceProps) {
               <p>Shared Cards opened in drawer</p>
             </div>
           )}
+          </div>
         </div>
       </div>
 
