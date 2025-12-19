@@ -21,6 +21,9 @@ export enum StudyGroupEvent {
   EXPLANATION_SUBMITTED = 'explanation.submitted',
   SHARED_CARD_CREATED = 'sharedCard.created',
   
+  // Chat events
+  CHAT_MESSAGE = 'chat.message',
+  
   // User presence
   USER_JOINED = 'user.joined',
   USER_LEFT = 'user.left',
