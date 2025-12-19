@@ -2,11 +2,34 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward } from 'lucide-react';
+import { AnnotationTimeline } from '@/components/annotations/AnnotationTimeline';
+import { TranscriptViewer } from './TranscriptViewer';
+
+interface Annotation {
+  id: string;
+  type: 'HIGHLIGHT' | 'NOTE';
+  timestamp?: number;
+  endTimestamp?: number;
+  text?: string;
+  color?: string;
+}
+
+interface TranscriptSegment {
+  id: number;
+  start: number;
+  end: number;
+  text: string;
+}
 
 interface AudioPlayerProps {
   src: string;
   duration?: number;
   onTimeUpdate?: (time: number) => void;
+  annotations?: Annotation[];
+  transcription?: {
+    segments: TranscriptSegment[];
+  };
+  onCreateAnnotation?: (timestamp: number) => void;
   className?: string;
 }
 
@@ -14,6 +37,9 @@ export function AudioPlayer({
   src, 
   duration,
   onTimeUpdate,
+  annotations = [],
+  transcription,
+  onCreateAnnotation,
   className = ''
 }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -92,8 +118,16 @@ export function AudioPlayer({
   const audioDuration = duration || audioRef.current?.duration || 0;
   const progress = audioDuration > 0 ? (currentTime / audioDuration) * 100 : 0;
 
+  // Seek handler
+  const handleSeekTo = (time: number) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = time;
+    }
+  };
+
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 p-6 ${className}`}>
+    <div className={className}>
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
       <audio ref={audioRef} src={src} preload="metadata" />
 
       {/* Waveform Placeholder (simple bar for now) */}
@@ -191,6 +225,31 @@ export function AudioPlayer({
           <option value="2">2x</option>
         </select>
       </div>
+      </div>
+
+      {/* Annotation Timeline */}
+      {annotations.length > 0 && audioDuration > 0 && (
+        <div className="mt-4">
+          <AnnotationTimeline
+            annotations={annotations}
+            duration={audioDuration}
+            currentTime={currentTime}
+            onSeek={handleSeekTo}
+            onCreateAnnotation={onCreateAnnotation}
+          />
+        </div>
+      )}
+
+      {/* Transcript Viewer */}
+      {transcription?.segments && transcription.segments.length > 0 && (
+        <div className="mt-4">
+          <TranscriptViewer
+            segments={transcription.segments}
+            currentTime={currentTime}
+            onSeek={handleSeekTo}
+          />
+        </div>
+      )}
     </div>
   );
 }

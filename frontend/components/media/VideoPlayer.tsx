@@ -12,11 +12,34 @@ import {
   SkipBack,
   SkipForward
 } from 'lucide-react';
+import { AnnotationTimeline } from '@/components/annotations/AnnotationTimeline';
+import { TranscriptViewer } from './TranscriptViewer';
+
+interface Annotation {
+  id: string;
+  type: 'HIGHLIGHT' | 'NOTE';
+  timestamp?: number;
+  endTimestamp?: number;
+  text?: string;
+  color?: string;
+}
+
+interface TranscriptSegment {
+  id: number;
+  start: number;
+  end: number;
+  text: string;
+}
 
 interface VideoPlayerProps {
   src: string;
   duration?: number;
   onTimeUpdate?: (time: number) => void;
+  annotations?: Annotation[];
+  transcription?: {
+    segments: TranscriptSegment[];
+  };
+  onCreateAnnotation?: (timestamp: number) => void;
   className?: string;
 }
 
@@ -24,6 +47,9 @@ export function VideoPlayer({
   src, 
   duration,
   onTimeUpdate,
+  annotations = [],
+  transcription,
+  onCreateAnnotation,
   className = ''
 }: VideoPlayerProps) {
   const playerRef = useRef<ReactPlayer>(null);
@@ -100,25 +126,31 @@ export function VideoPlayer({
   const videoDuration = duration || playerRef.current?.getDuration() || 0;
   const progress = videoDuration > 0 ? (currentTime / videoDuration) * 100 : 0;
 
+  // Seek handler for timeline and transcript
+  const handleSeekTo = (time: number) => {
+    playerRef.current?.seekTo(time, 'seconds');
+  };
+
   return (
-    <div 
-      ref={containerRef}
-      className={`relative bg-black rounded-lg overflow-hidden ${className}`}
-      onMouseEnter={() => setShowControls(true)}
-      onMouseLeave={() => setShowControls(false)}
-    >
-      <ReactPlayer
-        ref={playerRef}
-        url={src}
-        playing={playing}
-        volume={volume}
-        muted={muted}
-        playbackRate={playbackRate}
-        onProgress={handleProgress}
-        width="100%"
-        height="100%"
-        style={{ aspectRatio: '16/9' }}
-      />
+    <div className={className}>
+      <div 
+        ref={containerRef}
+        className="relative bg-black rounded-lg overflow-hidden"
+        onMouseEnter={() => setShowControls(true)}
+        onMouseLeave={() => setShowControls(false)}
+      >
+        <ReactPlayer
+          ref={playerRef}
+          url={src}
+          playing={playing}
+          volume={volume}
+          muted={muted}
+          playbackRate={playbackRate}
+          onProgress={handleProgress}
+          width="100%"
+          height="100%"
+          style={{ aspectRatio: '16/9' }}
+        />
 
       {/* Controls Overlay */}
       {showControls && (
@@ -207,6 +239,29 @@ export function VideoPlayer({
               <Maximize className="w-5 h-5" />
             </button>
           </div>
+        </div>
+      )}
+      </div>
+
+      {/* Annotation Timeline */}
+      {annotations.length > 0 && videoDuration > 0 && (
+        <AnnotationTimeline
+          annotations={annotations}
+          duration={videoDuration}
+          currentTime={currentTime}
+          onSeek={handleSeekTo}
+          onCreateAnnotation={onCreateAnnotation}
+        />
+      )}
+
+      {/* Transcript Viewer */}
+      {transcription?.segments && transcription.segments.length > 0 && (
+        <div className="mt-4">
+          <TranscriptViewer
+            segments={transcription.segments}
+            currentTime={currentTime}
+            onSeek={handleSeekTo}
+          />
         </div>
       )}
     </div>
