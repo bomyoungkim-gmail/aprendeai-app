@@ -5,10 +5,11 @@ import { GroupSession } from '@/lib/types/study-groups';
 import { useAuthStore } from '@/stores/auth-store';
 import { useRoundTimer } from '@/hooks/use-round-timer';
 import { useStartSession, useAdvanceRound, useSharedCards } from '@/hooks/use-sessions';
+import { useSessionEvents } from '@/hooks/use-session-events';
 import { RoundPanel } from './RoundPanel';
 import { ReferencePanel } from './ReferencePanel';
 import { SharedCardsDrawer } from './SharedCardsDrawer';
-import { Timer, Play, List } from 'lucide-react';
+import { Timer, Play, List, Wifi, WifiOff } from 'lucide-react';
 
 interface PISprintInterfaceProps {
   session: GroupSession;
@@ -19,6 +20,13 @@ export function PISprintInterface({ session }: PISprintInterfaceProps) {
   const [currentRoundIndex, setCurrentRoundIndex] = useState(1);
   const [selectedHighlightIds, setSelectedHighlightIds] = useState<string[]>([]);
   const [showSharedCards, setShowSharedCards] = useState(false);
+  
+  // WebSocket real-time connection
+  const { isConnected } = useSessionEvents(session.id, {
+    onRoundAdvanced: (data) => {
+      console.log('Round advanced in real-time:', data);
+    },
+  });
   
   const startSession = useStartSession(session.id);
   const advanceRound = useAdvanceRound(session.id);
@@ -112,6 +120,12 @@ export function PISprintInterface({ session }: PISprintInterfaceProps) {
                 </span>
               </div>
             )}
+            
+            {/* WebSocket Connection Status */}
+            <div className={`flex items-center gap-1 text-xs ${isConnected ? 'text-green-600' : 'text-gray-400'}`} title={isConnected ? 'Connected' : 'Disconnected'}>
+              {isConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
+              <span>{isConnected ? 'Live' : 'Offline'}</span>
+            </div>
             
             {currentRound && currentRound.status !== 'DONE' && currentRound.status !== 'CREATED' && (
               <div className="flex items-center gap-2 text-lg font-mono">

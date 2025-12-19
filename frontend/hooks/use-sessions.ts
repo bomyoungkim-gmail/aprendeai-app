@@ -10,7 +10,7 @@ export function useSession(sessionId: string) {
       return data;
     },
     enabled: !!sessionId,
-    refetchInterval: 5000, // Poll every 5 seconds for updates
+    // No longer polling - WebSocket provides real-time updates
   });
 }
 
