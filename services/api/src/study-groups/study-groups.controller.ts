@@ -1,6 +1,7 @@
 import { Controller, Post, Get, Delete, Param, Body, Request, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { StudyGroupsService } from './study-groups.service';
+import { GroupSessionsService } from './group-sessions.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { InviteMemberDto } from './dto/invite-member.dto';
 import { AddContentDto } from './dto/add-content.dto';
@@ -8,7 +9,10 @@ import { AddContentDto } from './dto/add-content.dto';
 @Controller('groups')
 @UseGuards(AuthGuard('jwt'))
 export class StudyGroupsController {
-  constructor(private readonly studyGroupsService: StudyGroupsService) {}
+  constructor(
+    private readonly studyGroupsService: StudyGroupsService,
+    private readonly groupSessionsService: GroupSessionsService,
+  ) {}
 
   @Post()
   async createGroup(@Request() req, @Body() dto: CreateGroupDto) {
@@ -63,5 +67,17 @@ export class StudyGroupsController {
   ) {
     await this.studyGroupsService.removeContent(groupId, req.user.userId, contentId);
     return { message: 'Content removed from playlist' };
+  }
+
+  @Get(':groupId/sessions')
+  async getGroupSessions(
+    @Param('groupId') groupId: string,
+    @Request() req,
+  ) {
+    // Verify membership
+    await this.studyGroupsService.getGroup(groupId, req.user.userId);
+    
+    // Return sessions using injected GroupSessionsService
+    return this.groupSessionsService.getGroupSessions(groupId);
   }
 }

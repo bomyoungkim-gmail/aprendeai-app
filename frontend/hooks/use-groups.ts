@@ -88,3 +88,13 @@ export function useRemoveContent(groupId: string) {
     },
   });
 }
+
+export function useGroupSessions(groupId: string) {
+  return useQuery({
+    queryKey: ['group-sessions', groupId],
+    queryFn: async () => {
+      const { data } = await api.get(`/groups/${groupId}/sessions`);
+      return data;
+    },
+  });
+}

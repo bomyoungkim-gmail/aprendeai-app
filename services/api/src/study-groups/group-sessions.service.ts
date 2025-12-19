@@ -150,6 +150,18 @@ export class GroupSessionsService {
     });
   }
 
+  async getGroupSessions(groupId: string) {
+    return this.prisma.groupSession.findMany({
+      where: { groupId },
+      include: {
+        _count: {
+          select: { rounds: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   // Deterministic role assignment algorithm
   private async assignRoles(tx: any, sessionId: string, groupId: string, members: any[]) {
     // Stable sort by userId (alphabetical)
