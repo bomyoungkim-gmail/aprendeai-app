@@ -26,6 +26,8 @@ import { StudyGroupsModule } from './study-groups/study-groups.module';
 import { WebSocketModule } from './websocket/websocket.module';
 import { HealthModule } from './health/health.module';
 import { AnnotationModule } from './annotations/annotation.module';
+// Activity Module
+import { ActivityModule } from './activity/activity.module';
 
 @Module({
   imports: [
@@ -41,6 +43,7 @@ import { AnnotationModule } from './annotations/annotation.module';
     AnalyticsModule,
     AdminModule,
     HealthModule,
+    ActivityModule, // Activity tracking & heatmap
     // V4 SRS Modules
     SrsModule,
     VocabModule,

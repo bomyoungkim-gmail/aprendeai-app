@@ -340,16 +340,26 @@ model DailyGoal {
 }
 
 model DailyActivity {
-  id               String   @id @default(uuid())
-  userId           String   @map("user_id")
-  date             DateTime @db.Date
-  minutesSpent     Int      @default(0) @map("minutes_spent")
-  lessonsCompleted Int      @default(0) @map("lessons_completed")
-  goalMet          Boolean  @default(false) @map("goal_met")
-  createdAt        DateTime @default(now()) @map("created_at")
-  user             User     @relation(fields: [userId], references: [id])
+  id     String   @id @default(uuid())
+  userId String   @map("user_id")
+  date   DateTime @db.Date
+
+  // Activity metrics for heatmap
+  minutesStudied     Int @default(0) @map("minutes_studied")
+  sessionsCount      Int @default(0) @map("sessions_count")
+  contentsRead       Int @default(0) @map("contents_read")
+  annotationsCreated Int @default(0) @map("annotations_created")
+
+  // Legacy fields (keeping for backwards compatibility)
+  minutesSpent     Int     @default(0) @map("minutes_spent")
+  lessonsCompleted Int     @default(0) @map("lessons_completed")
+  goalMet          Boolean @default(false) @map("goal_met")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
+  @@index([userId, date])
   @@map("daily_activities")
 }
 
