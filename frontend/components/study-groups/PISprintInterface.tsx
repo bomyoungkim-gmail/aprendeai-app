@@ -9,6 +9,7 @@ import { useSessionEvents } from '@/hooks/use-session-events';
 import { RoundPanel } from './RoundPanel';
 import { ReferencePanel } from './ReferencePanel';
 import { SharedCardsDrawer } from './SharedCardsDrawer';
+import { MobileTabBar } from './MobileTabBar';
 import { Timer, Play, List, Wifi, WifiOff } from 'lucide-react';
 
 interface PISprintInterfaceProps {
@@ -20,6 +21,7 @@ export function PISprintInterface({ session }: PISprintInterfaceProps) {
   const [currentRoundIndex, setCurrentRoundIndex] = useState(1);
   const [selectedHighlightIds, setSelectedHighlightIds] = useState<string[]>([]);
   const [showSharedCards, setShowSharedCards] = useState(false);
+  const [mobileActiveTab, setMobileActiveTab] = useState<'round' | 'reference' | 'cards'>('round');
   
   // WebSocket real-time connection
   const { isConnected, isReconnecting, reconnectAttempts } = useSessionEvents(session.id, {
@@ -96,23 +98,25 @@ export function PISprintInterface({ session }: PISprintInterfaceProps) {
 
   return (
     <div className="flex flex-col h-[calc(100vh-60px)]">
-      {/* TopBar */}
-      <div className="bg-white border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div>
-              <h2 className="text-lg font-semibold">{session.group?.name}</h2>
-              <p className="text-sm text-gray-600">{session.content?.title}</p>
+      {/* TopBar - Responsive */}
+      <div className="bg-white border-b px-3 md:px-6 py-3 md:py-4">
+        <div className="flex items-center justify-between gap-2">
+          {/* Left: Session Info */}
+          <div className="flex items-center gap-2 md:gap-4 min-w-0">
+            <div className="min-w-0">
+              <h2 className="text-sm md:text-lg font-semibold truncate">{session.group?.name}</h2>
+              <p className="text-xs md:text-sm text-gray-600 truncate">{session.content?.title}</p>
             </div>
             
-            <div className="flex items-center gap-2 text-sm">
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">
+            {/* Round & Status - Hide on small mobile */}
+            <div className="hidden sm:flex items-center gap-2 text-xs md:text-sm flex-shrink-0">
+              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded whitespace-nowrap">
                 Round {currentRoundIndex}/{session.rounds?.length || 0}
               </span>
               
               {currentRound && (
-                <span className={`px-2 py-1 rounded ${
-                  currentRound. status === 'VOTING' ? 'bg-green-100 text-green-800' :
+                <span className={`px-2 py-1 rounded whitespace-nowrap ${
+                  currentRound.status === 'VOTING' ? 'bg-green-100 text-green-800' :
                   currentRound.status === 'DISCUSSING' ? 'bg-yellow-100 text-yellow-800' :
                   currentRound.status === 'REVOTING' ? 'bg-orange-100 text-orange-800' :
                   currentRound.status === 'EXPLAINING' ? 'bg-purple-100 text-purple-800' :
@@ -124,11 +128,13 @@ export function PISprintInterface({ session }: PISprintInterfaceProps) {
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          {/* Right: Role, Connection, Timer, Actions */}
+          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+            {/* Role Badge - Hide on mobile */}
             {mySessionMember && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">You are:</span>
-                <span className={`text-sm px-3 py-1 rounded-full font-medium ${getRoleColor(mySessionMember.assignedRole)}`}>
+              <div className="hidden md:flex items-center gap-2">
+                <span className="text-xs md:text-sm text-gray-600">You are:</span>
+                <span className={`text-xs md:text-sm px-2 md:px-3 py-1 rounded-full font-medium ${getRoleColor(mySessionMember.assignedRole)}`}>
                   {mySessionMember.assignedRole}
                 </span>
               </div>
@@ -137,71 +143,143 @@ export function PISprintInterface({ session }: PISprintInterfaceProps) {
             {/* WebSocket Connection Status */}
             <div className={`flex items-center gap-1 text-xs ${connectionColor}`} title={connectionStatus}>
               {isReconnecting ? (
-                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                <div className="w-3 h-3 md:w-4 md:h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
               ) : isConnected ? (
-                <Wifi className="w-4 h-4" />
+                <Wifi className="w-3 h-3 md:w-4 md:h-4" />
               ) : (
-                <WifiOff className="w-4 h-4" />
+                <WifiOff className="w-3 h-3 md:w-4 md:h-4" />
               )}
-              <span>{connectionStatus}</span>
+              <span className="hidden sm:inline">{connectionStatus}</span>
             </div>
             
+            {/* Timer */}
             {currentRound && currentRound.status !== 'DONE' && currentRound.status !== 'CREATED' && (
-              <div className="flex items-center gap-2 text-lg font-mono">
-                <Timer className="w-5 h-5" />
+              <div className="flex items-center gap-1 md:gap-2 text-sm md:text-lg font-mono">
+                <Timer className="w-3 h-3 md:w-5 md:h-5" />
                 <span className={isExpired ? 'text-red-600' : 'text-gray-900'}>
                   {timeFormatted}
                 </span>
               </div>
             )}
             
+            {/* Start Session Button */}
             {session.status === 'CREATED' && (
               <button
                 onClick={handleStartSession}
                 disabled={startSession.isPending}
-                className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50"
+                className="flex items-center gap-1 md:gap-2 bg-green-600 text-white px-2 md:px-4 py-1.5 md:py-2 rounded-md hover:bg-green-700 disabled:opacity-50 text-xs md:text-sm"
               >
-                <Play className="w-4 h-4" />
-                Start Session
+                <Play className="w-3 h-3 md:w-4 md:h-4" />
+                <span className="hidden sm:inline">Start</span>
               </button>
             )}
             
+            {/* Shared Cards Button - Desktop only */}
             <button
               onClick={() => setShowSharedCards(true)}
-              className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+              className="hidden lg:flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm"
             >
               <List className="w-4 h-4" />
               Shared Cards ({sharedCards?.length || 0})
             </button>
           </div>
         </div>
+        
+        {/* Mobile: Round & Status below on small screens */}
+        <div className="flex sm:hidden items-center gap-2 mt-2 text-xs">
+          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">
+            R{currentRoundIndex}/{session.rounds?.length || 0}
+          </span>
+          {currentRound && (
+            <span className={`px-2 py-1 rounded ${
+              currentRound.status === 'VOTING' ? 'bg-green-100 text-green-800' :
+              currentRound.status === 'DISCUSSING' ? 'bg-yellow-100 text-yellow-800' :
+              'bg-gray-100 text-gray-800'
+            }`}>
+              {currentRound.status}
+            </span>
+          )}
+          {mySessionMember && (
+            <span className={`px-2 py-1 rounded text-xs ${getRoleColor(mySessionMember.assignedRole)}`}>
+              {mySessionMember.assignedRole}
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 overflow-hidden">
-        <div className="lg:col-span-2 overflow-y-auto">
-          <RoundPanel 
-            session={session}
-            currentRound={currentRound || null}
-            myRole={mySessionMember?.assignedRole || null}
-            canAdvance={canAdvance}
-            selectedHighlightIds={selectedHighlightIds}
-            onAdvance={handleAdvanceRound}
-          />
+      {/* Mobile Tab Bar */}
+      <MobileTabBar
+        activeTab={mobileActiveTab}
+        onTabChange={(tab) => {
+          setMobileActiveTab(tab);
+          if (tab === 'cards') {
+            setShowSharedCards(true);
+          }
+        }}
+        sharedCardsCount={sharedCards?.length || 0}
+      />
+
+      {/* Main Content - Responsive */}
+      <div className="flex-1 overflow-hidden">
+        {/* Desktop: 2-column grid */}
+        <div className="hidden lg:grid lg:grid-cols-3 gap-6 p-6 h-full">
+          <div className="lg:col-span-2 overflow-y-auto">
+            <RoundPanel 
+              session={session}
+              currentRound={currentRound || null}
+              myRole={mySessionMember?.assignedRole || null}
+              canAdvance={canAdvance}
+              selectedHighlightIds={selectedHighlightIds}
+              onAdvance={handleAdvanceRound}
+            />
+          </div>
+          
+          <div className="overflow-y-auto">
+            <ReferencePanel 
+              contentId={session.contentId}
+              selectedIds={selectedHighlightIds}
+              onSelectIds={setSelectedHighlightIds}
+            />
+          </div>
         </div>
-        
-        <div className="overflow-y-auto">
-          <ReferencePanel 
-            contentId={session.contentId}
-            selectedIds={selectedHighlightIds}
-            onSelectIds={setSelectedHighlightIds}
-          />
+
+        {/* Mobile/Tablet: Single panel based on active tab */}
+        <div className="lg:hidden h-full overflow-y-auto p-3 md:p-4">
+          {mobileActiveTab === 'round' && (
+            <RoundPanel 
+              session={session}
+              currentRound={currentRound || null}
+              myRole={mySessionMember?.assignedRole || null}
+              canAdvance={canAdvance}
+              selectedHighlightIds={selectedHighlightIds}
+              onAdvance={handleAdvanceRound}
+            />
+          )}
+          
+          {mobileActiveTab === 'reference' && (
+            <ReferencePanel 
+              contentId={session.contentId}
+              selectedIds={selectedHighlightIds}
+              onSelectIds={setSelectedHighlightIds}
+            />
+          )}
+          
+          {mobileActiveTab === 'cards' && (
+            <div className="text-center text-gray-500 py-8">
+              <p>Shared Cards opened in drawer</p>
+            </div>
+          )}
         </div>
       </div>
 
       <SharedCardsDrawer 
         isOpen={showSharedCards}
-        onClose={() => setShowSharedCards(false)}
+        onClose={() => {
+          setShowSharedCards(false);
+          if (mobileActiveTab === 'cards') {
+            setMobileActiveTab('round');
+          }
+        }}
         sharedCards={sharedCards || []}
       />
     </div>
