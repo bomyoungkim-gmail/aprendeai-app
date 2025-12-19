@@ -2,12 +2,15 @@
 
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tantml:query';
 import api from '@/lib/api';
 import { StreakCard } from '@/components/streak-card';
 import { DailyGoalCard } from '@/components/daily-goal-card';
 import { ContentItem } from '@/components/content-item';
 import { ContentUploadModal } from '@/components/content/ContentUploadModal';
+import { ActivityHeatmap } from '@/components/dashboard/ActivityHeatmap';
+import { ActivityStats } from '@/components/dashboard/ActivityStats';
+import { useActivityHeatmap, useActivityStats } from '@/hooks/use-activity';
 import { Loader2, BookOpen, Upload } from 'lucide-react';
 
 type GamificationData = {
@@ -41,6 +44,10 @@ export default function DashboardPage() {
     refetchInterval: 60000, // Refresh every minute
   });
 
+  // Activity heatmap and stats
+  const { data: heatmapData, isLoading: heatmapLoading } = useActivityHeatmap();
+  const { data: activityStats, isLoading: statsLoading } = useActivityStats();
+
   return (
     <div className="space-y-8">
       <div>
@@ -50,6 +57,31 @@ export default function DashboardPage() {
         <p className="mt-1 text-sm text-gray-500">
           Vamos continuar seu progresso hoje?
         </p>
+      </div>
+
+      {/* Activity Heatmap Section */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          📊 Sua Atividade de Estudo
+        </h3>
+        
+        {statsLoading ? (
+          <div className="flex h-32 items-center justify-center">
+            <Loader2 className="animate-spin text-blue-500" />
+          </div>
+        ) : activityStats ? (
+          <ActivityStats stats={activityStats} />
+        ) : null}
+
+        {heatmapLoading ? (
+          <div className="flex h-32 items-center justify-center mt-6">
+            <Loader2 className="animate-spin text-blue-500" />
+          </div>
+        ) : heatmapData ? (
+          <div className="mt-6">
+            <ActivityHeatmap data={heatmapData} />
+          </div>
+        ) : null}
       </div>
 
       {isLoading ? (

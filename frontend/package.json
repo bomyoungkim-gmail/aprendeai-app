@@ -21,6 +21,7 @@
     "next": "^14.2.0",
     "pdfjs-dist": "^3.11.174",
     "react": "^18.3.1",
+    "react-calendar-heatmap": "^1.10.0",
     "react-dom": "^18.3.1",
     "react-dropzone": "^14.3.8",
     "react-konva": "^18.2.10",
