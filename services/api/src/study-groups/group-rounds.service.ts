@@ -17,20 +17,8 @@ export class GroupRoundsService {
   async updatePrompt(sessionId: string, roundIndex: number, userId: string, dto: UpdatePromptDto) {
     const session = await this.groupSessionsService.getSession(sessionId, userId);
 
-    // Only FACILITATOR or OWNER/MOD can edit prompt
-    const member = await this.prisma.groupSessionMember.findUnique({
-      where: { sessionId_userId: { sessionId, userId } },
-    });
-
-    const groupMember = await this.prisma.studyGroupMember.findUnique({
-      where: { groupId_userId: { groupId: session.groupId, userId } },
-    });
-
-    const canEdit = member?.assignedRole === 'FACILITATOR' || ['OWNER', 'MOD'].includes(groupMember?.role);
-
-    if (!canEdit) {
-      throw new ForbiddenException('Only FACILITATOR or group OWNER/MOD can edit prompts');
-    }
+    // Check permissions using loaded session data (no extra queries)
+    this.assertFacilitatorPermission(session, userId);
 
     const round = await this.prisma.groupRound.findFirst({
       where: { sessionId, roundIndex },
@@ -55,20 +43,8 @@ export class GroupRoundsService {
   async advanceRound(sessionId: string, roundIndex: number, userId: string, toStatus: RoundStatus) {
     const session = await this.groupSessionsService.getSession(sessionId, userId);
 
-    // Only FACILITATOR or OWNER/MOD can advance
-    const member = await this.prisma.groupSessionMember.findUnique({
-      where: { sessionId_userId: { sessionId, userId } },
-    });
-
-    const groupMember = await this.prisma.studyGroupMember.findUnique({
-      where: { groupId_userId: { groupId: session.groupId, userId } },
-    });
-
-    const canAdvance = member?.assignedRole === 'FACILITATOR' || ['OWNER', 'MOD'].includes(groupMember?.role);
-
-    if (!canAdvance) {
-      throw new ForbiddenException('Only FACILITATOR or group OWNER/MOD can advance round');
-    }
+    // Check permissions using loaded session data (no extra queries)
+    this.assertFacilitatorPermission(session, userId);
 
     const round = await this.prisma.groupRound.findFirst({
       where: { sessionId, roundIndex },
@@ -88,10 +64,10 @@ export class GroupRoundsService {
   }
 
   async submitEvent(sessionId: string, userId: string, dto: SubmitEventDto) {
-    // Verify user is joined member
-    const member = await this.prisma.groupSessionMember.findUnique({
-      where: { sessionId_userId: { sessionId, userId } },
-    });
+    const session = await this.groupSessionsService.getSession(sessionId, userId);
+    
+    // Find member in already-loaded session members
+    const member = session.members.find((m: any) => m.userId === userId);
 
     if (!member || member.attendanceStatus !== 'JOINED') {
       throw new ForbiddenException('Must be a joined session member');
@@ -263,5 +239,23 @@ export class GroupRoundsService {
         },
       },
     });
+  }
+
+  // Helper: Check if user has facilitator-level permissions
+  // Uses session data loaded by getSession to avoid extra queries
+  private assertFacilitatorPermission(session: any, userId: string): void {
+    // Find member in already-loaded session members
+    const sessionMember = session.members?.find((m: any) => m.userId === userId);
+    
+    // Find group member in already-loaded group members
+    const groupMember = session.group?.members?.find((m: any) => m.userId === userId);
+
+    const canPerform = 
+      sessionMember?.assignedRole === 'FACILITATOR' || 
+      ['OWNER', 'MOD'].includes(groupMember?.role);
+
+    if (!canPerform) {
+      throw new ForbiddenException('Only FACILITATOR or group OWNER/MOD can perform this action');
+    }
   }
 }

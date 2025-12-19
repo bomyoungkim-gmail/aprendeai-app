@@ -76,7 +76,11 @@ export class GroupSessionsService {
     const session = await this.prisma.groupSession.findUnique({
       where: { id: sessionId },
       include: {
-        group: true,
+        group: {
+          include: {
+            members: true, // Eager load for permission checks
+          },
+        },
         content: {
           select: { id: true, title: true, type: true },
         },
