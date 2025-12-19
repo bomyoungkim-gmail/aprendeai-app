@@ -28,7 +28,7 @@ interface UseSessionEventsOptions {
 }
 
 export function useSessionEvents(sessionId: string, options: UseSessionEventsOptions = {}) {
-  const { socket, isConnected, joinSession, leaveSession } = useWebSocket();
+  const { socket, isConnected, isReconnecting, reconnectAttempts, joinSession, leaveSession } = useWebSocket();
   const queryClient = useQueryClient();
   const optionsRef = useRef(options);
 
@@ -110,5 +110,5 @@ export function useSessionEvents(sessionId: string, options: UseSessionEventsOpt
     };
   }, [socket, sessionId, queryClient]);
 
-  return { isConnected };
+  return { isConnected, isReconnecting, reconnectAttempts };
 }

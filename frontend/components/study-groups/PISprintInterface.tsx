@@ -22,7 +22,7 @@ export function PISprintInterface({ session }: PISprintInterfaceProps) {
   const [showSharedCards, setShowSharedCards] = useState(false);
   
   // WebSocket real-time connection
-  const { isConnected } = useSessionEvents(session.id, {
+  const { isConnected, isReconnecting, reconnectAttempts } = useSessionEvents(session.id, {
     onRoundAdvanced: (data) => {
       console.log('Round advanced in real-time:', data);
     },
@@ -44,6 +44,19 @@ export function PISprintInterface({ session }: PISprintInterfaceProps) {
   const canAdvance = mySessionMember?.assignedRole === 'FACILITATOR' || 
                      myGroupRole === 'OWNER' || 
                      myGroupRole === 'MOD';
+
+  // Connection status label
+  const connectionStatus = isReconnecting 
+    ? `Reconnecting${reconnectAttempts > 0 ? ` (${reconnectAttempts})` : '...'}` 
+    : isConnected 
+    ? 'Live' 
+    : 'Offline';
+  
+  const connectionColor = isReconnecting 
+    ? 'text-yellow-600' 
+    : isConnected 
+    ? 'text-green-600' 
+    : 'text-gray-400';
 
   const handleStartSession = async () => {
     try {
@@ -122,9 +135,15 @@ export function PISprintInterface({ session }: PISprintInterfaceProps) {
             )}
             
             {/* WebSocket Connection Status */}
-            <div className={`flex items-center gap-1 text-xs ${isConnected ? 'text-green-600' : 'text-gray-400'}`} title={isConnected ? 'Connected' : 'Disconnected'}>
-              {isConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-              <span>{isConnected ? 'Live' : 'Offline'}</span>
+            <div className={`flex items-center gap-1 text-xs ${connectionColor}`} title={connectionStatus}>
+              {isReconnecting ? (
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : isConnected ? (
+                <Wifi className="w-4 h-4" />
+              ) : (
+                <WifiOff className="w-4 h-4" />
+              )}
+              <span>{connectionStatus}</span>
             </div>
             
             {currentRound && currentRound.status !== 'DONE' && currentRound.status !== 'CREATED' && (
