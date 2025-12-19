@@ -8,6 +8,8 @@ import { useAuthStore } from '@/stores/auth-store';
 import api from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { Loader2, Lock, Mail } from 'lucide-react';
+import OAuthButton from '@/components/auth/OAuthButton';
+import { useOAuth } from '@/hooks/use-oauth';
 
 const loginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -21,6 +23,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const setAuth = useAuthStore((state) => state.setAuth);
   const router = useRouter();
+  const { loginWithGoogle, loginWithMicrosoft, isLoading: oauthLoading } = useOAuth();
 
   const {
     register,
@@ -56,6 +59,32 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-white p-8 shadow rounded-lg border border-gray-100">
+          {/* OAuth Buttons */}
+          <div className="space-y-3 mb-6">
+            <OAuthButton
+              provider="google"
+              onClick={loginWithGoogle}
+              isLoading={oauthLoading}
+            />
+            <OAuthButton
+              provider="microsoft"
+              onClick={loginWithMicrosoft}
+              isLoading={oauthLoading}
+            />
+          </div>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white text-gray-500">
+                Ou continue com email
+              </span>
+            </div>
+          </div>
+
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">

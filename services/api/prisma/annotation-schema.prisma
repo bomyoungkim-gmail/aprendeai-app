@@ -1,0 +1,51 @@
+// Annotation model for collaborative annotations
+model Annotation {
+  id            String                @id @default(uuid())
+  contentId     String                @map("content_id")
+  content       Content               @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  
+  userId        String                @map("user_id")
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type          AnnotationType
+  
+  // Position in document
+  startOffset   Int                   @map("start_offset")
+  endOffset     Int                   @map("end_offset")
+  selectedText  String?               @map("selected_text")
+  
+  // Annotation content
+  text          String?
+  color         String?               // For highlights: yellow, green, blue, pink
+  
+  // Visibility
+  visibility    AnnotationVisibility
+  groupId       String?               @map("group_id")
+  group         StudyGroup?           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  
+  // Comment threading
+  parentId      String?               @map("parent_id")
+  parent        Annotation?           @relation("AnnotationReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies       Annotation[]          @relation("AnnotationReplies")
+  
+  // Metadata
+  createdAt     DateTime              @default(now()) @map("created_at")
+  updatedAt     DateTime              @updatedAt @map("updated_at")
+  
+  @@index([contentId])
+  @@index([userId])
+  @@index([groupId])
+  @@map("annotations")
+}
+
+enum AnnotationType {
+  HIGHLIGHT
+  NOTE
+  COMMENT
+}
+
+enum AnnotationVisibility {
+  PRIVATE
+  GROUP
+  PUBLIC
+}

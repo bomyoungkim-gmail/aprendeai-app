@@ -67,4 +67,73 @@ export class AuthService {
       return result;
     });
   }
+
+  /**
+   * Validate OAuth user - create new or link to existing account
+   */
+  async validateOAuthUser(oauthData: {
+    oauthId: string;
+    oauthProvider: string;
+    email: string;
+    name?: string;
+    picture?: string;
+  }) {
+    // Check if user exists with this OAuth ID
+    let user = await this.prisma.user.findFirst({
+      where: {
+        oauthProvider: oauthData.oauthProvider,
+        oauthId: oauthData.oauthId,
+      },
+    });
+
+    if (user) {
+      // Update picture if changed
+      if (oauthData.picture && user.oauthPicture !== oauthData.picture) {
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: { oauthPicture: oauthData.picture },
+        });
+      }
+      return user;
+    }
+
+    // Check if user exists with this email
+    user = await this.prisma.user.findUnique({
+      where: { email: oauthData.email },
+    });
+
+    if (user) {
+      // Link OAuth to existing account
+      return this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          oauthProvider: oauthData.oauthProvider,
+          oauthId: oauthData.oauthId,
+          oauthPicture: oauthData.picture,
+        },
+      });
+    }
+
+    // Create new user with OAuth
+    return this.prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          email: oauthData.email,
+          name: oauthData.name || oauthData.email.split('@')[0],
+          oauthProvider: oauthData.oauthProvider,
+          oauthId: oauthData.oauthId,
+          oauthPicture: oauthData.picture,
+          role: UserRole.COMMON_USER,
+          schoolingLevel: 'ADULT',
+          status: 'ACTIVE',
+          passwordHash: null, // No password for OAuth users
+        },
+      });
+
+      // Create FREE subscription automatically
+      await this.subscriptionService.createFreeSubscription(newUser.id, tx);
+
+      return newUser;
+    });
+  }
 }

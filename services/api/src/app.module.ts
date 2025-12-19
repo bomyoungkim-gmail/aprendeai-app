@@ -24,6 +24,8 @@ import { AssetsModule } from './assets/assets.module';
 import { StudyGroupsModule } from './study-groups/study-groups.module';
 // WebSocket Module
 import { WebSocketModule } from './websocket/websocket.module';
+import { HealthModule } from './health/health.module';
+import { AnnotationModule } from './annotations/annotation.module';
 
 @Module({
   imports: [
@@ -38,6 +40,7 @@ import { WebSocketModule } from './websocket/websocket.module';
     GamificationModule,
     AnalyticsModule,
     AdminModule,
+    HealthModule,
     // V4 SRS Modules
     SrsModule,
     VocabModule,
@@ -48,6 +51,8 @@ import { WebSocketModule } from './websocket/websocket.module';
     StudyGroupsModule,
     // WebSocket for real-time
     WebSocketModule,
+    // Collaborative Annotations
+    AnnotationModule,
   ],
   controllers: [AppController],
   providers: [

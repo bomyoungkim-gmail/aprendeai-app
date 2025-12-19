@@ -36,7 +36,10 @@ describe('Cornell Notes Integration Tests', () => {
       data: {
         email: `cornell-test-${Date.now()}@example.com`,
         name: 'Cornell Test User',
-        emailVerified: new Date(),
+        passwordHash: 'hash',
+        role: 'COMMON_USER',
+        schoolingLevel: 'ADULT',
+        status: 'ACTIVE',
       },
     });
     testUserId = user.id;
@@ -44,7 +47,7 @@ describe('Cornell Notes Integration Tests', () => {
     // Create test content
     const content = await prisma.content.create({
       data: {
-        userId: testUserId,
+        ownerUserId: testUserId,
         title: 'Cornell Test Content',
         type: 'PDF',
         originalLanguage: 'EN',
@@ -102,7 +105,7 @@ describe('Cornell Notes Integration Tests', () => {
     beforeEach(async () => {
       // Clean existing notes
       await prisma.cornellNote.deleteMany({
-        where: { contentId: testContentId },
+        where: { userId: testUserId },
       });
     });
     

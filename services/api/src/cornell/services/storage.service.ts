@@ -107,8 +107,36 @@ export class StorageService {
       .slice(0, 255);               // Limit to 255 chars
   }
 
+  /**
+   * Save uploaded file to local storage
+   * TODO: For production, migrate to S3 for scalability and redundancy
+   * 
+   * @param file - Multer file object
+   * @returns storageKey - Unique key to identify the file
+   */
+  async saveFile(file: Express.Multer.File): Promise<string> {
+    const uploadPath = this.config.get('STORAGE_LOCAL_PATH', './uploads');
+
+    // Create uploads directory if not exists
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+
+    // Generate unique filename with timestamp and random string
+    const ext = path.extname(file.originalname);
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 10);
+    const storageKey = `${timestamp}-${randomStr}${ext}`;
+    const filePath = path.join(uploadPath, storageKey);
+
+    // Write file to disk
+    await fs.promises.writeFile(filePath, file.buffer);
+
+    return storageKey;
+  }
+
   async getUploadUrl(key: string, contentType: string): Promise<{ url: string; key: string }> {
-    // Stub for uploads - used by other parts of the system
+    // Legacy stub - keeping for backwards compatibility
     const baseUrl = this.config.get('STORAGE_BASE_URL', 'http://localhost:3000');
     return {
       url: `${baseUrl}/api/uploads/${key}`,

@@ -1,0 +1,33 @@
+model SharedCard {
+  id              String   @id @default(uuid())
+  sessionId       String   @map("session_id")
+  roundId         String   @unique @map("round_id")
+  createdByUserId String   @map("created_by_user_id")
+  cardJson        Json     @map("card_json")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  session GroupSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  round   GroupRound   @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("shared_cards")
+}
+
+model GroupChatMessage {
+  id        String   @id @default(cuid())
+  sessionId String   @map("session_id")
+  roundId   String   @map("round_id")
+  userId    String   @map("user_id")
+  message   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  session GroupSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  round   GroupRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  user    User @relation(fields: [userId], references: [id])
+
+  @@index([sessionId, roundId], map: "group_chat_messages_session_id_round_id_idx")
+  @@index([createdAt], map: "group_chat_messages_created_at_idx")
+  @@map("group_chat_messages")
+}
+
+// ===== Study Groups Enums =====

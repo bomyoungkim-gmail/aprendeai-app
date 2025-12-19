@@ -25,20 +25,32 @@ model Institution {
 }
 
 model User {
-  id                  String               @id @default(uuid())
-  institutionId       String?              @map("institution_id")
-  name                String
-  email               String               @unique
-  passwordHash        String               @map("password_hash")
-  role                UserRole
-  schoolingLevel      String               @map("schooling_level")
-  age                 Int?
-  sex                 String?
-  preferredLanguages  Json                 @default("[]") @map("preferred_languages")
-  createdAt           DateTime             @default(now()) @map("created_at")
-  updatedAt           DateTime             @updatedAt @map("updated_at")
-  lastLoginAt         DateTime?            @map("last_login_at")
-  status              String               @default("ACTIVE")
+  id            String  @id @default(uuid())
+  institutionId String? @map("institution_id")
+  name          String
+  email         String  @unique
+  passwordHash  String? @map("password_hash") // Optional for OAuth users
+
+  // OAuth fields
+  oauthProvider String? @map("oauth_provider") // 'google' | 'microsoft'
+  oauthId       String? @map("oauth_id") // Provider's user ID
+  oauthPicture  String? @map("oauth_picture") // Profile picture URL
+
+  role               UserRole
+  schoolingLevel     String    @map("schooling_level")
+  age                Int?
+  sex                String?
+  preferredLanguages Json      @default("[]") @map("preferred_languages")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  lastLoginAt        DateTime? @map("last_login_at")
+  status             String    @default("ACTIVE")
+
+  // Profile fields
+  avatarUrl String? @map("avatar_url")
+  bio       String?
+  settings  Json?   @default("{}")
+
   assessmentAttempts  AssessmentAttempt[]
   enrollments         ClassStudent[]
   createdContents     Content[]            @relation("ContentCreator")
@@ -62,7 +74,12 @@ model User {
   ownedGroups         StudyGroup[]         @relation("GroupOwner")
   groupMemberships    StudyGroupMember[]
   groupSessionMembers GroupSessionMember[]
+  chatMessages        GroupChatMessage[]
 
+  // Collaborative Annotations
+  annotations Annotation[]
+
+  @@unique([oauthProvider, oauthId])
   @@map("users")
 }
 
@@ -167,6 +184,11 @@ model Content {
   groupContents GroupContent[]
   groupSessions GroupSession[]
 
+  // Collaborative Annotations
+  annotations Annotation[]
+
+  @@index([title])
+  @@index([ownerUserId])
   @@map("contents")
 }
 
@@ -1030,10 +1052,11 @@ model StudyGroup {
   name        String
   createdAt   DateTime           @default(now()) @map("created_at")
 
-  owner    User               @relation("GroupOwner", fields: [ownerUserId], references: [id])
-  members  StudyGroupMember[]
-  contents GroupContent[]
-  sessions GroupSession[]
+  owner       User               @relation("GroupOwner", fields: [ownerUserId], references: [id])
+  members     StudyGroupMember[]
+  contents    GroupContent[]
+  sessions    GroupSession[]
+  annotations Annotation[]
 
   @@index([ownerUserId])
   @@index([scopeType, scopeId])
@@ -1080,12 +1103,13 @@ model GroupSession {
   endsAt    DateTime?          @map("ends_at")
   createdAt DateTime           @default(now()) @map("created_at")
 
-  group      StudyGroup           @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  content    Content              @relation(fields: [contentId], references: [id])
-  members    GroupSessionMember[]
-  rounds     GroupRound[]
-  events     GroupEvent[]
-  SharedCard SharedCard[]
+  group        StudyGroup           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  content      Content              @relation(fields: [contentId], references: [id])
+  members      GroupSessionMember[]
+  rounds       GroupRound[]
+  events       GroupEvent[]
+  SharedCard   SharedCard[]
+  chatMessages GroupChatMessage[]
 
   @@index([groupId])
   @@index([status])
@@ -1115,9 +1139,10 @@ model GroupRound {
   status     RoundStatus @default(CREATED)
   createdAt  DateTime    @default(now()) @map("created_at")
 
-  session    GroupSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  events     GroupEvent[]
-  sharedCard SharedCard?
+  session      GroupSession       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  events       GroupEvent[]
+  sharedCard   SharedCard?
+  chatMessages GroupChatMessage[]
 
   @@unique([sessionId, roundIndex])
   @@index([sessionId])
@@ -1155,6 +1180,23 @@ model SharedCard {
 
   @@index([sessionId])
   @@map("shared_cards")
+}
+
+model GroupChatMessage {
+  id        String   @id @default(cuid())
+  sessionId String   @map("session_id")
+  roundId   String   @map("round_id")
+  userId    String   @map("user_id")
+  message   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  session GroupSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  round   GroupRound   @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id])
+
+  @@index([sessionId, roundId], map: "group_chat_messages_session_id_round_id_idx")
+  @@index([createdAt], map: "group_chat_messages_created_at_idx")
+  @@map("group_chat_messages")
 }
 
 // ===== Study Groups Enums =====
@@ -1199,4 +1241,59 @@ enum RoundStatus {
   REVOTING
   EXPLAINING
   DONE
+}
+
+// ====================================================================
+// COLLABORATIVE ANNOTATIONS
+// ====================================================================
+
+model Annotation {
+  id        String  @id @default(uuid())
+  contentId String  @map("content_id")
+  content   Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type AnnotationType
+
+  // Position in document
+  startOffset  Int     @map("start_offset")
+  endOffset    Int     @map("end_offset")
+  selectedText String? @map("selected_text")
+
+  // Annotation content
+  text  String?
+  color String? // For highlights: yellow, green, blue, pink
+
+  // Visibility
+  visibility AnnotationVisibility
+  groupId    String?              @map("group_id")
+  group      StudyGroup?          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  // Comment threading
+  parentId String?      @map("parent_id")
+  parent   Annotation?  @relation("AnnotationReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Annotation[] @relation("AnnotationReplies")
+
+  // Metadata
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([contentId])
+  @@index([userId])
+  @@index([groupId])
+  @@map("annotations")
+}
+
+enum AnnotationType {
+  HIGHLIGHT
+  NOTE
+  COMMENT
+}
+
+enum AnnotationVisibility {
+  PRIVATE
+  GROUP
+  PUBLIC
 }

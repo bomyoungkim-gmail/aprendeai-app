@@ -1,12 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { StreakCard } from '@/components/streak-card';
 import { DailyGoalCard } from '@/components/daily-goal-card';
 import { ContentItem } from '@/components/content-item';
-import { Loader2, BookOpen } from 'lucide-react';
+import { ContentUploadModal } from '@/components/content/ContentUploadModal';
+import { Loader2, BookOpen, Upload } from 'lucide-react';
 
 type GamificationData = {
   dailyActivity: {
@@ -101,6 +103,7 @@ export default function DashboardPage() {
               Estude seus conteúdos com o método Cornell de anotações
             </p>
           </div>
+          <CornellReaderSection />
         </div>
 
         <CornellReaderSection />
@@ -111,13 +114,41 @@ export default function DashboardPage() {
 
 // Cornell Reader Section Component
 function CornellReaderSection() {
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  
   const { data: contents, isLoading } = useQuery({
-    queryKey: ['cornell-contents'],
+    queryKey: ['cornell-contents', 'my-contents'],
     queryFn: async () => {
       const res = await api.get('/contents/my-contents');
       return res.data;
     },
   });
+
+  return (
+    <>
+      {/* Upload Button */}
+      <button
+        onClick={() => setShowUploadModal(true)}
+        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+      >
+        <Upload className="w-4 h-4" />
+        Fazer Upload
+      </button>
+
+      {/* Upload Modal */}
+      <ContentUploadModal 
+        isOpen={showUploadModal} 
+        onClose={() => setShowUploadModal(false)} 
+      />
+
+      {/* Content List */}
+      <ContentList contents={contents} isLoading={isLoading} />
+    </>
+  );
+}
+
+// Separated Content List for cleaner code
+function ContentList({ contents, isLoading }: { contents: any; isLoading: boolean }) {
 
   if (isLoading) {
     return (
@@ -129,18 +160,18 @@ function CornellReaderSection() {
 
   if (!contents || contents.length === 0) {
     return (
-      <div className="text-center py-12 bg-gray-50 rounded-lg">
+      <div className="text-center py-12 bg-gray-50 rounded-lg mt-4">
         <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-        <p className="text-gray-600 text-sm">
-          Nenhum conteúdo disponível
+        <p className="text-gray-600 text-sm mb-4">
+          Nenhum conteúdo disponível. Faça upload do seu primeiro arquivo!
         </p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {contents.slice(0, 6).map((content: any) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+      {contents.map((content: any) => (
         <ContentItem key={content.id} content={content} />
       ))}
     </div>

@@ -6,10 +6,9 @@ import {
   OnGatewayDisconnect,
   ConnectedSocket,
   MessageBody,
-  UseGuards,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import { WsJwtGuard } from './guards/ws-jwt.guard';
 
 @WebSocketGateway({
@@ -91,5 +90,11 @@ export class StudyGroupsWebSocketGateway
       timestamp: new Date().toISOString(),
     });
     this.logger.log(`Emitted ${event} to session ${sessionId}`);
+  }
+
+  // Helper method to emit events to a group (for annotations, chat, etc)
+  emitToGroup(groupId: string, event: string, data: any) {
+    this.server.to(`group:${groupId}`).emit(event, data);
+    this.logger.debug(`Emitted ${event} to group ${groupId}`);
   }
 }

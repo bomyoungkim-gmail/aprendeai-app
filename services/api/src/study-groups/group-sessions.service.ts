@@ -3,6 +3,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { StudyGroupsService } from './study-groups.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { GroupSession, SessionRole } from '@prisma/client';
+import { StudyGroupsWebSocketGateway } from '../websocket/study-groups-ws.gateway';
+import { StudyGroupEvent } from '../websocket/events';
 
 @Injectable()
 export class GroupSessionsService {
@@ -11,6 +13,7 @@ export class GroupSessionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly studyGroupsService: StudyGroupsService,
+    private readonly wsGateway: StudyGroupsWebSocketGateway,
   ) {}
 
   async createSession(groupId: string, userId: string, dto: CreateSessionDto): Promise<GroupSession> {
@@ -120,6 +123,13 @@ export class GroupSessionsService {
         status: 'RUNNING',
         startsAt: new Date(),
       },
+    });
+
+    // Emit WebSocket event for real-time update
+    this.wsGateway.emitToSession(sessionId, StudyGroupEvent.SESSION_STARTED, {
+      sessionId,
+      status: 'RUNNING',
+      startedBy: userId,
     });
 
     this.logger.log(`Started session ${sessionId}`);

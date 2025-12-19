@@ -1,9 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Request, Res, UseGuards, SetMetadata } from '@nestjs/common';
+import { 
+  Body, Controller, Delete, Get, Param, Post, Put, Request, Res, Query,
+  UseGuards, SetMetadata, UseInterceptors, UploadedFile, BadRequestException 
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { QuotaGuard } from '../common/guards/quota.guard';
 import { CornellService } from './cornell.service';
 import { StorageService } from './services/storage.service';
+import { ContentService } from './services/content.service';
 import { CreateHighlightDto, UpdateCornellDto, UpdateHighlightDto } from './dto/cornell.dto';
+import { UploadContentDto } from './dto/upload-content.dto';
+import { SearchContentDto } from './dto/search-content.dto';
 
 @Controller('contents')
 @UseGuards(AuthGuard('jwt'))
@@ -11,11 +18,63 @@ export class CornellController {
   constructor(
     private cornellService: CornellService,
     private storageService: StorageService,
+    private contentService: ContentService,
   ) {}
 
   @Get('my-contents')
   async getMyContents(@Request() req) {
     return this.cornellService.getMyContents(req.user.id);
+  }
+
+  /**
+   * Upload new content file (PDF, DOCX, TXT)
+   * Max size: 20MB
+   */
+  @Post('upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+      fileFilter: (req, file, cb) => {
+        const allowed = [
+          'application/pdf',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'text/plain',
+        ];
+        
+        if (allowed.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(new BadRequestException('Only PDF, DOCX, and TXT files are allowed'), false);
+        }
+      },
+    }),
+  )
+  async uploadContent(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() dto: UploadContentDto,
+    @Request() req,
+  ) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
+    return this.contentService.uploadContent(file, dto, req.user.id);
+  }
+
+  /**
+   * Search content
+   */
+  @Get('search')
+  async searchContent(
+    @Query() dto: SearchContentDto,
+    @Request() req,
+  ) {
+    return this.contentService.searchContent(dto.q, {
+      type: dto.type,
+      language: dto.language,
+      page: dto.page,
+      limit: dto.limit,
+    }, req.user.id);
   }
 
   @Get('files/:id/proxy')

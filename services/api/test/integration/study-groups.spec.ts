@@ -38,7 +38,9 @@ describe('Study Groups API (Integration)', () => {
         email: 'test-groups@example.com',
         name: 'Test User',
         passwordHash: 'hash', // In real test, use bcrypt
-        role: 'USER',
+        role: 'COMMON_USER',
+        schoolingLevel: 'ADULT',
+        status: 'ACTIVE',
       },
       update: {},
     });
@@ -57,8 +59,9 @@ describe('Study Groups API (Integration)', () => {
       data: {
         title: 'Test Content for Groups',
         type: 'PDF',
-        uploadedByUserId: userId,
-        storageUrl: 'test.pdf',
+        ownerUserId: userId,
+        originalLanguage: 'EN',
+        rawText: 'Test content for groups',
       },
     });
 
@@ -128,8 +131,10 @@ describe('Study Groups API (Integration)', () => {
         data: {
           email: 'user2-groups@example.com',
           name: 'User 2',
-          passwordHash: 'hash',
-          role: 'USER',
+          passwordHash: 'hashed',
+          role: 'COMMON_USER',
+          schoolingLevel: 'ADULT',
+          status: 'ACTIVE',
         },
       });
 
@@ -172,8 +177,9 @@ describe('Study Groups API (Integration)', () => {
         data: {
           title: 'Content 2',
           type: 'PDF',
-          uploadedByUserId: userId,
-          storageUrl: 'test2.pdf',
+          ownerUserId: userId,
+          originalLanguage: 'EN',
+          rawText: 'Test content 2 text',
         },
       });
 
@@ -207,7 +213,9 @@ describe('Study Groups API (Integration)', () => {
           email: 'member2-groups@example.com',
           name: 'Member 2',
           passwordHash: 'hash',
-          role: 'USER',
+          role: 'COMMON_USER',
+          schoolingLevel: 'ADULT',
+          status: 'ACTIVE',
         },
         update: {},
       });
@@ -313,7 +321,7 @@ describe('Study Groups API (Integration)', () => {
       // Get all members and submit votes for them
       const session = await prisma.groupSession.findUnique({
         where: { id: sessionId },
-        include: { members: true },
+        include: { members: true, rounds: true },
       });
 
       // Submit votes for all members who haven't voted
@@ -389,7 +397,9 @@ describe('Study Groups API (Integration)', () => {
           email: 'member-only@example.com',
           name: 'Member Only',
           passwordHash: 'hash',
-          role: 'USER',
+          role: 'COMMON_USER',
+          schoolingLevel: 'ADULT',
+          status: 'ACTIVE',
         },
       });
 

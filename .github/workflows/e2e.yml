@@ -1,0 +1,110 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: aprendeai_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      # Backend setup
+      - name: Install backend dependencies
+        working-directory: services/api
+        run: npm ci
+      
+      - name: Run Prisma migrations
+        working-directory: services/api
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aprendeai_test
+        run: npx prisma migrate deploy
+      
+      - name: Seed E2E test users
+        working-directory: services/api
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aprendeai_test
+        run: npm run seed:e2e
+      
+      - name: Start backend
+        working-directory: services/api
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aprendeai_test
+          JWT_SECRET: test-secret-key-for-ci
+          NODE_ENV: test
+          PORT: 8000
+        run: npm run start:dev &
+      
+      # Frontend setup
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      
+      - name: Start frontend
+        working-directory: frontend
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+          PORT: 3000
+        run: npm run dev &
+      
+      # Wait for servers
+      - name: Install wait-on
+        run: npm install -g wait-on
+      
+      - name: Wait for backend
+        run: wait-on http://localhost:8000/health --timeout 60000 || echo "Backend health check not available, continuing..."
+      
+      - name: Wait for frontend
+        run: wait-on http://localhost:3000 --timeout 60000
+      
+      # Install Playwright
+      - name: Install Playwright
+        working-directory: services/api
+        run: npx playwright install --with-deps chromium
+      
+      # Run E2E tests
+      - name: Run Playwright tests
+        working-directory: services/api
+        run: npm run playwright
+      
+      # Upload artifacts on failure
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: services/api/test-results/
+          retention-days: 7
+      
+      - name: Upload screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-screenshots
+          path: services/api/test-results/**/*.png
+          retention-days: 7

@@ -14,6 +14,11 @@ import {
   useCornellAutosave,
   useSaveStatusWithOnline,
 } from '@/hooks';
+import { AnnotationToolbar } from '@/components/annotations/AnnotationToolbar';
+import { AnnotationsSidebar } from '@/components/annotations/AnnotationsSidebar';
+import { useTextSelection } from '@/hooks/use-text-selection';
+import { useCreateAnnotation } from '@/hooks/use-annotations';
+import { useStudySession } from '@/hooks/use-study-session';
 import type { ViewMode, CueItem, NoteItem, UpdateCornellDto } from '@/lib/types/cornell';
 
 interface ReaderPageProps {
@@ -24,7 +29,12 @@ interface ReaderPageProps {
 
 export default function ReaderPage({ params }: ReaderPageProps) {
   const [mode, setMode] = useState<ViewMode>('study');
+  const [showAnnotations, setShowAnnotations] = useState(true);
+  const [contentRef, setContentRef] = useState<HTMLElement | null>(null);
   const { toast, show: showToast, hide: hideToast } = useToast();
+
+  // Get study session context (will be null for solo study)
+  const { groupId, isInSession } = useStudySession();
 
   // Fetch data
   const { data: content, isLoading: contentLoading } = useContent(params.contentId);
@@ -34,6 +44,10 @@ export default function ReaderPage({ params }: ReaderPageProps) {
   // Mutations
   const updateMutation = useUpdateCornellNotes(params.contentId);
   const { mutateAsync: createHighlight } = useCreateHighlight(params.contentId);
+  const { mutateAsync: createAnnotation } = useCreateAnnotation(params.contentId);
+
+  // Text selection for annotations
+  const { selection, clearSelection } = useTextSelection(contentRef);
 
   // Autosave
   const { save, status: baseStatus, lastSaved } = useCornellAutosave({
@@ -64,6 +78,24 @@ export default function ReaderPage({ params }: ReaderPageProps) {
       }
     },
     [createHighlight, showToast]
+  );
+
+  // Annotation creation with feedback
+  const handleCreateAnnotation = useCallback(
+    async (annotationData: any) => {
+      try {
+        await createAnnotation({
+          contentId: params.contentId,
+          ...annotationData,
+        });
+        showToast('success', 'Annotation created!');
+        clearSelection();
+      } catch (error) {
+        showToast('error', 'Failed to create annotation');
+        throw error;
+      }
+    },
+    [createAnnotation, params.contentId, showToast, selection]
   );
 
   // Handlers
@@ -206,20 +238,79 @@ export default function ReaderPage({ params }: ReaderPageProps) {
 
   return (
     <>
-      <CornellLayout
-        title={content.title}
-        mode={mode}
-        onModeToggle={handleModeToggle}
-        saveStatus={status}
-        lastSaved={lastSaved}
-        cues={cornell?.cuesJson || []}
-        onCuesChange={handleCuesChange}
-        notes={cornell?.notesJson || []}
-        onNotesChange={handleNotesChange}
-        summary={cornell?.summaryText || ''}
-        onSummaryChange={handleSummaryChange}
-        viewer={renderViewer()}
-      />
+      <div className="relative h-screen flex">
+        {/* Main Content */}
+        <div className={`flex-1 transition-all duration-300 ${showAnnotations ? 'mr-80' : 'mr-0'}`}>
+          <CornellLayout
+            title={content.title}
+            mode={mode}
+            onModeToggle={handleModeToggle}
+            saveStatus={status}
+            lastSaved={lastSaved}
+            cues={cornell?.cuesJson || []}
+            onCuesChange={handleCuesChange}
+            notes={cornell?.notesJson || []}
+            onNotesChange={handleNotesChange}
+            summary={cornell?.summaryText || ''}
+            onSummaryChange={handleSummaryChange}
+            viewer={
+              <div ref={(el) => setContentRef(el)}>
+                {renderViewer()}
+              </div>
+            }
+          />
+        </div>
+
+        {/* Annotation Toolbar - appears on text selection */}
+        {selection && (
+          <AnnotationToolbar
+            selection={selection}
+            onCreateAnnotation={(type, color, text) => {
+              handleCreateAnnotation({
+                type,
+                startOffset: selection.startOffset,
+                endOffset: selection.endOffset,
+                selectedText: selection.text,
+                color,
+                text,
+                visibility: 'PRIVATE',
+              });
+            }}
+            onClose={() => clearSelection()}
+          />
+        )}
+
+        {/* Annotations Sidebar */}
+        {showAnnotations && (
+          <div className="fixed right-0 top-0 h-full w-80 border-l border-gray-200 bg-white shadow-lg z-10">
+            <AnnotationsSidebar
+              contentId={params.contentId}
+              groupId={groupId} // ✅ Dynamic - null for solo, real ID for group
+            />
+          </div>
+        )}
+
+        {/* Toggle Annotations Button */}
+        <button
+          onClick={() => setShowAnnotations(!showAnnotations)}
+          className="fixed right-4 bottom-4 z-20 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+          title={showAnnotations ? 'Hide annotations' : 'Show annotations'}
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+            />
+          </svg>
+        </button>
+      </div>
 
       {/* Toast Notifications */}
       {toast && (

@@ -35,7 +35,10 @@ describe('Sessions Integration Tests', () => {
       data: {
         email: `test-${Date.now()}@example.com`,
         name: 'Test User',
-        emailVerified: new Date(),
+        passwordHash: 'hash',
+        role: 'COMMON_USER',
+        schoolingLevel: 'ADULT',
+        status: 'ACTIVE',
       },
     });
     testUserId = user.id;
@@ -45,14 +48,13 @@ describe('Sessions Integration Tests', () => {
       data: {
         userId: testUserId,
         dailyReviewCap: 20,
-        targetLanguage: 'PT',
       },
     });
     
     // Create test content
     const content = await prisma.content.create({
       data: {
-        userId: testUserId,
+        ownerUserId: testUserId,
         title: 'Test Content for Integration',
         type: 'PDF',
         originalLanguage: 'EN',
@@ -78,8 +80,8 @@ describe('Sessions Integration Tests', () => {
   
   afterAll(async () => {
     // Cleanup
-    await prisma.sessionEvent.deleteMany({ where: { readingSession: { userId: testUserId } } });
-    await prisma.sessionOutcome.deleteMany({ where: { readingSession: { userId: testUserId } } });
+    await prisma.sessionEvent.deleteMany({ where: { readingSessionId: { in: await prisma.readingSession.findMany({ where: { userId: testUserId }, select: { id: true } }).then(s => s.map(x => x.id)) } } });
+    await prisma.sessionOutcome.deleteMany({ where: { readingSessionId: { in: await prisma.readingSession.findMany({ where: { userId: testUserId }, select: { id: true } }).then(s => s.map(x => x.id)) } } });
     await prisma.readingSession.deleteMany({ where: { userId: testUserId } });
     await prisma.contentChunk.deleteMany({ where: { contentId: testContentId } });
     await prisma.cornellNote.deleteMany({ where: { userId: testUserId } });
@@ -123,7 +125,6 @@ describe('Sessions Integration Tests', () => {
       await prisma.cornellNote.create({
         data: {
           userId: testUserId,
-          contentId: testContentId,
           readingSessionId: sessionId,
           mainNotes: {},
         },
@@ -177,7 +178,7 @@ describe('Sessions Integration Tests', () => {
       await prisma.cornellNote.updateMany({
         where: { readingSessionId: sessionId },
         data: {
-          summaryText: 'This is a comprehensive summary of what I learned from this integration test.',
+          summary: 'This is a comprehensive summary of what I learned from this integration test.',
         },
       });
       

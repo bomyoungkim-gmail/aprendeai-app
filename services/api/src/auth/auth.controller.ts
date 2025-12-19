@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, Get, UnauthorizedException, Logger } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Get, UnauthorizedException, Logger, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -43,5 +43,39 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   getProfile(@Request() req) {
     return req.user;
+  }
+
+  // Google OAuth
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Initiate Google OAuth login' })
+  googleLogin() {
+    // Redirects to Google
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Google OAuth callback' })
+  async googleCallback(@Request() req, @Res() res) {
+    const token = await this.authService.login(req.user);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/auth/callback?token=${token.access_token}`);
+  }
+
+  // Microsoft OAuth
+  @Get('microsoft')
+  @UseGuards(AuthGuard('microsoft'))
+  @ApiOperation({ summary: 'Initiate Microsoft OAuth login' })
+  microsoftLogin() {
+    // Redirects to Microsoft
+  }
+
+  @Get('microsoft/callback')
+  @UseGuards(AuthGuard('microsoft'))
+  @ApiOperation({ summary: 'Microsoft OAuth callback' })
+  async microsoftCallback(@Request() req, @Res() res) {
+    const token = await this.authService.login(req.user);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/auth/callback?token=${token.access_token}`);
   }
 }
