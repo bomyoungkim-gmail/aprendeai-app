@@ -3,6 +3,6 @@
 @tailwind utilities;
 
 /* React PDF styles */
-@import 'react-pdf/dist/Page/AnnotationLayer.css';
-@import 'react-pdf/dist/Page/TextLayer.css';
-
+/* Commented out - causing build errors, react-pdf works without these */
+/* @import 'react-pdf/dist/Page/AnnotationLayer.css'; */
+/* @import 'react-pdf/dist/Page/TextLayer.css'; */
