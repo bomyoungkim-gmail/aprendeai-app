@@ -336,5 +336,51 @@
                       - text: OWNER
                     - generic [ref=e389]: •
                     - generic [ref=e390]: ACTIVE
-  - alert [ref=e391]
+            - generic [ref=e391]:
+              - generic [ref=e392]:
+                - generic [ref=e393]:
+                  - link "Invite Test Fam" [ref=e394] [cursor=pointer]:
+                    - /url: /settings/family/87e9e504-f547-4aec-8110-b092708f63a5
+                    - heading "Invite Test Fam" [level=3] [ref=e395]
+                  - paragraph [ref=e396]: Created on 12/20/2025
+                - generic [ref=e397]:
+                  - link "View Dashboard" [ref=e398] [cursor=pointer]:
+                    - /url: /settings/family/87e9e504-f547-4aec-8110-b092708f63a5
+                  - button "Invite" [ref=e399] [cursor=pointer]:
+                    - img [ref=e400]
+                    - text: Invite
+              - generic [ref=e405]:
+                - img [ref=e407]
+                - generic [ref=e410]:
+                  - paragraph [ref=e411]: E2E Facilitator(You)
+                  - generic [ref=e412]:
+                    - generic [ref=e413]:
+                      - img [ref=e414]
+                      - text: OWNER
+                    - generic [ref=e416]: •
+                    - generic [ref=e417]: ACTIVE
+            - generic [ref=e418]:
+              - generic [ref=e419]:
+                - generic [ref=e420]:
+                  - link "Second Family for Primary Test" [ref=e421] [cursor=pointer]:
+                    - /url: /settings/family/e563de31-b831-4e51-9a3f-0113010b1521
+                    - heading "Second Family for Primary Test" [level=3] [ref=e422]
+                  - paragraph [ref=e423]: Created on 12/20/2025
+                - generic [ref=e424]:
+                  - link "View Dashboard" [ref=e425] [cursor=pointer]:
+                    - /url: /settings/family/e563de31-b831-4e51-9a3f-0113010b1521
+                  - button "Invite" [ref=e426] [cursor=pointer]:
+                    - img [ref=e427]
+                    - text: Invite
+              - generic [ref=e432]:
+                - img [ref=e434]
+                - generic [ref=e437]:
+                  - paragraph [ref=e438]: E2E Facilitator(You)
+                  - generic [ref=e439]:
+                    - generic [ref=e440]:
+                      - img [ref=e441]
+                      - text: OWNER
+                    - generic [ref=e443]: •
+                    - generic [ref=e444]: ACTIVE
+  - alert [ref=e445]
 ```

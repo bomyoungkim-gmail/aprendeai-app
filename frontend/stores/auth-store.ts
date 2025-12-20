@@ -6,6 +6,10 @@ interface User {
   email: string;
   name: string;
   role: string;
+  settings?: {
+    primaryFamilyId?: string;
+    [key: string]: any;
+  };
 }
 
 interface AuthState {

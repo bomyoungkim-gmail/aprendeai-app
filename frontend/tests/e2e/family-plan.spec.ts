@@ -70,15 +70,6 @@ test.describe('Family Plan Features', () => {
   });
 
   test('can navigate to family dashboard and view analytics', async ({ page }) => {
-    // Listen to console logs
-    const logs: string[] = [];
-    page.on('console', msg => {
-      const text = msg.text();
-      logs.push(text);
-      // Print ALL console logs to see debug data
-      console.log('📱 BROWSER:', text);
-    });
-
     await page.goto('/settings/family');
 
     // Ensure we have a family
