@@ -83,5 +83,28 @@
                       - text: OWNER
                     - generic [ref=e92]: •
                     - generic [ref=e93]: ACTIVE
-  - alert [ref=e94]
+            - generic [ref=e94]:
+              - generic [ref=e95]:
+                - generic [ref=e96]:
+                  - link "Invite Test Fam" [ref=e97] [cursor=pointer]:
+                    - /url: /settings/family/52f8e22b-8e60-4daf-8a08-e621d3042a0d
+                    - heading "Invite Test Fam" [level=3] [ref=e98]
+                  - paragraph [ref=e99]: Created on 12/20/2025
+                - generic [ref=e100]:
+                  - link "View Dashboard" [ref=e101] [cursor=pointer]:
+                    - /url: /settings/family/52f8e22b-8e60-4daf-8a08-e621d3042a0d
+                  - button "Invite" [ref=e102] [cursor=pointer]:
+                    - img [ref=e103]
+                    - text: Invite
+              - generic [ref=e108]:
+                - img [ref=e110]
+                - generic [ref=e113]:
+                  - paragraph [ref=e114]: E2E Facilitator(You)
+                  - generic [ref=e115]:
+                    - generic [ref=e116]:
+                      - img [ref=e117]
+                      - text: OWNER
+                    - generic [ref=e119]: •
+                    - generic [ref=e120]: ACTIVE
+  - alert [ref=e121]
 ```

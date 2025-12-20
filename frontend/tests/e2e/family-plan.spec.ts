@@ -85,6 +85,7 @@ test.describe('Family Plan Features', () => {
 
     // Click View Dashboard
     await page.getByText('View Dashboard').first().click();
+    await page.waitForURL(/\/settings\/family\/[a-zA-Z0-9-]+/);
 
     // Check dashboard URL
     await expect(page).toHaveURL(/\/settings\/family\/[a-zA-Z0-9-]+/);
@@ -112,6 +113,7 @@ test.describe('Family Plan Features', () => {
         await page.waitForTimeout(1000);
      }
      await page.getByText('View Dashboard').first().click();
+     await page.waitForURL(/\/settings\/family\/[a-zA-Z0-9-]+/);
 
      // Click Invite
      await page.getByTestId('invite-member-btn').click();
@@ -144,6 +146,7 @@ test.describe('Family Plan Features', () => {
      await page.goto('/settings/family');
      const allDashboards = page.getByText('View Dashboard');
      await allDashboards.nth(1).click(); // Click second family
+     await page.waitForURL(/\/settings\/family\/[a-zA-Z0-9-]+/);
      
      // Should have "Set as Primary" button since this is not the primary family
      page.on('dialog', dialog => dialog.accept());
@@ -157,6 +160,7 @@ test.describe('Family Plan Features', () => {
   test('can invite member with auto-provisioning warning', async ({ page }) => {
      await page.goto('/settings/family');
      await page.getByText('View Dashboard').first().click();
+     await page.waitForURL(/\/settings\/family\/[a-zA-Z0-9-]+/);
      await page.getByTestId('invite-member-btn').click();
 
      // Check for the warning text about placeholder accounts
