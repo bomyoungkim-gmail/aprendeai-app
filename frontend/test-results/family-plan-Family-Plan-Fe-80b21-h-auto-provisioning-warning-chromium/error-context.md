@@ -1141,5 +1141,28 @@
                       - text: OWNER
                     - generic [ref=e1334]: •
                     - generic [ref=e1335]: ACTIVE
-  - alert [ref=e1336]
+            - generic [ref=e1336]:
+              - generic [ref=e1337]:
+                - generic [ref=e1338]:
+                  - link "Second Family for Primary Test" [ref=e1339] [cursor=pointer]:
+                    - /url: /settings/family/34289150-e398-4c83-ae0f-29f7847bd295
+                    - heading "Second Family for Primary Test" [level=3] [ref=e1340]
+                  - paragraph [ref=e1341]: Created on 12/20/2025
+                - generic [ref=e1342]:
+                  - link "View Dashboard" [ref=e1343] [cursor=pointer]:
+                    - /url: /settings/family/34289150-e398-4c83-ae0f-29f7847bd295
+                  - button "Invite" [ref=e1344] [cursor=pointer]:
+                    - img [ref=e1345]
+                    - text: Invite
+              - generic [ref=e1350]:
+                - img [ref=e1352]
+                - generic [ref=e1355]:
+                  - paragraph [ref=e1356]: E2E Facilitator(You)
+                  - generic [ref=e1357]:
+                    - generic [ref=e1358]:
+                      - img [ref=e1359]
+                      - text: OWNER
+                    - generic [ref=e1361]: •
+                    - generic [ref=e1362]: ACTIVE
+  - alert [ref=e1363]
 ```

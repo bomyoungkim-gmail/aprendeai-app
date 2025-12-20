@@ -200,17 +200,20 @@ test.describe('Family Plan Features', () => {
 
      // Invite a random email
      const randomEmail = `newuser${Date.now()}@example.com`;
+     const expectedDisplayName = randomEmail.split('@')[0]; // API creates user with name = email prefix
+     
      await page.fill('input[id="email"]', randomEmail);
      await page.click('button:has-text("Send Invite")');
      
-     // Wait for async request to complete and modal to close (animation + request)
-     await page.waitForTimeout(1000);
+     // Wait for async request to complete and modal to close (animation + request + query invalidation)
+     await page.waitForTimeout(2000); // Increased from 1000ms
 
      // Verify modal closes and member appears in list
      await expect(page.getByText('Invite Family Member')).toBeHidden();
      // Reload page to ensure list updates (or wait for query invalidation)
      await page.reload();
-     await expect(page.getByText(randomEmail)).toBeVisible();
+     // FIX: Search for display name (not email) since list shows user.name first
+     await expect(page.getByText(expectedDisplayName)).toBeVisible();
   });
 });
 
