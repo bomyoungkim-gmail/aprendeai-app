@@ -17,35 +17,7 @@ export default function FamilyDashboard({ params }: { params: { id: string } }) 
   const setPrimary = useSetPrimaryFamily();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
-  // 🔴 DEBUG useEffect (must be before early returns)
-  useEffect(() => {
-    if (!family || !user) return; // Guard inside useEffect is OK
-    
-    console.log('🔴 DASHBOARD RENDER CHECK:');
-    console.log('1. user:', user);
-    console.log('2. user.settings:', user?.settings);
-    
-    const myMembership = family.members.find(m => m.userId === user?.id);
-    const canManage = myMembership?.role === 'OWNER' || myMembership?.role === 'ADMIN';
-    
-    console.log('3. canManage:', canManage);
-    console.log('4. myMembership:', myMembership);
-    console.log('5. family.id:', family.id);
-    console.log('6. primaryFamilyId:', (user?.settings as any)?.primaryFamilyId);
-    console.log('7. Invite button SHOULD render:', canManage);
-    console.log('8. Set Primary SHOULD render:', (user?.settings as any)?.primaryFamilyId !== family.id);
-    
-    // Check if elements exist in DOM
-    setTimeout(() => {
-      const inviteBtn = document.querySelector('[data-testid="invite-member-btn"]');
-      console.log('9. DOM Check - Invite button exists:', !!inviteBtn);
-      if (!inviteBtn && canManage) {
-        console.error('❌ PROBLEM: canManage is TRUE but button NOT in DOM!');
-      }
-    }, 100);
-  }, [family, user]);
-
-  // ===== NOW EARLY RETURNS (after all hooks) =====
+  // Early returns
   if (familyLoading || usageLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -136,6 +108,7 @@ export default function FamilyDashboard({ params }: { params: { id: string } }) 
                {/* Set Primary Button */}
                {(user?.settings as any)?.primaryFamilyId !== family.id && (
                   <button
+                    data-testid="set-primary-btn"
                     onClick={handleSetPrimary}
                     className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-700 px-2 py-1 bg-blue-50 rounded border border-blue-200"
                   >

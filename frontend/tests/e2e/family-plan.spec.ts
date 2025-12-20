@@ -165,7 +165,7 @@ test.describe('Family Plan Features', () => {
        await page.waitForTimeout(500); // Wait for page to fully load
        
        // Check if "Set as Primary" button exists on this page
-       const setPrimaryBtn = page.getByText('Set as Primary', { exact: false });
+       const setPrimaryBtn = page.getByTestId('set-primary-btn');
        const hasSetPrimaryBtn = await setPrimaryBtn.count() > 0;
        
        if (hasSetPrimaryBtn) {
