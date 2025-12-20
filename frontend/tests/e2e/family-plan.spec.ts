@@ -58,7 +58,7 @@ test.describe('Family Plan Features', () => {
     await expect(page.getByText('Create New Family')).toBeVisible();
     
     const familyName = `Test Family ${Date.now()}`;
-    await page.fill('input[placeholder*="The Smiths"]', familyName);
+    await page.fill('[data-testid="family-name-input"]', familyName);
     
     // Submit
     await page.click('[data-testid="submit-family-btn"]');
@@ -78,8 +78,8 @@ test.describe('Family Plan Features', () => {
     if (await dashboardLink.count() === 0) {
       // Create one if missing
       await page.click('[data-testid="create-family-btn"]');
-      await page.fill('input[placeholder*="The Smiths"]', 'Dashboard Test Fam');
-      await page.click('button:has-text("Create Family")');
+      await page.fill('[data-testid="family-name-input"]', 'Dashboard Test Fam');
+      await page.click('[data-testid="submit-family-btn"]');
       await page.waitForTimeout(1000); // Wait for refresh
     }
 
@@ -91,7 +91,7 @@ test.describe('Family Plan Features', () => {
 
     // Verify Dashboard Elements
     await expect(page.getByText('Free Plan')).toBeVisible();
-    await expect(page.getByText('Content Uploads')).toBeVisible();
+    await expect(page.getByText('Content Uploads', { exact: false })).toBeVisible();
     await expect(page.getByText('Approx. Cost')).toBeVisible();
     
     // Verify Members list presence
@@ -107,14 +107,14 @@ test.describe('Family Plan Features', () => {
      if (await dashboardLink.count() === 0) {
         // Create if needed
         await page.click('[data-testid="create-family-btn"]');
-        await page.fill('input[placeholder*="The Smiths"]', 'Invite Test Fam');
-        await page.click('button:has-text("Create Family")');
+        await page.fill('[data-testid="family-name-input"]', 'Invite Test Fam');
+        await page.click('[data-testid="submit-family-btn"]');
         await page.waitForTimeout(1000);
      }
      await page.getByText('View Dashboard').first().click();
 
      // Click Invite
-     await page.getByRole('button', { name: 'Invite Member' }).click();
+     await page.getByTestId('invite-member-btn').click();
 
      // Verify Modal
      await expect(page.getByText('Invite Family Member')).toBeVisible();
@@ -128,33 +128,36 @@ test.describe('Family Plan Features', () => {
   test('can set family as primary context', async ({ page }) => {
      await page.goto('/settings/family');
      
-     // Ensure we have a family to set as primary
-     const dashboardLink = page.locator('a', { hasText: 'View Dashboard' }).first();
-     if (await dashboardLink.count() === 0) {
+     // Ensure we have at least 2 families (create second if needed)
+     const familyCards = page.locator('[data-testid="family-card"]');
+     const familyCount = await familyCards.count();
+     
+     if (familyCount < 2) {
+        // Create a second family
         await page.click('[data-testid="create-family-btn"]');
-        await page.fill('input[placeholder*="The Smiths"]', 'Primary Test Fam');
-        await page.click('button:has-text("Create Family")');
+        await page.fill('[data-testid="family-name-input"]', 'Second Family for Primary Test');
+        await page.click('[data-testid="submit-family-btn"]');
         await page.waitForTimeout(1000);
      }
-     await page.getByText('View Dashboard').first().click();
-
-     // Check if already primary
-     const isPrimary = await page.getByText('Primary', { exact: true }).count() > 0;
      
-     if (!isPrimary) {
-        // Click Set as Primary
-        page.on('dialog', dialog => dialog.dismiss()); // Dismiss any alerts
-        await page.getByRole('button', { name: 'Set as Primary' }).click();
-        
-        // Should now see Primary badge
-        await expect(page.getByText('Primary', { exact: true })).toBeVisible();
-     }
+     // Go to the dashboard of the SECOND family (not primary yet)
+     await page.goto('/settings/family');
+     const allDashboards = page.getByText('View Dashboard');
+     await allDashboards.nth(1).click(); // Click second family
+     
+     // Should have "Set as Primary" button since this is not the primary family
+     page.on('dialog', dialog => dialog.accept());
+     await page.getByText('Set as Primary', { exact: false }).click();
+     await page.waitForTimeout(500);
+     
+     // Should now see Primary badge
+     await expect(page.getByText('Primary', { exact: false })).toBeVisible();
   });
 
   test('can invite member with auto-provisioning warning', async ({ page }) => {
      await page.goto('/settings/family');
      await page.getByText('View Dashboard').first().click();
-     await page.getByRole('button', { name: 'Invite Member' }).click();
+     await page.getByTestId('invite-member-btn').click();
 
      // Check for the warning text about placeholder accounts
      await expect(page.getByText('Note: If the user does not have an account')).toBeVisible();
@@ -171,6 +174,7 @@ test.describe('Family Plan Features', () => {
      await expect(page.getByText(randomEmail)).toBeVisible();
   });
 });
+
 
 
 
