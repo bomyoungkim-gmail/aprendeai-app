@@ -173,6 +173,9 @@ test.describe('Family Plan Features', () => {
      const randomEmail = `newuser${Date.now()}@example.com`;
      await page.fill('input[id="email"]', randomEmail);
      await page.click('button:has-text("Send Invite")');
+     
+     // Wait for async request to complete and modal to close (animation + request)
+     await page.waitForTimeout(1000);
 
      // Verify modal closes and member appears in list
      await expect(page.getByText('Invite Family Member')).toBeHidden();

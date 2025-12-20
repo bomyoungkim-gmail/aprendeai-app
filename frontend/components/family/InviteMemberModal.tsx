@@ -15,18 +15,22 @@ interface InviteMemberModalProps {
 export function InviteMemberModal({ familyId, isOpen, onClose }: InviteMemberModalProps) {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<FamilyRole>('MEMBER');
+  const [error, setError] = useState<string | null>(null);
   const inviteMember = useInviteMember();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null); // Clear previous errors
     
     try {
       await inviteMember.mutateAsync({ familyId, dto: { email, role } });
       setEmail('');
       setRole('MEMBER');
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to invite member:', error);
+      const errorMsg = error?.response?.data?.message || error?.message || 'Failed to send invite';
+      setError(errorMsg);
     }
   };
 
@@ -103,6 +107,12 @@ export function InviteMemberModal({ familyId, isOpen, onClose }: InviteMemberMod
                     Note: If the user does not have an account, a placeholder account will be created and they will need to reset their password to log in.
                   </p>
                 </div>
+                
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-sm text-red-600">{error}</p>
+                  </div>
+                )}
 
                 <div className="flex justify-end gap-2">
                   <button
