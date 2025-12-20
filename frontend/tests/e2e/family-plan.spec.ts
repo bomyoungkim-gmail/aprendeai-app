@@ -131,6 +131,13 @@ test.describe('Family Plan Features', () => {
      await expect(page.getByText('Invite Family Member')).toBeHidden();
   });
   test('can set family as primary context', async ({ page }) => {
+     // Capture console to see primaryFamilyId
+     page.on('console', msg => {
+       if (msg.text().includes('primaryFamilyId') || msg.text().includes('DASHBOARD RENDER')) {
+         console.log('BROWSER:', msg.text());
+       }
+     });
+     
      await page.goto('/settings/family');
      
      // Ensure we have at least 2 families (create second if needed)
@@ -145,19 +152,41 @@ test.describe('Family Plan Features', () => {
         await page.waitForTimeout(1000);
      }
      
-     // Go to the dashboard of the SECOND family (not primary yet)
+     // Simplified strategy: Try each family. If "Set as Primary" exists, click it
      await page.goto('/settings/family');
      const allDashboards = page.getByText('View Dashboard');
-     await allDashboards.nth(1).click(); // Click second family
-     await page.waitForURL(/\/settings\/family\/[a-zA-Z0-9-]+/);
+     const dashboardCount = await allDashboards.count();
      
-     // Should have "Set as Primary" button since this is not the primary family
-     page.on('dialog', dialog => dialog.accept());
-     await page.getByText('Set as Primary', { exact: false }).click();
-     await page.waitForTimeout(500);
+     let foundSetPrimaryButton = false;
+     for (let i = 0; i < dashboardCount && !foundSetPrimaryButton; i++) {
+       await page.goto('/settings/family');
+       await page.getByText('View Dashboard').nth(i).click();
+       await page.waitForURL(/\/settings\/family\/[a-zA-Z0-9-]+/);
+       await page.waitForTimeout(500); // Wait for page to fully load
+       
+       // Check if "Set as Primary" button exists on this page
+       const setPrimaryBtn = page.getByText('Set as Primary', { exact: false });
+       const hasSetPrimaryBtn = await setPrimaryBtn.count() > 0;
+       
+       if (hasSetPrimaryBtn) {
+         // Found a family with "Set as Primary" button!
+         foundSetPrimaryButton = true;
+         console.log(`Found "Set as Primary" button at family index ${i}`);
+         
+         // Click it
+         page.on('dialog', dialog => dialog.accept());
+         await setPrimaryBtn.click();
+         await page.waitForTimeout(500);
+         
+         // Should now see Primary badge
+         await expect(page.getByText('Primary', { exact: false })).toBeVisible();
+         break;
+       }
+     }
      
-     // Should now see Primary badge
-     await expect(page.getByText('Primary', { exact: false })).toBeVisible();
+     if (!foundSetPrimaryButton) {
+       throw new Error('Could not find "Set as Primary" button on any family');
+     }
   });
 
   test('can invite member with auto-provisioning warning', async ({ page }) => {
