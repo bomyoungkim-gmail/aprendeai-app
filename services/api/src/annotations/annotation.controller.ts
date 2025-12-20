@@ -1,6 +1,8 @@
-import { Controller, Post, Get, Put, Delete, Patch, Param, Body, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Put, Delete, Patch, Param, Body, Query, Res, UseGuards, Request } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { AnnotationService } from './annotation.service';
+import { AnnotationExportService } from './annotation-export.service';
 import { CreateAnnotationDto, UpdateAnnotationDto } from './dto/annotation.dto';
 import { SearchAnnotationsDto } from './dto/search-annotations.dto';
 import { CreateReplyDto } from './dto/create-reply.dto';
@@ -47,7 +49,10 @@ export class AnnotationController {
 @Controller('annotations')
 @UseGuards(AuthGuard('jwt'))
 export class AnnotationSearchController {
-  constructor(private annotationService: AnnotationService) {}
+  constructor(
+    private annotationService: AnnotationService,
+    private exportService: AnnotationExportService,
+  ) {}
 
   @Get('search')
   search(@Query() params: SearchAnnotationsDto, @Request() req) {
@@ -66,5 +71,26 @@ export class AnnotationSearchController {
   @Patch(':id/favorite')
   toggleFavorite(@Param('id') id: string, @Request() req) {
     return this.annotationService.toggleFavorite(id, req.user.id);
+  }
+
+  @Get('export')
+  async exportAnnotations(
+    @Query('format') format: 'pdf' | 'markdown' = 'pdf',
+    @Request() req,
+    @Res() res: Response,
+  ) {
+    const userId = req.user.id;
+
+    if (format === 'pdf') {
+      const pdf = await this.exportService.exportToPDF(userId);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename=annotations.pdf');
+      return res.send(pdf);
+    } else {
+      const markdown = await this.exportService.exportToMarkdown(userId);
+      res.setHeader('Content-Type', 'text/markdown');
+      res.setHeader('Content-Disposition', 'attachment; filename=annotations.md');
+      return res.send(markdown);
+    }
   }
 }
