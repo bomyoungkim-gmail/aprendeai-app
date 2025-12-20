@@ -1,20 +1,18 @@
 import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { WebSocketGateway } from '../websocket/websocket.gateway';
+import { StudyGroupsWebSocketGateway } from '../websocket/study-groups-ws.gateway';
 import { EmailService } from '../email/email.service';
-import {
-  CreateGroupDto,
-  UpdateGroupDto,
-  InviteMemberDto,
-  UpdateMemberRoleDto,
-} from './dto/study-groups.dto';
+import { CreateGroupDto } from './dto/create-group.dto';
+import { UpdateGroupDto } from './dto/update-group.dto'; // Wait, I didn't see update-group.dto in list?
+import { InviteMemberDto } from './dto/invite-member.dto';
+import { UpdateMemberRoleDto } from './dto/update-member-role.dto'; // Didn't see this one either
 import { GroupRole, StudyGroup, StudyGroupMember } from '@prisma/client';
 
 @Injectable()
 export class StudyGroupsService {
   constructor(
     private prisma: PrismaService,
-    private websocketGateway: WebSocketGateway,
+    private websocketGateway: StudyGroupsWebSocketGateway,
     private emailService: EmailService,
   ) {}
 

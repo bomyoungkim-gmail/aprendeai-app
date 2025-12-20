@@ -1,5 +1,6 @@
 import { Module, Global } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
+import { AdminModule } from '../admin/admin.module';
 import { BillingService } from './billing.service';
 import { SubscriptionService } from './subscription.service';
 import { EntitlementsService } from './entitlements.service';
@@ -11,7 +12,7 @@ import { UserBillingController } from './user-billing.controller';
 
 @Global()
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, AdminModule],
   controllers: [BillingController, UserBillingController],
   providers: [
     BillingService,

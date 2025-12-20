@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { SubscriptionScope, Environment } from '@prisma/client';
+import { ScopeType, Environment } from '@prisma/client';
 
 @Injectable()
 export class UsageTrackingService {
@@ -10,7 +10,7 @@ export class UsageTrackingService {
    * Track usage event
    */
   async trackUsage(data: {
-    scopeType: SubscriptionScope;
+    scopeType: ScopeType;
     scopeId: string;
     metric: string;
     quantity: number;
@@ -44,7 +44,7 @@ export class UsageTrackingService {
    * Get current usage for scope
    */
   async getCurrentUsage(
-    scopeType: SubscriptionScope,
+    scopeType: ScopeType,
     scopeId: string,
     metric: string,
     range: 'today' | '7d' | '30d' = 'today',
@@ -96,7 +96,7 @@ export class UsageTrackingService {
    * Get usage stats (all metrics)
    */
   async getUsageStats(
-    scopeType: SubscriptionScope,
+    scopeType: ScopeType,
     scopeId: string,
     range: 'today' | '7d' | '30d' = 'today',
   ) {
@@ -160,7 +160,7 @@ export class UsageTrackingService {
    * Get usage by provider
    */
   async getUsageByProvider(
-    scopeType: SubscriptionScope,
+    scopeType: ScopeType,
     scopeId: string,
     range: 'today' | '7d' | '30d' = '30d',
   ) {

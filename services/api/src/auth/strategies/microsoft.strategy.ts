@@ -11,11 +11,11 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
     private authService: AuthService,
   ) {
     super({
-      clientID: config.get('MICROSOFT_CLIENT_ID'),
-      clientSecret: config.get('MICROSOFT_CLIENT_SECRET'),
-      callbackURL: config.get('MICROSOFT_CALLBACK_URL', 'http://localhost:8000/auth/microsoft/callback'),
+      clientID: config.get('MICROSOFT_CLIENT_ID') || 'dummy-client-id',
+      clientSecret: config.get('MICROSOFT_CLIENT_SECRET') || 'dummy-secret',
+      callbackURL: config.get('MICROSOFT_CALLBACK_URL', 'http://localhost:4000/auth/microsoft/callback'),
       scope: ['user.read'],
-      tenant: 'common', // Multi-tenant
+      tenant: config.get('MICROSOFT_TENANT', 'common'),
     });
   }
 

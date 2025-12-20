@@ -51,24 +51,30 @@ model User {
   bio       String?
   settings  Json?   @default("{}")
 
+  // Relations
   assessmentAttempts  AssessmentAttempt[]
   enrollments         ClassStudent[]
-  createdContents     Content[]            @relation("ContentCreator")
-  ownedContents       Content[]            @relation("ContentOwner")
-  cornellNotesEntries CornellNotes[]       @relation("UserCornellNotes")
+  createdContents     Content[]           @relation("ContentCreator")
+  ownedContents       Content[]           @relation("ContentOwner")
+  cornellNotesEntries CornellNotes[]      @relation("UserCornellNotes")
   dailyActivities     DailyActivity[]
   dailyGoals          DailyGoal[]
-  highlights          Highlight[]          @relation("UserHighlights")
-  cornellNotes        CornellNote[]
-  readingSessions     ReadingSession[]
-  streak              Streak?
-  assignedBadges      UserBadge[]
-  libraryItems        UserLibraryItem[]
-  roleAssignments     UserRoleAssignment[] @relation("UserRoles")
-  vocabularyEntries   UserVocabulary[]
-  layerEligibility    LayerEligibility?
-  institution         Institution?         @relation(fields: [institutionId], references: [id])
-  LearnerProfile      LearnerProfile[]
+  usageEvents         UsageEvent[]
+
+  // Family Relations
+  ownedFamilies     Family[]             @relation("FamilyOwner")
+  memberships       FamilyMember[]
+  highlights        Highlight[]          @relation("UserHighlights")
+  cornellNotes      CornellNote[]
+  readingSessions   ReadingSession[]
+  streak            Streak?
+  assignedBadges    UserBadge[]
+  libraryItems      UserLibraryItem[]
+  roleAssignments   UserRoleAssignment[] @relation("UserRoles")
+  vocabularyEntries UserVocabulary[]
+  layerEligibility  LayerEligibility?
+  institution       Institution?         @relation(fields: [institutionId], references: [id])
+  LearnerProfile    LearnerProfile[]
 
   // Study Groups relations
   ownedGroups         StudyGroup[]         @relation("GroupOwner")
@@ -147,38 +153,44 @@ model LessonProgress {
 }
 
 model Content {
-  id               String              @id @default(uuid())
-  institutionId    String?             @map("institution_id")
+  id               String      @id @default(uuid())
+  institutionId    String?     @map("institution_id")
   type             ContentType
-  sourceId         String?             @map("source_id")
+  sourceId         String?     @map("source_id")
   title            String
-  originalLanguage Language            @map("original_language")
-  rawText          String              @map("raw_text")
+  originalLanguage Language    @map("original_language")
+  rawText          String      @map("raw_text")
   metadata         Json?
-  createdBy        String?             @map("created_by")
-  createdAt        DateTime            @default(now()) @map("created_at")
-  updatedAt        DateTime            @updatedAt @map("updated_at")
-  fileId           String?             @map("file_id")
-  languageGuess    String?             @map("language_guess")
-  ownerUserId      String?             @map("owner_user_id")
-  scopeType        SubscriptionScope?
-  scopeId          String?             @map("scope_id")
-  sourceUrl        String?             @map("source_url")
-  assessments      Assessment[]
-  extractions      ContentExtraction[]
-  versions         ContentVersion[]
-  creator          User?               @relation("ContentCreator", fields: [createdBy], references: [id])
-  file             File?               @relation(fields: [fileId], references: [id])
-  institution      Institution?        @relation(fields: [institutionId], references: [id])
-  ownerUser        User?               @relation("ContentOwner", fields: [ownerUserId], references: [id])
-  cornellNotes     CornellNotes[]
-  highlights       Highlight[]
-  chunks           ContentChunk[]
-  learningAssets   LearningAsset[]
-  lessons          Lesson[]
-  UserLibraryItem  UserLibraryItem[]
-  ReadingSession   ReadingSession[]
-  UserVocabulary   UserVocabulary[]
+  createdBy        String?     @map("created_by")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+
+  // Scope / Sharing
+  scopeType ScopeType @default(USER) @map("scope_type")
+  familyId  String?   @map("family_id")
+  family    Family?   @relation(fields: [familyId], references: [id])
+
+  fileId          String?             @map("file_id")
+  languageGuess   String?             @map("language_guess")
+  ownerUserId     String?             @map("owner_user_id")
+  // scopeType removed (duplicate)
+  scopeId         String?             @map("scope_id")
+  sourceUrl       String?             @map("source_url")
+  assessments     Assessment[]
+  extractions     ContentExtraction[]
+  versions        ContentVersion[]
+  creator         User?               @relation("ContentCreator", fields: [createdBy], references: [id])
+  file            File?               @relation(fields: [fileId], references: [id])
+  institution     Institution?        @relation(fields: [institutionId], references: [id])
+  ownerUser       User?               @relation("ContentOwner", fields: [ownerUserId], references: [id])
+  cornellNotes    CornellNotes[]
+  highlights      Highlight[]
+  chunks          ContentChunk[]
+  learningAssets  LearningAsset[]
+  lessons         Lesson[]
+  UserLibraryItem UserLibraryItem[]
+  ReadingSession  ReadingSession[]
+  UserVocabulary  UserVocabulary[]
 
   // Study Groups relations
   groupContents GroupContent[]
@@ -611,7 +623,7 @@ model Plan {
 
 model Subscription {
   id                     String             @id @default(uuid())
-  scopeType              SubscriptionScope  @map("scope_type")
+  scopeType              ScopeType          @map("scope_type")
   scopeId                String             @map("scope_id")
   planId                 String             @map("plan_id")
   status                 SubscriptionStatus
@@ -636,7 +648,7 @@ model Subscription {
 
 model EntitlementOverride {
   id        String            @id @default(uuid())
-  scopeType SubscriptionScope @map("scope_type")
+  scopeType ScopeType         @map("scope_type")
   scopeId   String            @map("scope_id")
   overrides Json
   reason    String
@@ -652,7 +664,7 @@ model UsageEvent {
   id            String            @id @default(uuid())
   environment   Environment
   occurredAt    DateTime          @map("occurred_at")
-  scopeType     SubscriptionScope @map("scope_type")
+  scopeType     ScopeType         @map("scope_type")
   scopeId       String            @map("scope_id")
   providerCode  String?           @map("provider_code")
   endpoint      String?
@@ -663,6 +675,7 @@ model UsageEvent {
   userId        String?           @map("user_id")
   metadata      Json?
   createdAt     DateTime          @default(now()) @map("created_at")
+  User          User?             @relation(fields: [userId], references: [id])
 
   @@index([scopeType, scopeId, metric, occurredAt])
   @@index([occurredAt])
@@ -855,6 +868,7 @@ enum ScopeType {
   GLOBAL
   INSTITUTION
   USER
+  FAMILY
 }
 
 enum Environment {
@@ -924,10 +938,7 @@ enum ConfigType {
   SECRET_REF
 }
 
-enum SubscriptionScope {
-  USER
-  INSTITUTION
-}
+
 
 enum SubscriptionStatus {
   ACTIVE
@@ -1055,12 +1066,12 @@ enum AssetLayer {
 // ===== Study Groups Models (Script 1/3) =====
 
 model StudyGroup {
-  id          String             @id @default(uuid())
-  ownerUserId String             @map("owner_user_id")
-  scopeType   SubscriptionScope? @map("scope_type")
-  scopeId     String?            @map("scope_id")
+  id          String     @id @default(uuid())
+  ownerUserId String     @map("owner_user_id")
+  scopeType   ScopeType? @map("scope_type")
+  scopeId     String?    @map("scope_id")
   name        String
-  createdAt   DateTime           @default(now()) @map("created_at")
+  createdAt   DateTime   @default(now()) @map("created_at")
 
   owner       User               @relation("GroupOwner", fields: [ownerUserId], references: [id])
   members     StudyGroupMember[]
@@ -1285,7 +1296,7 @@ model Annotation {
   parentId String?      @map("parent_id")
   parent   Annotation?  @relation("AnnotationReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies  Annotation[] @relation("AnnotationReplies")
-  
+
   // Favorites
   isFavorite Boolean @default(false) @map("is_favorite")
 
@@ -1310,3 +1321,53 @@ enum AnnotationVisibility {
   GROUP
   PUBLIC
 }
+
+// --- FAMILY PLAN MODELS ---
+
+enum FamilyRole {
+  OWNER
+  GUARDIAN
+  CHILD
+}
+
+enum FamilyMemberStatus {
+  INVITED
+  ACTIVE
+  REMOVED
+}
+
+model Family {
+  id       String  @id @default(uuid())
+  name     String
+  joinCode String? @unique @map("join_code")
+  ownerId  String  @map("owner_id")
+  owner    User    @relation("FamilyOwner", fields: [ownerId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  members      FamilyMember[]
+  contents     Content[]
+  // entitlements removed (using Subscription model)
+
+  @@map("families")
+}
+
+model FamilyMember {
+  id       String             @id @default(uuid())
+  familyId String             @map("family_id")
+  userId   String             @map("user_id")
+  role     FamilyRole
+  status   FamilyMemberStatus @default(INVITED)
+
+  displayName String?  @map("display_name")
+  joinedAt    DateTime @default(now()) @map("joined_at")
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([familyId, userId])
+  @@map("family_members")
+}
+
+// Entitlement model removed

@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { User, Bell, Lock, Settings as SettingsIcon } from 'lucide-react';
+import { User, Bell, Lock, Settings as SettingsIcon, Users } from 'lucide-react';
 
 const settingsNav = [
   { name: 'Account', href: '/settings/account', icon: User },
   { name: 'Notifications', href: '/settings/notifications', icon: Bell },
   { name: 'Privacy', href: '/settings/privacy', icon: Lock },
+  { name: 'Family', href: '/settings/family', icon: Users },
 ];
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {

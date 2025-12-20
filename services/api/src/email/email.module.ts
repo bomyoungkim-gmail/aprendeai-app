@@ -10,9 +10,14 @@ import { PrismaModule } from '../prisma/prisma.module';
 @Module({
   imports: [
     PrismaModule,
-    BullModule.registerQueue({
-      name: 'email',
-    }),
+    // BullModule temporarily disabled for local dev without Redis
+    // BullModule.registerQueue({
+    //   name: 'email',
+    //   connection: {
+    //     host: process.env.REDIS_HOST || 'localhost',
+    //     port: parseInt(process.env.REDIS_PORT || '6379'),
+    //   },
+    // }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { SubscriptionScope, SubscriptionStatus } from '@prisma/client';
+import { ScopeType, SubscriptionStatus } from '@prisma/client';
 import { BillingService } from './billing.service';
 
 @Injectable()
@@ -48,9 +48,46 @@ export class SubscriptionService {
   }
 
   /**
+   * Create initial/free subscription for any scope
+   */
+  async createInitialSubscription(scopeType: ScopeType, scopeId: string, tx?: any) {
+    const prisma = tx || this.prisma;
+
+    // Get FREE plan
+    const freePlan = await this.billingService.getPlanByCode('FREE');
+
+    // Check if scope already has active subscription
+    const existing = await prisma.subscription.findFirst({
+      where: {
+        scopeType,
+        scopeId,
+        status: { in: ['ACTIVE', 'TRIALING'] },
+      },
+    });
+
+    if (existing) {
+      return existing; // Idempotent
+    }
+
+    // Create FREE subscription
+    return prisma.subscription.create({
+      data: {
+        scopeType,
+        scopeId,
+        planId: freePlan.id,
+        status: 'ACTIVE',
+        source: 'INTERNAL',
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: null, // FREE has no period
+        cancelAtPeriodEnd: false,
+      },
+    });
+  }
+
+  /**
    * Get active subscription (NO FALLBACK - throws if missing)
    */
-  async getActiveSubscription(scopeType: SubscriptionScope, scopeId: string) {
+  async getActiveSubscription(scopeType: ScopeType, scopeId: string) {
     const subscription = await this.prisma.subscription.findFirst({
       where: {
         scopeType,
@@ -77,7 +114,7 @@ export class SubscriptionService {
   /**
    * Check if has active subscription (boolean check)
    */
-  async hasActiveSubscription(scopeType: SubscriptionScope, scopeId: string): Promise<boolean> {
+  async hasActiveSubscription(scopeType: ScopeType, scopeId: string): Promise<boolean> {
     const count = await this.prisma.subscription.count({
       where: {
         scopeType,
@@ -93,7 +130,7 @@ export class SubscriptionService {
    * Assign plan manually (Admin upgrade/downgrade)
    */
   async assignPlan(
-    scopeType: SubscriptionScope,
+    scopeType: ScopeType,
     scopeId: string,
     planCode: string,
     adminUserId: string,
@@ -210,7 +247,7 @@ export class SubscriptionService {
    * Get subscriptions (admin query)
    */
   async getSubscriptions(filters?: {
-    scopeType?: SubscriptionScope;
+    scopeType?: ScopeType;
     scopeId?: string;
     status?: SubscriptionStatus;
     planId?: string;

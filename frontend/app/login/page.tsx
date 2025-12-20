@@ -96,6 +96,7 @@ export default function LoginPage() {
                 </div>
                 <input
                   id="email"
+                  data-testid="email"
                   type="email"
                   className="block w-full rounded-md border border-gray-300 py-2 pl-10 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   placeholder="seu@email.com"
@@ -117,6 +118,7 @@ export default function LoginPage() {
                 </div>
                 <input
                   id="password"
+                  data-testid="password"
                   type="password"
                   className="block w-full rounded-md border border-gray-300 py-2 pl-10 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   placeholder="******"
@@ -132,6 +134,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
+              data-testid="login-btn"
               disabled={isLoading}
               className="flex w-full justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >

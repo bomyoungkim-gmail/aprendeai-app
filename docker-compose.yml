@@ -61,9 +61,11 @@ services:
     ports:
       - "4000:4000"
     volumes:
-      - ./services/api:/app
+      # DO NOT bind mount ./services/api:/app - it overwrites Linux-compiled bcrypt with Windows binary!
+      # For development, rebuild image instead of using bind mounts for native modules
+      # - ./services/api:/app
       - ./db/schema.prisma:/app/prisma/schema.prisma
-      - /app/node_modules
+      - /app/node_modules  # Protects node_modules from being overwritten
     environment:
       NODE_ENV: development
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-aprendeai}

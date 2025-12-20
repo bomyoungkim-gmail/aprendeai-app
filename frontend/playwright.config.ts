@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: '../services/api/test/e2e',
+  testDir: './tests/e2e',
   fullyParallel: false, // Sequential for WebSocket tests
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

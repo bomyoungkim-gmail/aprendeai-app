@@ -31,6 +31,35 @@ const E2E_USERS = [
     role: 'COMMON_USER',
     schoolingLevel: 'UNIVERSITY',
   },
+  // Family Plan E2E test users
+  {
+    email: 'owner@family-test.com',
+    password: 'Test123!@#',
+    name: 'Family Owner',
+    role: 'COMMON_USER',
+    schoolingLevel: 'UNDERGRADUATE',
+  },
+  {
+    email: 'existing@family-test.com',
+    password: 'Test123!@#',
+    name: 'Existing User',
+    role: 'COMMON_USER',
+    schoolingLevel: 'UNDERGRADUATE',
+  },
+  {
+    email: 'nonowner@family-test.com',
+    password: 'Test123!@#',
+    name: 'Non Owner',
+    role: 'COMMON_USER',
+    schoolingLevel: 'UNDERGRADUATE',
+  },
+  {
+    email: 'outsider@family-test.com',
+    password: 'Test123!@#',
+    name: 'Outsider',
+    role: 'COMMON_USER',
+    schoolingLevel: 'UNDERGRADUATE',
+  },
 ];
 
 async function main() {

@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Put, Delete, UseGuards, Request, Param, Query, Body } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminService } from './admin.service';
+import { SecretService } from './services/secret.service';
 import { Roles } from './decorators/roles.decorator';
 import { RolesGuard } from './guards/roles.guard';
 import { UserRole } from '@prisma/client';
@@ -25,7 +26,7 @@ import {
 export class AdminController {
   constructor(
     private adminService: AdminService,
-    private secretService: any, // SecretService
+    private secretService: SecretService,
   ) {}
 
   // ========================================

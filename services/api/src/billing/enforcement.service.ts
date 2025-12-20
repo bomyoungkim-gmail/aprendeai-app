@@ -1,6 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { SubscriptionScope, Environment } from '@prisma/client';
+import { ScopeType, Environment } from '@prisma/client';
 import { EntitlementsService } from './entitlements.service';
 
 export class LimitExceededException extends HttpException {
@@ -50,7 +50,7 @@ export class EnforcementService {
   * Require feature (throws if disabled)
    */
   async requireFeature(
-    scopeType: SubscriptionScope,
+    scopeType: ScopeType,
     scopeId: string,
     featureKey: string,
     environment: Environment,
@@ -70,7 +70,7 @@ export class EnforcementService {
    * Enforce limit (throws if exceeded)
    */
   async enforceLimit(
-    scopeType: SubscriptionScope,
+    scopeType: ScopeType,
     scopeId: string,
     metric: string,
     quantity: number,
@@ -109,7 +109,7 @@ export class EnforcementService {
    * Get current usage for metric
    */
   private async getCurrentUsage(
-    scopeType: SubscriptionScope,
+    scopeType: ScopeType,
     scopeId: string,
     metric: string,
     environment: Environment,
@@ -153,7 +153,7 @@ export class EnforcementService {
    * Check if limit would be exceeded (without throwing)
    */
   async wouldExceedLimit(
-    scopeType: SubscriptionScope,
+    scopeType: ScopeType,
     scopeId: string,
     metric: string,
     quantity: number,
@@ -178,5 +178,54 @@ export class EnforcementService {
       }
       throw error;
     }
+  }
+
+
+  /**
+   * Enforce limit across hierarchy (returns effective scope)
+   * Tries scopes in order. Returns the first one that has quota/permission.
+   */
+  async enforceHierarchy(
+    hierarchy: { scopeType: ScopeType; scopeId: string }[],
+    metric: string,
+    quantity: number,
+    environment: Environment,
+  ): Promise<{ scopeType: ScopeType; scopeId: string }> {
+    let lastError: any;
+
+    for (const scope of hierarchy) {
+      try {
+        await this.enforceLimit(scope.scopeType, scope.scopeId, metric, quantity, environment);
+        return scope; // Success
+      } catch (error) {
+        // If limit exceeded or feature missing or subscription missing, try next
+        lastError = error;
+      }
+    }
+
+    // If we get here, all failed. Throw the last error (likely limit exceeded of the final fallback)
+    throw lastError || new LimitExceededException({ metric, limit: 0, current: 0 });
+  }
+
+  /**
+   * Require feature across hierarchy (returns effective scope)
+   */
+  async requireFeatureHierarchy(
+    hierarchy: { scopeType: ScopeType; scopeId: string }[],
+    featureKey: string,
+    environment: Environment,
+  ): Promise<{ scopeType: ScopeType; scopeId: string }> {
+    let lastError: any;
+
+    for (const scope of hierarchy) {
+      try {
+        await this.requireFeature(scope.scopeType, scope.scopeId, featureKey, environment);
+        return scope; // Found enabled
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw lastError || new FeatureDisabledException(featureKey);
   }
 }

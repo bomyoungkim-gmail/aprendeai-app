@@ -32,10 +32,15 @@ import { ActivityModule } from './activity/activity.module';
 import { EmailModule } from './email/email.module';
 import { RecommendationModule } from './recommendations/recommendation.module';
 import { SearchModule } from './search/search.module';
+import { FamilyModule } from './family/family.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env.local', '.env'], // .env.local takes precedence for local dev
+      cache: false, // Disable caching to ensure fresh values
+    }),
     PrismaModule,
     QueueModule, // Global queue service
     BillingModule, // Global billing services
@@ -63,6 +68,8 @@ import { SearchModule } from './search/search.module';
     WebSocketModule,
     // Collaborative Annotations
     AnnotationModule,
+    // Family Plan
+    FamilyModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,5 +1,5 @@
 import { IsString, IsEnum, IsOptional } from 'class-validator';
-import { Language, SubscriptionScope } from '@prisma/client';
+import { Language, ScopeType } from '@prisma/client';
 
 export class UploadContentDto {
   @IsString()
@@ -9,8 +9,8 @@ export class UploadContentDto {
   originalLanguage: Language;
 
   @IsOptional()
-  @IsEnum(SubscriptionScope)
-  scopeType?: SubscriptionScope;
+  @IsEnum(ScopeType)
+  scopeType?: ScopeType;
 
   @IsOptional()
   @IsString()

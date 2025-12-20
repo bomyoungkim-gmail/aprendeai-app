@@ -84,7 +84,7 @@ export class CornellController {
 
   @Get(':id')
   async getContent(@Param('id') id: string, @Request() req) {
-    return this.cornellService.getContent(id, req.user.id);
+    return this.contentService.getContent(id, req.user.id);
   }
 
   @Get(':id/cornell')

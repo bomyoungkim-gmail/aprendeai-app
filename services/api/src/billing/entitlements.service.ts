@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { SubscriptionScope, Environment } from '@prisma/client';
+import { ScopeType, Environment } from '@prisma/client';
 import { SubscriptionService } from './subscription.service';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class EntitlementsService {
    * Resolve entitlements for scope (NO IMPLICIT FALLBACK)
    * Throws InternalServerErrorException if no subscription found
    */
-  async resolve(scopeType: SubscriptionScope, scopeId: string, environment: Environment) {
+  async resolve(scopeType: ScopeType, scopeId: string, environment: Environment) {
     // 1. Get active subscription (throws if missing - NO FALLBACK)
     const subscription = await this.subscriptionService.getActiveSubscription(scopeType, scopeId);
 
@@ -77,7 +77,7 @@ export class EntitlementsService {
    * Set entitlement overrides (Admin only)
    */
   async setOverrides(
-    scopeType: SubscriptionScope,
+    scopeType: ScopeType,
     scopeId: string,
     overrides: any,
     reason: string,
@@ -109,7 +109,7 @@ export class EntitlementsService {
   /**
    * Remove overrides
    */
-  async removeOverrides(scopeType: SubscriptionScope, scopeId: string) {
+  async removeOverrides(scopeType: ScopeType, scopeId: string) {
     try {
       await this.prisma.entitlementOverride.delete({
         where: {
@@ -127,7 +127,7 @@ export class EntitlementsService {
   /**
    * Get overrides (if exist)
    */
-  async getOverrides(scopeType: SubscriptionScope, scopeId: string) {
+  async getOverrides(scopeType: ScopeType, scopeId: string) {
     return this.prisma.entitlementOverride.findUnique({
       where: {
         scopeType_scopeId: {

@@ -1,6 +1,6 @@
 import { IsString, IsOptional, IsNumber, IsBoolean, IsEnum, IsObject, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SubscriptionScope, SubscriptionStatus } from '@prisma/client';
+import { ScopeType, SubscriptionStatus } from '@prisma/client';
 
 // ========== Plans ==========
 
@@ -70,9 +70,9 @@ export class UpdatePlanDto {
 // ========== Subscriptions ==========
 
 export class AssignPlanDto {
-  @ApiProperty({ enum: SubscriptionScope })
-  @IsEnum(SubscriptionScope)
-  scopeType: SubscriptionScope;
+  @ApiProperty({ enum: ScopeType })
+  @IsEnum(ScopeType)
+  scopeType: ScopeType;
 
   @ApiProperty()
   @IsString()
@@ -103,10 +103,10 @@ export class CancelSubscriptionDto {
 }
 
 export class SubscriptionFilterDto {
-  @ApiPropertyOptional({ enum: SubscriptionScope })
+  @ApiPropertyOptional({ enum: ScopeType })
   @IsOptional()
-  @IsEnum(SubscriptionScope)
-  scopeType?: SubscriptionScope;
+  @IsEnum(ScopeType)
+  scopeType?: ScopeType;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -126,10 +126,12 @@ export class SubscriptionFilterDto {
 
 // ========== Entitlements ==========
 
+
+
 export class PreviewEntitlementsDto {
-  @ApiProperty({ enum: SubscriptionScope })
-  @IsEnum(SubscriptionScope)
-  scopeType: SubscriptionScope;
+  @ApiProperty({ enum: ScopeType })
+  @IsEnum(ScopeType)
+  scopeType: ScopeType;
 
   @ApiProperty()
   @IsString()
@@ -137,9 +139,9 @@ export class PreviewEntitlementsDto {
 }
 
 export class SetOverridesDto {
-  @ApiProperty({ enum: SubscriptionScope })
-  @IsEnum(SubscriptionScope)
-  scopeType: SubscriptionScope;
+  @ApiProperty({ enum: ScopeType })
+  @IsEnum(ScopeType)
+  scopeType: ScopeType;
 
   @ApiProperty()
   @IsString()

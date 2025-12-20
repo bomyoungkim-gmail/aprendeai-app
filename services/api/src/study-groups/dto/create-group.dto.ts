@@ -1,5 +1,5 @@
 import { IsString, IsNotEmpty, IsOptional, IsEnum } from 'class-validator';
-import { SubscriptionScope } from '@prisma/client';
+import { ScopeType } from '@prisma/client';
 
 export class CreateGroupDto {
   @IsString()
@@ -7,8 +7,8 @@ export class CreateGroupDto {
   name: string;
 
   @IsOptional()
-  @IsEnum(SubscriptionScope)
-  scopeType?: SubscriptionScope;
+  @IsEnum(ScopeType)
+  scopeType?: ScopeType;
 
   @IsOptional()
   @IsString()

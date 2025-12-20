@@ -6,9 +6,10 @@ import { ContentService } from './services/content.service';
 import { StorageService } from './services/storage.service';
 import { VideoModule } from '../video/video.module';
 import { TranscriptionModule } from '../transcription/transcription.module';
+import { FamilyModule } from '../family/family.module';
 
 @Module({
-  imports: [PrismaModule, VideoModule, TranscriptionModule],
+  imports: [PrismaModule, VideoModule, TranscriptionModule, FamilyModule],
   controllers: [CornellController],
   providers: [CornellService, ContentService, StorageService],
   exports: [CornellService, ContentService],

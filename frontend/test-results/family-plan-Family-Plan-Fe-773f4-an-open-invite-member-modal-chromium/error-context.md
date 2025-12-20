@@ -1,0 +1,87 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - heading "Settings" [level=1] [ref=e5]:
+        - img [ref=e6]
+        - text: Settings
+      - paragraph [ref=e9]: Manage your account settings and preferences
+    - generic [ref=e10]:
+      - complementary [ref=e11]:
+        - navigation [ref=e12]:
+          - link "Account" [ref=e13] [cursor=pointer]:
+            - /url: /settings/account
+            - img [ref=e14]
+            - text: Account
+          - link "Notifications" [ref=e17] [cursor=pointer]:
+            - /url: /settings/notifications
+            - img [ref=e18]
+            - text: Notifications
+          - link "Privacy" [ref=e21] [cursor=pointer]:
+            - /url: /settings/privacy
+            - img [ref=e22]
+            - text: Privacy
+          - link "Family" [ref=e25] [cursor=pointer]:
+            - /url: /settings/family
+            - img [ref=e26]
+            - text: Family
+      - main [ref=e31]:
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - generic [ref=e34]:
+              - heading "Family Management" [level=2] [ref=e35]
+              - paragraph [ref=e36]: Create families, invite members, and manage access.
+            - button "Create Family" [ref=e37] [cursor=pointer]:
+              - img [ref=e38]
+              - text: Create Family
+          - generic [ref=e39]:
+            - generic [ref=e40]:
+              - generic [ref=e41]:
+                - generic [ref=e42]:
+                  - link "Hugo Cavalcante Kim" [ref=e43] [cursor=pointer]:
+                    - /url: /settings/family/5033bc21-0e72-48f2-b507-21597f820ec6
+                    - heading "Hugo Cavalcante Kim" [level=3] [ref=e44]
+                  - paragraph [ref=e45]: Created on 12/20/2025
+                - generic [ref=e46]:
+                  - link "View Dashboard" [ref=e47] [cursor=pointer]:
+                    - /url: /settings/family/5033bc21-0e72-48f2-b507-21597f820ec6
+                  - button "Invite" [ref=e48] [cursor=pointer]:
+                    - img [ref=e49]
+                    - text: Invite
+              - generic [ref=e54]:
+                - img [ref=e56]
+                - generic [ref=e59]:
+                  - paragraph [ref=e60]: E2E Facilitator(You)
+                  - generic [ref=e61]:
+                    - generic [ref=e62]:
+                      - img [ref=e63]
+                      - text: OWNER
+                    - generic [ref=e65]: •
+                    - generic [ref=e66]: ACTIVE
+            - generic [ref=e67]:
+              - generic [ref=e68]:
+                - generic [ref=e69]:
+                  - link "Test Family 1766250857166" [ref=e70] [cursor=pointer]:
+                    - /url: /settings/family/dbd79bd6-a5ca-41f4-80c8-05a0ca12540d
+                    - heading "Test Family 1766250857166" [level=3] [ref=e71]
+                  - paragraph [ref=e72]: Created on 12/20/2025
+                - generic [ref=e73]:
+                  - link "View Dashboard" [ref=e74] [cursor=pointer]:
+                    - /url: /settings/family/dbd79bd6-a5ca-41f4-80c8-05a0ca12540d
+                  - button "Invite" [ref=e75] [cursor=pointer]:
+                    - img [ref=e76]
+                    - text: Invite
+              - generic [ref=e81]:
+                - img [ref=e83]
+                - generic [ref=e86]:
+                  - paragraph [ref=e87]: E2E Facilitator(You)
+                  - generic [ref=e88]:
+                    - generic [ref=e89]:
+                      - img [ref=e90]
+                      - text: OWNER
+                    - generic [ref=e92]: •
+                    - generic [ref=e93]: ACTIVE
+  - alert [ref=e94]
+```
