@@ -1256,5 +1256,74 @@
                       - text: OWNER
                     - generic [ref=e1469]: •
                     - generic [ref=e1470]: ACTIVE
-  - alert [ref=e1471]
+            - generic [ref=e1471]:
+              - generic [ref=e1472]:
+                - generic [ref=e1473]:
+                  - link "Second Family for Primary Test" [ref=e1474] [cursor=pointer]:
+                    - /url: /settings/family/6b364a10-c9b2-41c8-8f95-99d2f60ba41b
+                    - heading "Second Family for Primary Test" [level=3] [ref=e1475]
+                  - paragraph [ref=e1476]: Created on 12/20/2025
+                - generic [ref=e1477]:
+                  - link "View Dashboard" [ref=e1478] [cursor=pointer]:
+                    - /url: /settings/family/6b364a10-c9b2-41c8-8f95-99d2f60ba41b
+                  - button "Invite" [ref=e1479] [cursor=pointer]:
+                    - img [ref=e1480]
+                    - text: Invite
+              - generic [ref=e1485]:
+                - img [ref=e1487]
+                - generic [ref=e1490]:
+                  - paragraph [ref=e1491]: E2E Facilitator(You)
+                  - generic [ref=e1492]:
+                    - generic [ref=e1493]:
+                      - img [ref=e1494]
+                      - text: OWNER
+                    - generic [ref=e1496]: •
+                    - generic [ref=e1497]: ACTIVE
+            - generic [ref=e1498]:
+              - generic [ref=e1499]:
+                - generic [ref=e1500]:
+                  - link "Second Family for Primary Test" [ref=e1501] [cursor=pointer]:
+                    - /url: /settings/family/a218c389-a1ed-4bd8-b6d9-b27d1e78b50b
+                    - heading "Second Family for Primary Test" [level=3] [ref=e1502]
+                  - paragraph [ref=e1503]: Created on 12/20/2025
+                - generic [ref=e1504]:
+                  - link "View Dashboard" [ref=e1505] [cursor=pointer]:
+                    - /url: /settings/family/a218c389-a1ed-4bd8-b6d9-b27d1e78b50b
+                  - button "Invite" [ref=e1506] [cursor=pointer]:
+                    - img [ref=e1507]
+                    - text: Invite
+              - generic [ref=e1512]:
+                - img [ref=e1514]
+                - generic [ref=e1517]:
+                  - paragraph [ref=e1518]: E2E Facilitator(You)
+                  - generic [ref=e1519]:
+                    - generic [ref=e1520]:
+                      - img [ref=e1521]
+                      - text: OWNER
+                    - generic [ref=e1523]: •
+                    - generic [ref=e1524]: ACTIVE
+            - generic [ref=e1525]:
+              - generic [ref=e1526]:
+                - generic [ref=e1527]:
+                  - link "Second Family for Primary Test" [ref=e1528] [cursor=pointer]:
+                    - /url: /settings/family/734ceb95-d907-4231-97b0-c6420f5b151b
+                    - heading "Second Family for Primary Test" [level=3] [ref=e1529]
+                  - paragraph [ref=e1530]: Created on 12/20/2025
+                - generic [ref=e1531]:
+                  - link "View Dashboard" [ref=e1532] [cursor=pointer]:
+                    - /url: /settings/family/734ceb95-d907-4231-97b0-c6420f5b151b
+                  - button "Invite" [ref=e1533] [cursor=pointer]:
+                    - img [ref=e1534]
+                    - text: Invite
+              - generic [ref=e1539]:
+                - img [ref=e1541]
+                - generic [ref=e1544]:
+                  - paragraph [ref=e1545]: E2E Facilitator(You)
+                  - generic [ref=e1546]:
+                    - generic [ref=e1547]:
+                      - img [ref=e1548]
+                      - text: OWNER
+                    - generic [ref=e1550]: •
+                    - generic [ref=e1551]: ACTIVE
+  - alert [ref=e1552]
 ```
