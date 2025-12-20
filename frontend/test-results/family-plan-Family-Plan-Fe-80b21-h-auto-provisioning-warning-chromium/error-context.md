@@ -520,5 +520,97 @@
                       - text: OWNER
                     - generic [ref=e605]: •
                     - generic [ref=e606]: ACTIVE
-  - alert [ref=e607]
+            - generic [ref=e607]:
+              - generic [ref=e608]:
+                - generic [ref=e609]:
+                  - link "Test Family 1766263812900" [ref=e610] [cursor=pointer]:
+                    - /url: /settings/family/6704a549-d9cc-4287-9c63-010766d5dae1
+                    - heading "Test Family 1766263812900" [level=3] [ref=e611]
+                  - paragraph [ref=e612]: Created on 12/20/2025
+                - generic [ref=e613]:
+                  - link "View Dashboard" [ref=e614] [cursor=pointer]:
+                    - /url: /settings/family/6704a549-d9cc-4287-9c63-010766d5dae1
+                  - button "Invite" [ref=e615] [cursor=pointer]:
+                    - img [ref=e616]
+                    - text: Invite
+              - generic [ref=e621]:
+                - img [ref=e623]
+                - generic [ref=e626]:
+                  - paragraph [ref=e627]: E2E Facilitator(You)
+                  - generic [ref=e628]:
+                    - generic [ref=e629]:
+                      - img [ref=e630]
+                      - text: OWNER
+                    - generic [ref=e632]: •
+                    - generic [ref=e633]: ACTIVE
+            - generic [ref=e634]:
+              - generic [ref=e635]:
+                - generic [ref=e636]:
+                  - link "Dashboard Test Fam" [ref=e637] [cursor=pointer]:
+                    - /url: /settings/family/4717bbc2-33c5-470a-80ae-7870764a5d7f
+                    - heading "Dashboard Test Fam" [level=3] [ref=e638]
+                  - paragraph [ref=e639]: Created on 12/20/2025
+                - generic [ref=e640]:
+                  - link "View Dashboard" [ref=e641] [cursor=pointer]:
+                    - /url: /settings/family/4717bbc2-33c5-470a-80ae-7870764a5d7f
+                  - button "Invite" [ref=e642] [cursor=pointer]:
+                    - img [ref=e643]
+                    - text: Invite
+              - generic [ref=e648]:
+                - img [ref=e650]
+                - generic [ref=e653]:
+                  - paragraph [ref=e654]: E2E Facilitator(You)
+                  - generic [ref=e655]:
+                    - generic [ref=e656]:
+                      - img [ref=e657]
+                      - text: OWNER
+                    - generic [ref=e659]: •
+                    - generic [ref=e660]: ACTIVE
+            - generic [ref=e661]:
+              - generic [ref=e662]:
+                - generic [ref=e663]:
+                  - link "Invite Test Fam" [ref=e664] [cursor=pointer]:
+                    - /url: /settings/family/97bbf00f-40e4-4b62-b70e-21d8d2e43a8f
+                    - heading "Invite Test Fam" [level=3] [ref=e665]
+                  - paragraph [ref=e666]: Created on 12/20/2025
+                - generic [ref=e667]:
+                  - link "View Dashboard" [ref=e668] [cursor=pointer]:
+                    - /url: /settings/family/97bbf00f-40e4-4b62-b70e-21d8d2e43a8f
+                  - button "Invite" [ref=e669] [cursor=pointer]:
+                    - img [ref=e670]
+                    - text: Invite
+              - generic [ref=e675]:
+                - img [ref=e677]
+                - generic [ref=e680]:
+                  - paragraph [ref=e681]: E2E Facilitator(You)
+                  - generic [ref=e682]:
+                    - generic [ref=e683]:
+                      - img [ref=e684]
+                      - text: OWNER
+                    - generic [ref=e686]: •
+                    - generic [ref=e687]: ACTIVE
+            - generic [ref=e688]:
+              - generic [ref=e689]:
+                - generic [ref=e690]:
+                  - link "Second Family for Primary Test" [ref=e691] [cursor=pointer]:
+                    - /url: /settings/family/ae197ed8-bb36-412b-a07c-fce311418626
+                    - heading "Second Family for Primary Test" [level=3] [ref=e692]
+                  - paragraph [ref=e693]: Created on 12/20/2025
+                - generic [ref=e694]:
+                  - link "View Dashboard" [ref=e695] [cursor=pointer]:
+                    - /url: /settings/family/ae197ed8-bb36-412b-a07c-fce311418626
+                  - button "Invite" [ref=e696] [cursor=pointer]:
+                    - img [ref=e697]
+                    - text: Invite
+              - generic [ref=e702]:
+                - img [ref=e704]
+                - generic [ref=e707]:
+                  - paragraph [ref=e708]: E2E Facilitator(You)
+                  - generic [ref=e709]:
+                    - generic [ref=e710]:
+                      - img [ref=e711]
+                      - text: OWNER
+                    - generic [ref=e713]: •
+                    - generic [ref=e714]: ACTIVE
+  - alert [ref=e715]
 ```

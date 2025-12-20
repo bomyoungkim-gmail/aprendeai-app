@@ -8,14 +8,44 @@ import { InviteMemberModal } from '@/components/family/InviteMemberModal';
 import { useAuthStore } from '@/stores/auth-store';
 
 export default function FamilyDashboard({ params }: { params: { id: string } }) {
+  // ===== ALL HOOKS FIRST (React Rules of Hooks) =====
   const router = useRouter();
   const { data: family, isLoading: familyLoading } = useFamily(params.id);
   const { data: usage, isLoading: usageLoading } = useFamilyUsage(params.id);
   const user = useAuthStore((state) => state.user);
   const removeMember = useRemoveMember();
-
+  const setPrimary = useSetPrimaryFamily();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
+  // 🔴 DEBUG useEffect (must be before early returns)
+  useEffect(() => {
+    if (!family || !user) return; // Guard inside useEffect is OK
+    
+    console.log('🔴 DASHBOARD RENDER CHECK:');
+    console.log('1. user:', user);
+    console.log('2. user.settings:', user?.settings);
+    
+    const myMembership = family.members.find(m => m.userId === user?.id);
+    const canManage = myMembership?.role === 'OWNER' || myMembership?.role === 'ADMIN';
+    
+    console.log('3. canManage:', canManage);
+    console.log('4. myMembership:', myMembership);
+    console.log('5. family.id:', family.id);
+    console.log('6. primaryFamilyId:', (user?.settings as any)?.primaryFamilyId);
+    console.log('7. Invite button SHOULD render:', canManage);
+    console.log('8. Set Primary SHOULD render:', (user?.settings as any)?.primaryFamilyId !== family.id);
+    
+    // Check if elements exist in DOM
+    setTimeout(() => {
+      const inviteBtn = document.querySelector('[data-testid="invite-member-btn"]');
+      console.log('9. DOM Check - Invite button exists:', !!inviteBtn);
+      if (!inviteBtn && canManage) {
+        console.error('❌ PROBLEM: canManage is TRUE but button NOT in DOM!');
+      }
+    }, 100);
+  }, [family, user]);
+
+  // ===== NOW EARLY RETURNS (after all hooks) =====
   if (familyLoading || usageLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -28,47 +58,19 @@ export default function FamilyDashboard({ params }: { params: { id: string } }) 
     return <div>Family not found</div>;
   }
 
+  // ===== CALCULATIONS (after early returns is fine) =====
   const myMembership = family.members.find(m => m.userId === user?.id);
   const canManage = myMembership?.role === 'OWNER' || myMembership?.role === 'ADMIN';
-
-  // 🔴 COMPREHENSIVE DEBUG
-  useEffect(() => {
-    console.log('🔴 DASHBOARD RENDER CHECK:');
-    console.log('1. user:', user);
-    console.log('2. user.settings:', user?.settings);
-    console.log('3. canManage:', canManage);
-    console.log('4. myMembership:', myMembership);
-    console.log('5. family.id:', family.id);
-    console.log('6. primaryFamilyId:', (user?.settings as any)?.primaryFamilyId);
-    console.log('7. Invite button SHOULD render:', canManage);
-    console.log('8. Set Primary SHOULD render:', (user?.settings as any)?.primaryFamilyId !== family.id);
-    
-    // Check if elements exist in DOM
-    setTimeout(() => {
-      const inviteBtn = document.querySelector('[data-testid="invite-member-btn"]');
-      const setPrimaryBtn = document.querySelector('button:has-text("Set as Primary")');
-      console.log('9. DOM Check - Invite button exists:', !!inviteBtn);
-      console.log('10. DOM Check - Set Primary exists:', !!setPrimaryBtn);
-      if (!inviteBtn && canManage) {
-        console.error('❌ PROBLEM: canManage is TRUE but button NOT in DOM!');
-      }
-    }, 100);
-  }, [user, canManage, family.id, myMembership]);
-
-
-
+  
   const handleRemove = async (userId: string) => {
     if (confirm('Are you sure you want to remove this member?')) {
       await removeMember.mutateAsync({ familyId: family.id, userId });
     }
   };
 
-  // Safe access usage stats
   const uploadMetric = usage?.metrics['content_uploads_per_month'];
   const uploadCount = uploadMetric?.quantity || 0;
   const totalCost = usage?.totalCost || 0;
-
-  const setPrimary = useSetPrimaryFamily();
 
   const handleSetPrimary = async () => {
     try {
