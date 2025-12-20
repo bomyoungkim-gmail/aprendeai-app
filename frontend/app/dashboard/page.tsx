@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
-import { useQuery } from '@tantml:query';
+import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { StreakCard } from '@/components/streak-card';
 import { DailyGoalCard } from '@/components/daily-goal-card';
