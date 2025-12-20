@@ -31,6 +31,7 @@ import { ActivityModule } from './activity/activity.module';
 // Email Module
 import { EmailModule } from './email/email.module';
 import { RecommendationModule } from './recommendations/recommendation.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { RecommendationModule } from './recommendations/recommendation.module';
     ActivityModule, // Activity tracking & heatmap
     EmailModule, // Email notifications
     RecommendationModule,
+    SearchModule,
     // V4 SRS Modules
     SrsModule,
     VocabModule,
