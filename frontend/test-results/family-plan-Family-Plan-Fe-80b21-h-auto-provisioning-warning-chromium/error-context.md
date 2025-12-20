@@ -1,31 +1,156 @@
 # Page snapshot
 
 ```yaml
-- dialog "Unhandled Runtime Error" [ref=e3]:
-  - generic [ref=e4]:
-    - generic [ref=e5]:
-      - generic [ref=e6]:
-        - navigation [ref=e7]:
-          - button "previous" [disabled] [ref=e8]:
-            - img "previous" [ref=e9]
-          - button "next" [disabled] [ref=e11]:
-            - img "next" [ref=e12]
-          - generic [ref=e14]: 1 of 1 error
-          - generic [ref=e15]:
-            - text: Next.js (14.2.35) is outdated
-            - link "(learn more)" [ref=e17] [cursor=pointer]:
-              - /url: https://nextjs.org/docs/messages/version-staleness
-        - button "Close" [ref=e18] [cursor=pointer]:
-          - img [ref=e20]
-      - heading "Unhandled Runtime Error" [level=1] [ref=e23]
-      - paragraph [ref=e24]: "ReferenceError: useSetPrimaryFamily is not defined"
-    - generic [ref=e25]:
-      - heading "Source" [level=2] [ref=e26]
-      - generic [ref=e27]:
-        - link "app\\settings\\family\\[id]\\page.tsx (45:22) @ useSetPrimaryFamily" [ref=e29] [cursor=pointer]:
-          - generic [ref=e30]: app\settings\family\[id]\page.tsx (45:22) @ useSetPrimaryFamily
-          - img [ref=e31]
-        - generic [ref=e35]: "43 | const totalCost = usage?.totalCost || 0; 44 | > 45 | const setPrimary = useSetPrimaryFamily(); | ^ 46 | 47 | const handleSetPrimary = async () => { 48 | try {"
-      - heading "Call Stack" [level=2] [ref=e36]
-      - button "Show collapsed frames" [ref=e37] [cursor=pointer]
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - heading "Settings" [level=1] [ref=e5]:
+        - img [ref=e6]
+        - text: Settings
+      - paragraph [ref=e9]: Manage your account settings and preferences
+    - generic [ref=e10]:
+      - complementary [ref=e11]:
+        - navigation [ref=e12]:
+          - link "Account" [ref=e13] [cursor=pointer]:
+            - /url: /settings/account
+            - img [ref=e14]
+            - text: Account
+          - link "Notifications" [ref=e17] [cursor=pointer]:
+            - /url: /settings/notifications
+            - img [ref=e18]
+            - text: Notifications
+          - link "Privacy" [ref=e21] [cursor=pointer]:
+            - /url: /settings/privacy
+            - img [ref=e22]
+            - text: Privacy
+          - link "Family" [ref=e25] [cursor=pointer]:
+            - /url: /settings/family
+            - img [ref=e26]
+            - text: Family
+      - main [ref=e31]:
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - generic [ref=e34]:
+              - heading "Family Management" [level=2] [ref=e35]
+              - paragraph [ref=e36]: Create families, invite members, and manage access.
+            - button "Create Family" [ref=e37] [cursor=pointer]:
+              - img [ref=e38]
+              - text: Create Family
+          - generic [ref=e39]:
+            - generic [ref=e40]:
+              - generic [ref=e41]:
+                - generic [ref=e42]:
+                  - link "Hugo Cavalcante Kim" [ref=e43] [cursor=pointer]:
+                    - /url: /settings/family/5033bc21-0e72-48f2-b507-21597f820ec6
+                    - heading "Hugo Cavalcante Kim" [level=3] [ref=e44]
+                  - paragraph [ref=e45]: Created on 12/20/2025
+                - generic [ref=e46]:
+                  - link "View Dashboard" [ref=e47] [cursor=pointer]:
+                    - /url: /settings/family/5033bc21-0e72-48f2-b507-21597f820ec6
+                  - button "Invite" [ref=e48] [cursor=pointer]:
+                    - img [ref=e49]
+                    - text: Invite
+              - generic [ref=e54]:
+                - img [ref=e56]
+                - generic [ref=e59]:
+                  - paragraph [ref=e60]: E2E Facilitator(You)
+                  - generic [ref=e61]:
+                    - generic [ref=e62]:
+                      - img [ref=e63]
+                      - text: OWNER
+                    - generic [ref=e65]: •
+                    - generic [ref=e66]: ACTIVE
+            - generic [ref=e67]:
+              - generic [ref=e68]:
+                - generic [ref=e69]:
+                  - link "Test Family 1766250857166" [ref=e70] [cursor=pointer]:
+                    - /url: /settings/family/dbd79bd6-a5ca-41f4-80c8-05a0ca12540d
+                    - heading "Test Family 1766250857166" [level=3] [ref=e71]
+                  - paragraph [ref=e72]: Created on 12/20/2025
+                - generic [ref=e73]:
+                  - link "View Dashboard" [ref=e74] [cursor=pointer]:
+                    - /url: /settings/family/dbd79bd6-a5ca-41f4-80c8-05a0ca12540d
+                  - button "Invite" [ref=e75] [cursor=pointer]:
+                    - img [ref=e76]
+                    - text: Invite
+              - generic [ref=e81]:
+                - img [ref=e83]
+                - generic [ref=e86]:
+                  - paragraph [ref=e87]: E2E Facilitator(You)
+                  - generic [ref=e88]:
+                    - generic [ref=e89]:
+                      - img [ref=e90]
+                      - text: OWNER
+                    - generic [ref=e92]: •
+                    - generic [ref=e93]: ACTIVE
+            - generic [ref=e94]:
+              - generic [ref=e95]:
+                - generic [ref=e96]:
+                  - link "Test Family 1766251636400" [ref=e97] [cursor=pointer]:
+                    - /url: /settings/family/f3723fda-5fde-46a6-a257-0ece2d3eb829
+                    - heading "Test Family 1766251636400" [level=3] [ref=e98]
+                  - paragraph [ref=e99]: Created on 12/20/2025
+                - generic [ref=e100]:
+                  - link "View Dashboard" [ref=e101] [cursor=pointer]:
+                    - /url: /settings/family/f3723fda-5fde-46a6-a257-0ece2d3eb829
+                  - button "Invite" [ref=e102] [cursor=pointer]:
+                    - img [ref=e103]
+                    - text: Invite
+              - generic [ref=e108]:
+                - img [ref=e110]
+                - generic [ref=e113]:
+                  - paragraph [ref=e114]: E2E Facilitator(You)
+                  - generic [ref=e115]:
+                    - generic [ref=e116]:
+                      - img [ref=e117]
+                      - text: OWNER
+                    - generic [ref=e119]: •
+                    - generic [ref=e120]: ACTIVE
+            - generic [ref=e121]:
+              - generic [ref=e122]:
+                - generic [ref=e123]:
+                  - link "Test Family 1766251747910" [ref=e124] [cursor=pointer]:
+                    - /url: /settings/family/d28906b7-d3b8-46dc-a133-8a731feb1db6
+                    - heading "Test Family 1766251747910" [level=3] [ref=e125]
+                  - paragraph [ref=e126]: Created on 12/20/2025
+                - generic [ref=e127]:
+                  - link "View Dashboard" [ref=e128] [cursor=pointer]:
+                    - /url: /settings/family/d28906b7-d3b8-46dc-a133-8a731feb1db6
+                  - button "Invite" [ref=e129] [cursor=pointer]:
+                    - img [ref=e130]
+                    - text: Invite
+              - generic [ref=e135]:
+                - img [ref=e137]
+                - generic [ref=e140]:
+                  - paragraph [ref=e141]: E2E Facilitator(You)
+                  - generic [ref=e142]:
+                    - generic [ref=e143]:
+                      - img [ref=e144]
+                      - text: OWNER
+                    - generic [ref=e146]: •
+                    - generic [ref=e147]: ACTIVE
+            - generic [ref=e148]:
+              - generic [ref=e149]:
+                - generic [ref=e150]:
+                  - link "Test Family 1766251892692" [ref=e151] [cursor=pointer]:
+                    - /url: /settings/family/686c9aca-099b-4689-89f0-729961eee041
+                    - heading "Test Family 1766251892692" [level=3] [ref=e152]
+                  - paragraph [ref=e153]: Created on 12/20/2025
+                - generic [ref=e154]:
+                  - link "View Dashboard" [ref=e155] [cursor=pointer]:
+                    - /url: /settings/family/686c9aca-099b-4689-89f0-729961eee041
+                  - button "Invite" [ref=e156] [cursor=pointer]:
+                    - img [ref=e157]
+                    - text: Invite
+              - generic [ref=e162]:
+                - img [ref=e164]
+                - generic [ref=e167]:
+                  - paragraph [ref=e168]: E2E Facilitator(You)
+                  - generic [ref=e169]:
+                    - generic [ref=e170]:
+                      - img [ref=e171]
+                      - text: OWNER
+                    - generic [ref=e173]: •
+                    - generic [ref=e174]: ACTIVE
+  - alert [ref=e175]
 ```

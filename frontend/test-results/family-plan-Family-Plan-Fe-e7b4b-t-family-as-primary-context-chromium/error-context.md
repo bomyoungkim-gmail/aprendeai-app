@@ -1,7 +1,7 @@
 # Page snapshot
 
 ```yaml
-- generic [active] [ref=e1]:
+- generic [ref=e1]:
   - generic [ref=e3]:
     - generic [ref=e4]:
       - heading "Settings" [level=1] [ref=e5]:
@@ -83,5 +83,92 @@
                       - text: OWNER
                     - generic [ref=e92]: •
                     - generic [ref=e93]: ACTIVE
-  - alert [ref=e94]
+            - generic [ref=e94]:
+              - generic [ref=e95]:
+                - generic [ref=e96]:
+                  - link "Test Family 1766251636400" [ref=e97] [cursor=pointer]:
+                    - /url: /settings/family/f3723fda-5fde-46a6-a257-0ece2d3eb829
+                    - heading "Test Family 1766251636400" [level=3] [ref=e98]
+                  - paragraph [ref=e99]: Created on 12/20/2025
+                - generic [ref=e100]:
+                  - link "View Dashboard" [ref=e101] [cursor=pointer]:
+                    - /url: /settings/family/f3723fda-5fde-46a6-a257-0ece2d3eb829
+                  - button "Invite" [ref=e102] [cursor=pointer]:
+                    - img [ref=e103]
+                    - text: Invite
+              - generic [ref=e108]:
+                - img [ref=e110]
+                - generic [ref=e113]:
+                  - paragraph [ref=e114]: E2E Facilitator(You)
+                  - generic [ref=e115]:
+                    - generic [ref=e116]:
+                      - img [ref=e117]
+                      - text: OWNER
+                    - generic [ref=e119]: •
+                    - generic [ref=e120]: ACTIVE
+            - generic [ref=e121]:
+              - generic [ref=e122]:
+                - generic [ref=e123]:
+                  - link "Test Family 1766251747910" [ref=e124] [cursor=pointer]:
+                    - /url: /settings/family/d28906b7-d3b8-46dc-a133-8a731feb1db6
+                    - heading "Test Family 1766251747910" [level=3] [ref=e125]
+                  - paragraph [ref=e126]: Created on 12/20/2025
+                - generic [ref=e127]:
+                  - link "View Dashboard" [ref=e128] [cursor=pointer]:
+                    - /url: /settings/family/d28906b7-d3b8-46dc-a133-8a731feb1db6
+                  - button "Invite" [ref=e129] [cursor=pointer]:
+                    - img [ref=e130]
+                    - text: Invite
+              - generic [ref=e135]:
+                - img [ref=e137]
+                - generic [ref=e140]:
+                  - paragraph [ref=e141]: E2E Facilitator(You)
+                  - generic [ref=e142]:
+                    - generic [ref=e143]:
+                      - img [ref=e144]
+                      - text: OWNER
+                    - generic [ref=e146]: •
+                    - generic [ref=e147]: ACTIVE
+            - generic [ref=e148]:
+              - generic [ref=e149]:
+                - generic [ref=e150]:
+                  - link "Test Family 1766251892692" [ref=e151] [cursor=pointer]:
+                    - /url: /settings/family/686c9aca-099b-4689-89f0-729961eee041
+                    - heading "Test Family 1766251892692" [level=3] [ref=e152]
+                  - paragraph [ref=e153]: Created on 12/20/2025
+                - generic [ref=e154]:
+                  - link "View Dashboard" [ref=e155] [cursor=pointer]:
+                    - /url: /settings/family/686c9aca-099b-4689-89f0-729961eee041
+                  - button "Invite" [ref=e156] [cursor=pointer]:
+                    - img [ref=e157]
+                    - text: Invite
+              - generic [ref=e162]:
+                - img [ref=e164]
+                - generic [ref=e167]:
+                  - paragraph [ref=e168]: E2E Facilitator(You)
+                  - generic [ref=e169]:
+                    - generic [ref=e170]:
+                      - img [ref=e171]
+                      - text: OWNER
+                    - generic [ref=e173]: •
+                    - generic [ref=e174]: ACTIVE
+  - alert [ref=e175]
+  - generic:
+    - generic:
+      - generic:
+        - dialog "Create New Family" [active]:
+          - generic [ref=e178]:
+            - generic [ref=e179]:
+              - heading "Create New Family" [level=2] [ref=e180]
+              - button [ref=e181] [cursor=pointer]:
+                - img [ref=e182]
+            - generic [ref=e185]:
+              - generic [ref=e186]:
+                - generic [ref=e187]: Family Name
+                - textbox "Family Name" [ref=e188]:
+                  - /placeholder: e.g. The Smiths
+                - paragraph [ref=e189]: This will be the name displayed on your dashboard.
+              - generic [ref=e190]:
+                - button "Cancel" [ref=e191] [cursor=pointer]
+                - button "Create Family" [ref=e192] [cursor=pointer]
 ```

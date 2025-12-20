@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useFamily, useFamilyUsage, useRemoveMember } from '@/hooks/use-family';
+import { useFamily, useFamilyUsage, useRemoveMember, useSetPrimaryFamily } from '@/hooks/use-family';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, BarChart2, DollarSign, Users, UserPlus, Trash2, Shield, User as UserIcon } from 'lucide-react';
 import { InviteMemberModal } from '@/components/family/InviteMemberModal';
@@ -168,6 +168,7 @@ export default function FamilyDashboard({ params }: { params: { id: string } }) 
             <h3 className="font-semibold text-gray-900">Family Members</h3>
             {canManage && (
                 <button
+                    data-testid="invite-member-btn"
                     onClick={() => setInviteModalOpen(true)}
                     className="flex items-center gap-2 text-sm bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors"
                 >

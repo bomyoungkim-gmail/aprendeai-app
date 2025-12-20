@@ -13,6 +13,30 @@ test.describe('Family Plan Features', () => {
     await page.waitForURL('/dashboard');
   });
 
+  // Cleanup: Delete all families after each test for isolation
+  test.afterEach(async ({ page }) => {
+    try {
+      await page.goto('/settings/family');
+      await page.waitForLoadState('networkidle');
+      
+      // Keep deleting families until none remain
+      while (true) {
+        const deleteButtons = page.getByRole('button', { name: /delete|remove/i });
+        if (await deleteButtons.count() === 0) break;
+        
+        // Click first delete button
+        await deleteButtons.first().click();
+        
+        // Handle confirmation dialog
+        page.once('dialog', dialog => dialog.accept());
+        
+        await page.waitForTimeout(500);
+      }
+    } catch (e) {
+      console.log('Cleanup failed:', e);
+    }
+  });
+
   test('can navigate to family settings page', async ({ page }) => {
     // Navigate via Settings
     await page.goto('/settings/account');
@@ -53,7 +77,7 @@ test.describe('Family Plan Features', () => {
     
     if (await dashboardLink.count() === 0) {
       // Create one if missing
-      await page.click('text=Create your first family');
+      await page.click('[data-testid="create-family-btn"]');
       await page.fill('input[placeholder*="The Smiths"]', 'Dashboard Test Fam');
       await page.click('button:has-text("Create Family")');
       await page.waitForTimeout(1000); // Wait for refresh
@@ -82,7 +106,7 @@ test.describe('Family Plan Features', () => {
      const dashboardLink = page.locator('a', { hasText: 'View Dashboard' }).first();
      if (await dashboardLink.count() === 0) {
         // Create if needed
-        await page.click('text=Create your first family');
+        await page.click('[data-testid="create-family-btn"]');
         await page.fill('input[placeholder*="The Smiths"]', 'Invite Test Fam');
         await page.click('button:has-text("Create Family")');
         await page.waitForTimeout(1000);
@@ -107,7 +131,7 @@ test.describe('Family Plan Features', () => {
      // Ensure we have a family to set as primary
      const dashboardLink = page.locator('a', { hasText: 'View Dashboard' }).first();
      if (await dashboardLink.count() === 0) {
-        await page.click('text=Create your first family');
+        await page.click('[data-testid="create-family-btn"]');
         await page.fill('input[placeholder*="The Smiths"]', 'Primary Test Fam');
         await page.click('button:has-text("Create Family")');
         await page.waitForTimeout(1000);
@@ -147,4 +171,8 @@ test.describe('Family Plan Features', () => {
      await expect(page.getByText(randomEmail)).toBeVisible();
   });
 });
+
+
+
+
 
