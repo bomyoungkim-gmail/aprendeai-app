@@ -28,8 +28,7 @@ test.describe('Family Plan Features', () => {
     await page.goto('/settings/family');
 
     // Click Create button (handling both empty state and header button)
-    const createButton = page.getByRole('button', { name: /Create.*Family/i }).first();
-    await createButton.click();
+    await page.click('[data-testid="create-family-btn"]');
 
     // Modal interaction
     await expect(page.getByText('Create New Family')).toBeVisible();
@@ -38,8 +37,8 @@ test.describe('Family Plan Features', () => {
     await page.fill('input[placeholder*="The Smiths"]', familyName);
     
     // Submit
-    const submitBtn = page.getByRole('button', { name: 'Create Family' });
-    await submitBtn.click();
+    await page.click('[data-testid="submit-family-btn"]');
+    await page.waitForTimeout(500);
 
     // Verify modal closed and family appears in list
     await expect(page.getByText('Create New Family')).toBeHidden();
@@ -148,3 +147,4 @@ test.describe('Family Plan Features', () => {
      await expect(page.getByText(randomEmail)).toBeVisible();
   });
 });
+
