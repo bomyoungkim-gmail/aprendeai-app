@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useFamily, useFamilyUsage, useRemoveMember, useSetPrimaryFamily } from '@/hooks/use-family';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, BarChart2, DollarSign, Users, UserPlus, Trash2, Shield, User as UserIcon } from 'lucide-react';
@@ -31,27 +31,31 @@ export default function FamilyDashboard({ params }: { params: { id: string } }) 
   const myMembership = family.members.find(m => m.userId === user?.id);
   const canManage = myMembership?.role === 'OWNER' || myMembership?.role === 'ADMIN';
 
-  // 🔍 DEBUG: Understanding the state
-  console.log('=== FAMILY DASHBOARD DEBUG ===');
-  console.log('User from authStore:', { id: user?.id, email: user?.email, name: user?.name });
-  console.log('Family:', { id: family.id, name: family.name, ownerId: family.ownerId });
-  console.log('Members:', family.members.map(m => ({ 
-    userId: m.userId, 
-    role: m.role, 
-    status: m.status,
-    userName: m.user?.name,
-    userEmail: m.user?.email
-  })));
-  console.log('My membership:', myMembership);
-  console.log('Can manage:', canManage);
-  console.log('Match check:', {
-    userIdFromStore: user?.id,
-    firstMemberUserId: family.members[0]?.userId,
-    idsMatch: user?.id === family.members[0]?.userId,
-    typeofUserId: typeof user?.id,
-    typeofMemberId: typeof family.members[0]?.userId
-  });
-  console.log('==============================');
+  // 🔴 COMPREHENSIVE DEBUG
+  useEffect(() => {
+    console.log('🔴 DASHBOARD RENDER CHECK:');
+    console.log('1. user:', user);
+    console.log('2. user.settings:', user?.settings);
+    console.log('3. canManage:', canManage);
+    console.log('4. myMembership:', myMembership);
+    console.log('5. family.id:', family.id);
+    console.log('6. primaryFamilyId:', (user?.settings as any)?.primaryFamilyId);
+    console.log('7. Invite button SHOULD render:', canManage);
+    console.log('8. Set Primary SHOULD render:', (user?.settings as any)?.primaryFamilyId !== family.id);
+    
+    // Check if elements exist in DOM
+    setTimeout(() => {
+      const inviteBtn = document.querySelector('[data-testid="invite-member-btn"]');
+      const setPrimaryBtn = document.querySelector('button:has-text("Set as Primary")');
+      console.log('9. DOM Check - Invite button exists:', !!inviteBtn);
+      console.log('10. DOM Check - Set Primary exists:', !!setPrimaryBtn);
+      if (!inviteBtn && canManage) {
+        console.error('❌ PROBLEM: canManage is TRUE but button NOT in DOM!');
+      }
+    }, 100);
+  }, [user, canManage, family.id, myMembership]);
+
+
 
   const handleRemove = async (userId: string) => {
     if (confirm('Are you sure you want to remove this member?')) {

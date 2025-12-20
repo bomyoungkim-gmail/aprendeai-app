@@ -101,6 +101,9 @@ test.describe('Family Plan Features', () => {
   });
 
   test('can open invite member modal', async ({ page }) => {
+     // Capture console logs
+     page.on('console', msg => console.log('BROWSER:', msg.text()));
+     
      await page.goto('/settings/family');
      
      // Go to dashboard of first family
