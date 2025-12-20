@@ -31,6 +31,16 @@ export default function FamilyDashboard({ params }: { params: { id: string } }) 
   const myMembership = family.members.find(m => m.userId === user?.id);
   const canManage = myMembership?.role === 'OWNER' || myMembership?.role === 'ADMIN';
 
+  // DEBUG: Check permissions
+  console.log('🔍 Permission Debug:', {
+    userId: user?.id,
+    familyId: family.id,
+    membersCount: family.members.length,
+    members: family.members.map(m => ({ userId: m.userId, role: m.role, status: m.status })),
+    myMembership,
+    canManage
+  });
+
   const handleRemove = async (userId: string) => {
     if (confirm('Are you sure you want to remove this member?')) {
       await removeMember.mutateAsync({ familyId: family.id, userId });
