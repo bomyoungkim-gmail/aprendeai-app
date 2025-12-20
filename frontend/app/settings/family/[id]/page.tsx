@@ -106,16 +106,14 @@ export default function FamilyDashboard({ params }: { params: { id: string } }) 
             {/* Action Buttons */}
             <div className="flex gap-2 mt-2 md:mt-0">
                {/* Set Primary Button */}
-               {(user?.settings as any)?.primaryFamilyId !== family.id && (
-                  <button
-                    data-testid="set-primary-btn"
-                    onClick={handleSetPrimary}
-                    className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-700 px-2 py-1 bg-blue-50 rounded border border-blue-200"
-                  >
-                     <Users className="w-3 h-3" />
-                     Set as Primary
-                  </button>
-               )}
+               {/* TEMP: No condition - always show for testing */}
+               <button
+                 data-testid="set-primary-btn"
+                 onClick={handleSetPrimary}
+                 className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-700 px-2 py-1 bg-blue-50 rounded border border-blue-200"
+               >
+                 Set as Primary [TEST]
+               </button>
             </div>
         </div>
         
