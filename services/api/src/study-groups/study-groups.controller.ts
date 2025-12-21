@@ -6,7 +6,7 @@ import { GroupChatService } from './group-chat.service';
 import { StudyGroupsWebSocketGateway } from '../websocket/study-groups-ws.gateway';
 import { StudyGroupEvent } from '../websocket/events';
 import { CreateGroupDto } from './dto/create-group.dto';
-import { InviteMemberDto } from './dto/invite-member.dto';
+import { InviteGroupMemberDto } from './dto/invite-member.dto';
 import { AddContentDto } from './dto/add-content.dto';
 import { SendChatMessageDto } from './dto/send-chat-message.dto';
 
@@ -38,7 +38,7 @@ export class StudyGroupsController {
   @Post(':groupId/members/invite')
   async inviteMember(
     @Param('groupId') groupId: string,
-    @Body() dto: InviteMemberDto,
+    @Body() dto: InviteGroupMemberDto,
     @Request() req,
   ) {
     await this.studyGroupsService.inviteMember(groupId, req.user.userId, dto);

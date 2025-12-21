@@ -1,4 +1,4 @@
-import axios from 'axios';
+import api from '@/lib/api';
 import type {
   Content,
   CornellNotes,
@@ -7,29 +7,6 @@ import type {
   CreateHighlightDto,
   UpdateHighlightDto,
 } from '../types/cornell';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-
-// Create axios instance with auth
-const api = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
-});
-
-// Add auth token interceptor
-api.interceptors.request.use((config) => {
-  // Get token from zustand store (works in browser)
-  if (typeof window !== 'undefined') {
-    const authStorage = localStorage.getItem('auth-storage');
-    if (authStorage) {
-      const { state } = JSON.parse(authStorage);
-      const token = state?.token;
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    }
-  }
-  return config;
-});
 
 // Cornell Reader API
 export const cornellApi = {
@@ -84,5 +61,3 @@ export const cornellApi = {
     await api.delete(`/highlights/${highlightId}`);
   },
 };
-
-export default api;

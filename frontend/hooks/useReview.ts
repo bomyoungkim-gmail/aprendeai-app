@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '@/lib/api';
 
 interface VocabItem {
   id: string;
@@ -40,17 +41,8 @@ export function useReview() {
   const { data: queue, isLoading, error } = useQuery<ReviewQueue>({
     queryKey: ['review-queue'],
     queryFn: async () => {
-      const response = await fetch('/api/review/queue', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch review queue');
-      }
-
-      return response.json();
+      const { data } = await api.get('/review/queue');
+      return data;
     },
   });
 
@@ -65,20 +57,12 @@ export function useReview() {
       dimension: 'FORM' | 'MEANING' | 'USE';
       result: 'FAIL' | 'HARD' | 'OK' | 'EASY';
     }) => {
-      const response = await fetch('/api/review/vocab/attempt', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({ vocabId, dimension, result }),
+      const { data } = await api.post('/review/vocab/attempt', {
+        vocabId,
+        dimension,
+        result,
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to record attempt');
-      }
-
-      return response.json();
+      return data;
     },
     onSuccess: () => {
       // Invalidate queue to get updated items

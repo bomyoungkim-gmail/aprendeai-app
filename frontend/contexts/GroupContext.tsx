@@ -1,8 +1,9 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
+import { ROUTES, ROUTES_WITH_PARAMS, ROUTE_ERRORS } from '@/lib/config/routes';
 
 interface Group {
   id: string;
@@ -52,9 +53,9 @@ export function GroupProvider({ groupId, children }: GroupProviderProps) {
         
         // Redirect on unauthorized
         if (err.response?.status === 403) {
-          router.push('/groups?error=not_member');
-        } else if (err.response?.status === 404) {
-          router.push('/groups?error=not_found');
+          router.push(ROUTES_WITH_PARAMS.GROUPS_WITH_ERROR(ROUTE_ERRORS.NOT_MEMBER));
+        } else {
+          router.push(ROUTES_WITH_PARAMS.GROUPS_WITH_ERROR(ROUTE_ERRORS.NOT_FOUND));
         }
       } finally {
         setIsLoading(false);
@@ -102,7 +103,7 @@ export function GroupProvider({ groupId, children }: GroupProviderProps) {
           <h2 className="text-2xl font-bold text-red-600 mb-2">Access Denied</h2>
           <p className="text-gray-600 mb-4">{error || 'Group not found'}</p>
           <button
-            onClick={() => router.push('/groups')}
+            onClick={() => router.push(ROUTES.GROUPS.HOME)}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Back to Groups
@@ -120,7 +121,7 @@ export function GroupProvider({ groupId, children }: GroupProviderProps) {
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Not a Member</h2>
           <p className="text-gray-600 mb-4">You are not a member of this group.</p>
           <button
-            onClick={() => router.push('/groups')}
+            onClick={() => router.push(ROUTES.GROUPS.HOME)}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Back to Groups

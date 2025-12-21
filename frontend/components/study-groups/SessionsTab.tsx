@@ -6,6 +6,7 @@ import { useGroupSessions } from '@/hooks/use-groups';
 import { CreateSessionModal } from './CreateSessionModal';
 import { Calendar, Play, CheckCircle, Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { ROUTES } from '@/lib/config/routes';
 
 interface SessionsTabProps {
   group: StudyGroup;
@@ -74,7 +75,7 @@ export function SessionsTab({ group }: SessionsTabProps) {
           {sessions.map((session: any) => (
             <div
               key={session.id}
-              onClick={() => router.push(`/groups/${group.id}/sessions/${session.id}`)}
+              onClick={() => router.push(ROUTES.GROUPS.SESSION(group.id, session.id))}
               className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
             >
               <div className="flex items-center gap-4">
@@ -109,7 +110,7 @@ export function SessionsTab({ group }: SessionsTabProps) {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSuccess={(sessionId) => {
-          router.push(`/groups/${group.id}/sessions/${sessionId}`);
+          router.push(ROUTES.GROUPS.SESSION(group.id, sessionId));
         }}
       />
     </div>

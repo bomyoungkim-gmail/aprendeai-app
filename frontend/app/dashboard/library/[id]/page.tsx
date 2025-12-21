@@ -2,8 +2,9 @@
 
 import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '@/lib/api';
-import { Loader2, ArrowLeft, Wand2, GraduationCap, Layers, CheckCircle } from 'lucide-react';
+import { Loader2, ArrowLeft, Wand2, GraduationCap, Layers, CheckCircle, ChevronLeft, FileText, Clock, User } from 'lucide-react';
 import Link from 'next/link';
+import { ROUTES } from '@/lib/config/routes';
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
@@ -72,7 +73,7 @@ export default function ContentReaderPage() {
     },
     onSuccess: () => {
         alert('Leitura concluída! Progresso registrado.');
-        router.push('/dashboard');
+        router.push(ROUTES.DASHBOARD.HOME);
     }
   });
 
@@ -124,7 +125,7 @@ export default function ContentReaderPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center space-x-4 mb-6">
-        <Link href="/dashboard/library" className="p-2 hover:bg-gray-100 rounded-full">
+        <Link href={ROUTES.DASHBOARD.LIBRARY.HOME} className="p-2 hover:bg-gray-100 rounded-full">
           <ArrowLeft size={20} />
         </Link>
         <h1 className="text-2xl font-bold">{content.title}</h1>

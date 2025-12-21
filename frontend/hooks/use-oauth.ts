@@ -1,6 +1,5 @@
 import { useState } from 'react';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+import { API_BASE_URL, API_ENDPOINTS } from '@/lib/config/api';
 
 export function useOAuth() {
   const [isLoading, setIsLoading] = useState(false);
@@ -11,7 +10,7 @@ export function useOAuth() {
     setError(null);
     
     // Redirect to backend OAuth endpoint
-    window.location.href = `${API_URL}/auth/google`;
+    window.location.href = `${API_BASE_URL}${API_ENDPOINTS.AUTH.GOOGLE}`;
   };
 
   const loginWithMicrosoft = () => {
@@ -19,7 +18,7 @@ export function useOAuth() {
     setError(null);
     
     // Redirect to backend OAuth endpoint
-    window.location.href = `${API_URL}/auth/microsoft`;
+    window.location.href = `${API_BASE_URL}${API_ENDPOINTS.AUTH.MICROSOFT}`;
   };
 
   const handleOAuthCallback = () => {

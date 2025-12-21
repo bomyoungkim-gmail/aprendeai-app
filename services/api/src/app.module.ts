@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
 import { QueueModule } from './queue/queue.module';
 import { ExtractionModule } from './extraction/extraction.module';
@@ -33,6 +33,11 @@ import { EmailModule } from './email/email.module';
 import { RecommendationModule } from './recommendations/recommendation.module';
 import { SearchModule } from './search/search.module';
 import { FamilyModule } from './family/family.module';
+import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { ActionLoggerMiddleware } from './common/middleware/logger.middleware';
 
 @Module({
   imports: [
@@ -68,6 +73,8 @@ import { FamilyModule } from './family/family.module';
     WebSocketModule,
     // Collaborative Annotations
     AnnotationModule,
+    // Auth Module (Authentication & Authorization)
+    AuthModule,
     // Family Plan
     FamilyModule,
   ],
@@ -75,9 +82,19 @@ import { FamilyModule } from './family/family.module';
   providers: [
     AppService,
     {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,  // Global authentication - all routes protected by default
+    },
+    {
       provide: APP_INTERCEPTOR,
       useClass: MetricsInterceptor,
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(RequestIdMiddleware, ActionLoggerMiddleware)
+      .forRoutes('*');
+  }
+}

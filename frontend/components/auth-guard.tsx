@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
+import { ROUTES } from '@/lib/config/routes';
 import { Loader2 } from 'lucide-react';
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -16,7 +17,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     
     // We can assume if token is null after mount, redirect.
     if (!token) {
-      router.push('/login');
+      router.push(ROUTES.AUTH.LOGIN);
     } else {
       setAuthorized(true);
     }

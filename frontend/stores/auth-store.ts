@@ -44,7 +44,10 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      skipHydration: true, // Manual hydration for SSR/E2E reliability
       onRehydrateStorage: () => (state) => {
+        console.log('[auth-store] onRehydrateStorage called, state:', state);
+        console.log('[auth-store] Setting _hasHydrated to true');
         state?.setHasHydrated(true);
       },
     }

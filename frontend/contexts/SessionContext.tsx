@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useRouter } from 'next/navigation';
 import { useGroup } from './GroupContext';
 import api from '@/lib/api';
+import { ROUTES_WITH_PARAMS, ROUTE_ERRORS } from '@/lib/config/routes';
 
 interface Session {
   id: string;
@@ -61,9 +62,9 @@ export function SessionProvider({ sessionId, children }: SessionProviderProps) {
         
         // Redirect on error
         if (err.response?.status === 404) {
-          router.push(`/groups/${group.id}?error=session_not_found`);
-        } else if (err.response?.status === 403) {
-          router.push(`/groups/${group.id}?error=session_forbidden`);
+          router.push(ROUTES_WITH_PARAMS.GROUP_WITH_ERROR(group.id, ROUTE_ERRORS.SESSION_NOT_FOUND));
+        } else {
+          router.push(ROUTES_WITH_PARAMS.GROUP_WITH_ERROR(group.id, ROUTE_ERRORS.SESSION_FORBIDDEN));
         }
       } finally {
         setIsLoading(false);
@@ -106,7 +107,7 @@ export function SessionProvider({ sessionId, children }: SessionProviderProps) {
           <h2 className="text-2xl font-bold text-red-600 mb-2">Session Error</h2>
           <p className="text-gray-600 mb-4">{error || 'Session not found'}</p>
           <button
-            onClick={() => router.push(`/groups/${group?.id}`)}
+            onClick={() => router.push(ROUTES_WITH_PARAMS.GROUP_WITH_ERROR(group?.id || '', ROUTE_ERRORS.SESSION_NOT_FOUND))}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Back to Group

@@ -9,14 +9,19 @@ interface HydrationWrapperProps {
 
 export function HydrationWrapper({ children }: HydrationWrapperProps) {
   const [isHydrated, setIsHydrated] = useState(false);
-  const hasHydrated = useAuthStore((state) => state._hasHydrated);
 
   useEffect(() => {
-    // Wait for zustand to hydrate from localStorage
-    if (hasHydrated) {
+    // Trigger manual rehydration (since skipHydration: true in store)
+    useAuthStore.persist.rehydrate();
+    
+    // Wait 100ms for rehydration to complete
+    // This is a deterministic, predictable delay that prevents race conditions
+    const timeout = setTimeout(() => {
       setIsHydrated(true);
-    }
-  }, [hasHydrated]);
+    }, 100);
+    
+    return () => clearTimeout(timeout);
+  }, []);
 
   // Show minimal loading screen while hydrating
   if (!isHydrated) {

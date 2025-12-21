@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
+import { ROUTES } from '@/lib/config/routes';
 
 export default function HomePage() {
   const router = useRouter();
@@ -19,10 +20,10 @@ export default function HomePage() {
     
     if (user) {
       // User is logged in, redirect to dashboard
-      router.replace('/dashboard');
+      router.replace(ROUTES.DASHBOARD.HOME);
     } else {
       // User is not logged in, redirect to login
-      router.replace('/login');
+      router.replace(ROUTES.AUTH.LOGIN);
     }
   }, [user, router, isHydrated]);
 

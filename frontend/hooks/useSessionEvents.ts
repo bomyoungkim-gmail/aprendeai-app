@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import api from '@/lib/api';
 
 type EventType = 
   | 'MARK_UNKNOWN_WORD' 
@@ -22,23 +23,12 @@ export function useSessionEvents(sessionId?: string) {
     }
 
     try {
-      const response = await fetch(`/api/reading-sessions/${sessionId}/events`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          eventType,
-          payload,
-        }),
+      const response = await api.post(`/reading-sessions/${sessionId}/events`, {
+        eventType,
+        payload,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to record event');
-      }
-
-      return await response.json();
+      return response.data;
     } catch (err) {
       console.error('Failed to record event:', err);
       // Don't throw - event tracking shouldn't break the app

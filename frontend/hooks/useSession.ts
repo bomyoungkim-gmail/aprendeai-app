@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import api from '@/lib/api';
 
 interface ReadingSession {
   id: string;
@@ -43,17 +44,13 @@ export function useSession(contentId: string) {
       const cachedSessionId = localStorage.getItem(`session_${contentId}`);
       
       if (cachedSessionId) {
-        const response = await fetch(`/api/reading-sessions/${cachedSessionId}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
+        try {
+          const { data } = await api.get(`/reading-sessions/${cachedSessionId}`);
           setSession(data);
           setLoading(false);
           return;
+        } catch (err) {
+          // Session not found, will create new one
         }
       }
 
@@ -69,19 +66,7 @@ export function useSession(contentId: string) {
   const startSession = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/contents/${contentId}/reading-sessions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to start session');
-      }
-
-      const data = await response.json();
+      const { data } = await api.post(`/contents/${contentId}/reading-sessions`);
       setSession(data);
       
       // Cache session ID
@@ -103,27 +88,14 @@ export function useSession(contentId: string) {
 
     try {
       setLoading(true);
-      const response = await fetch(`/api/reading-sessions/${session.id}/pre`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update pre-phase');
-      }
-
-      const updatedSession = await response.json();
+      const { data: updatedSession } = await api.put(`/reading-sessions/${session.id}/pre`, data);
       setSession(updatedSession);
       
       return updatedSession;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update pre-phase');
-      throw err;
+    } catch (err: any) {
+      const message = err.response?.data?.message || err.message || 'Failed to update pre-phase';
+      setError(message);
+      throw new Error(message);
     } finally {
       setLoading(false);
     }
@@ -136,21 +108,7 @@ export function useSession(contentId: string) {
 
     try {
       setLoading(true);
-      const response = await fetch(`/api/reading-sessions/${session.id}/advance`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ toPhase }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to advance phase');
-      }
-
-      const updatedSession = await response.json();
+      const { data: updatedSession } = await api.post(`/reading-sessions/${session.id}/advance`, { toPhase });
       setSession(updatedSession);
       
       // Clear cache if session finished
@@ -159,9 +117,10 @@ export function useSession(contentId: string) {
       }
       
       return updatedSession;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to advance phase');
-      throw err;
+    } catch (err: any) {
+      const message = err.response?.data?.message || err.message || 'Failed to advance phase';
+      setError(message);
+      throw new Error(message);
     } finally {
       setLoading(false);
     }
@@ -171,16 +130,8 @@ export function useSession(contentId: string) {
     if (!session) return;
     
     try {
-      const response = await fetch(`/api/reading-sessions/${session.id}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSession(data);
-      }
+      const { data } = await api.get(`/reading-sessions/${session.id}`);
+      setSession(data);
     } catch (err) {
       console.error('Failed to refresh session:', err);
     }

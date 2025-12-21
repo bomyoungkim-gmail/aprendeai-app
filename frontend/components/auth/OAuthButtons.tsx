@@ -1,14 +1,14 @@
 'use client';
 
-export function OAuthButtons() {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { API_BASE_URL, API_ENDPOINTS } from '@/lib/config/api';
 
+export function OAuthButtons() {
   const handleGoogleLogin = () => {
-    window.location.href = `${API_URL}/auth/google`;
+    window.location.href = `${API_BASE_URL}${API_ENDPOINTS.AUTH.GOOGLE}`;
   };
 
   const handleMicrosoftLogin = () => {
-    window.location.href = `${API_URL}/auth/microsoft`;
+    window.location.href = `${API_BASE_URL}${API_ENDPOINTS.AUTH.MICROSOFT}`;
   };
 
   return (

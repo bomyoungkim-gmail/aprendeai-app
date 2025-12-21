@@ -9,6 +9,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
 
+  // Set global prefix for all routes (versioning)
+  app.setGlobalPrefix('api/v1');
+  logger.log('🌐 Global prefix set to /api/v1');
+
   // Initialize Sentry for error tracking
   if (process.env.SENTRY_DSN) {
     Sentry.init({

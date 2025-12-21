@@ -4,7 +4,7 @@ import { StudyGroupsWebSocketGateway } from '../websocket/study-groups-ws.gatewa
 import { EmailService } from '../email/email.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto'; // Wait, I didn't see update-group.dto in list?
-import { InviteMemberDto } from './dto/invite-member.dto';
+import { InviteGroupMemberDto } from './dto/invite-member.dto';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto'; // Didn't see this one either
 import { GroupRole, StudyGroup, StudyGroupMember } from '@prisma/client';
 
@@ -100,7 +100,7 @@ export class StudyGroupsService {
     });
   }
 
-  async inviteMember(groupId: string, inviterId: string, dto: InviteMemberDto): Promise<void> {
+  async inviteMember(groupId: string, inviterId: string, dto: InviteGroupMemberDto): Promise<void> {
     // Verify inviter has permission (OWNER or MOD)
     await this.assertPermission(groupId, inviterId, ['OWNER', 'MOD']);
 

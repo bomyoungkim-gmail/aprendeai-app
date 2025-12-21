@@ -6,6 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useAuthStore } from '@/stores/auth-store';
 import api from '@/lib/api';
+import { API_ENDPOINTS } from '@/lib/config/api';
+import { ROUTES } from '@/lib/config/routes';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, Lock, Mail, User } from 'lucide-react';
@@ -44,7 +46,7 @@ export default function RegisterPage() {
       setIsLoading(true);
       setError('');
 
-      const response = await api.post('/auth/register', {
+      const response = await api.post(API_ENDPOINTS.AUTH.REGISTER, {
         name: data.name,
         email: data.email,
         password: data.password,
@@ -52,7 +54,7 @@ export default function RegisterPage() {
 
       if (response.data.access_token) {
         setAuth(response.data.access_token, response.data.user);
-        router.push('/dashboard');
+        router.push(ROUTES.DASHBOARD.HOME);
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao criar conta');
@@ -215,7 +217,7 @@ export default function RegisterPage() {
         {/* Login Link */}
         <p className="text-center text-sm text-gray-600">
           Já tem uma conta?{' '}
-          <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+          <Link href={ROUTES.AUTH.LOGIN} className="font-medium text-blue-600 hover:text-blue-500">
             Fazer login
           </Link>
         </p>

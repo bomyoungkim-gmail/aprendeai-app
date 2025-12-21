@@ -1,0 +1,25 @@
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "aprendeai", schema "public" at "127.0.0.1:5432"
+
+Applying migration `20251218164727_add_content_chunks`
+Applying migration `20251218171727_add_study_sessions_v3`
+Applying migration `20251218181920_add_srs_vocabulary_system`
+Applying migration `20251218202729_add_learning_assets_and_gating`
+Applying migration `20251218231049_add_study_groups`
+Applying migration `20251219012224_add_study_groups_indexes`
+Applying migration `20251219012324_add_missing_study_groups_indexes`
+Applying migration `20251219103329_add_oauth_field`
+Error: P3018
+
+A migration failed to apply. New migrations cannot be applied before the error is recovered from. Read more about how to resolve migration issues in a production database: https://pris.ly/d/migrate-resolve
+
+Migration name: 20251219103329_add_oauth_field
+
+Database error code: 42P01
+
+Database error:
+ERROR: relation "group_chat_messages" does not exist
+
+DbError { severity: "ERROR", parsed_severity: Some(Error), code: SqlState(E42P01), message: "relation \"group_chat_messages\" does not exist", detail: None, hint: None, position: None, where_: None, schema: None, table: None, column: None, datatype: None, constraint: None, file: Some("namespace.c"), line: Some(434), routine: Some("RangeVarGetRelidExtended") }
+
+

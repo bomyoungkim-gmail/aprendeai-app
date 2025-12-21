@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuthStore } from '@/stores/auth-store';
+import { ROUTES, ROUTES_WITH_PARAMS, ROUTE_ERRORS } from '@/lib/config/routes';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -16,14 +18,14 @@ export default function AuthCallback() {
       localStorage.setItem('token', token);
       
       // Redirect to dashboard
-      router.push('/dashboard');
+      router.push(ROUTES.DASHBOARD.HOME);
     } else if (error) {
       // OAuth failed
       console.error('OAuth error:', error);
-      router.push('/login?error=oauth_failed');
+      router.push(ROUTES_WITH_PARAMS.LOGIN_WITH_ERROR(ROUTE_ERRORS.OAUTH_FAILED));
     } else {
       // No token or error - something went wrong
-      router.push('/login?error=invalid_callback');
+      router.push(ROUTES_WITH_PARAMS.LOGIN_WITH_ERROR(ROUTE_ERRORS.INVALID_CALLBACK));
     }
   }, [searchParams, router]);
 

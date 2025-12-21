@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useFamily, useFamilyUsage, useRemoveMember, useSetPrimaryFamily } from '@/hooks/use-family';
+import { useFamily, useFamilyUsage, useRemoveMember, useSetPrimaryFamily, useDeleteFamily } from '@/hooks/use-family';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, BarChart2, DollarSign, Users, UserPlus, Trash2, Shield, User as UserIcon } from 'lucide-react';
 import { InviteMemberModal } from '@/components/family/InviteMemberModal';
 import { useAuthStore } from '@/stores/auth-store';
+import { ROUTES } from '@/lib/config/routes';
 
 export default function FamilyDashboard({ params }: { params: { id: string } }) {
   // ===== ALL HOOKS FIRST (React Rules of Hooks) =====
@@ -15,6 +16,7 @@ export default function FamilyDashboard({ params }: { params: { id: string } }) 
   const user = useAuthStore((state) => state.user);
   const removeMember = useRemoveMember();
   const setPrimary = useSetPrimaryFamily();
+  const deleteFamily = useDeleteFamily();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   // Early returns
@@ -78,10 +80,14 @@ export default function FamilyDashboard({ params }: { params: { id: string } }) 
                         Transfer Owner
                      </button>
                      <button
-                        onClick={() => {
+                        onClick={async () => {
                             if (confirm('Are you certain you want to delete this family? This action cannot be undone.')) {
-                                // Placeholder for delete functionality
-                                alert('Please implement useDeleteFamily hook connection');
+                                try {
+                                    await deleteFamily.mutateAsync(family.id);
+                                    router.push(ROUTES.FAMILY.HOME);
+                                } catch (error) {
+                                    alert('Failed to delete family');
+                                }
                             }
                         }}
                         className="text-xs flex items-center gap-1 text-red-600 hover:text-red-700 px-2 py-1 bg-red-50 rounded border border-red-100"

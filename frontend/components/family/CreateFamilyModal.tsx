@@ -4,7 +4,8 @@ import { useState, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { useCreateFamily } from '@/hooks/use-family';
 import { useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
+import { ROUTES } from '@/lib/config/routes';
 
 interface CreateFamilyModalProps {
   isOpen: boolean;
@@ -25,7 +26,7 @@ export function CreateFamilyModal({ isOpen, onClose }: CreateFamilyModalProps) {
       
       // Navigate to the newly created family's dashboard
       // (Backend now auto-sets this as Primary Family)
-      router.push(`/settings/family/${family.id}`);
+      router.push(ROUTES.FAMILY.DETAIL(family.id));
       
       // Small delay to ensure navigation starts before closing modal
       await new Promise(resolve => setTimeout(resolve, 100));

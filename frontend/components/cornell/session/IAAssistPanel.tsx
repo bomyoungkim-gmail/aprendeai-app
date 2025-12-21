@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
+import api from '@/lib/api';
 
 interface IAAssistPanelProps {
   contentId: string;
@@ -16,18 +17,12 @@ export function IAAssistPanel({ contentId, onAssetGenerated }: IAAssistPanelProp
     setStatus('Solicitando geração de conteúdo...');
 
     try {
-      const response = await fetch(`/api/contents/${contentId}/assets/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          layer: selectedLayer,
-          educationLevel: '1_EM', // TODO: Get from user profile
-          modality: 'READING',
-          promptVersion: 'v1.0',
-        }),
+      const { data: result } = await api.post(`/contents/${contentId}/assets/generate`, {
+        layer: selectedLayer,
+        educationLevel: '1_EM', // TODO: Get from user profile
+        modality: 'READING',
+        promptVersion: 'v1.0',
       });
-
-      const result = await response.json();
 
       if (result.status === 'completed') {
         setStatus('✅ Conteúdo gerado com sucesso!');

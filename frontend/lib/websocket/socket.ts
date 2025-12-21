@@ -1,7 +1,9 @@
 import { io, Socket } from 'socket.io-client';
+import { API_BASE_URL, WS_NAMESPACES } from '@/lib/config/api';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-const SOCKET_NAMESPACE = '/study-groups';
+// Convert HTTP URL to WebSocket URL
+const SOCKET_URL = API_BASE_URL.replace(/^http/, 'ws');
+const SOCKET_NAMESPACE = WS_NAMESPACES.STUDY_GROUPS;
 
 export function createSocket(token: string): Socket {
   return io(`${SOCKET_URL}${SOCKET_NAMESPACE}`, {

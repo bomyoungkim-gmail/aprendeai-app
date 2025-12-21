@@ -6,6 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useAuthStore } from '@/stores/auth-store';
 import api from '@/lib/api';
+import { API_ENDPOINTS } from '@/lib/config/api';
+import { ROUTES } from '@/lib/config/routes';
 import { useRouter } from 'next/navigation';
 import { Loader2, Lock, Mail } from 'lucide-react';
 import OAuthButton from '@/components/auth/OAuthButton';
@@ -37,9 +39,9 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
     try {
-      const res = await api.post('/auth/login', data);
+      const res = await api.post(API_ENDPOINTS.AUTH.LOGIN, data);
       setAuth(res.data.access_token, res.data.user);
-      router.push('/dashboard');
+      router.push(ROUTES.DASHBOARD.HOME);
     } catch (err: any) {
       console.error(err);
       setError(err.response?.data?.message || 'Erro ao realizar login');
@@ -152,7 +154,7 @@ export default function LoginPage() {
            <div className="mt-4 text-center">
               <p className="text-sm text-gray-600">
                 Ainda não tem conta?{' '}
-                <a href="/register" className="font-medium text-blue-600 hover:text-blue-500">
+                <a href={ROUTES.AUTH.REGISTER} className="font-medium text-blue-600 hover:text-blue-500">
                   Registre-se
                 </a>
               </p>

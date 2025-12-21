@@ -10,29 +10,23 @@ export interface ExtractionMessage {
 
 @Injectable()
 export class QueueService implements OnModuleInit, OnModuleDestroy {
-  private connection: any; // amqp.Connection
-  private channel: any; // amqp.Channel
+  private connection: any; // amqplib Connection type has quirks
+  private channel: any; // amqplib Channel type
   private readonly logger = new Logger(QueueService.name);
+  private isConnecting = false;
+  private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(private config: ConfigService) {}
 
   async onModuleInit() {
-    try {
-      const url = this.config.get('RABBITMQ_URL') || 'amqp://guest:guest@localhost:5672';
-      this.logger.log(`Connecting to RabbitMQ at ${url}`);
-      
-      this.connection = await amqp.connect(url);
-      this.channel = await this.connection.createChannel();
-      
-      this.logger.log('RabbitMQ connection established');
-    } catch (error) {
-      this.logger.error('Failed to connect to RabbitMQ', error);
-      // Don't throw - allow app to start without RabbitMQ
-    }
+    await this.connect();
   }
 
   async onModuleDestroy() {
     try {
+      if (this.reconnectTimeout) {
+        clearTimeout(this.reconnectTimeout);
+      }
       await this.channel?.close();
       await this.connection?.close();
       this.logger.log('RabbitMQ connection closed');
@@ -41,38 +35,113 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async publishExtractionJob(contentId: string): Promise<void> {
-    if (!this.channel) {
-      throw new Error('RabbitMQ channel not initialized');
+  private async connect(retries = 5, delay = 2000): Promise<void> {
+    if (this.isConnecting) {
+      this.logger.debug('Connection attempt already in progress, skipping');
+      return;
     }
 
-    const queue = 'content.extract';
-    await this.channel.assertQueue(queue, { durable: true });
+    this.isConnecting = true;
+    const url = this.config.get('RABBITMQ_URL') || 'amqp://guest:guest@localhost:5672';
 
-    const message: ExtractionMessage = {
-      action: 'EXTRACT_TEXT',
-      contentId,
-      timestamp: new Date().toISOString(),
-    };
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        this.logger.log(`Connecting to RabbitMQ (attempt ${attempt}/${retries})...`);
+        
+        this.connection = await amqp.connect(url, {
+          timeout: 10000,  // 10 second timeout
+        });
 
-    this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)), {
-      persistent: true,
-    });
+        // Setup connection event handlers for automatic reconnection
+        this.connection.on('error', (err) => {
+          this.logger.error('RabbitMQ connection error', err.message);
+        });
 
-    this.logger.log(`Published extraction job for content ${contentId}`);
+        this.connection.on('close', () => {
+          this.logger.warn('RabbitMQ connection closed, will attempt to reconnect in 5 seconds');
+          this.connection = null;
+          this.channel = null;
+          this.isConnecting = false;
+          
+          // Schedule reconnection
+          this.reconnectTimeout = setTimeout(() => {
+            this.connect();
+          }, 5000);
+        });
+
+        this.channel = await this.connection.createChannel();
+        
+        this.logger.log('✅ RabbitMQ connection established successfully');
+        this.isConnecting = false;
+        return;
+
+      } catch (error) {
+        this.logger.error(
+          `Failed to connect to RabbitMQ (attempt ${attempt}/${retries}): ${error.message}`
+        );
+        
+        if (attempt < retries) {
+          const backoff = delay * attempt;  // Exponential backoff
+          this.logger.log(`Retrying in ${backoff}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoff));
+        }
+      }
+    }
+
+    this.logger.error('❌ Failed to connect to RabbitMQ after all retries. Queue operations will be disabled.');
+    this.isConnecting = false;
+  }
+
+  async publishExtractionJob(contentId: string): Promise<void> {
+    if (!this.channel) {
+      this.logger.warn('RabbitMQ channel not available, skipping job publication for content ' + contentId);
+      return;  // Graceful degradation
+    }
+
+    try {
+      const queue = 'content.extract';
+      await this.channel.assertQueue(queue, { durable: true });
+
+      const message: ExtractionMessage = {
+        action: 'EXTRACT_TEXT',
+        contentId,
+        timestamp: new Date().toISOString(),
+      };
+
+      this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)), {
+        persistent: true,
+      });
+
+      this.logger.log(`Published extraction job for content ${contentId}`);
+    } catch (error) {
+      this.logger.error(`Failed to publish extraction job: ${error.message}`);
+      throw error;
+    }
   }
 
   // Generic publish method for future use
   async publish(queue: string, message: any): Promise<void> {
     if (!this.channel) {
-      throw new Error('RabbitMQ channel not initialized');
+      this.logger.warn(`RabbitMQ channel not available, skipping publication to queue ${queue}`);
+      return;  // Graceful degradation
     }
 
-    await this.channel.assertQueue(queue, { durable: true });
-    this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)), {
-      persistent: true,
-    });
+    try {
+      await this.channel.assertQueue(queue, { durable: true });
+      this.channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)), {
+        persistent: true,
+      });
 
-    this.logger.log(`Published message to queue ${queue}`);
+      this.logger.log(`Published message to queue ${queue}`);
+    } catch (error) {
+      this.logger.error(`Failed to publish to queue ${queue}: ${error.message}`);
+      throw error;
+    }
+  }
+
+  // Health check method
+  isConnected(): boolean {
+    return this.channel !== null && this.connection !== null;
   }
 }
+

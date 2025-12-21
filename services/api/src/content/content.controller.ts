@@ -1,13 +1,17 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { ContentService } from './content.service';
+import { QueueService } from '../queue/queue.service';
 import { CreateContentDto, UpdateContentDto } from './dto/content.dto';
 import { CreateContentVersionDto } from './dto/content-version.dto';
-import { AuthGuard } from '@nestjs/passport';
-import * as amqp from 'amqplib';
+import { AuthGuard } from '@nestjs/passport'; // Keep explicit guard or remove if using global
+import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('content')
 export class ContentController {
-  constructor(private readonly contentService: ContentService) {}
+  constructor(
+    private readonly contentService: ContentService,
+    private readonly queueService: QueueService,
+  ) {}
 
   // @UseGuards(AuthGuard('jwt'))
   @Post()
@@ -31,18 +35,12 @@ export class ContentController {
     return this.contentService.addVersion(id, createVersionDto);
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  // Guards are now global, but keeping explicit ones doesn't hurt (or we can clean them up)
   @Post(':id/simplify')
   async triggerSimplify(@Param('id') id: string, @Body() body: { text: string; level?: string; lang?: string }) {
-    // Ideally this logic moves to Service or a QueueService
-    const RABBIT_URL = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
     const QUEUE = 'content.process';
 
     try {
-        const conn = await amqp.connect(RABBIT_URL);
-        const channel = await conn.createChannel();
-        await channel.assertQueue(QUEUE, { durable: true });
-        
         const payload = {
             action: 'SIMPLIFY',
             contentId: id,
@@ -51,9 +49,7 @@ export class ContentController {
             targetLang: body.lang || 'PT_BR'
         };
         
-        channel.sendToQueue(QUEUE, Buffer.from(JSON.stringify(payload)));
-        await channel.close();
-        await conn.close();
+        await this.queueService.publish(QUEUE, payload);
 
         return { message: 'Simplification task queued' };
     } catch (err) {
@@ -62,17 +58,11 @@ export class ContentController {
     }
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Post(':id/assessment')
   async triggerAssessment(@Param('id') id: string, @Body() body: { text: string; level?: string }) {
-    const RABBIT_URL = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
     const QUEUE = 'content.process';
 
     try {
-        const conn = await amqp.connect(RABBIT_URL);
-        const channel = await conn.createChannel();
-        await channel.assertQueue(QUEUE, { durable: true });
-        
         const payload = {
             action: 'ASSESSMENT',
             contentId: id,
@@ -80,9 +70,7 @@ export class ContentController {
             level: body.level || '1_EM'
         };
         
-        channel.sendToQueue(QUEUE, Buffer.from(JSON.stringify(payload)));
-        await channel.close();
-        await conn.close();
+        await this.queueService.publish(QUEUE, payload);
 
         return { message: 'Assessment task queued' };
     } catch (err) {
@@ -91,13 +79,11 @@ export class ContentController {
     }
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateContentDto: UpdateContentDto) {
     return this.contentService.update(id, updateContentDto);
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.contentService.remove(id);
