@@ -2,144 +2,362 @@
 > api@0.0.1 build
 > nest build
 
-src/admin/admin.controller.ts:7:67 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+test/unit/family.service.spec.ts:86:39 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyFindUniqueArgs>(args: SelectSubset<T, FamilyFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
 
-7 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
-                                                                    ~~~~~~~~~~~~~~~~~
-src/admin/config.controller.ts:14:54 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+86       prismaService.family.findUnique.mockResolvedValue(mockFamily);
+                                         ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:87:37 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends UserFindUniqueArgs>(args: SelectSubset<T, UserFindUniqueArgs<DefaultArgs>>) => Prisma__UserClient<GetFindResult<$UserPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
 
-14 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-                                                        ~~~~~~~~~~~~~~~~~
-src/admin/dashboard.controller.ts:6:54 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+87       prismaService.user.findUnique.mockResolvedValue(null);
+                                       ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:100:33 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends UserCreateArgs>(args: SelectSubset<T, UserCreateArgs<DefaultArgs>>) => Prisma__UserClient<GetFindResult<$UserPayload<DefaultArgs>, T, {}>, never, DefaultArgs>'.
 
-6 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-                                                       ~~~~~~~~~~~~~~~~~
-src/admin/dto/config.dto.ts:2:50 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+100       prismaService.user.create.mockResolvedValue(createdUser as any);
+                                    ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:101:45 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyMemberFindUniqueArgs>(args: SelectSubset<T, FamilyMemberFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyMemberClient<GetFindResult<$FamilyMemberPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
 
-2 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-                                                   ~~~~~~~~~~~~~~~~~
-src/admin/dto/dashboard.dto.ts:2:50 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+101       prismaService.familyMember.findUnique.mockResolvedValue(null);
+                                                ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:102:41 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyMemberCreateArgs>(args: SelectSubset<T, FamilyMemberCreateArgs<DefaultArgs>>) => Prisma__FamilyMemberClient<GetFindResult<$FamilyMemberPayload<DefaultArgs>, T, {}>, never, DefaultArgs>'.
 
-2 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-                                                   ~~~~~~~~~~~~~~~~~
-src/admin/dto/feature-flag.dto.ts:2:50 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+102       prismaService.familyMember.create.mockResolvedValue({
+                                            ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:105:26 - error TS2339: Property 'MEMBER' does not exist on type '{ OWNER: "OWNER"; GUARDIAN: "GUARDIAN"; CHILD: "CHILD"; }'.
 
-2 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-                                                   ~~~~~~~~~~~~~~~~~
-src/admin/dto/secret.dto.ts:2:50 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+105         role: FamilyRole.MEMBER,
+                             ~~~~~~
+test/unit/family.service.spec.ts:110:53 - error TS2345: Argument of type '{ email: string; displayName: string; }' is not assignable to parameter of type 'InviteMemberDto'.
+  Property 'role' is missing in type '{ email: string; displayName: string; }' but required in type 'InviteMemberDto'.
 
-2 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-                                                   ~~~~~~~~~~~~~~~~~
-src/admin/dto/user-management.dto.ts:4:50 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
+110       await service.inviteMember(ownerId, familyId, dto);
+                                                        ~~~
 
-4 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-                                                   ~~~~~~~~~~~~~~~~~
-src/auth/auth.controller.ts:5:76 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
-
-5 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
-                                                                             ~~~~~~~~~~~~~~~~~
-src/billing/billing.controller.ts:14:54 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
-
-14 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-                                                        ~~~~~~~~~~~~~~~~~
-src/billing/dto/billing.dto.ts:2:50 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
-
-2 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-                                                   ~~~~~~~~~~~~~~~~~
-src/billing/plan-limits.service.ts:51:38 - error TS2339: Property 'billingPlan' does not exist on type 'PrismaService'.
-
-51       const plan = await this.prisma.billingPlan.findUnique({
-                                        ~~~~~~~~~~~
-src/billing/user-billing.controller.ts:9:54 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
-
-9 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-                                                       ~~~~~~~~~~~~~~~~~
-src/common/logger/logger.module.ts:2:31 - error TS2307: Cannot find module 'nest-winston' or its corresponding type declarations.
-
-2 import { WinstonModule } from 'nest-winston';
-                                ~~~~~~~~~~~~~~
-src/common/logger/logger.module.ts:3:26 - error TS2307: Cannot find module 'winston' or its corresponding type declarations.
-
-3 import * as winston from 'winston';
-                           ~~~~~~~~~
-src/cornell/services/storage.service.ts:26:7 - error TS2322: Type 'void' is not assignable to type '{ url: string; expiresAt: string; }'.
-
-26       return this.getS3SignedUrl(file);
-         ~~~~~~
-src/extraction/extraction.service.ts:32:47 - error TS2339: Property 'hasEntitlement' does not exist on type 'EntitlementsService'.
-
-32     const hasAccess = await this.entitlements.hasEntitlement(
-                                                 ~~~~~~~~~~~~~~
-src/extraction/extraction.service.ts:91:13 - error TS2353: Object literal may only specify known properties, and 'contentType' does not exist in type 'ContentSelect<DefaultArgs>'.
-
-91             contentType: true,
-               ~~~~~~~~~~~
-src/main.ts:5:48 - error TS2307: Cannot find module '@nestjs/swagger' or its corresponding type declarations.
-
-5 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-                                                 ~~~~~~~~~~~~~~~~~
-src/main.ts:6:25 - error TS2307: Cannot find module '@sentry/node' or its corresponding type declarations.
-
-6 import * as Sentry from '@sentry/node';
-                          ~~~~~~~~~~~~~~
-src/observability/jobs.service.ts:2:38 - error TS2307: Cannot find module '@nestjs/schedule' or its corresponding type declarations.
-
-2 import { Cron, CronExpression } from '@nestjs/schedule';
-                                       ~~~~~~~~~~~~~~~~~~
-src/observability/observability.module.ts:2:32 - error TS2307: Cannot find module '@nestjs/schedule' or its corresponding type declarations.
-
-2 import { ScheduleModule } from '@nestjs/schedule';
-                                 ~~~~~~~~~~~~~~~~~~
-src/profiles/profile.service.ts:36:7 - error TS2322: Type 'UpdateProfileDto' is not assignable to type '(Without<LearnerProfileUpdateInput, LearnerProfileUncheckedUpdateInput> & LearnerProfileUncheckedUpdateInput) | (Without<...> & LearnerProfileUpdateInput)'.
-  Type 'UpdateProfileDto' is not assignable to type 'Without<LearnerProfileUncheckedUpdateInput, LearnerProfileUpdateInput> & LearnerProfileUpdateInput'.
-    Types of property 'educationLevel' are incompatible.
-      Type 'string' is not assignable to type 'EducationLevel | EnumEducationLevelFieldUpdateOperationsInput'.
-
-36       data,
+  src/family/dto/invite-member.dto.ts:12:3
+    12   role: FamilyRole;
          ~~~~
+    'role' is declared here.
+test/unit/family.service.spec.ts:135:39 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyFindUniqueArgs>(args: SelectSubset<T, FamilyFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
 
-  node_modules/.prisma/client/index.d.ts:47713:5
-    47713     data: XOR<LearnerProfileUpdateInput, LearnerProfileUncheckedUpdateInput>
-              ~~~~
-    The expected type comes from property 'data' which is declared here on type '{ select?: LearnerProfileSelect<DefaultArgs>; include?: LearnerProfileInclude<DefaultArgs>; data: (Without<...> & LearnerProfileUncheckedUpdateInput) | (Without<...> & LearnerProfileUpdateInput); where: LearnerProfileWhereUniqueInput; }'
-src/queue/queue.service.ts:24:7 - error TS2739: Type 'ChannelModel' is missing the following properties from type 'Connection': serverProperties, expectSocketClose, sentSinceLastCheck, recvSinceLastCheck, sendMessage
+135       prismaService.family.findUnique.mockResolvedValue(mockFamily);
+                                          ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:136:37 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends UserFindUniqueArgs>(args: SelectSubset<T, UserFindUniqueArgs<DefaultArgs>>) => Prisma__UserClient<GetFindResult<$UserPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
 
-24       this.connection = await amqp.connect(url);
-         ~~~~~~~~~~~~~~~
-src/queue/queue.service.ts:25:44 - error TS2339: Property 'createChannel' does not exist on type 'Connection'.
+136       prismaService.user.findUnique.mockResolvedValue(existingUser as any);
+                                        ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:137:45 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyMemberFindUniqueArgs>(args: SelectSubset<T, FamilyMemberFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyMemberClient<GetFindResult<$FamilyMemberPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
 
-25       this.channel = await this.connection.createChannel();
-                                              ~~~~~~~~~~~~~
-src/queue/queue.service.ts:37:30 - error TS2339: Property 'close' does not exist on type 'Connection'.
+137       prismaService.familyMember.findUnique.mockResolvedValue(null);
+                                                ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:138:41 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyMemberCreateArgs>(args: SelectSubset<T, FamilyMemberCreateArgs<DefaultArgs>>) => Prisma__FamilyMemberClient<GetFindResult<$FamilyMemberPayload<DefaultArgs>, T, {}>, never, DefaultArgs>'.
 
-37       await this.connection?.close();
-                                ~~~~~
-src/sessions/reading-sessions.service.ts:44:13 - error TS2353: Object literal may only specify known properties, and 'contentType' does not exist in type 'ContentSelect<DefaultArgs>'.
+138       prismaService.familyMember.create.mockResolvedValue({
+                                            ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:141:26 - error TS2339: Property 'MEMBER' does not exist on type '{ OWNER: "OWNER"; GUARDIAN: "GUARDIAN"; CHILD: "CHILD"; }'.
 
-44             contentType: true,
-               ~~~~~~~~~~~
-src/sessions/reading-sessions.service.ts:65:13 - error TS2353: Object literal may only specify known properties, and 'contentType' does not exist in type 'ContentSelect<DefaultArgs>'.
+141         role: FamilyRole.MEMBER,
+                             ~~~~~~
+test/unit/family.service.spec.ts:146:53 - error TS2345: Argument of type '{ email: string; }' is not assignable to parameter of type 'InviteMemberDto'.
+  Property 'role' is missing in type '{ email: string; }' but required in type 'InviteMemberDto'.
 
-65             contentType: true,
-               ~~~~~~~~~~~
-src/sessions/reading-sessions.service.ts:108:9 - error TS2353: Object literal may only specify known properties, and 'updatedAt' does not exist in type '(Without<ReadingSessionUpdateInput, ReadingSessionUncheckedUpdateInput> & ReadingSessionUncheckedUpdateInput) | (Without<...> & ReadingSessionUpdateInput)'.
+146       await service.inviteMember(ownerId, familyId, dto);
+                                                        ~~~
 
-108         updatedAt: new Date(),
-            ~~~~~~~~~
+  src/family/dto/invite-member.dto.ts:12:3
+    12   role: FamilyRole;
+         ~~~~
+    'role' is declared here.
+test/unit/family.service.spec.ts:153:28 - error TS2339: Property 'MEMBER' does not exist on type '{ OWNER: "OWNER"; GUARDIAN: "GUARDIAN"; CHILD: "CHILD"; }'.
 
-  node_modules/.prisma/client/index.d.ts:17264:5
-    17264     data: XOR<ReadingSessionUpdateInput, ReadingSessionUncheckedUpdateInput>
-              ~~~~
-    The expected type comes from property 'data' which is declared here on type '{ select?: ReadingSessionSelect<DefaultArgs>; include?: ReadingSessionInclude<DefaultArgs>; data: (Without<...> & ReadingSessionUncheckedUpdateInput) | (Without<...> & ReadingSessionUpdateInput); where: ReadingSessionWhereUniqueInput; }'
-src/sessions/reading-sessions.service.ts:155:9 - error TS2353: Object literal may only specify known properties, and 'updatedAt' does not exist in type '(Without<ReadingSessionUpdateInput, ReadingSessionUncheckedUpdateInput> & ReadingSessionUncheckedUpdateInput) | (Without<...> & ReadingSessionUpdateInput)'.
+153           role: FamilyRole.MEMBER,
+                               ~~~~~~
+test/unit/family.service.spec.ts:163:39 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyFindUniqueArgs>(args: SelectSubset<T, FamilyFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
 
-155         updatedAt: new Date(),
-            ~~~~~~~~~
+163       prismaService.family.findUnique.mockResolvedValue(mockFamily);
+                                          ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:164:37 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends UserFindUniqueArgs>(args: SelectSubset<T, UserFindUniqueArgs<DefaultArgs>>) => Prisma__UserClient<GetFindResult<$UserPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
 
-  node_modules/.prisma/client/index.d.ts:17264:5
-    17264     data: XOR<ReadingSessionUpdateInput, ReadingSessionUncheckedUpdateInput>
-              ~~~~
-    The expected type comes from property 'data' which is declared here on type '{ select?: ReadingSessionSelect<DefaultArgs>; include?: ReadingSessionInclude<DefaultArgs>; data: (Without<...> & ReadingSessionUncheckedUpdateInput) | (Without<...> & ReadingSessionUpdateInput); where: ReadingSessionWhereUniqueInput; }'
+164       prismaService.user.findUnique.mockResolvedValue(user);
+                                        ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:165:45 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyMemberFindUniqueArgs>(args: SelectSubset<T, FamilyMemberFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyMemberClient<GetFindResult<$FamilyMemberPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
 
-Found 30 error(s).
+165       prismaService.familyMember.findUnique.mockResolvedValue(null);
+                                                ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:166:41 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyMemberCreateArgs>(args: SelectSubset<T, FamilyMemberCreateArgs<DefaultArgs>>) => Prisma__FamilyMemberClient<GetFindResult<$FamilyMemberPayload<DefaultArgs>, T, {}>, never, DefaultArgs>'.
+
+166       prismaService.familyMember.create.mockResolvedValue({
+                                            ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:167:26 - error TS2339: Property 'MEMBER' does not exist on type '{ OWNER: "OWNER"; GUARDIAN: "GUARDIAN"; CHILD: "CHILD"; }'.
+
+167         role: FamilyRole.MEMBER,
+                             ~~~~~~
+test/unit/family.service.spec.ts:170:53 - error TS2345: Argument of type '{ email: string; }' is not assignable to parameter of type 'InviteMemberDto'.
+  Property 'role' is missing in type '{ email: string; }' but required in type 'InviteMemberDto'.
+
+170       await service.inviteMember(ownerId, familyId, dto);
+                                                        ~~~
+
+  src/family/dto/invite-member.dto.ts:12:3
+    12   role: FamilyRole;
+         ~~~~
+    'role' is declared here.
+test/unit/family.service.spec.ts:174:28 - error TS2339: Property 'MEMBER' does not exist on type '{ OWNER: "OWNER"; GUARDIAN: "GUARDIAN"; CHILD: "CHILD"; }'.
+
+174           role: FamilyRole.MEMBER,
+                               ~~~~~~
+test/unit/family.service.spec.ts:183:39 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyFindUniqueArgs>(args: SelectSubset<T, FamilyFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+183       prismaService.family.findUnique.mockResolvedValue(mockFamily);
+                                          ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:184:37 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends UserFindUniqueArgs>(args: SelectSubset<T, UserFindUniqueArgs<DefaultArgs>>) => Prisma__UserClient<GetFindResult<$UserPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+184       prismaService.user.findUnique.mockResolvedValue(user);
+                                        ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:185:45 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyMemberFindUniqueArgs>(args: SelectSubset<T, FamilyMemberFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyMemberClient<GetFindResult<$FamilyMemberPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+185       prismaService.familyMember.findUnique.mockResolvedValue({
+                                                ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:188:26 - error TS2339: Property 'MEMBER' does not exist on type '{ OWNER: "OWNER"; GUARDIAN: "GUARDIAN"; CHILD: "CHILD"; }'.
+
+188         role: FamilyRole.MEMBER,
+                             ~~~~~~
+test/unit/family.service.spec.ts:192:60 - error TS2345: Argument of type '{ email: string; }' is not assignable to parameter of type 'InviteMemberDto'.
+  Property 'role' is missing in type '{ email: string; }' but required in type 'InviteMemberDto'.
+
+192       await expect(service.inviteMember(ownerId, familyId, dto)).rejects.toThrow(BadRequestException);
+                                                               ~~~
+
+  src/family/dto/invite-member.dto.ts:12:3
+    12   role: FamilyRole;
+         ~~~~
+    'role' is declared here.
+test/unit/family.service.spec.ts:199:39 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyFindUniqueArgs>(args: SelectSubset<T, FamilyFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+199       prismaService.family.findUnique.mockResolvedValue(mockFamily);
+                                          ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:200:37 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends UserFindUniqueArgs>(args: SelectSubset<T, UserFindUniqueArgs<DefaultArgs>>) => Prisma__UserClient<GetFindResult<$UserPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+200       prismaService.user.findUnique.mockResolvedValue(null);
+                                        ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:201:33 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends UserCreateArgs>(args: SelectSubset<T, UserCreateArgs<DefaultArgs>>) => Prisma__UserClient<GetFindResult<$UserPayload<DefaultArgs>, T, {}>, never, DefaultArgs>'.
+
+201       prismaService.user.create.mockResolvedValue(user);
+                                    ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:202:45 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyMemberFindUniqueArgs>(args: SelectSubset<T, FamilyMemberFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyMemberClient<GetFindResult<$FamilyMemberPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+202       prismaService.familyMember.findUnique.mockResolvedValue(null);
+                                                ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:203:41 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyMemberCreateArgs>(args: SelectSubset<T, FamilyMemberCreateArgs<DefaultArgs>>) => Prisma__FamilyMemberClient<GetFindResult<$FamilyMemberPayload<DefaultArgs>, T, {}>, never, DefaultArgs>'.
+
+203       prismaService.familyMember.create.mockResolvedValue({} as any);
+                                            ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:205:53 - error TS2345: Argument of type '{ email: string; }' is not assignable to parameter of type 'InviteMemberDto'.
+  Property 'role' is missing in type '{ email: string; }' but required in type 'InviteMemberDto'.
+
+205       await service.inviteMember(ownerId, familyId, dto);
+                                                        ~~~
+
+  src/family/dto/invite-member.dto.ts:12:3
+    12   role: FamilyRole;
+         ~~~~
+    'role' is declared here.
+test/unit/family.service.spec.ts:219:39 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyFindUniqueArgs>(args: SelectSubset<T, FamilyFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+219       prismaService.family.findUnique.mockResolvedValue(mockFamily);
+                                          ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:221:63 - error TS2345: Argument of type '{ email: string; }' is not assignable to parameter of type 'InviteMemberDto'.
+  Property 'role' is missing in type '{ email: string; }' but required in type 'InviteMemberDto'.
+
+221       await expect(service.inviteMember(nonOwnerId, familyId, dto)).rejects.toThrow(ForbiddenException);
+                                                                  ~~~
+
+  src/family/dto/invite-member.dto.ts:12:3
+    12   role: FamilyRole;
+         ~~~~
+    'role' is declared here.
+test/unit/family.service.spec.ts:239:39 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyFindUniqueArgs>(args: SelectSubset<T, FamilyFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+239       prismaService.family.findUnique.mockResolvedValue(mockFamily);
+                                          ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:240:45 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyMemberFindUniqueArgs>(args: SelectSubset<T, FamilyMemberFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyMemberClient<GetFindResult<$FamilyMemberPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+240       prismaService.familyMember.findUnique.mockResolvedValue({
+                                                ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:243:26 - error TS2339: Property 'MEMBER' does not exist on type '{ OWNER: "OWNER"; GUARDIAN: "GUARDIAN"; CHILD: "CHILD"; }'.
+
+243         role: FamilyRole.MEMBER,
+                             ~~~~~~
+test/unit/family.service.spec.ts:248:65 - error TS2345: Argument of type '{ newOwnerId: string; }' is not assignable to parameter of type 'string'.
+
+248       await service.transferOwnership(currentOwnerId, familyId, { newOwnerId });
+                                                                    ~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:257:39 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyFindUniqueArgs>(args: SelectSubset<T, FamilyFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+257       prismaService.family.findUnique.mockResolvedValue(mockFamily);
+                                          ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:258:45 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyMemberFindUniqueArgs>(args: SelectSubset<T, FamilyMemberFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyMemberClient<GetFindResult<$FamilyMemberPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+258       prismaService.familyMember.findUnique.mockResolvedValue({
+                                                ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:260:26 - error TS2339: Property 'MEMBER' does not exist on type '{ OWNER: "OWNER"; GUARDIAN: "GUARDIAN"; CHILD: "CHILD"; }'.
+
+260         role: FamilyRole.MEMBER,
+                             ~~~~~~
+test/unit/family.service.spec.ts:263:65 - error TS2345: Argument of type '{ newOwnerId: string; }' is not assignable to parameter of type 'string'.
+
+263       await service.transferOwnership(currentOwnerId, familyId, { newOwnerId });
+                                                                    ~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:274:39 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyFindUniqueArgs>(args: SelectSubset<T, FamilyFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+274       prismaService.family.findUnique.mockResolvedValue(mockFamily);
+                                          ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:275:45 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyMemberFindUniqueArgs>(args: SelectSubset<T, FamilyMemberFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyMemberClient<GetFindResult<$FamilyMemberPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+275       prismaService.familyMember.findUnique.mockResolvedValue({
+                                                ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:277:26 - error TS2339: Property 'MEMBER' does not exist on type '{ OWNER: "OWNER"; GUARDIAN: "GUARDIAN"; CHILD: "CHILD"; }'.
+
+277         role: FamilyRole.MEMBER,
+                             ~~~~~~
+test/unit/family.service.spec.ts:280:65 - error TS2345: Argument of type '{ newOwnerId: string; }' is not assignable to parameter of type 'string'.
+
+280       await service.transferOwnership(currentOwnerId, familyId, { newOwnerId });
+                                                                    ~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:291:39 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyFindUniqueArgs>(args: SelectSubset<T, FamilyFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+291       prismaService.family.findUnique.mockResolvedValue(mockFamily);
+                                          ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:292:45 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyMemberFindUniqueArgs>(args: SelectSubset<T, FamilyMemberFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyMemberClient<GetFindResult<$FamilyMemberPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+292       prismaService.familyMember.findUnique.mockResolvedValue(null);
+                                                ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:295:61 - error TS2345: Argument of type '{ newOwnerId: string; }' is not assignable to parameter of type 'string'.
+
+295         service.transferOwnership(currentOwnerId, familyId, { newOwnerId })
+                                                                ~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:300:39 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyFindUniqueArgs>(args: SelectSubset<T, FamilyFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+300       prismaService.family.findUnique.mockResolvedValue(mockFamily);
+                                          ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:301:45 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyMemberFindUniqueArgs>(args: SelectSubset<T, FamilyMemberFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyMemberClient<GetFindResult<$FamilyMemberPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+301       prismaService.familyMember.findUnique.mockResolvedValue({
+                                                ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:303:26 - error TS2339: Property 'MEMBER' does not exist on type '{ OWNER: "OWNER"; GUARDIAN: "GUARDIAN"; CHILD: "CHILD"; }'.
+
+303         role: FamilyRole.MEMBER,
+                             ~~~~~~
+test/unit/family.service.spec.ts:306:65 - error TS2345: Argument of type '{ newOwnerId: string; }' is not assignable to parameter of type 'string'.
+
+306       await service.transferOwnership(currentOwnerId, familyId, { newOwnerId });
+                                                                    ~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:313:39 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyFindUniqueArgs>(args: SelectSubset<T, FamilyFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+313       prismaService.family.findUnique.mockResolvedValue(mockFamily);
+                                          ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:316:57 - error TS2345: Argument of type '{ newOwnerId: string; }' is not assignable to parameter of type 'string'.
+
+316         service.transferOwnership(notOwnerId, familyId, { newOwnerId })
+                                                            ~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:326:45 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyMemberFindUniqueArgs>(args: SelectSubset<T, FamilyMemberFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyMemberClient<GetFindResult<$FamilyMemberPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+326       prismaService.familyMember.findUnique.mockResolvedValue({
+                                                ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:329:26 - error TS2339: Property 'MEMBER' does not exist on type '{ OWNER: "OWNER"; GUARDIAN: "GUARDIAN"; CHILD: "CHILD"; }'.
+
+329         role: FamilyRole.MEMBER,
+                             ~~~~~~
+test/unit/family.service.spec.ts:333:33 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends UserUpdateArgs>(args: SelectSubset<T, UserUpdateArgs<DefaultArgs>>) => Prisma__UserClient<GetFindResult<$UserPayload<DefaultArgs>, T, {}>, never, DefaultArgs>'.
+
+333       prismaService.user.update.mockResolvedValue({
+                                    ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:351:45 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyMemberFindUniqueArgs>(args: SelectSubset<T, FamilyMemberFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyMemberClient<GetFindResult<$FamilyMemberPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+351       prismaService.familyMember.findUnique.mockResolvedValue(null);
+                                                ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:357:45 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyMemberFindUniqueArgs>(args: SelectSubset<T, FamilyMemberFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyMemberClient<GetFindResult<$FamilyMemberPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+357       prismaService.familyMember.findUnique.mockResolvedValue({
+                                                ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:360:26 - error TS2339: Property 'MEMBER' does not exist on type '{ OWNER: "OWNER"; GUARDIAN: "GUARDIAN"; CHILD: "CHILD"; }'.
+
+360         role: FamilyRole.MEMBER,
+                             ~~~~~~
+test/unit/family.service.spec.ts:363:37 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends UserFindUniqueArgs>(args: SelectSubset<T, UserFindUniqueArgs<DefaultArgs>>) => Prisma__UserClient<GetFindResult<$UserPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+363       prismaService.user.findUnique.mockResolvedValue({
+                                        ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:389:37 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends UserFindUniqueArgs>(args: SelectSubset<T, UserFindUniqueArgs<DefaultArgs>>) => Prisma__UserClient<GetFindResult<$UserPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+389       prismaService.user.findUnique.mockResolvedValue(mockUser as any);
+                                        ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:397:21 - error TS2339: Property 'scopeType' does not exist on type '{ scopeType: ScopeType; scopeId: string; }[]'.
+
+397       expect(result.scopeType).toBe('FAMILY');
+                        ~~~~~~~~~
+test/unit/family.service.spec.ts:398:21 - error TS2339: Property 'scopeId' does not exist on type '{ scopeType: ScopeType; scopeId: string; }[]'.
+
+398       expect(result.scopeId).toBe(primaryFamilyId);
+                        ~~~~~~~
+test/unit/family.service.spec.ts:404:37 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends UserFindUniqueArgs>(args: SelectSubset<T, UserFindUniqueArgs<DefaultArgs>>) => Prisma__UserClient<GetFindResult<$UserPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+404       prismaService.user.findUnique.mockResolvedValue({
+                                        ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:409:38 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyFindFirstArgs>(args?: SelectSubset<T, FamilyFindFirstArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+409       prismaService.family.findFirst.mockResolvedValue({
+                                         ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:421:21 - error TS2339: Property 'scopeType' does not exist on type '{ scopeType: ScopeType; scopeId: string; }[]'.
+
+421       expect(result.scopeType).toBe('FAMILY');
+                        ~~~~~~~~~
+test/unit/family.service.spec.ts:422:21 - error TS2339: Property 'scopeId' does not exist on type '{ scopeType: ScopeType; scopeId: string; }[]'.
+
+422       expect(result.scopeId).toBe(ownedFamilyId);
+                        ~~~~~~~
+test/unit/family.service.spec.ts:428:37 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends UserFindUniqueArgs>(args: SelectSubset<T, UserFindUniqueArgs<DefaultArgs>>) => Prisma__UserClient<GetFindResult<$UserPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+428       prismaService.user.findUnique.mockResolvedValue({
+                                        ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:434:10 - error TS2339: Property 'mockResolvedValueOnce' does not exist on type '<T extends FamilyFindFirstArgs>(args?: SelectSubset<T, FamilyFindFirstArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+434         .mockResolvedValueOnce(null) // No owned family
+             ~~~~~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:444:21 - error TS2339: Property 'scopeType' does not exist on type '{ scopeType: ScopeType; scopeId: string; }[]'.
+
+444       expect(result.scopeType).toBe('FAMILY');
+                        ~~~~~~~~~
+test/unit/family.service.spec.ts:445:21 - error TS2339: Property 'scopeId' does not exist on type '{ scopeType: ScopeType; scopeId: string; }[]'.
+
+445       expect(result.scopeId).toBe(firstFamilyId);
+                        ~~~~~~~
+test/unit/family.service.spec.ts:449:37 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends UserFindUniqueArgs>(args: SelectSubset<T, UserFindUniqueArgs<DefaultArgs>>) => Prisma__UserClient<GetFindResult<$UserPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+449       prismaService.user.findUnique.mockResolvedValue({
+                                        ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:454:38 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyFindFirstArgs>(args?: SelectSubset<T, FamilyFindFirstArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+454       prismaService.family.findFirst.mockResolvedValue(null);
+                                         ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:463:21 - error TS2339: Property 'scopeType' does not exist on type '{ scopeType: ScopeType; scopeId: string; }[]'.
+
+463       expect(result.scopeType).toBe('USER');
+                        ~~~~~~~~~
+test/unit/family.service.spec.ts:464:21 - error TS2339: Property 'scopeId' does not exist on type '{ scopeType: ScopeType; scopeId: string; }[]'.
+
+464       expect(result.scopeId).toBe(userId);
+                        ~~~~~~~
+test/unit/family.service.spec.ts:473:39 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyFindUniqueArgs>(args: SelectSubset<T, FamilyFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+473       prismaService.family.findUnique.mockResolvedValue({
+                                          ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:490:39 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyFindUniqueArgs>(args: SelectSubset<T, FamilyFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+490       prismaService.family.findUnique.mockResolvedValue({
+                                          ~~~~~~~~~~~~~~~~~
+test/unit/family.service.spec.ts:499:39 - error TS2339: Property 'mockResolvedValue' does not exist on type '<T extends FamilyFindUniqueArgs>(args: SelectSubset<T, FamilyFindUniqueArgs<DefaultArgs>>) => Prisma__FamilyClient<GetFindResult<$FamilyPayload<DefaultArgs>, T, {}>, null, DefaultArgs>'.
+
+499       prismaService.family.findUnique.mockResolvedValue(null);
+                                          ~~~~~~~~~~~~~~~~~
+
+Found 80 error(s).
 

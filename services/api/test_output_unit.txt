@@ -1,0 +1,37 @@
+  console.log
+    [FamilyService.create] BEFORE UPDATE: { userId: 'user-123', currentSettings: {} }
+
+      at src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: family-id
+
+      at src/family/family.service.ts:62:15
+
+  console.log
+    [FamilyService.create] BEFORE UPDATE: {
+      userId: 'user-123',
+      currentSettings: { primaryFamilyId: 'old-family-id' }
+    }
+
+      at src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: family-id
+
+      at src/family/family.service.ts:62:15
+
+PASS test/unit/family.primary.logic.spec.ts
+  FamilyService - Primary Family Logic
+    create()
+      √ should create family and auto-set as primaryFamilyId (24 ms)
+      √ should overwrite existing primaryFamilyId on creation (2 ms)
+    acceptInvite()
+      √ should accept invite and set Primary if user has none (2 ms)
+      √ should accept invite but NOT change Primary if already set (1 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       4 passed, 4 total
+Snapshots:   0 total
+Time:        5.172 s
+Ran all test suites matching /services\\api\\test\\unit\\family.primary.logic.spec.ts/i.

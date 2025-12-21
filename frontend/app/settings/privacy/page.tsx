@@ -9,15 +9,16 @@ export default function PrivacyPage() {
   const updateSettings = useUpdateSettings();
   const { toast, show: showToast, hide: hideToast } = useToast();
 
-  const handleToggle = async (key: keyof typeof settings.privacy) => {
+  const handleToggle = async (key: string) => {
     if (!settings) return;
 
-    const newValue = !settings.privacy[key];
+    const currentPrivacy = settings.privacy || {};
+    const newValue = !currentPrivacy[key];
     
     try {
       await updateSettings.mutateAsync({
         privacy: {
-          ...settings.privacy,
+          ...currentPrivacy,
           [key]: newValue,
         },
       });
@@ -59,10 +60,12 @@ export default function PrivacyPage() {
     );
   }
 
+  const privacy = settings.privacy || {};
+
   const privacySettings = [
-    { key: 'profileVisible' as const, label: 'Public Profile', description: 'Make your profile visible to other users' },
-    { key: 'showStats' as const, label: 'Show Statistics', description: 'Display your study statistics on your profile' },
-    { key: 'allowEmailDiscovery' as const, label: 'Email Discovery', description: 'Allow others to find you by email address' },
+    { key: 'profileVisible', label: 'Public Profile', description: 'Make your profile visible to other users' },
+    { key: 'showStats', label: 'Show Statistics', description: 'Display your study statistics on your profile' },
+    { key: 'allowEmailDiscovery', label: 'Email Discovery', description: 'Allow others to find you by email address' },
   ];
 
   return (
@@ -82,12 +85,12 @@ export default function PrivacyPage() {
                 onClick={() => handleToggle(setting.key)}
                 disabled={updateSettings.isPending}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 ${
-                  settings.privacy[setting.key] ? 'bg-blue-600' : 'bg-gray-200'
+                  privacy[setting.key] ? 'bg-blue-600' : 'bg-gray-200'
                 }`}
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    settings.privacy[setting.key] ? 'translate-x-6' : 'translate-x-1'
+                    privacy[setting.key] ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />
               </button>

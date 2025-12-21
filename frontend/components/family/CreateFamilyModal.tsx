@@ -3,6 +3,7 @@
 import { useState, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { useCreateFamily } from '@/hooks/use-family';
+import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 
 interface CreateFamilyModalProps {
@@ -11,6 +12,7 @@ interface CreateFamilyModalProps {
 }
 
 export function CreateFamilyModal({ isOpen, onClose }: CreateFamilyModalProps) {
+  const router = useRouter();
   const [name, setName] = useState('');
   const createFamily = useCreateFamily();
 
@@ -18,8 +20,17 @@ export function CreateFamilyModal({ isOpen, onClose }: CreateFamilyModalProps) {
     e.preventDefault();
     
     try {
-      await createFamily.mutateAsync({ name });
+      const family = await createFamily.mutateAsync({ name });
       setName('');
+      
+      // Navigate to the newly created family's dashboard
+      // (Backend now auto-sets this as Primary Family)
+      router.push(`/settings/family/${family.id}`);
+      
+      // Small delay to ensure navigation starts before closing modal
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Close modal after navigation is initiated
       onClose();
     } catch (error) {
       console.error('Failed to create family:', error);

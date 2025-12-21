@@ -1,0 +1,444 @@
+
+Running 6 tests using 1 worker
+
+[1A[2K[1/6] [chromium] › tests\e2e\family-plan.spec.ts:40:7 › Family Plan Features › can navigate to family settings page
+[1A[2K[chromium] › tests\e2e\family-plan.spec.ts:40:7 › Family Plan Features › can navigate to family settings page
+Cleanup failed: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family
+Call log:
+[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"[22m
+
+    at [90mC:\projects\aprendeai-app\frontend\[39mtests\e2e\family-plan.spec.ts:19:18 {
+  name: [32m'Error'[39m,
+  [[32mSymbol(step)[39m]: {
+    location: {
+      file: [32m'C:\\projects\\aprendeai-app\\frontend\\tests\\e2e\\family-plan.spec.ts'[39m,
+      line: [33m19[39m,
+      column: [33m18[39m
+    },
+    category: [32m'pw:api'[39m,
+    title: [32m'Navigate to "/settings/family"'[39m,
+    apiName: [32m'page.goto'[39m,
+    params: { url: [32m'/settings/family'[39m, waitUntil: [32m'load'[39m, timeout: [33m0[39m },
+    group: [90mundefined[39m,
+    stepId: [32m'pw:api@39'[39m,
+    boxedStack: [90mundefined[39m,
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'pw:api@39'[39m,
+      _title: [32m'Navigate to "/settings/family"'[39m,
+      _parentStep: [36m[TestStepInfoImpl][39m,
+      skip: [36m[Function (anonymous)][39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1766270262078[39m,
+    error: {
+      message: [32m'Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"\x1B[22m\n'[39m,
+      stack: [32m'Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"\x1B[22m\n'[39m +
+        [32m'\n'[39m +
+        [32m'    at C:\\projects\\aprendeai-app\\frontend\\tests\\e2e\\family-plan.spec.ts:19:18'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+
+[1A[2K  1) [chromium] › tests\e2e\family-plan.spec.ts:40:7 › Family Plan Features › can navigate to family settings page 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/login
+    Call log:
+    [2m  - navigating to "http://localhost:3000/login", waiting until "load"[22m
+
+
+      4 |   // Common setup: Login
+      5 |   test.beforeEach(async ({ page }) => {
+    > 6 |     await page.goto('/login');
+        |                ^
+      7 |     await page.waitForLoadState('networkidle');
+      8 |     
+      9 |     // Using seeded test credentials with data-testid selectors
+        at C:\projects\aprendeai-app\frontend\tests\e2e\family-plan.spec.ts:6:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\family-plan-Family-Plan-Fe-b0e2a-ate-to-family-settings-page-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\family-plan-Family-Plan-Fe-b0e2a-ate-to-family-settings-page-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[2/6] [chromium] › tests\e2e\family-plan.spec.ts:51:7 › Family Plan Features › can create a new family
+[1A[2K[chromium] › tests\e2e\family-plan.spec.ts:51:7 › Family Plan Features › can create a new family
+Cleanup failed: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family
+Call log:
+[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"[22m
+
+    at [90mC:\projects\aprendeai-app\frontend\[39mtests\e2e\family-plan.spec.ts:19:18 {
+  name: [32m'Error'[39m,
+  [[32mSymbol(step)[39m]: {
+    location: {
+      file: [32m'C:\\projects\\aprendeai-app\\frontend\\tests\\e2e\\family-plan.spec.ts'[39m,
+      line: [33m19[39m,
+      column: [33m18[39m
+    },
+    category: [32m'pw:api'[39m,
+    title: [32m'Navigate to "/settings/family"'[39m,
+    apiName: [32m'page.goto'[39m,
+    params: { url: [32m'/settings/family'[39m, waitUntil: [32m'load'[39m, timeout: [33m0[39m },
+    group: [90mundefined[39m,
+    stepId: [32m'pw:api@39'[39m,
+    boxedStack: [90mundefined[39m,
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'pw:api@39'[39m,
+      _title: [32m'Navigate to "/settings/family"'[39m,
+      _parentStep: [36m[TestStepInfoImpl][39m,
+      skip: [36m[Function (anonymous)][39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1766270265969[39m,
+    error: {
+      message: [32m'Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"\x1B[22m\n'[39m,
+      stack: [32m'Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"\x1B[22m\n'[39m +
+        [32m'\n'[39m +
+        [32m'    at C:\\projects\\aprendeai-app\\frontend\\tests\\e2e\\family-plan.spec.ts:19:18'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+
+[1A[2K  2) [chromium] › tests\e2e\family-plan.spec.ts:51:7 › Family Plan Features › can create a new family 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/login
+    Call log:
+    [2m  - navigating to "http://localhost:3000/login", waiting until "load"[22m
+
+
+      4 |   // Common setup: Login
+      5 |   test.beforeEach(async ({ page }) => {
+    > 6 |     await page.goto('/login');
+        |                ^
+      7 |     await page.waitForLoadState('networkidle');
+      8 |     
+      9 |     // Using seeded test credentials with data-testid selectors
+        at C:\projects\aprendeai-app\frontend\tests\e2e\family-plan.spec.ts:6:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\family-plan-Family-Plan-Features-can-create-a-new-family-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\family-plan-Family-Plan-Features-can-create-a-new-family-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[3/6] [chromium] › tests\e2e\family-plan.spec.ts:72:7 › Family Plan Features › can navigate to family dashboard and view analytics
+[1A[2K[chromium] › tests\e2e\family-plan.spec.ts:72:7 › Family Plan Features › can navigate to family dashboard and view analytics
+Cleanup failed: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family
+Call log:
+[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"[22m
+
+    at [90mC:\projects\aprendeai-app\frontend\[39mtests\e2e\family-plan.spec.ts:19:18 {
+  name: [32m'Error'[39m,
+  [[32mSymbol(step)[39m]: {
+    location: {
+      file: [32m'C:\\projects\\aprendeai-app\\frontend\\tests\\e2e\\family-plan.spec.ts'[39m,
+      line: [33m19[39m,
+      column: [33m18[39m
+    },
+    category: [32m'pw:api'[39m,
+    title: [32m'Navigate to "/settings/family"'[39m,
+    apiName: [32m'page.goto'[39m,
+    params: { url: [32m'/settings/family'[39m, waitUntil: [32m'load'[39m, timeout: [33m0[39m },
+    group: [90mundefined[39m,
+    stepId: [32m'pw:api@39'[39m,
+    boxedStack: [90mundefined[39m,
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'pw:api@39'[39m,
+      _title: [32m'Navigate to "/settings/family"'[39m,
+      _parentStep: [36m[TestStepInfoImpl][39m,
+      skip: [36m[Function (anonymous)][39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1766270269456[39m,
+    error: {
+      message: [32m'Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"\x1B[22m\n'[39m,
+      stack: [32m'Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"\x1B[22m\n'[39m +
+        [32m'\n'[39m +
+        [32m'    at C:\\projects\\aprendeai-app\\frontend\\tests\\e2e\\family-plan.spec.ts:19:18'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+
+[1A[2K  3) [chromium] › tests\e2e\family-plan.spec.ts:72:7 › Family Plan Features › can navigate to family dashboard and view analytics 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/login
+    Call log:
+    [2m  - navigating to "http://localhost:3000/login", waiting until "load"[22m
+
+
+      4 |   // Common setup: Login
+      5 |   test.beforeEach(async ({ page }) => {
+    > 6 |     await page.goto('/login');
+        |                ^
+      7 |     await page.waitForLoadState('networkidle');
+      8 |     
+      9 |     // Using seeded test credentials with data-testid selectors
+        at C:\projects\aprendeai-app\frontend\tests\e2e\family-plan.spec.ts:6:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\family-plan-Family-Plan-Fe-73670-ashboard-and-view-analytics-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\family-plan-Family-Plan-Fe-73670-ashboard-and-view-analytics-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[4/6] [chromium] › tests\e2e\family-plan.spec.ts:103:7 › Family Plan Features › can open invite member modal
+[1A[2K[chromium] › tests\e2e\family-plan.spec.ts:103:7 › Family Plan Features › can open invite member modal
+Cleanup failed: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family
+Call log:
+[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"[22m
+
+    at [90mC:\projects\aprendeai-app\frontend\[39mtests\e2e\family-plan.spec.ts:19:18 {
+  name: [32m'Error'[39m,
+  [[32mSymbol(step)[39m]: {
+    location: {
+      file: [32m'C:\\projects\\aprendeai-app\\frontend\\tests\\e2e\\family-plan.spec.ts'[39m,
+      line: [33m19[39m,
+      column: [33m18[39m
+    },
+    category: [32m'pw:api'[39m,
+    title: [32m'Navigate to "/settings/family"'[39m,
+    apiName: [32m'page.goto'[39m,
+    params: { url: [32m'/settings/family'[39m, waitUntil: [32m'load'[39m, timeout: [33m0[39m },
+    group: [90mundefined[39m,
+    stepId: [32m'pw:api@39'[39m,
+    boxedStack: [90mundefined[39m,
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'pw:api@39'[39m,
+      _title: [32m'Navigate to "/settings/family"'[39m,
+      _parentStep: [36m[TestStepInfoImpl][39m,
+      skip: [36m[Function (anonymous)][39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1766270273633[39m,
+    error: {
+      message: [32m'Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"\x1B[22m\n'[39m,
+      stack: [32m'Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"\x1B[22m\n'[39m +
+        [32m'\n'[39m +
+        [32m'    at C:\\projects\\aprendeai-app\\frontend\\tests\\e2e\\family-plan.spec.ts:19:18'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+
+[1A[2K  4) [chromium] › tests\e2e\family-plan.spec.ts:103:7 › Family Plan Features › can open invite member modal 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/login
+    Call log:
+    [2m  - navigating to "http://localhost:3000/login", waiting until "load"[22m
+
+
+      4 |   // Common setup: Login
+      5 |   test.beforeEach(async ({ page }) => {
+    > 6 |     await page.goto('/login');
+        |                ^
+      7 |     await page.waitForLoadState('networkidle');
+      8 |     
+      9 |     // Using seeded test credentials with data-testid selectors
+        at C:\projects\aprendeai-app\frontend\tests\e2e\family-plan.spec.ts:6:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\family-plan-Family-Plan-Fe-773f4-an-open-invite-member-modal-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\family-plan-Family-Plan-Fe-773f4-an-open-invite-member-modal-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[5/6] [chromium] › tests\e2e\family-plan.spec.ts:133:7 › Family Plan Features › can set family as primary context
+[1A[2K[chromium] › tests\e2e\family-plan.spec.ts:133:7 › Family Plan Features › can set family as primary context
+Cleanup failed: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family
+Call log:
+[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"[22m
+
+    at [90mC:\projects\aprendeai-app\frontend\[39mtests\e2e\family-plan.spec.ts:19:18 {
+  name: [32m'Error'[39m,
+  [[32mSymbol(step)[39m]: {
+    location: {
+      file: [32m'C:\\projects\\aprendeai-app\\frontend\\tests\\e2e\\family-plan.spec.ts'[39m,
+      line: [33m19[39m,
+      column: [33m18[39m
+    },
+    category: [32m'pw:api'[39m,
+    title: [32m'Navigate to "/settings/family"'[39m,
+    apiName: [32m'page.goto'[39m,
+    params: { url: [32m'/settings/family'[39m, waitUntil: [32m'load'[39m, timeout: [33m0[39m },
+    group: [90mundefined[39m,
+    stepId: [32m'pw:api@39'[39m,
+    boxedStack: [90mundefined[39m,
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'pw:api@39'[39m,
+      _title: [32m'Navigate to "/settings/family"'[39m,
+      _parentStep: [36m[TestStepInfoImpl][39m,
+      skip: [36m[Function (anonymous)][39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1766270277445[39m,
+    error: {
+      message: [32m'Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"\x1B[22m\n'[39m,
+      stack: [32m'Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"\x1B[22m\n'[39m +
+        [32m'\n'[39m +
+        [32m'    at C:\\projects\\aprendeai-app\\frontend\\tests\\e2e\\family-plan.spec.ts:19:18'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+
+[1A[2K  5) [chromium] › tests\e2e\family-plan.spec.ts:133:7 › Family Plan Features › can set family as primary context 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/login
+    Call log:
+    [2m  - navigating to "http://localhost:3000/login", waiting until "load"[22m
+
+
+      4 |   // Common setup: Login
+      5 |   test.beforeEach(async ({ page }) => {
+    > 6 |     await page.goto('/login');
+        |                ^
+      7 |     await page.waitForLoadState('networkidle');
+      8 |     
+      9 |     // Using seeded test credentials with data-testid selectors
+        at C:\projects\aprendeai-app\frontend\tests\e2e\family-plan.spec.ts:6:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\family-plan-Family-Plan-Fe-e7b4b-t-family-as-primary-context-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\family-plan-Family-Plan-Fe-e7b4b-t-family-as-primary-context-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[6/6] [chromium] › tests\e2e\family-plan.spec.ts:176:7 › Family Plan Features › can invite member with auto-provisioning warning
+[1A[2K[chromium] › tests\e2e\family-plan.spec.ts:176:7 › Family Plan Features › can invite member with auto-provisioning warning
+Cleanup failed: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family
+Call log:
+[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"[22m
+
+    at [90mC:\projects\aprendeai-app\frontend\[39mtests\e2e\family-plan.spec.ts:19:18 {
+  name: [32m'Error'[39m,
+  [[32mSymbol(step)[39m]: {
+    location: {
+      file: [32m'C:\\projects\\aprendeai-app\\frontend\\tests\\e2e\\family-plan.spec.ts'[39m,
+      line: [33m19[39m,
+      column: [33m18[39m
+    },
+    category: [32m'pw:api'[39m,
+    title: [32m'Navigate to "/settings/family"'[39m,
+    apiName: [32m'page.goto'[39m,
+    params: { url: [32m'/settings/family'[39m, waitUntil: [32m'load'[39m, timeout: [33m0[39m },
+    group: [90mundefined[39m,
+    stepId: [32m'pw:api@39'[39m,
+    boxedStack: [90mundefined[39m,
+    steps: [],
+    attachmentIndices: [],
+    info: TestStepInfoImpl {
+      annotations: [],
+      _testInfo: [36m[TestInfoImpl][39m,
+      _stepId: [32m'pw:api@39'[39m,
+      _title: [32m'Navigate to "/settings/family"'[39m,
+      _parentStep: [36m[TestStepInfoImpl][39m,
+      skip: [36m[Function (anonymous)][39m
+    },
+    complete: [36m[Function: complete][39m,
+    endWallTime: [33m1766270281491[39m,
+    error: {
+      message: [32m'Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"\x1B[22m\n'[39m,
+      stack: [32m'Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/settings/family\n'[39m +
+        [32m'Call log:\n'[39m +
+        [32m'\x1B[2m  - navigating to "http://localhost:3000/settings/family", waiting until "load"\x1B[22m\n'[39m +
+        [32m'\n'[39m +
+        [32m'    at C:\\projects\\aprendeai-app\\frontend\\tests\\e2e\\family-plan.spec.ts:19:18'[39m,
+      cause: [90mundefined[39m
+    }
+  }
+}
+
+[1A[2K  6) [chromium] › tests\e2e\family-plan.spec.ts:176:7 › Family Plan Features › can invite member with auto-provisioning warning 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/login
+    Call log:
+    [2m  - navigating to "http://localhost:3000/login", waiting until "load"[22m
+
+
+      4 |   // Common setup: Login
+      5 |   test.beforeEach(async ({ page }) => {
+    > 6 |     await page.goto('/login');
+        |                ^
+      7 |     await page.waitForLoadState('networkidle');
+      8 |     
+      9 |     // Using seeded test credentials with data-testid selectors
+        at C:\projects\aprendeai-app\frontend\tests\e2e\family-plan.spec.ts:6:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\family-plan-Family-Plan-Fe-80b21-h-auto-provisioning-warning-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\family-plan-Family-Plan-Fe-80b21-h-auto-provisioning-warning-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  6 failed
+    [chromium] › tests\e2e\family-plan.spec.ts:40:7 › Family Plan Features › can navigate to family settings page 
+    [chromium] › tests\e2e\family-plan.spec.ts:51:7 › Family Plan Features › can create a new family 
+    [chromium] › tests\e2e\family-plan.spec.ts:72:7 › Family Plan Features › can navigate to family dashboard and view analytics 
+    [chromium] › tests\e2e\family-plan.spec.ts:103:7 › Family Plan Features › can open invite member modal 
+    [chromium] › tests\e2e\family-plan.spec.ts:133:7 › Family Plan Features › can set family as primary context 
+    [chromium] › tests\e2e\family-plan.spec.ts:176:7 › Family Plan Features › can invite member with auto-provisioning warning 
+
+[36m  Serving HTML report at http://localhost:9323. Press Ctrl+C to quit.[39m

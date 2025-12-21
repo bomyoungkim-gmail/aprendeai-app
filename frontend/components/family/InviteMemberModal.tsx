@@ -76,6 +76,7 @@ export function InviteMemberModal({ familyId, isOpen, onClose }: InviteMemberMod
                   </label>
                   <input
                     id="email"
+                    data-testid="invite-email-input"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -124,6 +125,7 @@ export function InviteMemberModal({ familyId, isOpen, onClose }: InviteMemberMod
                   </button>
                   <button
                     type="submit"
+                    data-testid="invite-send-btn"
                     disabled={inviteMember.isPending}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                   >

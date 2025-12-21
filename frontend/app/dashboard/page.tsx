@@ -137,8 +137,6 @@ export default function DashboardPage() {
           </div>
           <CornellReaderSection />
         </div>
-
-        <CornellReaderSection />
       </div>
     </div>
   );

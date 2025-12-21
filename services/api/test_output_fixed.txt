@@ -1,0 +1,307 @@
+  console.error
+    [JwtStrategy.validate] User data: {
+      id: '409c67b5-8935-41a2-a048-a984ed7d2fe5',
+      email: 'user1-fresh@primary-test.com',
+      settings: {}
+    }
+
+    [0m [90m 36 |[39m     })[33m;[39m
+     [90m 37 |[39m     
+    [31m[1m>[22m[39m[90m 38 |[39m     console[33m.[39merror([32m'[JwtStrategy.validate] User data:'[39m[33m,[39m { 
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 39 |[39m       id[33m:[39m user[33m?[39m[33m.[39mid[33m,[39m 
+     [90m 40 |[39m       email[33m:[39m user[33m?[39m[33m.[39memail[33m,[39m
+     [90m 41 |[39m       settings[33m:[39m user[33m?[39m[33m.[39msettings [0m
+
+      at JwtStrategy.validate (src/auth/jwt.strategy.ts:38:13)
+      at JwtStrategy.callback [as _verify] (node_modules/@nestjs/passport/dist/passport/passport.strategy.js:13:44)
+
+  console.log
+    [FamilyService.create] BEFORE UPDATE: { userId: '409c67b5-8935-41a2-a048-a984ed7d2fe5', currentSettings: {} }
+
+      at src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: 5c049d05-a354-45a0-b008-2985a5482a3d
+
+      at src/family/family.service.ts:62:15
+
+  console.error
+    [JwtStrategy.validate] User data: {
+      id: '7e5bd450-558e-40b3-bedf-bbcbeeb3ae5d',
+      email: 'user2@primary-test.com',
+      settings: {}
+    }
+
+    [0m [90m 36 |[39m     })[33m;[39m
+     [90m 37 |[39m     
+    [31m[1m>[22m[39m[90m 38 |[39m     console[33m.[39merror([32m'[JwtStrategy.validate] User data:'[39m[33m,[39m { 
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 39 |[39m       id[33m:[39m user[33m?[39m[33m.[39mid[33m,[39m 
+     [90m 40 |[39m       email[33m:[39m user[33m?[39m[33m.[39memail[33m,[39m
+     [90m 41 |[39m       settings[33m:[39m user[33m?[39m[33m.[39msettings [0m
+
+      at JwtStrategy.validate (src/auth/jwt.strategy.ts:38:13)
+      at JwtStrategy.callback [as _verify] (node_modules/@nestjs/passport/dist/passport/passport.strategy.js:13:44)
+
+  console.log
+    [FamilyService.create] BEFORE UPDATE: { userId: '7e5bd450-558e-40b3-bedf-bbcbeeb3ae5d', currentSettings: {} }
+
+      at src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: c4c69abd-9634-41df-997a-025e88ea1a15
+
+      at src/family/family.service.ts:62:15
+
+  console.error
+    [JwtStrategy.validate] User data: {
+      id: '7e5bd450-558e-40b3-bedf-bbcbeeb3ae5d',
+      email: 'user2@primary-test.com',
+      settings: { primaryFamilyId: 'c4c69abd-9634-41df-997a-025e88ea1a15' }
+    }
+
+    [0m [90m 36 |[39m     })[33m;[39m
+     [90m 37 |[39m     
+    [31m[1m>[22m[39m[90m 38 |[39m     console[33m.[39merror([32m'[JwtStrategy.validate] User data:'[39m[33m,[39m { 
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 39 |[39m       id[33m:[39m user[33m?[39m[33m.[39mid[33m,[39m 
+     [90m 40 |[39m       email[33m:[39m user[33m?[39m[33m.[39memail[33m,[39m
+     [90m 41 |[39m       settings[33m:[39m user[33m?[39m[33m.[39msettings [0m
+
+      at JwtStrategy.validate (src/auth/jwt.strategy.ts:38:13)
+      at JwtStrategy.callback [as _verify] (node_modules/@nestjs/passport/dist/passport/passport.strategy.js:13:44)
+
+  console.log
+    [FamilyService.create] BEFORE UPDATE: {
+      userId: '7e5bd450-558e-40b3-bedf-bbcbeeb3ae5d',
+      currentSettings: { primaryFamilyId: 'c4c69abd-9634-41df-997a-025e88ea1a15' }
+    }
+
+      at src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: a7455e61-70b3-49e5-b54e-5930ebab1825
+
+      at src/family/family.service.ts:62:15
+
+  console.error
+    [JwtStrategy.validate] User data: {
+      id: 'bc034af8-753a-4b28-b149-7a44e3631838',
+      email: 'owner-dep1766285277893@primary-test.com',
+      settings: {}
+    }
+
+    [0m [90m 36 |[39m     })[33m;[39m
+     [90m 37 |[39m     
+    [31m[1m>[22m[39m[90m 38 |[39m     console[33m.[39merror([32m'[JwtStrategy.validate] User data:'[39m[33m,[39m { 
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 39 |[39m       id[33m:[39m user[33m?[39m[33m.[39mid[33m,[39m 
+     [90m 40 |[39m       email[33m:[39m user[33m?[39m[33m.[39memail[33m,[39m
+     [90m 41 |[39m       settings[33m:[39m user[33m?[39m[33m.[39msettings [0m
+
+      at JwtStrategy.validate (src/auth/jwt.strategy.ts:38:13)
+      at JwtStrategy.callback [as _verify] (node_modules/@nestjs/passport/dist/passport/passport.strategy.js:13:44)
+
+  console.log
+    [FamilyService.create] BEFORE UPDATE: { userId: 'bc034af8-753a-4b28-b149-7a44e3631838', currentSettings: {} }
+
+      at src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: 5fd7b53e-1cd2-444c-808a-976fdfab1e3e
+
+      at src/family/family.service.ts:62:15
+
+  console.error
+    [JwtStrategy.validate] User data: {
+      id: 'bc034af8-753a-4b28-b149-7a44e3631838',
+      email: 'owner-dep1766285277893@primary-test.com',
+      settings: { primaryFamilyId: '5fd7b53e-1cd2-444c-808a-976fdfab1e3e' }
+    }
+
+    [0m [90m 36 |[39m     })[33m;[39m
+     [90m 37 |[39m     
+    [31m[1m>[22m[39m[90m 38 |[39m     console[33m.[39merror([32m'[JwtStrategy.validate] User data:'[39m[33m,[39m { 
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 39 |[39m       id[33m:[39m user[33m?[39m[33m.[39mid[33m,[39m 
+     [90m 40 |[39m       email[33m:[39m user[33m?[39m[33m.[39memail[33m,[39m
+     [90m 41 |[39m       settings[33m:[39m user[33m?[39m[33m.[39msettings [0m
+
+      at JwtStrategy.validate (src/auth/jwt.strategy.ts:38:13)
+      at JwtStrategy.callback [as _verify] (node_modules/@nestjs/passport/dist/passport/passport.strategy.js:13:44)
+
+[Nest] 39016  - 20/12/2025, 23:47:58   ERROR [ExceptionsHandler] PrismaClientValidationError: 
+Invalid `this.prisma.familyMember.create()` invocation in
+C:\projects\aprendeai-app\services\api\src\family\family.service.ts:191:54
+
+  188 }
+  189 
+  190 // 4. Create member (INVITED)
+→ 191 const newMember = await this.prisma.familyMember.create({
+        data: {
+          familyId: "5fd7b53e-1cd2-444c-808a-976fdfab1e3e",
+          userId: "a99e3653-5488-4fe6-b6e8-ee27efc5268e",
+          role: "MEMBER",
+                ~~~~~~~~
+          status: "INVITED",
+          displayName: undefined
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              avatarUrl: true
+            }
+          }
+        }
+      })
+
+Invalid value for argument `role`. Expected FamilyRole.
+    at wn (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at l (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at FamilyService.inviteMember (C:\projects\aprendeai-app\services\api\src\family\family.service.ts:191:23) {
+  clientVersion: '5.22.0'
+}
+  console.error
+    [JwtStrategy.validate] User data: {
+      id: '14b575a2-ad5d-4aaf-86a2-e9c1abad916e',
+      email: 'owner-dep1766285278181@primary-test.com',
+      settings: {}
+    }
+
+    [0m [90m 36 |[39m     })[33m;[39m
+     [90m 37 |[39m     
+    [31m[1m>[22m[39m[90m 38 |[39m     console[33m.[39merror([32m'[JwtStrategy.validate] User data:'[39m[33m,[39m { 
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 39 |[39m       id[33m:[39m user[33m?[39m[33m.[39mid[33m,[39m 
+     [90m 40 |[39m       email[33m:[39m user[33m?[39m[33m.[39memail[33m,[39m
+     [90m 41 |[39m       settings[33m:[39m user[33m?[39m[33m.[39msettings [0m
+
+      at JwtStrategy.validate (src/auth/jwt.strategy.ts:38:13)
+      at JwtStrategy.callback [as _verify] (node_modules/@nestjs/passport/dist/passport/passport.strategy.js:13:44)
+
+  console.log
+    [FamilyService.create] BEFORE UPDATE: { userId: '14b575a2-ad5d-4aaf-86a2-e9c1abad916e', currentSettings: {} }
+
+      at src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: 8544182d-2c88-44f2-a2b3-0431672266df
+
+      at src/family/family.service.ts:62:15
+
+  console.error
+    [JwtStrategy.validate] User data: {
+      id: '14b575a2-ad5d-4aaf-86a2-e9c1abad916e',
+      email: 'owner-dep1766285278181@primary-test.com',
+      settings: { primaryFamilyId: '8544182d-2c88-44f2-a2b3-0431672266df' }
+    }
+
+    [0m [90m 36 |[39m     })[33m;[39m
+     [90m 37 |[39m     
+    [31m[1m>[22m[39m[90m 38 |[39m     console[33m.[39merror([32m'[JwtStrategy.validate] User data:'[39m[33m,[39m { 
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 39 |[39m       id[33m:[39m user[33m?[39m[33m.[39mid[33m,[39m 
+     [90m 40 |[39m       email[33m:[39m user[33m?[39m[33m.[39memail[33m,[39m
+     [90m 41 |[39m       settings[33m:[39m user[33m?[39m[33m.[39msettings [0m
+
+      at JwtStrategy.validate (src/auth/jwt.strategy.ts:38:13)
+      at JwtStrategy.callback [as _verify] (node_modules/@nestjs/passport/dist/passport/passport.strategy.js:13:44)
+
+[Nest] 39016  - 20/12/2025, 23:47:58   ERROR [ExceptionsHandler] PrismaClientValidationError: 
+Invalid `this.prisma.familyMember.create()` invocation in
+C:\projects\aprendeai-app\services\api\src\family\family.service.ts:191:54
+
+  188 }
+  189 
+  190 // 4. Create member (INVITED)
+→ 191 const newMember = await this.prisma.familyMember.create({
+        data: {
+          familyId: "8544182d-2c88-44f2-a2b3-0431672266df",
+          userId: "cc7ea544-26b1-4b2f-9bf4-32e8b0d56966",
+          role: "MEMBER",
+                ~~~~~~~~
+          status: "INVITED",
+          displayName: undefined
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              avatarUrl: true
+            }
+          }
+        }
+      })
+
+Invalid value for argument `role`. Expected FamilyRole.
+    at wn (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at l (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at FamilyService.inviteMember (C:\projects\aprendeai-app\services\api\src\family\family.service.ts:191:23) {
+  clientVersion: '5.22.0'
+}
+FAIL test/integration/family-primary.integration.spec.ts (8.051 s)
+  Primary Family Logic (Integration)
+    Auto-Primary on Creation
+      √ should set primaryFamilyId in database when creating FIRST family (233 ms)
+      √ should switch Primary when creating SECOND family (Creation Priority) (173 ms)
+    Auto-Primary on Invites
+      × should set Primary on FIRST invite acceptance (288 ms)
+      × should NOT change Primary on SECOND invite acceptance (264 ms)
+
+  ● Primary Family Logic (Integration) › Auto-Primary on Invites › should set Primary on FIRST invite acceptance
+
+    expected 201 "Created", got 500 "Internal Server Error"
+
+      147 |         .set('Authorization', `Bearer ${ownerToken}`)
+      148 |         .send({ email: dependentEmail, role: 'MEMBER' })
+    > 149 |         .expect(201);
+          |          ^
+      150 |
+      151 |       // 3. Dependent accepts invite
+      152 |       await request(app.getHttpServer())
+
+      at Object.<anonymous> (test/integration/family-primary.integration.spec.ts:149:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Primary Family Logic (Integration) › Auto-Primary on Invites › should NOT change Primary on SECOND invite acceptance
+
+    expected 201 "Created", got 500 "Internal Server Error"
+
+      173 |         .set('Authorization', `Bearer ${ownerToken}`)
+      174 |         .send({ email: dependentEmail, role: 'MEMBER' })
+    > 175 |         .expect(201);
+          |          ^
+      176 |
+      177 |       await request(app.getHttpServer())
+      178 |         .post(`/families/${familyAId}/accept`)
+
+      at Object.<anonymous> (test/integration/family-primary.integration.spec.ts:175:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 2 passed, 4 total
+Snapshots:   0 total
+Time:        8.269 s
+Ran all test suites matching /test\\integration\\family-primary.integration.spec.ts/i.

@@ -1,0 +1,34 @@
+FAIL test/integration/family-primary.integration.spec.ts
+  Primary Family Logic (Integration)
+    Auto-Primary on Creation
+      × should set primaryFamilyId in database when creating FIRST family (176 ms)
+      ○ skipped should switch Primary when creating SECOND family (Creation Priority)
+    Auto-Primary on Invites
+      ○ skipped should set Primary on FIRST invite acceptance
+      ○ skipped should NOT change Primary on SECOND invite acceptance
+
+  ● Primary Family Logic (Integration) › Auto-Primary on Creation › should set primaryFamilyId in database when creating FIRST family
+
+    expected 201 "Created", got 401 "Unauthorized"
+
+      74 |         .set('Authorization', `Bearer ${token}`)
+      75 |         .send({ name: 'Family A' })
+    > 76 |         .expect(201);
+         |          ^
+      77 |
+      78 |       const familyId = res.body.id;
+      79 |
+
+      at Object.<anonymous> (test/integration/family-primary.integration.spec.ts:76:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 3 skipped, 4 total
+Snapshots:   0 total
+Time:        5.157 s, estimated 8 s
+Ran all test suites matching /test\\integration\\family-primary.integration.spec.ts/i with tests matching "FIRST family".

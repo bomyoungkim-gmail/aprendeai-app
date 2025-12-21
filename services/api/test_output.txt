@@ -1,0 +1,74 @@
+FAIL test/integration/family-primary.integration.spec.ts (7.171 s)
+  Primary Family Logic (Integration)
+    Auto-Primary on Creation
+      × should set primaryFamilyId in database when creating FIRST family (192 ms)
+      √ should switch Primary when creating SECOND family (Creation Priority) (134 ms)
+    Auto-Primary on Invites
+      × should set Primary on FIRST invite acceptance (240 ms)
+      × should NOT change Primary on SECOND invite acceptance (243 ms)
+
+  ● Primary Family Logic (Integration) › Auto-Primary on Creation › should set primaryFamilyId in database when creating FIRST family
+
+    expected 201 "Created", got 401 "Unauthorized"
+
+      74 |         .set('Authorization', `Bearer ${token}`)
+      75 |         .send({ name: 'Family A' })
+    > 76 |         .expect(201);
+         |          ^
+      77 |
+      78 |       const familyId = res.body.id;
+      79 |
+
+      at Object.<anonymous> (test/integration/family-primary.integration.spec.ts:76:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Primary Family Logic (Integration) › Auto-Primary on Invites › should set Primary on FIRST invite acceptance
+
+    expected 201 "Created", got 401 "Unauthorized"
+
+      139 |         .set('Authorization', `Bearer ${ownerToken}`)
+      140 |         .send({ name: 'Invited Family' })
+    > 141 |         .expect(201);
+          |          ^
+      142 |       const familyId = res.body.id;
+      143 |
+      144 |       // 2. Owner invites dependent
+
+      at Object.<anonymous> (test/integration/family-primary.integration.spec.ts:141:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Primary Family Logic (Integration) › Auto-Primary on Invites › should NOT change Primary on SECOND invite acceptance
+
+    expected 201 "Created", got 401 "Unauthorized"
+
+      173 |         .set('Authorization', `Bearer ${ownerToken}`)
+      174 |         .send({ email: dependentEmail, role: 'MEMBER' })
+    > 175 |         .expect(201);
+          |          ^
+      176 |
+      177 |       await request(app.getHttpServer())
+      178 |         .post(`/families/${familyAId}/accept`)
+
+      at Object.<anonymous> (test/integration/family-primary.integration.spec.ts:175:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+Test Suites: 1 failed, 1 total
+Tests:       3 failed, 1 passed, 4 total
+Snapshots:   0 total
+Time:        7.371 s
+Ran all test suites matching /test\\integration\\family-primary.integration.spec.ts/i.

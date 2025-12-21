@@ -42,6 +42,11 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Returns user profile' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   getProfile(@Request() req) {
+    console.log('[AuthController.getProfile] Returning user:', {
+      id: req.user?.id,
+      email: req.user?.email,
+      settings: req.user?.settings
+    });
     return req.user;
   }
 

@@ -68,6 +68,152 @@ describe('FamilyService (Unit)', () => {
     jest.clearAllMocks();
   });
 
+  describe('create()', () => {
+    const userId = 'user-123';
+    const dto = { name: 'New Family' };
+    const createdFamily = {
+      id: 'family-id',
+      name: dto.name,
+      ownerId: userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    it('should create family and auto-set as primaryFamilyId', async () => {
+      // Mock family creation
+      prismaService.family.create.mockResolvedValue(createdFamily as any);
+      
+      // Mock user settings retrieval
+      prismaService.user.findUnique.mockResolvedValue({
+        id: userId,
+        settings: {}, // No existing primary
+      } as any);
+
+      await service.create(userId, dto);
+
+      // Verify db calls
+      expect(prismaService.family.create).toHaveBeenCalled();
+      
+      // Verify Subscription creation
+      expect(subscriptionService.createInitialSubscription).toHaveBeenCalledWith(
+        'FAMILY',
+        createdFamily.id,
+        expect.anything() // transaction client
+      );
+
+      // Verify User Update (Auto-Primary Rule)
+      expect(prismaService.user.update).toHaveBeenCalledWith({
+        where: { id: userId },
+        data: expect.objectContaining({
+          settings: expect.objectContaining({
+            primaryFamilyId: createdFamily.id,
+          }),
+        }),
+      });
+    });
+
+    it('should overwrite existing primaryFamilyId on creation', async () => {
+      prismaService.family.create.mockResolvedValue(createdFamily as any);
+      
+      prismaService.user.findUnique.mockResolvedValue({
+        id: userId,
+        settings: { primaryFamilyId: 'old-family-id' }, 
+      } as any);
+
+      await service.create(userId, dto);
+
+      expect(prismaService.user.update).toHaveBeenCalledWith({
+        where: { id: userId },
+        data: expect.objectContaining({
+          settings: expect.objectContaining({
+            primaryFamilyId: createdFamily.id, // Should be the NEW family
+          }),
+        }),
+      });
+    });
+  });
+
+  describe('acceptInvite()', () => {
+    const familyId = 'family-123';
+    const userId = 'user-123';
+    const memberId = 'member-id';
+
+    const mockMember = {
+      id: memberId,
+      familyId,
+      userId,
+      role: FamilyRole.MEMBER,
+      status: FamilyMemberStatus.INVITED,
+    };
+
+    it('should accept invite and set Primary if user has none', async () => {
+      // Mock member found
+      prismaService.familyMember.findUnique.mockResolvedValue(mockMember as any);
+      // Mock update status
+      prismaService.familyMember.update.mockResolvedValue({ ...mockMember, status: 'ACTIVE' } as any);
+      
+      // Mock user settings (NONE)
+      prismaService.user.findUnique.mockResolvedValue({
+        id: userId,
+        settings: {}, 
+      } as any);
+
+      await service.acceptInvite(familyId, userId);
+
+      // Verify status update
+      expect(prismaService.familyMember.update).toHaveBeenCalledWith({
+        where: { id: memberId },
+        data: { status: 'ACTIVE' },
+      });
+
+      // Verify User Update (Auto-Primary)
+      expect(prismaService.user.update).toHaveBeenCalledWith({
+        where: { id: userId },
+        data: {
+          settings: { primaryFamilyId: familyId },
+        },
+      });
+    });
+
+    it('should accept invite but NOT change Primary if already set', async () => {
+      // Mock member found
+      prismaService.familyMember.findUnique.mockResolvedValue(mockMember as any);
+      // Mock update status
+      prismaService.familyMember.update.mockResolvedValue({ ...mockMember, status: 'ACTIVE' } as any);
+      
+      // Mock user settings (EXISTING)
+      prismaService.user.findUnique.mockResolvedValue({
+        id: userId,
+        settings: { primaryFamilyId: 'other-family' }, 
+      } as any);
+
+      await service.acceptInvite(familyId, userId);
+
+      // Verify status update
+      expect(prismaService.familyMember.update).toHaveBeenCalled();
+
+      // Verify User Update NOT called for settings
+      expect(prismaService.user.update).not.toHaveBeenCalled();
+    });
+
+    it('should return member if already active', async () => {
+      prismaService.familyMember.findUnique.mockResolvedValue({
+        ...mockMember,
+        status: FamilyMemberStatus.ACTIVE,
+      } as any);
+
+      await service.acceptInvite(familyId, userId);
+
+      expect(prismaService.familyMember.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException if invite not found', async () => {
+      prismaService.familyMember.findUnique.mockResolvedValue(null);
+
+      await expect(service.acceptInvite(familyId, userId)).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe('inviteMember()', () => {
     const familyId = 'family-123';
     const ownerId = 'owner-user-id';

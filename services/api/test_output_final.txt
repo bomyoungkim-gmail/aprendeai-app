@@ -1,0 +1,80 @@
+  console.log
+    [FamilyService.create] BEFORE UPDATE: { userId: 'a7a7014a-4e23-4d7f-ad91-b6b99d00a04c', currentSettings: {} }
+
+      at src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: 174df8cf-eb44-46a1-911c-b24118b41691
+
+      at src/family/family.service.ts:62:15
+
+  console.log
+    [FamilyService.create] BEFORE UPDATE: { userId: '87816fb6-3703-4545-99bd-83140b065399', currentSettings: {} }
+
+      at src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: 8b2366bc-77c6-4024-98ac-ba892c328609
+
+      at src/family/family.service.ts:62:15
+
+  console.log
+    [FamilyService.create] BEFORE UPDATE: {
+      userId: '87816fb6-3703-4545-99bd-83140b065399',
+      currentSettings: { primaryFamilyId: '8b2366bc-77c6-4024-98ac-ba892c328609' }
+    }
+
+      at src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: 12b46e2f-a919-4717-9d17-1db0190111ea
+
+      at src/family/family.service.ts:62:15
+
+  console.log
+    [FamilyService.create] BEFORE UPDATE: { userId: 'def95523-b0e8-494a-bf9f-a3f9d9b12616', currentSettings: {} }
+
+      at src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: fcf2ea06-6ccb-4874-837e-de5503eeecbf
+
+      at src/family/family.service.ts:62:15
+
+  console.log
+    [FamilyService.create] BEFORE UPDATE: { userId: '924d7ca7-0100-44ed-8530-af450056b2ba', currentSettings: {} }
+
+      at src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: ec8d545d-8f9a-47e0-9a0d-7bae1bbc858a
+
+      at src/family/family.service.ts:62:15
+
+  console.log
+    [FamilyService.create] BEFORE UPDATE: {
+      userId: '924d7ca7-0100-44ed-8530-af450056b2ba',
+      currentSettings: { primaryFamilyId: 'ec8d545d-8f9a-47e0-9a0d-7bae1bbc858a' }
+    }
+
+      at src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: 58f6fa89-a774-493f-9668-507d26a6fe07
+
+      at src/family/family.service.ts:62:15
+
+PASS test/integration/family-primary.integration.spec.ts (7.896 s)
+  Primary Family Logic (Integration)
+    Auto-Primary on Creation
+      √ should set primaryFamilyId in database when creating FIRST family (215 ms)
+      √ should switch Primary when creating SECOND family (Creation Priority) (168 ms)
+    Auto-Primary on Invites
+      √ should set Primary on FIRST invite acceptance (290 ms)
+      √ should NOT change Primary on SECOND invite acceptance (330 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       4 passed, 4 total
+Snapshots:   0 total
+Time:        8.11 s, estimated 9 s
+Ran all test suites matching /test\\integration\\family-primary.integration.spec.ts/i.

@@ -1,0 +1,85 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - alert [ref=e2]
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - heading "Settings" [level=1] [ref=e6]:
+        - img [ref=e7]
+        - text: Settings
+      - paragraph [ref=e10]: Manage your account settings and preferences
+    - generic [ref=e11]:
+      - complementary [ref=e12]:
+        - navigation [ref=e13]:
+          - link "Account" [ref=e14] [cursor=pointer]:
+            - /url: /settings/account
+            - img [ref=e15]
+            - text: Account
+          - link "Notifications" [ref=e18] [cursor=pointer]:
+            - /url: /settings/notifications
+            - img [ref=e19]
+            - text: Notifications
+          - link "Privacy" [ref=e22] [cursor=pointer]:
+            - /url: /settings/privacy
+            - img [ref=e23]
+            - text: Privacy
+          - link "Family" [ref=e26] [cursor=pointer]:
+            - /url: /settings/family
+            - img [ref=e27]
+            - text: Family
+      - main [ref=e32]:
+        - generic [ref=e33]:
+          - generic [ref=e34]:
+            - generic [ref=e35]:
+              - button "Back to Families" [ref=e36] [cursor=pointer]:
+                - img [ref=e37]
+                - text: Back to Families
+              - generic [ref=e39]:
+                - button "Transfer Owner" [ref=e40] [cursor=pointer]:
+                  - img [ref=e41]
+                  - text: Transfer Owner
+                - button "Delete Family" [active] [ref=e43] [cursor=pointer]:
+                  - img [ref=e44]
+                  - text: Delete Family
+            - generic [ref=e47]:
+              - heading "Test Family 1766287628245" [level=1] [ref=e48]
+              - generic [ref=e49]:
+                - generic [ref=e50]: Free Plan
+                - button "Set as Primary" [ref=e51] [cursor=pointer]:
+                  - img [ref=e52]
+                  - text: Set as Primary
+          - generic [ref=e57]:
+            - generic [ref=e58]:
+              - generic [ref=e59]:
+                - img [ref=e61]
+                - heading "Content Uploads (30d)" [level=3] [ref=e62]
+              - paragraph [ref=e63]: "0"
+              - paragraph [ref=e64]: Usage across all members
+            - generic [ref=e65]:
+              - generic [ref=e66]:
+                - img [ref=e68]
+                - heading "Approx. Cost (30d)" [level=3] [ref=e70]
+              - paragraph [ref=e71]: $0.00
+              - paragraph [ref=e72]: Estimated operational cost
+            - generic [ref=e73]:
+              - generic [ref=e74]:
+                - img [ref=e76]
+                - heading "Members" [level=3] [ref=e81]
+              - paragraph [ref=e82]: "1"
+              - paragraph [ref=e83]: Active and invited users
+          - generic [ref=e84]:
+            - generic [ref=e85]:
+              - heading "Family Members" [level=3] [ref=e86]
+              - button "Invite Member" [ref=e87] [cursor=pointer]:
+                - img [ref=e88]
+                - text: Invite Member
+            - generic [ref=e93]:
+              - img [ref=e95]
+              - generic [ref=e98]:
+                - paragraph [ref=e99]: E2E Facilitator(You)
+                - generic [ref=e100]:
+                  - generic [ref=e101]: owner
+                  - generic [ref=e102]: •
+                  - generic [ref=e103]: active
+```

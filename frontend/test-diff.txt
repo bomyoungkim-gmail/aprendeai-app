@@ -1,0 +1,98 @@
+diff --git a/frontend/tests/e2e/family-plan.spec.ts b/frontend/tests/e2e/family-plan.spec.ts
+index 1823575..b907080 100644
+--- a/frontend/tests/e2e/family-plan.spec.ts
++++ b/frontend/tests/e2e/family-plan.spec.ts
+@@ -138,55 +138,39 @@ test.describe('Family Plan Features', () => {
+        }
+      });
+      
++     
++     // Navigate to families list
+      await page.goto('/settings/family');
++     await page.waitForLoadState('networkidle');
+      
+-     // Ensure we have at least 2 families (create second if needed)
+-     const familyCards = page.locator('[data-testid="family-card"]');
+-     const familyCount = await familyCards.count();
++     // Create a NEW family to guarantee it's not primary
++     await page.getByTestId('create-family-btn').click();
++     await page.fill('[data-testid="family-name-input"]', `Test Primary Family ${Date.now()}`);
++     await page.click('[data-testid="submit-family-btn"]');
++     await page.waitForURL(/\/settings\/family\/[a-zA-Z0-9-]+/);
+      
+-     if (familyCount < 2) {
+-        // Create a second family
+-        await page.click('[data-testid="create-family-btn"]');
+-        await page.fill('[data-testid="family-name-input"]', 'Second Family for Primary Test');
+-        await page.click('[data-testid="submit-family-btn"]');
+-        await page.waitForTimeout(1000);
+-     }
++     // Now we're on the NEW family's dashboard
++     // This family is NOT primary (just created)
++     // So "Set as Primary" button MUST be visible
+      
+-     // Simplified strategy: Try each family. If "Set as Primary" exists, click it
+-     await page.goto('/settings/family');
+-     const allDashboards = page.getByText('View Dashboard');
+-     const dashboardCount = await allDashboards.count();
++     const setPrimaryBtn = page.getByTestId('set-primary-btn');
++     await expect(setPrimaryBtn).toBeVisible({ timeout: 5000 });
+      
+-     let foundSetPrimaryButton = false;
+-     for (let i = 0; i < dashboardCount && !foundSetPrimaryButton; i++) {
+-       await page.goto('/settings/family');
+-       await page.getByText('View Dashboard').nth(i).click();
+-       await page.waitForURL(/\/settings\/family\/[a-zA-Z0-9-]+/);
+-       await page.waitForTimeout(500); // Wait for page to fully load
+-       
+-       // Check if "Set as Primary" button exists on this page
+-       const setPrimaryBtn = page.getByTestId('set-primary-btn');
+-       const hasSetPrimaryBtn = await setPrimaryBtn.count() > 0;
+-       
+-       if (hasSetPrimaryBtn) {
+-         // Found a family with "Set as Primary" button!
+-         foundSetPrimaryButton = true;
+-         console.log(`Found "Set as Primary" button at family index ${i}`);
+-         
+-         // Click it
+-         page.on('dialog', dialog => dialog.accept());
+-         await setPrimaryBtn.click();
+-         await page.waitForTimeout(500);
+-         
+-         // Should now see Primary badge
+-         await expect(page.getByText('Primary', { exact: false })).toBeVisible();
+-         break;
+-       }
+-     }
++     // Click it
++     await setPrimaryBtn.click();
+      
+-     if (!foundSetPrimaryButton) {
+-       throw new Error('Could not find "Set as Primary" button on any family');
+-     }
++     // Wait for mutation to complete and auth store to refresh
++     await page.waitForTimeout(1500);
++     
++     // Reload to ensure UI updates
++     await page.reload();
++     await page.waitForLoadState('networkidle');
++     
++     // Should now see Primary badge
++     await expect(page.getByText('Primary')).toBeVisible();
++     
++     // And "Set as Primary" button should be GONE (replaced by badge)
++     await expect(setPrimaryBtn).toBeHidden();
+   });
+ 
+   test('can invite member with auto-provisioning warning', async ({ page }) => {
+@@ -202,8 +186,8 @@ test.describe('Family Plan Features', () => {
+      const randomEmail = `newuser${Date.now()}@example.com`;
+      const expectedDisplayName = randomEmail.split('@')[0]; // API creates user with name = email prefix
+      
+-     await page.fill('input[id="email"]', randomEmail);
+-     await page.click('button:has-text("Send Invite")');
++     await page.fill('[data-testid="invite-email-input"]', randomEmail);
++     await page.click('[data-testid="invite-send-btn"]');
+      
+      // Wait for async request to complete and modal to close (animation + request + query invalidation)
+      await page.waitForTimeout(2000); // Increased from 1000ms

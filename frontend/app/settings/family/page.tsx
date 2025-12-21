@@ -102,10 +102,14 @@ function FamilyCard({
 }) {
   const removeMember = useRemoveMember();
   const acceptInvite = useAcceptInvite();
+  const user = useAuthStore((state) => state.user);
   
   // Am I an Admin/Owner?
   const myMembership = family.members.find(m => m.userId === currentUserId);
   const canManage = myMembership?.role === 'OWNER' || myMembership?.role === 'ADMIN';
+  
+  // Is this my Primary Family?
+  const isPrimary = (user?.settings as any)?.primaryFamilyId === family.id;
 
   const handleRemove = async (userId: string) => {
     const isMe = userId === currentUserId;
@@ -154,9 +158,16 @@ function FamilyCard({
     <div data-testid="family-card" className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
         <div>
-          <Link href={`/settings/family/${family.id}`} className="hover:underline cursor-pointer">
-             <h3 className="font-semibold text-gray-900">{family.name}</h3>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href={`/settings/family/${family.id}`} className="hover:underline cursor-pointer">
+               <h3 className="font-semibold text-gray-900">{family.name}</h3>
+            </Link>
+            {isPrimary && (
+              <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-medium">
+                Primary
+              </span>
+            )}
+          </div>
           <p className="text-xs text-gray-500 mt-0.5">
             Created on {new Date(family.createdAt).toLocaleDateString()}
           </p>

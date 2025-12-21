@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { familyApi } from '@/lib/api/family';
 import { CreateFamilyDto, InviteMemberDto } from '@/lib/types/family';
+import api from '@/lib/api';
+import { useAuthStore } from '@/stores/auth-store';
 
 export function useFamilies() {
   return useQuery({
@@ -27,10 +29,14 @@ export function useFamilyUsage(id: string) {
 
 export function useCreateFamily() {
   const queryClient = useQueryClient();
+  const refreshUser = useAuthStore((state) => state.refreshUser);
+  
   return useMutation({
     mutationFn: (dto: CreateFamilyDto) => familyApi.createFamily(dto),
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['families'] });
+      // Refresh user data to get updated primaryFamilyId (set by backend)
+      await refreshUser?.();
     },
   });
 }
@@ -59,10 +65,14 @@ export function useRemoveMember() {
 
 export function useAcceptInvite() {
   const queryClient = useQueryClient();
+  const refreshUser = useAuthStore((state) => state.refreshUser);
+  
   return useMutation({
     mutationFn: (familyId: string) => familyApi.acceptInvite(familyId),
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['families'] });
+      // Refresh user data to get updated primaryFamilyId (first invite sets Primary)
+      await refreshUser?.();
     },
   });
 }
@@ -78,11 +88,16 @@ export function useDeleteFamily() {
 
 export function useSetPrimaryFamily() {
   const queryClient = useQueryClient();
+  const refreshUser = useAuthStore((state) => state.refreshUser);
+  
   return useMutation({
     mutationFn: (familyId: string) => familyApi.setPrimary(familyId),
-    onSuccess: () => {
-      // Invalidate both families list and active family queries
+    onSuccess: async () => {
+      // Invalidate families list
       queryClient.invalidateQueries({ queryKey: ['families'] });
+      
+      // Refresh user data to get updated primaryFamilyId
+      await refreshUser?.();
     },
   });
 }

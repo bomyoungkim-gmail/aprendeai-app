@@ -19,7 +19,7 @@ const navItems = [
   { href: '/dashboard/library', label: 'Biblioteca', icon: BookOpen },
   { href: '/dashboard/progress', label: 'Progresso', icon: TrendingUp },
   { href: '/dashboard/assessments', label: 'Avaliações', icon: GraduationCap },
-  { href: '/dashboard/settings', label: 'Configurações', icon: Settings },
+  { href: '/settings', label: 'Configurações', icon: Settings },
 ];
 
 interface DashboardSidebarProps {

@@ -40,6 +40,27 @@ export class FamilyService {
       // Create initial Subscription for the family (Free Tier)
       await this.subscriptionService.createInitialSubscription(ScopeType.FAMILY, family.id, tx);
 
+      // Auto-set this family as Primary for the creator (Rule 1.2)
+      const user = await tx.user.findUnique({ 
+        where: { id: userId },
+        select: { settings: true }
+      });
+      const currentSettings = (user?.settings as Record<string, any>) || {};
+
+      console.log('[FamilyService.create] BEFORE UPDATE:', { userId, currentSettings });
+
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          settings: {
+            ...currentSettings,
+            primaryFamilyId: family.id,
+          },
+        },
+      });
+
+      console.log('[FamilyService.create] AFTER UPDATE - Set primaryFamilyId:', family.id);
+
       return family;
     });
   }
@@ -230,10 +251,35 @@ export class FamilyService {
         return member;
     }
 
-    return this.prisma.familyMember.update({
+    // Update member status to ACTIVE
+    const updatedMember = await this.prisma.familyMember.update({
       where: { id: member.id },
       data: { status: 'ACTIVE' },
     });
+
+    // Auto-set as Primary if this is user's first family (Rule 2.1)
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { settings: true },
+    });
+    const currentSettings = (user?.settings as Record<string, any>) || {};
+    const hasPrimaryFamily = currentSettings.primaryFamilyId;
+
+    if (!hasPrimaryFamily) {
+      // First family - auto-set as Primary
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          settings: {
+            ...currentSettings,
+            primaryFamilyId: familyId,
+          },
+        },
+      });
+    }
+    // Rule 2.2: If user already has a Primary family, don't change it
+
+    return updatedMember;
   }
 
   /**
