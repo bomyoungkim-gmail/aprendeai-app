@@ -21,9 +21,10 @@
 │              Frontend (Next.js 14)                  │
 │  ┌──────────────────────────────────────────────┐  │
 │  │  Pages Layer                                 │  │
-│  │  - /reading/[sessionId]  (NEW Phase 3)      │  │
+│  │  - /reading/[sessionId]  (NEW Phase 3)       │  │
 │  │  - /dashboard                                │  │
 │  │  - /groups                                   │  │
+│  │  - /extension/verify (NEW Phase 5)           │  │
 │  └──────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────┐  │
 │  │  Components                                  │  │
@@ -98,6 +99,49 @@
                       ↓
                   OpenAI API
 ```
+
+### Chrome Extension Architecture (Phase 5)
+
+```
+┌─────────────────────────────────────────────────────┐
+│              Chrome Extension                       │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  Background Service Worker                   │  │
+│  │  - AuthHandler (Device Code Flow)            │  │
+│  │  - ContextMenuHandler                        │  │
+│  │  - TokenManager (Storage)                    │  │
+│  └──────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  UI Components                               │  │
+│  │  - SidePanel (React)                         │  │
+│  │  - ContentScripts (DOM scraping)             │  │
+│  └──────────────────────────────────────────────┘  │
+└─────────────────────┬───────────────────────────────┘
+                      │
+                      │ HTTPS (Bearer Token)
+                      ↓
+┌─────────────────────────────────────────────────────┐
+│           Backend API (NestJS)                      │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  ExtensionAuthController                     │  │
+│  │  - POST /auth/extension/device/code          │  │
+│  │  - POST /auth/extension/token                │  │
+│  └──────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  ExtensionAuthService                        │  │
+│  │  - Device Flow Implementation                │  │
+│  │  - Polling Mechanism                         │  │
+│  └──────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────┘
+```
+
+**Device Code Flow**:
+
+1. Extension requests code (`POST /device/code`).
+2. User opens Verification URL (`/extension/verify`) on mobile/desktop.
+3. User confirms code and grants permission.
+4. Extension polls (`POST /token`) until approved.
+5. API issues Refresh/Access tokens with `extension` scope.
 
 ### OpsCoach Architecture (Phase 4)
 
@@ -335,6 +379,25 @@ model OpsEvent {
 }
 ```
 
+@@index([userId, type])
+}
+
+model ExtensionDeviceAuth {
+id String @id @default(uuid())
+deviceCode String @unique
+userCode String @unique
+// ... expiration and polling fields
+}
+
+model ExtensionGrant {
+id String @id @default(uuid())
+userId String
+deviceId String @unique
+// ... tokens and metadata
+}
+
+````
+
 ---
 
 ## Key Design Patterns
@@ -365,7 +428,7 @@ interface SessionContextType {
   quickReplies;
   sendPrompt;
 }
-```
+````
 
 **Benefits**:
 
@@ -460,7 +523,8 @@ try {
 
 ### Authentication
 
-- JWT tokens (httpOnly cookies)
+- JWT tokens (httpOnly cookies) for Web App
+- Bearer Tokens (Device Flow) for Extension
 - Refresh token rotation
 - CORS configured per environment
 
