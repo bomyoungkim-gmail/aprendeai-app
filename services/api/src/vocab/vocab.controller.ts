@@ -2,7 +2,7 @@ import { Controller, Post, Param, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { VocabService } from './vocab.service';
 
-// TODO: Add proper AuthGuard in V5
+// TODO (Issue #9): Add proper AuthGuard in V5
 @ApiTags('Vocabulary')
 @Controller('vocab')
 export class VocabController {

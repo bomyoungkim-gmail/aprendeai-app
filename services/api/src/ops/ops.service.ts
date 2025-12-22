@@ -83,7 +83,7 @@ export class OpsService {
     const tasks: TaskDto[] = [];
 
     // Check for due SRS reviews
-    // TODO: Uncomment when Vocab model is created
+    // TODO (Issue #8): Uncomment when Vocab model is created
     const dueReviews = 0; // await this.prisma.vocab.count({ where: { userId } });
 
     if (dueReviews > 0) {
@@ -160,7 +160,7 @@ export class OpsService {
     }
 
     // Review due
-    // TODO: Uncomment when Vocab model is created
+    // TODO (Issue #8): Uncomment when Vocab model is created
     const dueReviews = 0; // await this.prisma.vocab.count({ where: { userId } });
 
     if (dueReviews >= 10) {

@@ -3,8 +3,9 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ReviewService } from './review.service';
 import { VocabAttemptDto, ReviewQueueQueryDto } from './dto/review.dto';
 
-// TODO: Add proper AuthGuard in V5
+// TODO (Issue #9): Add proper AuthGuard in V5
 @ApiTags('Review')
+@Controller('v5/review')
 @Controller('review')
 export class ReviewController {
   constructor(private reviewService: ReviewService) {}
