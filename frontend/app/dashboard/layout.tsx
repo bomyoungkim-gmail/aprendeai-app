@@ -1,4 +1,10 @@
+'use client';
+
+import { useState } from 'react';
 import { GlobalSearch } from '@/components/search/GlobalSearch';
+import { Menu } from 'lucide-react';
+import AuthGuard from '@/components/auth-guard';
+import DashboardSidebar from '@/components/dashboard-sidebar';
 
 // ... imports
 
