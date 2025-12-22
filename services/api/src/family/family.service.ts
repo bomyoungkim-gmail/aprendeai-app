@@ -410,7 +410,7 @@ export class FamilyService {
         where: {
           familyId_userId: { familyId, userId: currentOwnerId },
         },
-        data: { role: 'ADMIN' as any },
+        data: { role: 'GUARDIAN' },
       });
 
       // 3. Update New Owner Role to OWNER
@@ -442,3 +442,4 @@ export class FamilyService {
     });
   }
 }
+
