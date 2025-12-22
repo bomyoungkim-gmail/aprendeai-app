@@ -59,7 +59,7 @@ export class FamilyDashboardService {
     }, 0);
 
     // Calculate comprehension average (mock for now)
-    const comprehensionAvg = 75; // TODO: Calculate from assessments
+    const comprehensionAvg = 75; // TODO (Issue #3): Calculate from assessments
 
     // Determine trend
     const comprehensionTrend = this.calculateTrend(sessions);
@@ -113,7 +113,7 @@ export class FamilyDashboardService {
    * Calculate comprehension trend
    */
   private calculateTrend(sessions: any[]): 'UP' | 'DOWN' | 'FLAT' {
-    // TODO: Implement based on assessment scores
+    // TODO (Issue #4): Implement based on assessment scores
     return 'FLAT';
   }
 
@@ -121,7 +121,7 @@ export class FamilyDashboardService {
    * Get top blockers (vocabulary, grammar, etc.)
    */
   private async getTopBlockers(learnerUserId: string): Promise<string[]> {
-    // TODO: Analyze session events to find common struggles
+    // TODO (Issue #5): Analyze session events to find common struggles
     return ['vocabulary', 'complex sentences'];
   }
 
@@ -129,7 +129,7 @@ export class FamilyDashboardService {
    * Get active alerts
    */
   private async getAlerts(learnerUserId: string) {
-    // TODO: Check for slumps, low comprehension, etc.
+    // TODO (Issue #6): Check for slumps, low comprehension, etc.
     return [];
   }
 

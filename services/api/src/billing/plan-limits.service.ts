@@ -48,7 +48,7 @@ export class PlanLimitsService {
     });
 
     if (subscription?.planId) {
-      // TODO: Re-enable when billingPlan model exists in schema
+      // TODO (Issue #11): Re-enable when billingPlan model exists in schema
       /*
       const plan = await this.prisma.billingPlan.findUnique({
         where: { id: subscription.planId }

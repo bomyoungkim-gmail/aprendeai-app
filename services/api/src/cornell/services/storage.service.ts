@@ -38,7 +38,7 @@ export class StorageService {
   }
 
   private async getS3SignedUrl(file: any): Promise<{ url: string; expiresAt: string }> {
-    // TODO: Implement S3 signed URL generation when needed
+    // TODO (Issue #10): Implement S3 signed URL generation when needed
     // For now, return placeholder (will throw in production if S3 is used)
     return {
       url: `http://placeholder-s3-url.com/${file.storageKey}`,
@@ -109,7 +109,7 @@ export class StorageService {
 
   /**
    * Save uploaded file to local storage
-   * TODO: For production, migrate to S3 for scalability and redundancy
+   * TODO (Issue #10): For production, migrate to S3 for scalability and redundancy
    * 
    * @param file - Multer file object
    * @returns storageKey - Unique key to identify the file

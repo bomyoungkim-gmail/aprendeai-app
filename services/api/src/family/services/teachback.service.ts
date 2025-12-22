@@ -59,7 +59,7 @@ export class TeachBackService {
 
     // Get initial prompts for teach-back
     const childPrompt = this.promptLibrary.getPrompt('TB_STEP1_EXPLAIN', {
-      W1: 'palavra1', // TODO: Get from session
+      W1: 'palavra1', // TODO (Issue #13): Get from session
       W2: 'palavra2',
     });
 
@@ -117,7 +117,7 @@ export class TeachBackService {
       },
     });
 
-    // TODO: Log TEACH_BACK_FINISHED event with stars
+    // TODO (Issue #13): Log TEACH_BACK_FINISHED event with stars
 
     return this.promptLibrary.getPrompt('TB_REWARD', { STARS: stars });
   }

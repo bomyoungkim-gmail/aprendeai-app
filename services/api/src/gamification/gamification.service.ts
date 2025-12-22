@@ -143,7 +143,7 @@ export class GamificationService {
             });
         } else if (diffDays > 1) {
             // Broke streak
-            // TODO: Implement Freeze Token Logic here
+            // TODO (Issue #12): Implement Freeze Token Logic here
             let newCurrent = 1;
             // if (streak.freezeTokens > 0) ...
             

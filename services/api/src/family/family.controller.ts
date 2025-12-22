@@ -144,13 +144,14 @@ export class FamilyController {
       DURING: 'READ_DURING_MARK_RULE',
       POST: 'READ_POST_FREE_RECALL',
     };
-    return this.opsCoachService.getDailyBootLearner(); // TODO: Use phase-based logic
+    return this.opsCoachService.getDailyBootLearner(); // TODO (Issue #1): Use phase-based logic
   }
 
   @Post('teachback/:id/prompt')
   @ApiOperation({ summary: 'Get teach-back step prompt' })
   getTeachBackPrompt(@Param('id') sessionId: string, @Body() body: { step: number }) {
     const step = body.step || 1;
+    // TODO (Issue #2): Get learnerUserId from Session Context
     if (step === 1) return this.teachBackService.offerMission('learner_id');
     if (step === 2) return this.teachBackService.getStep2Prompt();
     if (step === 3) return this.teachBackService.getStep3Prompt();

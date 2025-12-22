@@ -75,8 +75,8 @@ export class ClassDashboardService {
       take: 10,
     });
 
-    const progressPercent = sessions.length > 0 ? 65 : 0; // TODO: Calculate
-    const comprehensionScore = 72; // TODO: Calculate from assessments
+    const progressPercent = sessions.length > 0 ? 65 : 0; // TODO (Issue #7): Calculate
+    const comprehensionScore = 72; // TODO (Issue #7): Calculate from assessments
     const lastActivityDate = sessions[0]?.startedAt || null;
 
     return {
