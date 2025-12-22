@@ -13,6 +13,7 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
+import { ROUTES, apiUrl } from '../helpers/routes';
 
 describe('Cornell Notes Integration Tests', () => {
   let app: INestApplication;
@@ -27,6 +28,7 @@ describe('Cornell Notes Integration Tests', () => {
     }).compile();
     
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api/v1'); // Match production
     await app.init();
     
     prisma = app.get<PrismaService>(PrismaService);
@@ -56,7 +58,27 @@ describe('Cornell Notes Integration Tests', () => {
     });
     testContentId = content.id;
     
-    authToken = 'Bearer test-token';
+    const testEmail = `cornell-test-${Date.now()}@example.com`;
+
+    // Real authentication - register and login
+    await request(app.getHttpServer())
+      .post(apiUrl(ROUTES.AUTH.REGISTER))
+      .send({
+        email: testEmail,
+        password: 'Test123!@#',
+        name: 'Cornell Test User',
+        role: 'COMMON_USER',
+        schoolingLevel: 'ADULT',
+      })
+      .expect(201);
+    const loginResponse = await request(app.getHttpServer())
+      .post(apiUrl(ROUTES.AUTH.LOGIN))
+      .send({
+        email: testEmail,
+        password: 'Test123!@#',
+      })
+      .expect(201);
+    authToken = `Bearer ${loginResponse.body.access_token}`;
   });
   
   afterAll(async () => {
@@ -70,7 +92,7 @@ describe('Cornell Notes Integration Tests', () => {
   describe('GET /contents/:id/cornell - Auto-create', () => {
     it('should create empty Cornell notes on first GET', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/contents/${testContentId}/cornell`)
+        .get(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
         .expect(200);
       
@@ -85,7 +107,7 @@ describe('Cornell Notes Integration Tests', () => {
     it('should return existing Cornell notes on subsequent GET', async () => {
       // First GET creates it
       const first = await request(app.getHttpServer())
-        .get(`/contents/${testContentId}/cornell`)
+        .get(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
         .expect(200);
       
@@ -93,7 +115,7 @@ describe('Cornell Notes Integration Tests', () => {
       
       // Second GET returns same
       const second = await request(app.getHttpServer())
-        .get(`/contents/${testContentId}/cornell`)
+        .get(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
         .expect(200);
       
@@ -117,7 +139,7 @@ describe('Cornell Notes Integration Tests', () => {
       };
       
       const response = await request(app.getHttpServer())
-        .put(`/contents/${testContentId}/cornell`)
+        .put(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
         .send({ mainNotes })
         .expect(200);
@@ -129,7 +151,7 @@ describe('Cornell Notes Integration Tests', () => {
       const cueColumn = 'Key questions:\n- What is X?\n- Why Y?\n- How Z?';
       
       const response = await request(app.getHttpServer())
-        .put(`/contents/${testContentId}/cornell`)
+        .put(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
         .send({ cueColumn })
         .expect(200);
@@ -141,7 +163,7 @@ describe('Cornell Notes Integration Tests', () => {
       const summaryText = 'This is a comprehensive summary of everything I learned from this content.';
       
       const response = await request(app.getHttpServer())
-        .put(`/contents/${testContentId}/cornell`)
+        .put(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
         .send({ summaryText })
         .expect(200);
@@ -160,7 +182,7 @@ describe('Cornell Notes Integration Tests', () => {
       };
       
       const response = await request(app.getHttpServer())
-        .put(`/contents/${testContentId}/cornell`)
+        .put(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
         .send(data)
         .expect(200);
@@ -180,14 +202,14 @@ describe('Cornell Notes Integration Tests', () => {
       
       // Save
       await request(app.getHttpServer())
-        .put(`/contents/${testContentId}/cornell`)
+        .put(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
         .send(data)
         .expect(200);
       
       // Retrieve
       const response = await request(app.getHttpServer())
-        .get(`/contents/${testContentId}/cornell`)
+        .get(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
         .expect(200);
       
@@ -198,7 +220,7 @@ describe('Cornell Notes Integration Tests', () => {
     it('should update existing notes without losing data', async () => {
       // Initial save
       await request(app.getHttpServer())
-        .put(`/contents/${testContentId}/cornell`)
+        .put(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
         .send({
           mainNotes: { '1': 'Original' },
@@ -208,7 +230,7 @@ describe('Cornell Notes Integration Tests', () => {
       
       // Update only cueColumn
       const updated = await request(app.getHttpServer())
-        .put(`/contents/${testContentId}/cornell`)
+        .put(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
         .send({
           cueColumn: 'New cue column',
@@ -225,7 +247,7 @@ describe('Cornell Notes Integration Tests', () => {
   describe('Cornell Notes Validation', () => {
     it('should reject invalid mainNotes format', async () => {
       await request(app.getHttpServer())
-        .put(`/contents/${testContentId}/cornell`)
+        .put(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
         .send({
           mainNotes: 'not an object',  // Should be object
@@ -235,7 +257,7 @@ describe('Cornell Notes Integration Tests', () => {
     
     it('should allow empty cornell notes', async () => {
       const response = await request(app.getHttpServer())
-        .put(`/contents/${testContentId}/cornell`)
+        .put(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
         .send({
           mainNotes: {},
@@ -248,3 +270,5 @@ describe('Cornell Notes Integration Tests', () => {
     });
   });
 });
+
+

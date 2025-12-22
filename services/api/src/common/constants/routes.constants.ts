@@ -44,6 +44,7 @@ export const ROUTES = {
   CONTENT: {
     BASE: 'contents',
     BY_ID: (id: string) => `contents/${id}`,
+    CORNELL: (id: string) => `contents/${id}/cornell`,
     SESSIONS: (id: string) => `contents/${id}/sessions`,
   },
   

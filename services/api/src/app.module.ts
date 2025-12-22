@@ -21,6 +21,7 @@ import { VocabModule } from './vocab/vocab.module';
 import { ReviewModule } from './review/review.module';
 // V5 Assets Module
 import { AssetsModule } from './assets/assets.module';
+import { CornellModule } from './cornell/cornell.module';
 // Study Groups Module
 import { StudyGroupsModule } from './study-groups/study-groups.module';
 // WebSocket Module
@@ -69,6 +70,7 @@ import { ActionLoggerMiddleware } from './common/middleware/logger.middleware';
     ReviewModule,
     // V5 Assets Module
     AssetsModule,
+    CornellModule,
     // Study Groups Module
     StudyGroupsModule,
     // WebSocket for real-time
