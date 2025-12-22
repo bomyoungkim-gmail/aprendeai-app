@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { ExtensionAuthService } from './extension-auth.service';
+import { ExtensionAuthController } from './extension-auth.controller';
 import { UsersModule } from '../users/users.module';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
@@ -35,8 +37,9 @@ import { EmailModule } from '../email/email.module';
     JwtStrategy,
     GoogleStrategy,
     MicrosoftStrategy,
+    ExtensionAuthService,
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, ExtensionAuthController],
   exports: [AuthService],
 })
 export class AuthModule {}

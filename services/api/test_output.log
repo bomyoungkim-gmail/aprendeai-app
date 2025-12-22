@@ -1,0 +1,174 @@
+
+> api@0.0.1 test
+> jest test/integration/sessions.spec.ts
+
+  console.error
+    Cleanup failed PrismaClientKnownRequestError: 
+    Invalid `prisma.readingSession.deleteMany()` invocation in
+    C:\projects\aprendeai-app\services\api\test\integration\sessions.spec.ts:111:37
+    
+      108     // Also need to delete cornell notes if not handled
+      109 }
+      110 
+    → 111 await prisma.readingSession.deleteMany(
+    Foreign key constraint violated: `legacy_cornell_notes_reading_session_id_fkey (index)`
+        at $n.handleRequestError (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:121:7315)
+        at $n.handleAndLogRequestError (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:121:6623)
+        at $n.request (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:121:6307)
+        at l (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:130:9633)
+        at Object.<anonymous> (C:\projects\aprendeai-app\services\api\test\integration\sessions.spec.ts:111:9) {
+      code: 'P2003',
+      clientVersion: '5.22.0',
+      meta: {
+        modelName: 'ReadingSession',
+        field_name: 'legacy_cornell_notes_reading_session_id_fkey (index)'
+      }
+    }
+
+    [0m [90m 117 |[39m       }
+     [90m 118 |[39m     } [36mcatch[39m (e) {
+    [31m[1m>[22m[39m[90m 119 |[39m       console[33m.[39merror([32m'Cleanup failed'[39m[33m,[39m e)[33m;[39m
+     [90m     |[39m               [31m[1m^[22m[39m
+     [90m 120 |[39m     }
+     [90m 121 |[39m     
+     [90m 122 |[39m     [36mawait[39m app[33m.[39mclose()[33m;[39m[0m
+
+      at Object.<anonymous> (test/integration/sessions.spec.ts:119:15)
+
+FAIL test/integration/sessions.spec.ts (5.011 s)
+  Sessions Integration Tests
+    POST /contents/:id/sessions - Create Session
+      × should create a new reading session (25 ms)
+    Session Phase Transitions
+      × should advance from PRE to DURING (22 ms)
+      × should reject FINISHED without DoD requirements (13 ms)
+      × should allow FINISHED when all DoD met (16 ms)
+    Session Events
+      × should record quiz response event (6 ms)
+      × should record production submit event (6 ms)
+
+  ● Sessions Integration Tests › POST /contents/:id/sessions - Create Session › should create a new reading session
+
+    expected 201 "Created", got 404 "Not Found"
+
+      128 |         .post(`/contents/${testContentId}/sessions`)
+      129 |         .set('Authorization', authToken)
+    > 130 |         .expect(201);
+          |          ^
+      131 |       
+      132 |       expect(response.body).toHaveProperty('id');
+      133 |       expect(response.body.phase).toBe('PRE');
+
+      at Object.<anonymous> (test/integration/sessions.spec.ts:130:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Sessions Integration Tests › Session Phase Transitions › should advance from PRE to DURING
+
+    expected 200 "OK", got 404 "Not Found"
+
+      171 |           targetWords: ['test', 'integration', 'jest'],
+      172 |         })
+    > 173 |         .expect(200);
+          |          ^
+      174 |       
+      175 |       // Then advance to DURING
+      176 |       const response = await request(app.getHttpServer())
+
+      at Object.<anonymous> (test/integration/sessions.spec.ts:173:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Sessions Integration Tests › Session Phase Transitions › should reject FINISHED without DoD requirements
+
+    expected 400 "Bad Request", got 404 "Not Found"
+
+      195 |         .set('Authorization', authToken)
+      196 |         .send({ toPhase: 'FINISHED' })
+    > 197 |         .expect(400);  // Should fail DoD validation
+          |          ^
+      198 |     });
+      199 |     
+      200 |     it('should allow FINISHED when all DoD met', async () => {
+
+      at Object.<anonymous> (test/integration/sessions.spec.ts:197:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Sessions Integration Tests › Session Phase Transitions › should allow FINISHED when all DoD met
+
+    expected 200 "OK", got 404 "Not Found"
+
+      236 |         .set('Authorization', authToken)
+      237 |         .send({ toPhase: 'FINISHED' })
+    > 238 |         .expect(200);
+          |          ^
+      239 |       
+      240 |       expect(response.body.phase).toBe('FINISHED');
+      241 |       expect(response.body.finishedAt).toBeDefined();
+
+      at Object.<anonymous> (test/integration/sessions.spec.ts:238:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Sessions Integration Tests › Session Events › should record quiz response event
+
+    expected 201 "Created", got 404 "Not Found"
+
+      265 |           payload: { correct: true, questionText: 'What is Jest?' },
+      266 |         })
+    > 267 |         .expect(201);
+          |          ^
+      268 |       
+      269 |       expect(response.body.eventType).toBe('QUIZ_RESPONSE');
+      270 |       expect(response.body.readingSessionId).toBe(sessionId);
+
+      at Object.<anonymous> (test/integration/sessions.spec.ts:267:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Sessions Integration Tests › Session Events › should record production submit event
+
+    expected 201 "Created", got 404 "Not Found"
+
+      279 |           payload: { text: 'My notes on testing' },
+      280 |         })
+    > 281 |         .expect(201);
+          |          ^
+      282 |       
+      283 |       expect(response.body.eventType).toBe('PRODUCTION_SUBMIT');
+      284 |     });
+
+      at Object.<anonymous> (test/integration/sessions.spec.ts:281:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+Test Suites: 1 failed, 1 total
+Tests:       6 failed, 6 total
+Snapshots:   0 total
+Time:        5.216 s
+Ran all test suites matching /test\\integration\\sessions.spec.ts/i.

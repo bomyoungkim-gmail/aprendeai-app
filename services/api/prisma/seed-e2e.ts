@@ -1,5 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 /**
  * Seed E2E Test Users
@@ -10,6 +13,13 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 const E2E_USERS = [
+  {
+    email: 'test@example.com',
+    password: 'password123',
+    name: 'Test User',
+    role: 'COMMON_USER',
+    schoolingLevel: 'UNIVERSITY',
+  },
   {
     email: 'facilitator@e2e-test.com',
     password: 'Test123!@#',
@@ -64,6 +74,13 @@ const E2E_USERS = [
 
 async function main() {
   console.log('🌱 Seeding E2E test users...');
+  
+  // Get default institution
+  const institution = await prisma.institution.findFirst();
+  if (!institution) {
+    throw new Error('No institution found. Please run main seed first.');
+  }
+  console.log(`Using institution: ${institution.name} (${institution.id})`);
   
   // First, ensure Plans exist (required for subscriptions during login)
   console.log('📋 Ensuring Plans exist...');
@@ -146,6 +163,7 @@ async function main() {
         name: userData.name,
         role: userData.role as any,
         schoolingLevel: userData.schoolingLevel,
+        institutionId: institution.id,
       },
     });
 

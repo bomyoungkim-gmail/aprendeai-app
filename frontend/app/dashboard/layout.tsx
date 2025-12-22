@@ -1,9 +1,6 @@
-'use client';
+import { GlobalSearch } from '@/components/search/GlobalSearch';
 
-import { useState } from 'react';
-import { DashboardSidebar } from '@/components/dashboard-sidebar';
-import AuthGuard from '@/components/auth-guard';
-import { Menu } from 'lucide-react';
+// ... imports
 
 export default function DashboardLayout({
   children,
@@ -35,6 +32,9 @@ export default function DashboardLayout({
 
           {/* Main content */}
           <main className="flex-1 overflow-y-auto p-4 md:p-8">
+            <div className="mb-6">
+              <GlobalSearch />
+            </div>
             {children}
           </main>
         </div>

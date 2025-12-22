@@ -13,6 +13,7 @@ import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { addDays, subDays } from 'date-fns';
+import { ROUTES, apiUrl } from '../helpers/routes';
 
 describe('Review & SRS Integration Tests', () => {
   let app: INestApplication;
@@ -27,6 +28,7 @@ describe('Review & SRS Integration Tests', () => {
     }).compile();
     
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api/v1'); // Match production
     await app.init();
     
     prisma = app.get<PrismaService>(PrismaService);
@@ -85,7 +87,7 @@ describe('Review & SRS Integration Tests', () => {
     
     it('should return empty queue when no due items', async () => {
       const response = await request(app.getHttpServer())
-        .get('/review/queue')
+        .get(apiUrl('review/queue'))
         .set('Authorization', authToken)
         .expect(200);
       
@@ -106,7 +108,7 @@ describe('Review & SRS Integration Tests', () => {
       });
       
       const response = await request(app.getHttpServer())
-        .get('/review/queue')
+        .get(apiUrl('review/queue'))
         .set('Authorization', authToken)
         .expect(200);
       
@@ -128,7 +130,7 @@ describe('Review & SRS Integration Tests', () => {
       });
       
       const response = await request(app.getHttpServer())
-        .get('/review/queue')
+        .get(apiUrl('review/queue'))
         .set('Authorization', authToken)
         .expect(200);
       
@@ -155,7 +157,7 @@ describe('Review & SRS Integration Tests', () => {
       await Promise.all(promises);
       
       const response = await request(app.getHttpServer())
-        .get('/review/queue')
+        .get(apiUrl('review/queue'))
         .set('Authorization', authToken)
         .expect(200);
       
@@ -183,7 +185,7 @@ describe('Review & SRS Integration Tests', () => {
     
     it('should transition NEW + OK -> D1', async () => {
       const response = await request(app.getHttpServer())
-        .post('/review/attempt')
+        .post(apiUrl('review/attempt'))
         .set('Authorization', authToken)
         .send({
           vocabItemId: vocabId,
@@ -203,7 +205,7 @@ describe('Review & SRS Integration Tests', () => {
       });
       
       const response = await request(app.getHttpServer())
-        .post('/review/attempt')
+        .post(apiUrl('review/attempt'))
         .set('Authorization', authToken)
         .send({
           vocabItemId: vocabId,
@@ -225,7 +227,7 @@ describe('Review & SRS Integration Tests', () => {
       const beforeAttempt = new Date();
       
       const response = await request(app.getHttpServer())
-        .post('/review/attempt')
+        .post(apiUrl('review/attempt'))
         .set('Authorization', authToken)
         .send({
           vocabItemId: vocabId,
@@ -245,7 +247,7 @@ describe('Review & SRS Integration Tests', () => {
     
     it('should record attempt in history', async () => {
       await request(app.getHttpServer())
-        .post('/review/attempt')
+        .post(apiUrl('review/attempt'))
         .set('Authorization', authToken)
         .send({
           vocabItemId: vocabId,
@@ -283,7 +285,7 @@ describe('Review & SRS Integration Tests', () => {
     
     it('should keep MASTERED on OK', async () => {
       const response = await request(app.getHttpServer())
-        .post('/review/attempt')
+        .post(apiUrl('review/attempt'))
         .set('Authorization', authToken)
         .send({
           vocabItemId: vocabId,
@@ -296,7 +298,7 @@ describe('Review & SRS Integration Tests', () => {
     
     it('should regress MASTERED on FAIL', async () => {
       const response = await request(app.getHttpServer())
-        .post('/review/attempt')
+        .post(apiUrl('review/attempt'))
         .set('Authorization', authToken)
         .send({
           vocabItemId: vocabId,
@@ -308,3 +310,4 @@ describe('Review & SRS Integration Tests', () => {
     });
   });
 });
+

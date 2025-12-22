@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { AppModule } from '../../src/app.module';
+import { ROUTES, apiUrl } from '../helpers/routes';
 
 describe('Annotations Integration Tests', () => {
   let app: INestApplication;
@@ -18,13 +19,14 @@ describe('Annotations Integration Tests', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api/v1'); // Match production
     await app.init();
 
     prisma = app.get<PrismaService>(PrismaService);
 
     // Get auth token and setup test data
     const loginRes = await request(app.getHttpServer())
-      .post('/auth/login')
+      .post(apiUrl(ROUTES.AUTH.LOGIN))
       .send({
         email: 'test@example.com',
         password: 'password123',
@@ -206,3 +208,4 @@ describe('Annotations Integration Tests', () => {
     });
   });
 });
+

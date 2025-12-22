@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
+import { ROUTES, apiUrl } from '../helpers/routes';
 
 describe('Primary Family Logic (Integration)', () => {
   let app: INestApplication;
@@ -14,6 +15,7 @@ describe('Primary Family Logic (Integration)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api/v1'); // Match production
     await app.init();
     prisma = app.get<PrismaService>(PrismaService);
 
@@ -38,7 +40,7 @@ describe('Primary Family Logic (Integration)', () => {
   const createAndLoginUser = async (name: string, email: string) => {
     try {
       await request(app.getHttpServer())
-        .post('/auth/register')
+        .post(apiUrl(ROUTES.AUTH.REGISTER))
         .send({
           email,
           password: 'Test123!@#',
@@ -51,7 +53,7 @@ describe('Primary Family Logic (Integration)', () => {
     }
 
     const login = await request(app.getHttpServer())
-      .post('/auth/login')
+      .post(apiUrl(ROUTES.AUTH.LOGIN))
       .send({ email, password: 'Test123!@#' });
 
     if (login.status !== 200 && login.status !== 201) {
@@ -70,7 +72,7 @@ describe('Primary Family Logic (Integration)', () => {
 
       // Create Family A
       const res = await request(app.getHttpServer())
-        .post('/families')
+        .post(apiUrl(ROUTES.FAMILY.BASE))
         .set('Authorization', `Bearer ${token}`)
         .send({ name: 'Family A' })
         .expect(201);
@@ -88,7 +90,7 @@ describe('Primary Family Logic (Integration)', () => {
 
       // Create Family A
       const resA = await request(app.getHttpServer())
-        .post('/families')
+        .post(apiUrl(ROUTES.FAMILY.BASE))
         .set('Authorization', `Bearer ${token}`)
         .send({ name: 'Family A' });
       
@@ -100,7 +102,7 @@ describe('Primary Family Logic (Integration)', () => {
 
       // Create Family B
       const resB = await request(app.getHttpServer())
-        .post('/families')
+        .post(apiUrl(ROUTES.FAMILY.BASE))
         .set('Authorization', `Bearer ${token}`)
         .send({ name: 'Family B' });
       
@@ -135,7 +137,7 @@ describe('Primary Family Logic (Integration)', () => {
     it('should set Primary on FIRST invite acceptance', async () => {
       // 1. Owner creates family
       const res = await request(app.getHttpServer())
-        .post('/families')
+        .post(apiUrl(ROUTES.FAMILY.BASE))
         .set('Authorization', `Bearer ${ownerToken}`)
         .send({ name: 'Invited Family' })
         .expect(201);
@@ -163,7 +165,7 @@ describe('Primary Family Logic (Integration)', () => {
     it('should NOT change Primary on SECOND invite acceptance', async () => {
       // Setup: Dependent joins Family A (becomes Primary)
       const resA = await request(app.getHttpServer())
-        .post('/families')
+        .post(apiUrl(ROUTES.FAMILY.BASE))
         .set('Authorization', `Bearer ${ownerToken}`)
         .send({ name: 'Family A' });
       const familyAId = resA.body.id;
@@ -185,7 +187,7 @@ describe('Primary Family Logic (Integration)', () => {
 
       // Create Family B
       const resB = await request(app.getHttpServer())
-        .post('/families')
+        .post(apiUrl(ROUTES.FAMILY.BASE))
         .set('Authorization', `Bearer ${ownerToken}`)
         .send({ name: 'Family B' });
       const familyBId = resB.body.id;
@@ -210,3 +212,4 @@ describe('Primary Family Logic (Integration)', () => {
     });
   });
 });
+

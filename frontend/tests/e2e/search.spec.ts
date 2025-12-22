@@ -1,7 +1,14 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Global Search', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, context }) => {
+    // Clear context to prevent stale session issues
+    await context.clearCookies();
+    await page.addInitScript(() => {
+        window.localStorage.clear();
+        window.sessionStorage.clear();
+    });
+
     await page.goto('/login');
     await page.fill('input[name="email"]', 'test@example.com');
     await page.fill('input[name="password"]', 'password123');

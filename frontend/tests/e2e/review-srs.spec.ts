@@ -12,7 +12,14 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Review SRS Flow', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, context }) => {
+    // Clear context to prevent stale session issues
+    await context.clearCookies();
+    await page.addInitScript(() => {
+        window.localStorage.clear();
+        window.sessionStorage.clear();
+    });
+
     // Login
     await page.goto('/login');
     await page.fill('[name="email"]', 'test@example.com');

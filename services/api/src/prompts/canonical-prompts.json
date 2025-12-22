@@ -1,0 +1,254 @@
+[
+  {
+    "key": "FAM_ONBOARD_START",
+    "audience": "EDUCATOR",
+    "phase": "PLAN",
+    "nextPrompt": "Bem-vindo ao Modo Família! Vamos criar um combinado de leitura conjunta?",
+    "quickReplies": ["Sim, criar combinado", "Quero saber mais primeiro"],
+    "notes": "Initial family mode activation"
+  },
+  {
+    "key": "FAM_CONTRACT_CONFIRM",
+    "audience": "EDUCATOR",
+    "phase": "PLAN",
+    "nextPrompt": "Combinado: {MIN} min, sem celular, sem briga. Confirma?",
+    "quickReplies": ["Confirmo", "Quero ajustar"],
+    "notes": "Contract confirmation with time commitment"
+  },
+  {
+    "key": "FAM_PRIVACY_MODE",
+    "audience": "EDUCATOR",
+    "phase": "PLAN",
+    "nextPrompt": "Privacidade: A) Só gráficos (padrão) B) Gráficos + alertas críticos. Escolha:",
+    "quickReplies": ["A - Só gráficos", "B - Com alertas"],
+    "notes": "Privacy preference selection"
+  },
+  {
+    "key": "OPS_DAILY_BOOT_LEARNER",
+    "audience": "LEARNER",
+    "phase": "BOOT",
+    "nextPrompt": "Meta de hoje: O que vamos ler? Por quê?",
+    "quickReplies": ["Continuar plano", "Escolher novo tema"],
+    "notes": "Daily goal setting for learner"
+  },
+  {
+    "key": "OPS_QUEUE_NEXT",
+    "audience": "LEARNER",
+    "phase": "BOOT",
+    "nextPrompt": "Sugerido: {TITLE} ({MIN} min). Começar?",
+    "quickReplies": ["Sim, começar", "Outro item"],
+    "notes": "Next queue item suggestion"
+  },
+  {
+    "key": "OPS_TIME_LOG",
+    "audience": "LEARNER",
+    "phase": "POST",
+    "nextPrompt": "Registre seu tempo (exemplo: '/log 15m foco ok'):",
+    "quickReplies": ["/log 15m foco ok", "/log 10m travou"],
+    "notes": "Quick time logging"
+  },
+  {
+    "key": "OPS_DAILY_CLOSE_LEARNER",
+    "audience": "LEARNER",
+    "phase": "POST",
+    "nextPrompt": "Fim do dia! O que travou? O que ajustamos amanhã?",
+    "quickReplies": ["Nada travou", "Travou: vocabulário"],
+    "notes": "End of day reflection"
+  },
+  {
+    "key": "OPS_DAILY_BOOT_EDUCATOR",
+    "audience": "EDUCATOR",
+    "phase": "BOOT",
+    "nextPrompt": "Hoje é dia de leitura conjunta ({DAYS}). Vamos começar?",
+    "quickReplies": ["Sim, iniciar sessão", "Adiar para outro momento"],
+    "notes": "Co-reading session reminder for educator"
+  },
+  {
+    "key": "OPS_WEEKLY_REPORT_EDUCATOR",
+    "audience": "EDUCATOR",
+    "phase": "POST",
+    "nextPrompt": "Relatório semanal: {STREAK} dias, {COMP}% compreensão. Ver detalhes?",
+    "quickReplies": ["Ver relatório completo", "Só ações sugeridas"],
+    "notes": "Weekly aggregated report prompt"
+  },
+  {
+    "key": "READ_PRE_CHOICE_SKIM",
+    "audience": "LEARNER",
+    "phase": "PRE",
+    "nextPrompt": "Antes de começar: quer dar uma olhada rápida (skim)?",
+    "quickReplies": ["Sim, dar uma olhada", "Ir direto"],
+    "notes": "Pre-reading skim option"
+  },
+  {
+    "key": "READ_TARGET_WORDS_APPROVE",
+    "audience": "LEARNER",
+    "phase": "PRE",
+    "nextPrompt": "Palavras-alvo sugeridas: {WORDS}. OK ou trocar alguma?",
+    "quickReplies": ["OK, essas palavras", "Trocar uma palavra"],
+    "notes": "Vocabulary approval gate"
+  },
+  {
+    "key": "READ_DURING_MARK_RULE",
+    "audience": "LEARNER",
+    "phase": "DURING",
+    "nextPrompt": "Durante a leitura, marque: '/mark unknown: palavra' ou '/keyidea: texto curto'.",
+    "quickReplies": ["/mark unknown: ...", "/keyidea: ..."],
+    "notes": "During-reading marking commands"
+  },
+  {
+    "key": "READ_CHECKPOINT_1LINE",
+    "audience": "LEARNER",
+    "phase": "DURING",
+    "nextPrompt": "Em 1 linha: o que aconteceu nesse bloco?",
+    "quickReplies": ["Responder em 1 linha", "Reler bloco"],
+    "notes": "Block checkpoint comprehension check"
+  },
+  {
+    "key": "READ_POST_FREE_RECALL",
+    "audience": "LEARNER",
+    "phase": "POST",
+    "nextPrompt": "Sem olhar o texto: resuma em 2-3 frases o que você leu.",
+    "quickReplies": ["Escrever resumo", "Preciso reler antes"],
+    "notes": "Post-reading free recall"
+  },
+  {
+    "key": "READ_POST_VOCAB_USE_3SENT",
+    "audience": "LEARNER",
+    "phase": "POST",
+    "nextPrompt": "Use 2 palavras-alvo em 3 frases suas (não copie do texto):",
+    "quickReplies": ["Escrever frases", "Ver exemplo primeiro"],
+    "notes": "Vocabulary usage production"
+  },
+  {
+    "key": "READ_POST_METACOG",
+    "audience": "LEARNER",
+    "phase": "POST",
+    "nextPrompt": "O que foi fácil? O que foi difícil?",
+    "quickReplies": ["Fácil: ... | Difícil: ...", "Tudo tranquilo"],
+    "notes": "Metacognitive reflection"
+  },
+  {
+    "key": "EDU_OPEN_QUESTION_SUGGEST",
+    "audience": "EDUCATOR",
+    "phase": "DURING",
+    "nextPrompt": "Sugestão: Pergunte 'Por que você acha que {TOPIC}?'",
+    "quickReplies": ["Fazer essa pergunta", "Fazer outra pergunta"],
+    "notes": "Open-ended question template for educator"
+  },
+  {
+    "key": "EDU_EVIDENCE_REQUEST",
+    "audience": "EDUCATOR",
+    "phase": "DURING",
+    "nextPrompt": "Peça: 'Mostre onde está escrito isso no texto'.",
+    "quickReplies": ["Pedir evidência", "Continuar lendo"],
+    "notes": "Text evidence prompt"
+  },
+  {
+    "key": "EDU_INTERVENTION_MENU",
+    "audience": "EDUCATOR",
+    "phase": "DURING",
+    "nextPrompt": "Dificuldade detectada. Opções: A) Reduzir bloco B) Dar 2 palavras chave C) Ler exemplo junto.",
+    "quickReplies": ["A - Reduzir bloco", "B - Dar pista", "C - Ler junto"],
+    "notes": "Struggle intervention menu (A/B/C pattern)"
+  },
+  {
+    "key": "EDU_CLOSE_SCRIPT",
+    "audience": "EDUCATOR",
+    "phase": "POST",
+    "nextPrompt": "Sessão finalizada! Dê parabéns pelo esforço e sugira 1 ajuste para próxima vez.",
+    "quickReplies": ["Dar feedback", "Finalizar sem comentário"],
+    "notes": "Session closure script"
+  },
+  {
+    "key": "TB_OFFER_MISSION",
+    "audience": "LEARNER",
+    "phase": "POST",
+    "nextPrompt": "Missão Bônus (5 min): Quer virar professor e ensinar isso para o responsável?",
+    "quickReplies": ["Quero!", "Hoje não"],
+    "notes": "Teach-Back mission offer after successful session"
+  },
+  {
+    "key": "TB_STEP1_EXPLAIN",
+    "audience": "LEARNER",
+    "phase": "DURING",
+    "nextPrompt": "Passo 1/3: Explique a ideia principal em 2 frases usando {W1}, {W2}.",
+    "quickReplies": ["Explicação: ...", "Preciso de ajuda"],
+    "notes": "Teach-Back step 1: explanation with target words"
+  },
+  {
+    "key": "TB_PARENT_SUMMARY",
+    "audience": "EDUCATOR",
+    "phase": "DURING",
+    "nextPrompt": "Em 1 linha: qual foi a ideia principal que você entendeu?",
+    "quickReplies": ["Ideia: ...", "Não entendi bem"],
+    "notes": "Parent (as learner) summary"
+  },
+  {
+    "key": "TB_STEP2_EXAMPLE",
+    "audience": "LEARNER",
+    "phase": "DURING",
+    "nextPrompt": "Passo 2/3: Dê 1 exemplo do dia a dia em 1 frase (use {W3} se possível).",
+    "quickReplies": ["Exemplo: ...", "Trocar palavra"],
+    "notes": "Teach-Back step 2: real-life example"
+  },
+  {
+    "key": "TB_STEP3_QUESTIONS",
+    "audience": "LEARNER",
+    "phase": "DURING",
+    "nextPrompt": "Passo 3/3: Faça 2 perguntas abertas para o responsável.",
+    "quickReplies": [
+      "Por que você acha que isso acontece?",
+      "Como você explicaria com suas palavras?",
+      "Onde você vê isso no mundo real?"
+    ],
+    "notes": "Teach-Back step 3: open questions to parent"
+  },
+  {
+    "key": "TB_PARENT_FEEDBACK",
+    "audience": "EDUCATOR",
+    "phase": "POST",
+    "nextPrompt": "Diga 1 coisa que ficou clara e 1 pergunta (curto):",
+    "quickReplies": ["Ficou claro: ... | Pergunta: ...", "Tudo claro"],
+    "notes": "Parent feedback in teach-back mode"
+  },
+  {
+    "key": "TB_REWARD",
+    "audience": "LEARNER",
+    "phase": "POST",
+    "nextPrompt": "Você ganhou {STARS} estrelas! Quer melhorar 1 frase para ficar mais clara?",
+    "quickReplies": ["Sim, melhorar", "Não, encerrar"],
+    "notes": "Teach-Back reward and optional refinement"
+  },
+  {
+    "key": "CLASS_POLICY_SET",
+    "audience": "EDUCATOR",
+    "phase": "PLAN",
+    "nextPrompt": "Política da turma: {UNITS} unidades/semana, {MIN} min/sessão. Confirma?",
+    "quickReplies": ["Confirmar", "Ajustar"],
+    "notes": "Classroom policy setup"
+  },
+  {
+    "key": "CLASS_WEEKLY_PLAN",
+    "audience": "EDUCATOR",
+    "phase": "PLAN",
+    "nextPrompt": "Plano semanal: Selecione {UNITS} conteúdos para esta semana.",
+    "quickReplies": ["Sugerir automaticamente", "Escolher manualmente"],
+    "notes": "Weekly content planning for classroom"
+  },
+  {
+    "key": "CLASS_DASHBOARD",
+    "audience": "EDUCATOR",
+    "phase": "POST",
+    "nextPrompt": "Dashboard: {ACTIVE} alunos ativos, {AVG}% compreensão média. Ver detalhes?",
+    "quickReplies": ["Ver relatório turma", "Ver aluno específico"],
+    "notes": "Classroom aggregated dashboard"
+  },
+  {
+    "key": "CLASS_INTERVENTION_PROMPT",
+    "audience": "EDUCATOR",
+    "phase": "DURING",
+    "nextPrompt": "Aluno {NAME} solicitou ajuda em {TOPIC}. Iniciar sessão 1:1?",
+    "quickReplies": ["Iniciar 1:1", "Enviar dica via chat"],
+    "notes": "Student help request trigger (privacy gate)"
+  }
+]

@@ -5,6 +5,7 @@ import { io, Socket as ClientSocket } from 'socket.io-client';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { TestAuthHelper } from '../helpers/auth.helper';
+import { ROUTES, apiUrl } from '../helpers/routes';
 
 describe('WebSocket Real-Time Events (Integration)', () => {
   let app: INestApplication;
@@ -28,6 +29,7 @@ describe('WebSocket Real-Time Events (Integration)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api/v1'); // Match production
     await app.init();
     await app.listen(8000); // Need actual server for WebSocket
 
@@ -459,3 +461,4 @@ describe('WebSocket Real-Time Events (Integration)', () => {
     });
   });
 });
+

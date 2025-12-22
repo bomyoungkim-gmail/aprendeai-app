@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebClip → AprendeAI</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="sidepanel">
+  <div class="header">
+    <h2>📚 WebClip → AprendeAI</h2>
+  </div>
+
+  <!-- Login State -->
+  <div id="loginSection" style="display: none;">
+    <div class="auth-prompt">
+      <h3>🔐 Login Required</h3>
+      <p>Authorize this extension to create WebClips</p>
+      <button id="loginBtn" class="btn-primary">Login</button>
+    </div>
+  </div>
+
+  <!-- Verification State -->
+  <div id="verificationSection" style="display: none;">
+    <div class="auth-code">
+      <h3>Enter this code on the website:</h3>
+      <div class="user-code" id="userCode">ABCD-1234</div>
+      <button id="openVerifyBtn" class="btn-secondary">Open Verification Page</button>
+      <p class="status" id="verificationUrl" data-url="">Waiting for authorization...</p>
+    </div>
+  </div>
+
+  <!-- Authenticated State -->
+  <div id="authenticatedSection" style="display: none;">
+    <!-- User Info -->
+    <div class="user-info">
+      <span id="userName">Loading...</span>
+      <button id="logoutBtn" class="btn-logout">Logout</button>
+    </div>
+
+    <!-- Mode Toggle -->
+    <div class="mode-toggle">
+      <button id="studentMode" class="mode-btn active">👨‍🎓 Aluno</button>
+      <button id="teacherMode" class="mode-btn">👩‍🏫 Professor</button>
+    </div>
+
+    <!-- Student Mode Options -->
+    <div class="section">
+      <label>Objetivo (opcional):</label>
+      <input type="text" id="goal" placeholder="Entender a tese principal..." />
+
+      <label>Tempo:</label>
+      <select id="timebox">
+        <option value="10">10 min</option>
+        <option value="15" selected>15 min</option>
+        <option value="20">20 min</option>
+        <option value="30">30 min</option>
+      </select>
+
+      <label>Intenção:</label>
+      <select id="intent">
+        <option value="inspectional" selected>Inspectional</option>
+        <option value="analytical">Analytical</option>
+      </select>
+    </div>
+
+    <!-- Teacher Mode Options -->
+    <div id="teacherSection" class="section" style="display: none;">
+      <label>Turma:</label>
+      <select id="classroomSelect">
+        <option value="">Carregando...</option>
+      </select>
+    </div>
+
+    <!-- Capture Buttons -->
+    <div class="actions">
+      <button id="captureSelection" class="btn-secondary">
+        📝 Enviar Seleção
+      </button>
+      <button id="capturePage" class="btn-primary">
+        📄 Enviar Página (Modo Leitura)
+      </button>
+      <button id="assignToClass" class="btn-teacher" style="display: none;">
+        👩‍🏫 Atribuir à Turma
+      </button>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div id="status" class="status"></div>
+
+  <script src="sidepanel.js" type="module"></script>
+</body>
+</html>

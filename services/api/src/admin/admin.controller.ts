@@ -343,6 +343,8 @@ export class AdminController {
       [UserRole.TEACHER]: [],
       [UserRole.STUDENT]: [],
       [UserRole.COMMON_USER]: [],
+      [UserRole.GUARDIAN]: [], // Added for schema compatibility
+      [UserRole.SCHOOL_ADMIN]: [], // Added for schema compatibility
     };
 
     return permissions[role] || [];

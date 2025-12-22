@@ -1,13 +1,41 @@
 import { Module } from '@nestjs/common';
-import { FamilyService } from './family.service';
 import { FamilyController } from './family.controller';
+import { FamilyService } from './family.service';
+import { FamilyPolicyService } from './services/family-policy.service';
+import { CoReadingService } from './services/co-reading.service';
+import { TeachBackService } from './services/teachback.service';
+import { FamilyDashboardService } from './services/family-dashboard.service';
+import { OpsCoachService } from './services/ops-coach.service';
 import { PrismaModule } from '../prisma/prisma.module';
-// import { AuthModule } from '../auth/auth.module'; // If needed for guards
+import { PromptLibraryModule } from '../prompts/prompt-library.module';
+import { EventsModule } from '../events/events.module';
+import { StateMachineModule } from '../state-machine/state-machine.module';
+import { PrivacyModule } from '../privacy/privacy.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [
+    PrismaModule,
+    PromptLibraryModule,
+    EventsModule,
+    StateMachineModule,
+    PrivacyModule,
+  ],
   controllers: [FamilyController],
-  providers: [FamilyService],
-  exports: [FamilyService],
+  providers: [
+    FamilyService,
+    FamilyPolicyService,
+    CoReadingService,
+    TeachBackService,
+    FamilyDashboardService,
+    OpsCoachService,
+  ],
+  exports: [
+    FamilyService,
+    FamilyPolicyService,
+    CoReadingService,
+    TeachBackService,
+    FamilyDashboardService,
+    OpsCoachService,
+  ],
 })
 export class FamilyModule {}

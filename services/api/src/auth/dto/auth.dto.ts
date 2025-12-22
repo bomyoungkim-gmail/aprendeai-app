@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, MaxLength, IsOptional, IsEnum } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, MaxLength, IsOptional, IsEnum, IsUUID } from 'class-validator';
 import { UserRole } from '@prisma/client';
 
 export class RegisterDto {
@@ -19,6 +19,14 @@ export class RegisterDto {
   @IsOptional()
   @IsEnum(UserRole, { message: 'Invalid user role' })
   role?: UserRole; // Default should be COMMON_USER if not provided
+
+  @IsNotEmpty({ message: 'Institution ID is required' })
+  @IsUUID('4', { message: 'Institution ID must be a valid UUID' })
+  institutionId!: string;
+
+  @IsNotEmpty({ message: 'Schooling level is required' })
+  @IsString()
+  schoolingLevel!: string;
 }
 
 export class LoginDto {

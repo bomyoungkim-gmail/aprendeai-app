@@ -13,7 +13,14 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Complete Session Flow', () => {
-  test('should complete full session with DoD requirements', async ({ page }) => {
+  test('should complete full session with DoD requirements', async ({ page, context }) => {
+    // Clear context
+    await context.clearCookies();
+    await page.addInitScript(() => {
+        window.localStorage.clear();
+        window.sessionStorage.clear();
+    });
+
     // Login
     await page.goto('/login');
     await page.fill('[name="email"]', 'test@example.com');

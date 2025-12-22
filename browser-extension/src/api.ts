@@ -1,0 +1,77 @@
+import type {
+  CreateWebClipRequest,
+  WebClipResponse,
+  StartSessionRequest,
+  StartSessionResponse,
+  ClassroomsResponse,
+} from './types';
+
+/**
+ * API Client for AprendeAI backend
+ * Uses centralized routes (mirroring backend ROUTES.WEBCLIP)
+ */
+export class APIClient {
+  constructor(
+    private baseUrl: string,
+    private token: string,
+  ) {}
+
+  /**
+   * Create WebClip from browser extension
+   * Route: POST /api/v1/webclips (ROUTES.WEBCLIP.CREATE)
+   */
+  async createWebClip(data: CreateWebClipRequest): Promise<WebClipResponse> {
+    return this.fetch('/api/v1/webclips', 'POST', data);
+  }
+
+  /**
+   * Start reading session for WebClip
+   * Route: POST /api/v1/webclips/:contentId/sessions/start (ROUTES.WEBCLIP.START_SESSION)
+   */
+  async startSession(
+    contentId: string,
+    params: StartSessionRequest,
+  ): Promise<StartSessionResponse> {
+    return this.fetch(`/api/v1/webclips/${contentId}/sessions/start`, 'POST', params);
+  }
+
+  /**
+   * Get teacher's classrooms
+   * Route: GET /api/v1/classrooms/mine
+   */
+  async getMyClassrooms(): Promise<ClassroomsResponse> {
+    return this.fetch('/api/v1/classrooms/mine', 'GET');
+  }
+
+  /**
+   * Send prompt to classroom planning
+   * Route: POST /api/v1/classrooms/:id/plans/weekly/prompt
+   */
+  async sendClassroomPlanPrompt(classroomId: string, prompt: any) {
+    return this.fetch(`/api/v1/classrooms/${classroomId}/plans/weekly/prompt`, 'POST', prompt);
+  }
+
+  /**
+   * Generic fetch wrapper
+   */
+  private async fetch(path: string, method: string, body?: any): Promise<any> {
+    const url = `${this.baseUrl}${path}`;
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.token}`,
+    };
+
+    const response = await fetch(url, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`API Error: ${response.status} - ${error}`);
+    }
+
+    return response.json();
+  }
+}

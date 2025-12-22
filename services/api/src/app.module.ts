@@ -35,11 +35,15 @@ import { EmailModule } from './email/email.module';
 import { RecommendationModule } from './recommendations/recommendation.module';
 import { SearchModule } from './search/search.module';
 import { FamilyModule } from './family/family.module';
+import { ClassroomModule } from './classroom/classroom.module';
+import { OpsModule } from './ops/ops.module';
+import { WebClipsModule } from './webclips/webclips.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { ActionLoggerMiddleware } from './common/middleware/logger.middleware';
+import { RouteValidationMiddleware } from './common/middleware/route-validation.middleware';
 
 @Module({
   imports: [
@@ -81,6 +85,12 @@ import { ActionLoggerMiddleware } from './common/middleware/logger.middleware';
     AuthModule,
     // Family Plan
     FamilyModule,
+    // Classroom Mode
+    ClassroomModule,
+    // OpsCoach
+    OpsModule,
+    // Browser Extension WebClips
+    WebClipsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -98,7 +108,7 @@ import { ActionLoggerMiddleware } from './common/middleware/logger.middleware';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(RequestIdMiddleware, ActionLoggerMiddleware)
+      .apply(RequestIdMiddleware, RouteValidationMiddleware, ActionLoggerMiddleware)
       .forRoutes('*');
   }
 }

@@ -12,6 +12,9 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
+import { ObservabilityJobsService } from '../../src/observability/jobs.service';
+import { ROUTES, apiUrl } from '../helpers/routes';
+
 
 describe('Sessions Integration Tests', () => {
   let app: INestApplication;
@@ -19,13 +22,15 @@ describe('Sessions Integration Tests', () => {
   let authToken: string;
   let testUserId: string;
   let testContentId: string;
-  
+
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
     
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api/v1');
+    app.setGlobalPrefix('api/v1'); // Match production
     await app.init();
     
     prisma = app.get<PrismaService>(PrismaService);
@@ -254,3 +259,4 @@ describe('Sessions Integration Tests', () => {
     });
   });
 });
+

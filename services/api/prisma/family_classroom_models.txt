@@ -1,0 +1,164 @@
+// ===== FAMILY MODE + CLASSROOM MODE (Scripts 1-3 + Addendum) =====
+
+// --- Privacy & Status Enums ---
+enum PrivacyMode {
+  AGGREGATED_ONLY                // Stats only, no granular tracking
+  AGGREGATED_PLUS_TRIGGERS      // + blockers/flags for intervention
+}
+
+enum ClassPrivacyMode {
+  AGGREGATED_ONLY                // Teacher sees only aggregated stats
+  AGGREGATED_PLUS_HELP_REQUESTS // + details when student asks for help
+  AGGREGATED_PLUS_FLAGS         // + risk alerts without textual content
+}
+
+enum CoReadingStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  PENDING
+  REMOVED
+}
+
+enum InterventionMode {
+  PROMPT_COACH                  // AI-driven prompts only
+  PROMPT_COACH_PLUS_1ON1       // + teacher can initiate 1:1 co-sessions
+}
+
+// --- Family Mode Models ---
+
+model FamilyPolicy {
+  id                    String      @id @default(uuid())
+  familyId              String      @map("family_id")
+  learnerUserId         String      @map("learner_user_id")
+  
+  // Time management
+  timeboxDefaultMin     Int         @default(15) @map("timebox_default_min")
+  dailyMinMinutes       Int         @default(15) @map("daily_min_minutes")
+  dailyReviewCap        Int         @default(20) @map("daily_review_cap")
+  
+  // Co-reading schedule
+  coReadingDays         Int[]       @map("co_reading_days") // [0-6] Sun-Sat
+  coReadingTime         String?     @map("co_reading_time") // "20:00"
+  
+  // Gates & Privacy
+  toolWordsGateEnabled  Boolean     @default(true) @map("tool_words_gate_enabled")
+  privacyMode           PrivacyMode @default(AGGREGATED_ONLY) @map("privacy_mode")
+  
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
+  
+  family                Family      @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  learner               User        @relation("FamilyPolicies", fields: [learnerUserId], references: [id], onDelete: Cascade)
+  
+  @@unique([familyId, learnerUserId])
+  @@map("family_policies")
+}
+
+model CoReadingSession {
+  id                    String           @id @default(uuid())
+  familyId              String           @map("family_id")
+  educatorUserId        String           @map("educator_user_id")
+  learnerUserId         String           @map("learner_user_id")
+  
+  readingSessionId      String           @unique @map("reading_session_id")
+  threadIdLearner       String           @map("thread_id_learner")
+  threadIdEducator      String           @map("thread_id_educator")
+  
+  timeboxMin            Int              @map("timebox_min")
+  status                CoReadingStatus  @default(ACTIVE)
+  
+  startedAt             DateTime         @default(now()) @map("started_at")
+  endedAt               DateTime?        @map("ended_at")
+  
+  family                Family           @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  educator              User             @relation("EducatorSessions", fields: [educatorUserId], references: [id])
+  learner               User             @relation("LearnerSessions", fields: [learnerUserId], references: [id])
+  readingSession        ReadingSession   @relation(fields: [readingSessionId], references: [id], onDelete: Cascade)
+  
+  @@map("co_reading_sessions")
+}
+
+// --- Classroom Mode Models ---
+
+model Classroom {
+  id                  String      @id @default(uuid())
+  institutionId       String?     @map("institution_id")
+  ownerEducatorUserId String      @map("owner_educator_id")
+  name                String
+  gradeLevel          String?     @map("grade_level")
+  
+  createdAt           DateTime    @default(now()) @map("created_at")
+  updatedAt           DateTime    @updatedAt @map("updated_at")
+  
+  owner               User        @relation("ClassroomOwner", fields: [ownerEducatorUserId], references: [id])
+  enrollments         Enrollment[]
+  policies            ClassPolicy[]
+  weeklyPlans         ClassPlanWeek[]
+  
+  @@map("classrooms")
+}
+
+model Enrollment {
+  id            String            @id @default(uuid())
+  classroomId   String            @map("classroom_id")
+  learnerUserId String            @map("learner_user_id")
+  status        EnrollmentStatus  @default(ACTIVE)
+  nickname      String?           // Display name in teacher's dashboard
+  
+  enrolledAt    DateTime          @default(now()) @map("enrolled_at")
+  
+  classroom     Classroom         @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  learner       User              @relation("StudentEnrollments", fields: [learnerUserId], references: [id])
+  
+  @@unique([classroomId, learnerUserId])
+  @@map("enrollments")
+}
+
+model ClassPolicy {
+  id                    String            @id @default(uuid())
+  classroomId           String            @unique @map("classroom_id")
+  
+  timeboxDefaultMin     Int               @default(15) @map("timebox_default_min")
+  weeklyUnitsTarget     Int               @default(3) @map("weekly_units_target")
+  toolWordsGateEnabled  Boolean           @default(true) @map("tool_words_gate_enabled")
+  dailyReviewCap        Int               @default(10) @map("daily_review_cap")
+  
+  privacyMode           ClassPrivacyMode  @default(AGGREGATED_ONLY) @map("privacy_mode")
+  interventionMode      InterventionMode  @default(PROMPT_COACH) @map("intervention_mode")
+  
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
+  
+  classroom             Classroom         @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  
+  @@map("class_policies")
+}
+
+model ClassPlanWeek {
+  id                      String    @id @default(uuid())
+  classroomId             String    @map("classroom_id")
+  weekStart               DateTime  @map("week_start")
+  createdByEducatorUserId String    @map("created_by_educator_id")
+  
+  title                   String?
+  notes                   String?
+  
+  // JSON arrays
+  itemsJson               Json      @map("items_json")        // ReadItem[]
+  toolWordsJson           Json?     @map("tool_words_json")   // string[]
+  checkpointsJson         Json?     @map("checkpoints_json")  // Checkpoint[]
+  
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+  
+  classroom               Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  creator                 User      @relation("ClassPlansCreated", fields: [createdByEducatorUserId], references: [id])
+  
+  @@unique([classroomId, weekStart])
+  @@map("class_plan_weeks")
+}

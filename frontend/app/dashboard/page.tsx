@@ -149,7 +149,7 @@ function CornellReaderSection() {
   const { data: contents, isLoading } = useQuery({
     queryKey: ['cornell-contents', 'my-contents'],
     queryFn: async () => {
-      const res = await api.get('/contents/my-contents');
+      const res = await api.get('/content');
       return res.data;
     },
   });

@@ -5,6 +5,7 @@ import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { TestAuthHelper, createTestUser } from '../helpers/auth.helper';
+import { ROUTES, apiUrl } from '../helpers/routes';
 
 describe('Study Groups API (Integration)', () => {
   let app: INestApplication;
@@ -22,6 +23,7 @@ describe('Study Groups API (Integration)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api/v1'); // Match production
     await app.init();
 
     prisma = app.get<PrismaService>(PrismaService);
@@ -127,15 +129,17 @@ describe('Study Groups API (Integration)', () => {
 
     it('POST /groups/:groupId/members/invite - should invite member', async () => {
       // Create another test user
-      const user2 = await prisma.user.create({
-        data: {
+      const user2 = await prisma.user.upsert({
+        where: { email: 'user2-groups@example.com' },
+        create: {
           email: 'user2-groups@example.com',
           name: 'User 2',
-          passwordHash: 'hashed',
+          passwordHash: 'hash',
           role: 'COMMON_USER',
-          schoolingLevel: 'ADULT',
+          schoolingLevel: 'ADVANCED_USER',
           status: 'ACTIVE',
         },
+        update: {},
       });
 
       await request(app.getHttpServer())
@@ -453,3 +457,4 @@ describe('Study Groups API (Integration)', () => {
     });
   });
 });
+
