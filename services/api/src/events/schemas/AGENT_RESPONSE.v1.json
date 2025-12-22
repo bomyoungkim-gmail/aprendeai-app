@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "AGENT_RESPONSE.v1",
+  "title": "Agent Response Event",
+  "description": "Educator agent's response to user prompt",
+  "type": "object",
+  "required": ["text", "threadId"],
+  "properties": {
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 5000,
+      "description": "Agent's response text"
+    },
+    "threadId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Conversation thread identifier"
+    },
+    "tone": {
+      "type": "string",
+      "enum": ["encouraging", "neutral", "challenging"],
+      "description": "Response tone"
+    },
+    "quickReplies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": { "type": "string", "maxLength": 100 },
+          "action": { "type": "string" }
+        }
+      },
+      "maxItems": 5,
+      "description": "Suggested quick reply buttons"
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["actionType"],
+        "properties": {
+          "actionType": { "type": "string" },
+          "parameters": { "type": "object" }
+        }
+      },
+      "description": "Actions triggered by agent"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "llmModel": { "type": "string" },
+        "tokensUsed": { "type": "integer", "minimum": 0 },
+        "latencyMs": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "additionalProperties": false
+}

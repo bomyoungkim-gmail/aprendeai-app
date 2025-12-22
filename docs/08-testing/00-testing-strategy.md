@@ -67,25 +67,117 @@
 
 ## Test Organization
 
+### Centralized Structure
+
 ```
 services/api/test/
-  unit/
-    srs.service.spec.ts          (31 tests)
-    gating.service.spec.ts       (18 tests)
-  integration/
-    sessions.spec.ts             (6 tests)
-    cornell.spec.ts              (10 tests)
-    review-srs.spec.ts           (11 tests)
+  unit/                  (23+ files)
+    srs.service.spec.ts
+    gating.service.spec.ts
+    ... (all service tests)
+  integration/           (8 files)
+    sessions.spec.ts
+    cornell.spec.ts
+    ...
+  e2e/                   (11 files)
 
 frontend/tests/
-  unit/
-    CornellPanel.spec.tsx        (13 tests)
-    HighlightLink.spec.tsx       (8 tests)
-  e2e/
-    cornell-persistence.spec.ts  (5 tests)
-    session-flow.spec.ts         (4 tests)
-    review-srs.spec.ts           (8 tests)
+  unit/                  (3 files)
+    PromptDrawer.spec.tsx
+    CornellPanel.spec.tsx
+    HighlightLink.spec.tsx
+  e2e/                   (14 files)
+    prompt-session.spec.ts
+    session-flow.spec.ts
+    dashboard.spec.ts
+  integration/           (Planned)
 ```
+
+## Running Tests
+
+We use standardized scripts across both monorepo workspaces.
+
+**Backend (`services/api`):**
+
+```bash
+cd services/api
+
+# Run all tests
+npm run test:all
+
+# Specific types
+npm run test:unit
+npm run test:integration
+npm run test:e2e
+
+# Debugging
+npm run test:debug
+npm run test:watch
+```
+
+**Frontend (`frontend`):**
+
+```bash
+cd frontend
+
+# Run all tests
+npm run test:all
+
+# Unit (Jest)
+npm run test:unit
+
+# E2E (Playwright)
+npm run test:e2e
+npm run test:e2e:ui      # Interactive UI mode
+npm run test:e2e:headed  # Visible browser
+```
+
+## Setup & Configuration
+
+- **Frontend Unit**: Jest + React Testing Library (migrated from Vitest). Config: `frontend/jest.config.js`
+- **Frontend E2E**: Playwright. Config: `frontend/playwright.config.ts`
+- **Backend**: Jest (Native NestJS). Config: `services/api/test/jest-*.json`
+
+## CI/CD Pipeline
+
+**GitHub Actions:**
+
+```yaml
+jobs:
+  backend-test:
+    steps:
+      - run: npm install
+      - run: npm run test:all
+  frontend-test:
+    steps:
+      - run: npm install
+      - run: npm run test:all
+```
+
+**On PR:**
+
+- All tests must pass
+- Linting must pass
+- Build must succeed
+
+## Failure Modes & Safeguards
+
+**Flaky tests:**
+
+- Use `waitFor` selectors in Playwright
+- Avoid fixed `sleep()` calls
+- Use deterministic seed data
+
+**Slow tests:**
+
+- Backend integration tests use shared DB container (ensure reset)
+- Frontend unit tests mock complex providers
+
+## Related Docs
+
+- [Unit Tests](./01-unit-tests.md)
+- [Integration Tests](./02-integration-tests.md)
+- [E2E Tests](./03-e2e-tests.md)
 
 ## Running Tests
 

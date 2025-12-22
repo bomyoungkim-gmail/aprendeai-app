@@ -93,9 +93,21 @@ npm run dev
 # Running on http://localhost:3000
 ```
 
-**AI Workers (Optional/Mocked):**
-If you don't run python workers, the API pushes messages to RabbitMQ but they won't be processed.
-See `docs/07-jobs-and-ai` for python setup.
+**AI Workers (OpsCoach Service):**
+
+The AI Service (FastAPI) runs on port 8001.
+
+```bash
+# Activate environment
+source services/ai/venv/bin/activate  # or venv\Scripts\activate on Windows
+
+# Run standard agent
+cd services/ai
+uvicorn main:app --reload --port 8001
+```
+
+If you don't run this service, the OpsCoach and Educator Agents will not process turns.
+See `docs/11-ops-coach/00-overview.md` for more details.
 
 ## Development Workflows
 

@@ -1,0 +1,45 @@
+/**
+ * Reading Session Layout Styles
+ * Cornell-centric with collapsible drawer
+ */
+
+.reading-session-container {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-primary, #f9fafb);
+  position: relative;
+}
+
+.cornell-container {
+  width: 100%;
+  height: 100%;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Adjust Cornell width based on drawer state */
+body:has(.prompt-drawer-collapsed) .cornell-container {
+  width: 100%; /* Full width when drawer is collapsed */
+}
+
+body:has(.prompt-drawer-peek) .cornell-container {
+  width: calc(100% - 60px); /* Minus peek width */
+}
+
+body:has(.prompt-drawer-expanded) .cornell-container {
+  width: 65%; /* Sharing with expanded drawer */
+}
+
+/* Tablet adjustments */
+@media (max-width: 1024px) {
+  body:has(.prompt-drawer-expanded) .cornell-container {
+    width: 55%;
+  }
+}
+
+/* Mobile - drawer doesn't affect cornell width (becomes bottom sheet) */
+@media (max-width: 768px) {
+  .cornell-container {
+    width: 100% !important;
+  }
+}

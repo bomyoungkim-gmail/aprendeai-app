@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "USER_PROMPT.v1",
+  "title": "User Prompt Event",
+  "description": "User sends a message/question to the educator agent",
+  "type": "object",
+  "required": ["text", "threadId"],
+  "properties": {
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "User's message text"
+    },
+    "threadId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Conversation thread identifier"
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2}$",
+      "description": "ISO 639-1 language code (e.g., 'en', 'pt')"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "clientTimestamp": { "type": "string", "format": "date-time" },
+        "uiMode": { "type": "string", "enum": ["PRE", "DURING", "POST"] }
+      },
+      "description": "Additional metadata"
+    }
+  },
+  "additionalProperties": false
+}

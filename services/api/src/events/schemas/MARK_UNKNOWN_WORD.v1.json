@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "MARK_UNKNOWN_WORD.v1",
+  "title": "Mark Unknown Word Event",
+  "description": "User marks a word as unknown during reading session",
+  "type": "object",
+  "required": ["word", "context"],
+  "properties": {
+    "word": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[a-zA-ZÀ-ÿ\\s'-]+$",
+      "description": "The word marked as unknown"
+    },
+    "context": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "Sentence or paragraph containing the word"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Confidence score if AI-detected (0-1)"
+    },
+    "sourceType": {
+      "type": "string",
+      "enum": ["MANUAL", "AI_DETECTED"],
+      "description": "How the word was marked"
+    },
+    "position": {
+      "type": "object",
+      "properties": {
+        "start": { "type": "integer", "minimum": 0 },
+        "end": { "type": "integer", "minimum": 0 }
+      },
+      "description": "Character position in text"
+    }
+  },
+  "additionalProperties": false
+}

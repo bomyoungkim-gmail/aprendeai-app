@@ -14,6 +14,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   private channel: any; // amqplib Channel type
   private readonly logger = new Logger(QueueService.name);
   private isConnecting = false;
+  private isShuttingDown = false;
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(private config: ConfigService) {}
@@ -23,6 +24,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
+    this.isShuttingDown = true;
     try {
       if (this.reconnectTimeout) {
         clearTimeout(this.reconnectTimeout);
@@ -36,8 +38,8 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async connect(retries = 5, delay = 2000): Promise<void> {
-    if (this.isConnecting) {
-      this.logger.debug('Connection attempt already in progress, skipping');
+    if (this.isConnecting || this.isShuttingDown) {
+      this.logger.debug('Connection attempt skipped (already connecting or shutting down)');
       return;
     }
 
@@ -46,6 +48,8 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
 
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
+        if (this.isShuttingDown) return;
+        
         this.logger.log(`Connecting to RabbitMQ (attempt ${attempt}/${retries})...`);
         
         this.connection = await amqp.connect(url, {
@@ -58,6 +62,11 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
         });
 
         this.connection.on('close', () => {
+          if (this.isShuttingDown) {
+             this.logger.log('RabbitMQ connection closed gracefully');
+             return;
+          }
+          
           this.logger.warn('RabbitMQ connection closed, will attempt to reconnect in 5 seconds');
           this.connection = null;
           this.channel = null;

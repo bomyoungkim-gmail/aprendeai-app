@@ -1,256 +1,551 @@
-# AprendeAI Platform Architecture
+# AprendeAI - Architecture Overview
 
-**Version:** 1.0.0 (Production Ready)  
-**Date:** December 2025
+**Version**: 2.0  
+**Last Updated**: 2025-12-21  
+**Status**: Phase 3 Complete
 
-## 🏗️ High-Level Architecture
+---
 
-AprendeAI is built on a modern, event-driven microservices architecture designed for scalability, real-time interaction, and AI data processing.
+## System Architecture
 
-```mermaid
-graph TD
-    User[Users/Clients]
+### High-Level Overview
 
-    subgraph Frontend_Layer
-        Web[Next.js PWA]
-        Mobile[Mobile View]
-    end
+```
+┌─────────────────────────────────────────────────────┐
+│                   Users/Clients                     │
+└─────────────────────┬───────────────────────────────┘
+                      │
+                      │ HTTPS
+                      ↓
+┌─────────────────────────────────────────────────────┐
+│              Frontend (Next.js 14)                  │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  Pages Layer                                 │  │
+│  │  - /reading/[sessionId]  (NEW Phase 3)      │  │
+│  │  - /dashboard                                │  │
+│  │  - /groups                                   │  │
+│  └──────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  Components                                  │  │
+│  │  - PromptConsole (Phase 3)                   │  │
+│  │  - CornellLayout (existing)                  │  │
+│  │  - Family components                         │  │
+│  └──────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  State Management                            │  │
+│  │  - SessionContext (EXTENDED Phase 3)         │  │
+│  │  - GroupContext                              │  │
+│  │  - AuthContext                               │  │
+│  └──────────────────────────────────────────────┘  │
+└─────────────────────┬───────────────────────────────┘
+                      │
+                      │ REST API
+                      ↓
+┌─────────────────────────────────────────────────────┐
+│           Backend API (NestJS)                      │
+│                Port 3001                            │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  Controllers                                 │  │
+│  │  - SessionsController (Phase 1)              │  │
+│  │  - GroupsController                          │  │
+│  │  - AuthController                            │  │
+│  │  - VocabController                           │  │
+│  └──────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  Services                                    │  │
+│  │  - ReadingSessionsService                    │  │
+│  │  - QuickCommandParser (Phase 1)              │  │
+│  │  - VocabService                              │  │
+│  │  - AiServiceClient (Phase 2)                 │  │
+│  └──────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  Event Listeners                             │  │
+│  │  - VocabCaptureListener (Phase 1)            │  │
+│  └──────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  Database (Prisma ORM)                       │  │
+│  │  - PostgreSQL                                │  │
+│  └──────────────────────────────────────────────┘  │
+└─────────────────────┬───────────────────────────────┘
+                      │
+                      │ HTTP
+                      ↓
+┌─────────────────────────────────────────────────────┐
+│         AI Service (FastAPI + LangGraph)            │
+│                Port 8001                            │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  Educator Agent (Phase 2)                    │  │
+│  │  ┌──────────┬──────────┬──────────┐          │  │
+│  │  │ PRE Node │DURING Nd │ POST Node│          │  │
+│  │  │ (goal,   │(check-   │(recall,  │          │  │
+│  │  │ predict) │points)   │quiz)     │          │  │
+│  │  └──────────┴──────────┴──────────┘          │  │
+│  └──────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  LLM Factory (Phase 2)                       │  │
+│  │  - gpt-4o-mini (cheap)                       │  │
+│  │  - gpt-4o (smart)                            │  │
+│  │  - Embeddings                                │  │
+│  └──────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  Utils                                       │  │
+│  │  - NestJSClient (calls API)                  │  │
+│  │  - ContextBuilder                            │  │
+│  └──────────────────────────────────────────────┘  │
+└─────────────────────┬───────────────────────────────┘
+                      │
+                      │ API Calls
+                      ↓
+                  OpenAI API
+```
 
-    subgraph Gateway_Layer
-        API[NestJS API Gateway]
-        WS[WebSocket Gateway]
-    end
+### OpsCoach Architecture (Phase 4)
 
-    subgraph Core_Services
-        Auth[Auth Service]
-        Content[Content Management]
-        Study[Study & Review]
-        Social[Social/Groups]
-        Gamification[Gamification Engine]
-    end
+```
+┌─────────────────────────────────────────────────────┐
+│              OpsCoach System                        │
+│                                                     │
+│  ┌──────────────┐      ┌──────────────┐             │
+│  │   Inputs     │      │    Cycle     │             │
+│  │              │      │              │             │
+│  │ - Daily CMD  ├─────►│  1. BOOT     │             │
+│  │ - Chat Msg   │      │      │       │             │
+│  │ - Time Logs  │      │      ▼       │             │
+│  └──────────────┘      │  2. PLAN     │◄────┐       │
+│                        │      │       │     │       │
+│  ┌──────────────┐      │      ▼       │     │       │
+│  │   Outputs    │      │  3. EXECUTE  │     │       │
+│  │              │      │      │       │     │       │
+│  │ - Plan Card  │◄─────┤      ▼       │     │       │
+│  │ - Next Task  │      │  4. LOG      │     │       │
+│  │ - Audit Rep  │      │      │       │     │       │
+│  └──────────────┘      │      ▼       │     │       │
+│                        │  5. AUDIT    │─────┘       │
+│  ┌──────────────┐      │              │             │
+│  │  External    │      └──────────────┘             │
+│  │              │             ▲                     │
+│  │ - LLM Agent  │─────────────┘                     │
+│  │ - Calendar   │                                   │
+│  └──────────────┘                                   │
+└─────────────────────────────────────────────────────┘
+```
 
-    subgraph AI_Processing_Layer
-        AIService[Python AI Service]
-        Queue[BullMQ / Redis]
+#### The Ops Cycle Model
 
-        Ingestor[Content Ingestor Worker]
-        Processor[Content Processor Worker]
-        Extractor[Extraction Worker]
-    end
+The OpsCoach operates on a strict cyclical state machine:
 
-    subgraph Data_Persistence
-        Postgres[(PostgreSQL Primary DB)]
-        Redis[(Redis Cache & Session)]
-        VectorDB[(pgvector Embeddings)]
-        Storage[File Storage]
-    end
+1.  **BOOT (Daily)**
 
-    %% Connections
-    User -->|HTTPS/WSS| Web
-    Web -->|REST| API
-    Web -->|Socket.io| WS
+    - **Trigger**: First user interaction of the day.
+    - **Input**: `CheckDailyGoal`.
+    - **Output**: If missing goal → Prompt User. If present → Move to EXECUTE.
 
-    API -->|Auth| Auth
-    API -->|CRUD| Postgres
-    API -->|Quick Access| Redis
-    API -->|Async Jobs| Queue
+2.  **PLAN (Weekly/Daily)**
 
-    WS -->|Realtime| API
-    WS -->|PubSub| Redis
+    - **Trigger**: Sunday or Start of Day.
+    - **Input**: User priorities, weak areas.
+    - **Output**: `WEEKLY_PLAN` or `DAILY_GOAL` event.
 
-    Queue --> Ingestor
-    Queue --> Processor
-    Queue --> Extractor
+3.  **EXECUTE (Loop)**
 
-    Processor -->|LLM Requests| AIService
-    Processor -->|Store Assets| Storage
-    Processor -->|Update Status| API
+    - **Trigger**: User accepts task or asks "What's next?".
+    - **Input**: Queue state, Energy level.
+    - **Output**: Next Todo Item (Context + Action).
 
-    AIService -->|Embeddings| VectorDB
+4.  **LOG (Continuous)**
+
+    - **Trigger**: Completion of task.
+    - **Input**: `/log 30m`, "Finished X".
+    - **Output**: `TIME_LOG` event, streak update.
+
+5.  **AUDIT (Weekly)**
+    - **Trigger**: End of week (Sunday).
+    - **Input**: All `TIME_LOG`, `WEEKLY_PLAN` events.
+    - **Output**: Variance analysis (Planned vs Actual), Bias detection.
+
+---
+
+---
+
+## Data Flow
+
+### Reading Session Creation
+
+```
+User clicks "Start Reading"
+  ↓
+Frontend: POST /sessions/start
+  ↓
+NestJS: SessionsController.start()
+  ├─ Create ReadingSession in DB
+  ├─ Call AI Service: /educator/turn (initial)
+  │   ↓
+  │   FastAPI: Educator Agent
+  │   ├─ Route to PRE phase node
+  │   ├─ Generate initial prompt
+  │   └─ Return nextPrompt
+  └─ Return session + initial prompt
+  ↓
+Frontend: Redirect to /reading/[sessionId]
+  ↓
+Display PromptConsole with initial message
+```
+
+### User Sends Prompt
+
+```
+User types message
+  ↓
+PromptConsole: sendPrompt()
+  ├─ Optimistic UI (add message as "sending")
+  ├─ POST /sessions/:id/prompt
+  │   ↓
+  │   NestJS: SessionsController.sendPrompt()
+  │   ├─ QuickCommandParser: parse text
+  │   ├─ Create SessionEvent(s)
+  │   ├─ Emit events → VocabCaptureListener
+  │   │   └─ Update UserVocabulary if MARK_UNKNOWN_WORD
+  │   ├─ Call AI Service: /educator/turn
+  │   │   ↓
+  │   │   FastAPI: Educator Agent
+  │   │   ├─ NestJSClient: fetch context
+  │   │   │   ├─ Learner profile
+  │   │   │   ├─ Session data
+  │   │   │   ├─ Vocabulary
+  │   │   │   └─ Events
+  │   │   ├─ ContextBuilder: build ContextPack
+  │   │   ├─ LangGraph: route to phase node
+  │   │   │   ├─ PRE: goal/prediction/words
+  │   │   │   ├─ DURING: checkpoints/scaffolding
+  │   │   │   └─ POST: recall/quiz/vocab/production
+  │   │   ├─ LLM: generate response
+  │   │   └─ Return AgentTurnResponse
+  │   └─ Return nextPrompt + quickReplies
+  └─ Update message status to "sent"
+  ↓
+SessionContext: update messages + quickReplies
+  ↓
+PromptConsole: re-render with new message
 ```
 
 ---
 
-## 🧩 Core Components
+## Technology Stack
 
-### 1. Frontend Application
+### Frontend
 
-- **Framework:** Next.js 14 (App Router)
-- **State Management:** Zustand + React Query
-- **Styling:** Tailwind CSS + Lucide Icons
-- **Real-time:** Socket.io Client
-- **PWA:** Service Workers, Manifest, Offline Capability
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **Styling**: CSS Modules + Tailwind CSS
+- **State**: React Context API
+- **HTTP Client**: Axios
+- **Forms**: React Hook Form
+- **Testing**: Playwright (E2E)
 
-### 2. API Gateway (Backend)
+### Backend API
 
-- **Framework:** NestJS (Node.js)
-- **Role:** Central entry point, authentication, orchestration
-- **Modules:**
-  - `AuthModule`: JWT strategies, Guards, OAuth
-  - `ContentModule`: Uploads, metadata, organization
-  - `ReviewModule`: SRS logic, flashcards
-  - `GroupsModule`: Collaboration, chat
-  - `ActivityModule`: Heatmaps, stats tracking
+- **Framework**: NestJS
+- **Language**: TypeScript
+- **Database**: PostgreSQL
+- **ORM**: Prisma
+- **Validation**: class-validator
+- **Testing**: Jest
+- **Message Queue**: RabbitMQ (optional)
 
-### 3. AI Service (Python)
+### AI Service
 
-- **Framework:** FastAPI
-- **Dependencies:** LangChain, OpenAI/Anthropic SDKs
-- **Capabilities:**
-  - Content Summarization
-  - Flashcard Generation (JSON Mode)
-  - Quiz Generation
-  - Semantic Search (Embeddings)
-  - Audio Transcription (Whisper)
-
-### 4. Background Workers
-
-- **Queue System:** BullMQ (Redis-based)
-- **Worker Types:**
-  - `news-ingestor`: Fetches RSS/API feeds
-  - `arxiv-ingestor`: Processes academic papers
-  - `content-processor`: Orchestrates AI pipelines
-  - `extraction-worker`: OCR and text extraction from binaries
+- **Framework**: FastAPI
+- **Language**: Python 3.11+
+- **LLM Orchestration**: LangChain + LangGraph
+- **LLM Provider**: OpenAI
+- **HTTP Client**: httpx
+- **Testing**: pytest
 
 ---
 
-## 🔄 Critical Data Flows
+## Database Schema (Key Models)
 
-### A. Content Upload & Processing Pipeline
+### Reading Sessions
 
-This flow describes how a raw file (PDF, Video) becomes learnable material.
+```prisma
+model ReadingSession {
+  id            String   @id @default(uuid())
+  userId        String
+  contentId     String
+  assetLayer    AssetLayer
+  phase         UiMode   @default(PRE)
+  status        SessionStatus @default(ACTIVE)
+  startedAt     DateTime @default(now())
+  finishedAt    DateTime?
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant API as API Gateway
-    participant Q as Job Queue
-    participant W as Processor Worker
-    participant AI as AI Service
-    participant DB as Database
+  events        SessionEvent[]
+  outcome       SessionOutcome?
 
-    U->>API: Upload File (PDF/MP4)
-    API->>DB: Create Content Entry (PENDING)
-    API->>Q: Add 'process-content' Job
-    API-->>U: 202 Accepted
+  @@index([userId])
+  @@index([contentId])
+}
 
-    Q->>W: Process Job
+model SessionEvent {
+  id                String   @id @default(uuid())
+  readingSessionId  String
+  eventType         EventType
+  actorRole         ActorRole
+  payloadJson       Json
+  createdAt         DateTime @default(now())
 
-    alt Text Content
-        W->>W: Extract Text
-    else Media Content
-        W->>AI: Request Transcription (Whisper)
-        AI-->>W: Transcript Text
-    end
+  session SessionEvent @relation(...)
 
-    W->>W: Chunk Text
-    W->>DB: Save Transcript/Chunks
+  @@index([readingSessionId, eventType])
+}
 
-    par Parallel AI Tasks
-        W->>AI: Generate Summary
-        W->>AI: Generate Flashcards
-        W->>AI: Generate Initial Quiz
-        W->>AI: Generate Embeddings
-    end
+model UserVocabulary {
+  id              String   @id @default(uuid())
+  userId          String
+  word            String
+  status          VocabStatus
+  reviewCount     Int      @default(0)
+  lastReviewedAt  DateTime?
+  nextReviewAt    DateTime?
+  easeFactor      Float    @default(2.5)
+  interval        Int      @default(0)
 
-    AI-->>W: AI Assets
-    W->>DB: Save All Assets
-    W->>DB: Update Status (READY)
-    W->>API: Emit WebSocket Event
-    API-->>U: Toast Notification "Content Ready"
-```
+  @@unique([userId, word])
+  @@index([userId, nextReviewAt])
+}
 
-### B. Spaced Repetition (SRS) Algorithm Flow
+model OpsSnapshot {
+  id        String   @id @default(uuid())
+  userId    String
+  date      DateTime @default(now()) // YYYY-MM-DD
+  state     Json     // { phase: "EXECUTE", queue: [], metrics: {} }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-How the system queues and reschedules reviews.
+  @@unique([userId, date])
+}
 
-```mermaid
-flowchart LR
-    Start([User Review Session]) --> Fetch{Get Due Cards}
-    Fetch -->|Query SRS Queue| DB[(Database)]
-    DB -->|Due Items| Display[Display Card]
+model OpsEvent {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String   // DAILY_BOOT, WEEKLY_PLAN, TIME_LOG
+  data      Json
+  createdAt DateTime @default(now())
 
-    Display --> Response{User Grade}
-
-    Response -->|Again 1| FSRS[FSRS Algo]
-    Response -->|Hard 2| FSRS
-    Response -->|Good 3| FSRS
-    Response -->|Easy 4| FSRS
-
-    FSRS --> Calc[Calculate Next Interval]
-    Calc --> Update[Update Card Stability/Difficulty]
-    Update --> Schedule[Schedule Next Review Date]
-    Schedule --> DB
+  @@index([userId, type])
+}
 ```
 
 ---
 
-## 💾 Data Model (ER Diagram)
+## Key Design Patterns
 
-Key entity relationships powering the platform.
+### 1. Extended Context Pattern
 
-```mermaid
-erDiagram
-    User ||--o{ Content : creates
-    User ||--o{ Session : takes
-    User ||--o{ ReviewLog : generates
-    User ||--o{ GroupMember : belongs_to
+**Problem**: Need new functionality without breaking existing code
 
-    Content ||--o{ Flashcard : contains
-    Content ||--o{ Quiz : contains
-    Content ||--o{ Annotation : has
-    Content ||--o{ Session : scaffolds
+**Solution**: Extend existing Context with new fields/methods
 
-    Session ||--o{ SessionEvent : tracks
+```typescript
+// BEFORE (existing)
+interface SessionContextType {
+  session;
+  isLoading;
+  error;
+}
 
-    StudyGroup ||--o{ GroupMember : has
-    StudyGroup ||--o{ Content : shares
-    StudyGroup ||--o{ GroupSession : hosts
+// AFTER (extended - Phase 3)
+interface SessionContextType {
+  // Keep all existing
+  session;
+  isLoading;
+  error;
 
-    Flashcard ||--o{ ReviewItem : srs_state
-    ReviewItem ||--o{ ReviewLog : history
+  // Add new
+  messages;
+  quickReplies;
+  sendPrompt;
+}
 ```
 
+**Benefits**:
+
+- Zero breaking changes
+- Single source of truth
+- Backward compatible
+
+### 2. Centralized Configuration
+
+**Problem**: Hardcoded URLs make deployment difficult
+
+**Solution**: All routes in `API_ENDPOINTS` config
+
+```typescript
+// lib/config/api.ts
+export const API_ENDPOINTS = {
+  SESSIONS: {
+    START: "/sessions/start",
+    PROMPT: (id) => `/sessions/${id}/prompt`,
+  },
+};
+
+// Usage
+api.post(API_ENDPOINTS.SESSIONS.PROMPT(sessionId), data);
+```
+
+**Benefits**:
+
+- Easy to change URLs
+- Environment-based configuration
+- Type-safe
+
+### 3. Event-Driven Architecture
+
+**Problem**: Need to trigger multiple actions on user events
+
+**Solution**: Emit events, listeners react
+
+```typescript
+// Emit event
+this.eventEmitter.emit('session.event.created', {
+  eventType: 'MARK_UNKNOWN_WORD',
+  word: 'exemplo'
+});
+
+// Listener reacts
+@OnEvent('session.event.created')
+async handleEvent(event) {
+  if (event.eventType === 'MARK_UNKNOWN_WORD') {
+    await this.vocabService.upsert(event.word);
+  }
+}
+```
+
+**Benefits**:
+
+- Loose coupling
+- Easy to add new listeners
+- Single responsibility
+
+### 4. Optimistic UI
+
+**Problem**: Slow network makes UI feel unresponsive
+
+**Solution**: Show changes immediately, update on confirmation
+
+```typescript
+// Add message immediately
+setMessages([...messages, {
+  text,
+  status: 'sending'
+}]);
+
+// Send to backend
+try {
+  await api.post(...);
+  // Update status to 'sent'
+} catch {
+  // Update status to 'error'
+}
+```
+
+**Benefits**:
+
+- Instant feedback
+- Better UX
+- Clear error states
+
 ---
 
-## 🛠️ Infrastructure Stack
+## Security
 
-| Layer        | Technology          | Purpose                        |
-| ------------ | ------------------- | ------------------------------ |
-| **Compute**  | Docker / K8s        | Container orchestration        |
-| **Database** | PostgreSQL 16       | ACID compliant primary store   |
-| **Caching**  | Redis 7             | Job queues, caching, PubSub    |
-| **Search**   | pgvector            | Vector similarity search       |
-| **Storage**  | S3 / MinIO          | Binary file storage            |
-| **AI LLM**   | GPT-4o / Claude 3.5 | Logic & generation             |
-| **AI Audio** | Whisper             | Speech-to-text                 |
-| **CI/CD**    | GitHub Actions      | Automated testing & deployment |
+### Authentication
 
----
+- JWT tokens (httpOnly cookies)
+- Refresh token rotation
+- CORS configured per environment
 
-## 🔐 Security & Compliance
+### Authorization
 
-1. **Authentication:**
+- Role-based access control (RBAC)
+- Resource ownership checks
+- API rate limiting
 
-   - JWT (Access + Refresh tokens)
-   - OAuth 2.0 (Google, Microsoft integration)
-   - Password Hashing (Argon2)
+### Data Protection
 
-2. **Authorization:**
-
-   - RBAC (Role-Based Access Control)
-   - Resource Ownership Guards (User can only access their own data)
-
-3. **Data Protection:**
-   - Transmit encryption (TLS 1.3)
-   - Database encryption at rest attempt
-   - Secure HttpOnly Cookies for tokens
+- Passwords hashed with bcrypt
+- Sensitive data encrypted at rest
+- HTTPS only in production
 
 ---
 
-## 📈 Scalability Strategy
+## Monitoring & Observability
 
-- **Horizontal Scaling:** API Gateway is stateless; multiple instances can run behind a load balancer.
-- **Worker Scaling:** Processing workers can be scaled independently based on queue depth.
-- **Read Replicas:** Database read replicas for heavy read operations (Flashcard retrieval).
-- **CDN:** Static assets and generated media served via CDN edges.
+### Logging
+
+- Structured logging (JSON format)
+- Request ID correlation
+- Error stack traces
+
+### Metrics
+
+- Response times (p50, p95, p99)
+- Error rates
+- LLM usage/costs
+
+### Alerts
+
+- Error rate > 5%
+- Response time > 3s (p95)
+- LLM failures
+
+---
+
+## Scaling Considerations
+
+### Horizontal Scaling
+
+- Stateless API servers
+- Load balancer in front
+- Shared session store (Redis)
+
+### Database Scaling
+
+- Read replicas for queries
+- Connection pooling
+- Query optimization
+
+### AI Service Scaling
+
+- Queue-based processing
+- Multiple worker instances
+- LLM request caching
+
+---
+
+## Future Architecture
+
+### Phase 4-6 Additions
+
+1. **Vector Database** (ChromaDB/Pinecone)
+
+   - Semantic search for checkpoints
+   - Content recommendations
+
+2. **Redis Cache**
+
+   - Session state
+   - Learner profiles
+   - LLM responses
+
+3. **Analytics Pipeline**
+   - Event streaming (Kafka)
+   - Data warehouse (BigQuery)
+   - BI dashboards
+
+---
+
+## References
+
+- [Prompt Interface Docs](./prompt-interface.md)
+- [API Reference](./api-reference.md)
+- [Deployment Guide](./deployment.md)

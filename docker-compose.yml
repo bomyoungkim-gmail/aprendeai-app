@@ -3,6 +3,7 @@ name: socrates
 services:
   # Infrastructure Services
   postgres:
+    env_file: .env.docker
     image: postgres:16-alpine
     container_name: socrates-postgres
     environment:
@@ -22,6 +23,7 @@ services:
       retries: 5
 
   redis:
+    env_file: .env.docker
     image: redis:alpine
     container_name: socrates-redis
     ports:
@@ -35,6 +37,7 @@ services:
       retries: 5
 
   rabbitmq:
+    env_file: .env.docker
     image: rabbitmq:3-management-alpine
     container_name: socrates-rabbitmq
     ports:
@@ -55,6 +58,7 @@ services:
 
   # Backend API
   api:
+    env_file: .env.docker
     build:
       context: .
       dockerfile: infra/docker/api.Dockerfile
@@ -84,6 +88,7 @@ services:
 
   # AI Service
   ai:
+    env_file: .env.docker
     container_name: socrates-ai
     build:
       context: ./services/ai
@@ -125,6 +130,7 @@ services:
 
   # Workers
   news_ingestor:
+    env_file: .env.docker
     build:
       context: .
       dockerfile: infra/docker/news_ingestor.Dockerfile
@@ -143,6 +149,7 @@ services:
       - socrates-network
 
   arxiv_ingestor:
+    env_file: .env.docker
     build:
       context: .
       dockerfile: infra/docker/arxiv_ingestor.Dockerfile
@@ -161,6 +168,7 @@ services:
       - socrates-network
 
   content_processor:
+    env_file: .env.docker
     build:
       context: .
       dockerfile: infra/docker/content_processor.Dockerfile
@@ -182,6 +190,7 @@ services:
       - socrates-network
 
   extraction_worker:
+    env_file: .env.docker
     build:
       context: .
       dockerfile: infra/docker/extraction_worker.Dockerfile
@@ -207,6 +216,7 @@ services:
 
   # Frontend
   frontend:
+    env_file: .env.docker
     build:
       context: .
       dockerfile: infra/docker/frontend.Dockerfile

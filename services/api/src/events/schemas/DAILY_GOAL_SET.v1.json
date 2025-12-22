@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "DAILY_GOAL_SET.v1",
+  "title": "Daily Goal Set Event",
+  "description": "User sets or updates daily learning goal",
+  "type": "object",
+  "required": ["goalType", "targetValue"],
+  "properties": {
+    "goalType": {
+      "type": "string",
+      "enum": ["READING_TIME", "PAGES_READ", "WORDS_LEARNED", "SESSIONS_COMPLETED"],
+      "description": "Type of daily goal"
+    },
+    "targetValue": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000,
+      "description": "Target value for the goal"
+    },
+    "unit": {
+      "type": "string",
+      "enum": ["minutes", "pages", "words", "sessions"],
+      "description": "Unit of measurement"
+    },
+    "previousValue": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Previous goal value if updating"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "TIME_LOG.v1",
+  "title": "Time Log Event",
+  "description": "Logs time spent on reading activity",
+  "type": "object",
+  "required": ["durationSeconds", "activityType"],
+  "properties": {
+    "durationSeconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 86400,
+      "description": "Duration in seconds (max 24h)"
+    },
+    "activityType": {
+      "type": "string",
+      "enum": ["READING", "WRITING", "QUIZ", "DISCUSSION", "REVIEW"],
+      "description": "Type of learning activity"
+    },
+    "startTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Activity start timestamp"
+    },
+    "endTime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Activity end timestamp"
+    },
+    "autoTracked": {
+      "type": "boolean",
+      "description": "Whether time was automatically tracked"
+    }
+  },
+  "additionalProperties": false
+}

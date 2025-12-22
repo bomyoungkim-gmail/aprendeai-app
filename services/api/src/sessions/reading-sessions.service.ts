@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException, Logger, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProfileService } from '../profiles/profile.service';
 import { GamificationService } from '../gamification/gamification.service';
@@ -6,6 +6,13 @@ import { VocabService } from '../vocab/vocab.service';
 import { OutcomesService } from '../outcomes/outcomes.service';
 import { GatingService } from '../gating/gating.service';
 import { PrePhaseDto } from './dto/reading-sessions.dto';
+import { StartSessionDto, FinishSessionDto } from './dto/start-session.dto';
+import { PromptMessageDto } from './dto/prompt-message.dto';
+import { AgentTurnResponseDto } from './dto/agent-turn-response.dto';
+import { QuickCommandParser } from './parsers/quick-command.parser';
+import { AiServiceClient } from '../ai-service/ai-service.client';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class ReadingSessionsService {
@@ -18,6 +25,9 @@ export class ReadingSessionsService {
     private vocabService: VocabService,
     private outcomesService: OutcomesService,
     private gatingService: GatingService,
+    private quickCommandParser: QuickCommandParser,
+    private aiServiceClient: AiServiceClient,
+    @Inject(EventEmitter2) private eventEmitter: EventEmitter2,
   ) {}
 
   async startSession(userId: string, contentId: string) {
@@ -302,5 +312,138 @@ export class ReadingSessionsService {
       ADULTO_LEIGO: 5,
     };
     return MIN_WORDS[level] || 5;
+  }
+
+  // ============================================
+  // NEW: Prompt-Only Methods (Phase 1)
+  // ============================================
+
+  /**
+   * POST /sessions/start - Prompt-only version
+   * Creates session and returns initial prompt
+   */
+  async startSessionPromptOnly(userId: string, dto: StartSessionDto) {
+    this.logger.log(`Starting prompt-only session for user ${userId}, content ${dto.contentId}`);
+
+    // Create session (reuse existing logic)
+    const profile = await this.profileService.getOrCreate(userId);
+    const content = await this.prisma.content.findUnique({
+      where: { id: dto.contentId },
+    });
+
+    if (!content) {
+      throw new NotFoundException('Content not found');
+    }
+
+    const assetLayer = dto.assetLayer || await this.gatingService.determineLayer(userId, dto.contentId);
+
+    const session = await this.prisma.readingSession.create({
+      data: {
+        userId,
+        contentId: dto.contentId,
+        phase: 'PRE',
+        modality: 'READING',
+        assetLayer,
+      },
+    });
+
+    // Generate threadId for LangGraph
+    const threadId = uuid();
+
+    // Initial prompt (Phase 1 stub)
+    const nextPrompt = "Meta do dia: em 1 linha, o que você quer entender neste texto?";
+
+    return {
+      readingSessionId: session.id,
+      threadId,
+      nextPrompt,
+    };
+  }
+
+  /**
+   * POST /sessions/:id/prompt
+   * Processes user prompt, parses commands, calls AI, returns response
+   */
+  async processPrompt(
+    sessionId: string,
+    dto: PromptMessageDto,
+    userId: string,
+  ): Promise<AgentTurnResponseDto> {
+    this.logger.log(`Processing prompt for session ${sessionId}`);
+
+    // 1. Verify session ownership
+    const session = await this.getSession(sessionId, userId);
+
+    // 2. Parse quick commands
+    const parsedEvents = this.quickCommandParser.parse(dto.text, dto.metadata);
+
+    // 3. Persist parsed events
+    if (parsedEvents.length > 0) {
+      this.logger.log(`Persisting ${parsedEvents.length} quick command events`);
+      await this.persistEvents(sessionId, parsedEvents);
+    }
+
+    // 4. Call AI Service
+    const aiResponse = await this.aiServiceClient.sendPrompt(dto);
+
+    // 5. Persist AI-suggested events (if any)
+    if (aiResponse.eventsToWrite && aiResponse.eventsToWrite.length > 0) {
+      this.logger.log(`Persisting ${aiResponse.eventsToWrite.length} AI-suggested events`);
+      await this.persistEvents(sessionId, aiResponse.eventsToWrite);
+    }
+
+    return aiResponse;
+  }
+
+  /**
+   * POST /sessions/:id/finish
+   * Marks session as finished
+   */
+  async finishSessionPromptOnly(
+    sessionId: string,
+    userId: string,
+    dto: FinishSessionDto,
+  ) {
+    this.logger.log(`Finishing session ${sessionId}, reason: ${dto.reason}`);
+
+    const session = await this.getSession(sessionId, userId);
+
+    const updated = await this.prisma.readingSession.update({
+      where: { id: sessionId },
+      data: {
+        phase: 'FINISHED',
+        finishedAt: new Date(),
+      },
+    });
+
+    // Trigger outcome computation (async)
+    this.outcomesService.computeSessionOutcomes(sessionId).catch(err => {
+      this.logger.error(`Failed to compute outcomes for ${sessionId}`, err);
+    });
+
+    return { ok: true, session: updated };
+  }
+
+  /**
+   * Persists multiple events in batch with validation
+   */
+  private async persistEvents(sessionId: string, events: any[]) {
+    // Note: Validation happens in QuickCommandParser for now
+    // Add DTO validation here in future if needed
+
+    await this.prisma.sessionEvent.createMany({
+      data: events.map(e => ({
+        readingSessionId: sessionId,
+        eventType: e.eventType,
+        payloadJson: e.payloadJson,
+        occurredAt: new Date(),
+      })),
+    });
+
+    // Emit event to trigger vocab capture and other listeners
+    this.eventEmitter.emit('session.events.created', {
+      sessionId,
+      eventTypes: events.map(e => e.eventType),
+    });
   }
 }

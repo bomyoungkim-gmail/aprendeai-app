@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PrismaModule } from './prisma/prisma.module';
 import { QueueModule } from './queue/queue.module';
 import { ExtractionModule } from './extraction/extraction.module';
@@ -46,6 +47,7 @@ import { ActionLoggerMiddleware } from './common/middleware/logger.middleware';
       envFilePath: ['.env.local', '.env'], // .env.local takes precedence for local dev
       cache: false, // Disable caching to ensure fresh values
     }),
+    EventEmitterModule.forRoot({ global: true }),
     PrismaModule,
     QueueModule, // Global queue service
     BillingModule, // Global billing services

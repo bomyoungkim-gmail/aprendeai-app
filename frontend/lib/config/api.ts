@@ -51,6 +51,15 @@ export const API_ENDPOINTS = {
   // Study Groups
   STUDY_GROUPS: '/study-groups',
   STUDY_GROUP: (id: string) => `/study-groups/${id}`,
+  
+  // Reading Sessions (NEW - Phase 3)
+  SESSIONS: {
+    START: '/sessions/start',
+    GET: (id: string) => `/sessions/${id}`,
+    PROMPT: (id: string) => `/sessions/${id}/prompt`,
+    FINISH: (id: string) => `/sessions/${id}/finish`,
+    EVENTS: (id: string) => `/sessions/${id}/events`,
+  },
 } as const;
 
 /**

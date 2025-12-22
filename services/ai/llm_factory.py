@@ -31,102 +31,124 @@ TASK_TIERS = {
 # Provider configurations
 PROVIDER_CONFIGS = {
     TIER_PREMIUM: {
-        'provider': 'openai',
-        'model': os.getenv('TIER_PREMIUM_MODEL', 'gpt-4-turbo')
-    },
-    TIER_BALANCED: {
-        'provider': 'anthropic',
-        'model': os.getenv('TIER_BALANCED_MODEL', 'claude-3-sonnet-20240229')
-    },
-    TIER_CHEAP: {
-        'provider': 'gemini',
-        'model': os.getenv('TIER_CHEAP_MODEL', 'gemini-1.5-flash')
-    }
-}
 
+load_dotenv()
 
 class LLMFactory:
-    """Factory for creating LLM instances with task-specific optimization."""
+    """
+    Enhanced factory for LLM instances and embeddings.
+    Supports: OpenAI, Azure OpenAI, Anthropic
     
-    @staticmethod
-    def create_for_task(
-        task: str,
-        temperature: float = 0,
-        **kwargs
-    ):
-        """
-        Create optimal LLM for specific task.
+    New in Phase 2:
+    - Embeddings support
+    - Tiered LLMs (cheap/smart)
+    - Better error handling
+    """
+    
+    def __init__(self):
+        # OpenAI
+        self.openai_key = os.getenv("OPENAI_API_KEY")
+        self.openai_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # Updated default
         
-        Args:
-            task: Task name ('summarize', 'extract_words', etc.)
-            temperature: 0-1 (default 0 for deterministic)
-            **kwargs: Additional LLM parameters
-            
-        Returns:
-            LangChain LLM instance
-        """
-        tier = TASK_TIERS.get(task, TIER_BALANCED)
-        config = PROVIDER_CONFIGS[tier]
+        # Azure OpenAI
+        self.azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+        self.azure_key = os.getenv("AZURE_OPENAI_KEY")
+        self.azure_deployment = os.getenv("AZURE_DEPLOYMENT_NAME")
+        self.azure_api_version = os.getenv("AZURE_API_VERSION", "2023-05-15")
         
-        return LLMFactory.create_llm(
-            provider=config['provider'],
-            model=config['model'],
-            temperature=temperature,
-            **kwargs
+        # Anthropic
+        self.anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+        
+        self.default_temperature = float(os.getenv("LLM_TEMPERATURE", "0.0"))
+    
+    def get_openai_llm(
+        self, 
+        model: Optional[str] = None, 
+        temperature: Optional[float] = None
+    ) -> ChatOpenAI:
+        """Get OpenAI LLM"""
+        if not self.openai_key:
+            raise ValueError("OPENAI_API_KEY not set in environment")
+        
+        return ChatOpenAI(
+            model=model or self.openai_model,
+            temperature=temperature if temperature is not None else self.default_temperature,
+            api_key=self.openai_key
         )
     
-    @staticmethod
-    def create_llm(
-        provider: Optional[str] = None,
-        model: Optional[str] = None,
-        temperature: float = 0,
-        **kwargs
-    ):
-        """
-        Create LLM instance for specified provider.
+    def get_azure_llm(
+        self,
+        deployment: Optional[str] = None,
+        temperature: Optional[float] = None
+    ) -> AzureChatOpenAI:
+        """Get Azure OpenAI LLM"""
+        if not self.azure_endpoint or not self.azure_key:
+            raise ValueError("Azure OpenAI credentials not set")
         
-        Args:
-            provider: 'openai' | 'anthropic' | 'gemini' (default from env)
-            model: Model name (default from env)
-            temperature: 0-1
-            
-        Returns:
-            LangChain LLM instance
-        """
-        provider = provider or os.getenv('LLM_PROVIDER', 'openai')
-        
-        if provider == 'openai':
-            return ChatOpenAI(
-                model=model or os.getenv('OPENAI_MODEL', 'gpt-4-turbo'),
-                temperature=temperature,
-                **kwargs
-            )
-        
-        elif provider == 'anthropic':
-            return ChatAnthropic(
-                model=model or os.getenv('ANTHROPIC_MODEL', 'claude-3-sonnet-20240229'),
-                temperature=temperature,
-                **kwargs
-            )
-        
-        elif provider == 'gemini':
-            return ChatGoogleGenerativeAI(
-                model=model or os.getenv('GEMINI_MODEL', 'gemini-1.5-flash'),
-                temperature=temperature,
-                **kwargs
-            )
-        
-        else:
-            raise ValueError(f"Unsupported provider: {provider}")
+        return AzureChatOpenAI(
+            azure_endpoint=self.azure_endpoint,
+            openai_api_key=self.azure_key,
+            deployment_name=deployment or self.azure_deployment,
+            api_version=self.azure_api_version,
+            temperature=temperature if temperature is not None else self.default_temperature
+        )
     
-    @staticmethod
-    def get_task_info(task: str) -> dict:
-        """Get provider and cost info for a task."""
-        tier = TASK_TIERS.get(task, TIER_BALANCED)
-        config = PROVIDER_CONFIGS[tier]
-        return {
-            'task': task,
-            'tier': tier,
-            'provider': config['provider'],
-            'model': config['model']
+    def get_anthropic_llm(
+        self,
+        model: str = "claude-3-5-sonnet-20241022",
+        temperature: Optional[float] = None
+    ) -> ChatAnthropic:
+        """Get Anthropic LLM"""
+        if not self.anthropic_key:
+            raise ValueError("ANTHROPIC_API_KEY not set")
+        
+        return ChatAnthropic(
+            model=model,
+            temperature=temperature if temperature is not None else self.default_temperature,
+            api_key=self.anthropic_key
+        )
+    
+    def get_default_llm(self, temperature: Optional[float] = None):
+        """Get default LLM based on availability"""
+        # Try providers in order
+        if self.openai_key:
+            return self.get_openai_llm(temperature=temperature)
+        elif self.azure_endpoint and self.azure_key:
+            return self.get_azure_llm(temperature=temperature)
+        elif self.anthropic_key:
+            return self.get_anthropic_llm(temperature=temperature)
+        else:
+            raise ValueError("No LLM provider credentials found. Set OPENAI_API_KEY, Azure credentials, or ANTHROPIC_API_KEY")
+    
+    # ============================================
+    # NEW: Phase 2 Enhancements
+    # ============================================
+    
+    def get_cheap_llm(self, temperature: Optional[float] = None):
+        """
+        Get cost-effective LLM for simple tasks.
+        Use for: quick responses, checkpoints, simple prompts
+        """
+        if self.openai_key:
+            return ChatOpenAI(
+                model="gpt-4o-mini",  # Cheap and fast
+                temperature=temperature if temperature is not None else self.default_temperature,
+                api_key=self.openai_key
+            )
+        else:
+            return self.get_default_llm(temperature=temperature)
+    
+    def get_smart_llm(self, temperature: Optional[float] = None):
+        """
+        Get high-intelligence LLM for complex reasoning.
+        Use for: evaluation, analysis, difficult tasks
+        """
+        if self.openai_key:
+            return ChatOpenAI(
+                model="gpt-4o",  # Smarter but more expensive
+                temperature=temperature if temperature is not None else self.default_temperature,
+                api_key=self.openai_key
+            )
+        elif self.anthropic_key:
+            return ChatAnthropic(
         }

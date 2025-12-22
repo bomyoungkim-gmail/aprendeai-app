@@ -2,11 +2,60 @@ import { Controller, Get, Post, Put, Param, Body, Request, UseGuards } from '@ne
 import { AuthGuard } from '@nestjs/passport';
 import { ReadingSessionsService } from './reading-sessions.service';
 import { PrePhaseDto, RecordEventDto, AdvancePhaseDto } from './dto/reading-sessions.dto';
+import { StartSessionDto, FinishSessionDto } from './dto/start-session.dto';
+import { PromptMessageDto } from './dto/prompt-message.dto';
 
 @Controller()
 @UseGuards(AuthGuard('jwt'))
 export class ReadingSessionsController {
   constructor(private sessionService: ReadingSessionsService) {}
+
+  // ============================================
+  // NEW: Prompt-Only Endpoints (Phase 1)
+  // ============================================
+
+  /**
+   * POST /sessions/start
+   * Creates a new reading session with initial prompt
+   */
+  @Post('sessions/start')
+  async startSessionPromptOnly(
+    @Body() dto: StartSessionDto,
+    @Request() req,
+  ) {
+    return this.sessionService.startSessionPromptOnly(req.user.id, dto);
+  }
+
+  /**
+   * POST /sessions/:id/prompt
+   * Main prompt-only interaction endpoint
+   * Parses quick commands, persists events, calls AI Service
+   */
+  @Post('sessions/:id/prompt')
+  async sendPrompt(
+    @Param('id') sessionId: string,
+    @Body() dto: PromptMessageDto,
+    @Request() req,
+  ) {
+    return this.sessionService.processPrompt(sessionId, dto, req.user.id);
+  }
+
+  /**
+   * POST /sessions/:id/finish
+   * Marks session as finished and triggers outcome computation
+   */
+  @Post('sessions/:id/finish')
+  async finishSessionPromptOnly(
+    @Param('id') sessionId: string,
+    @Body() dto: FinishSessionDto,
+    @Request() req,
+  ) {
+    return this.sessionService.finishSessionPromptOnly(sessionId, req.user.id, dto);
+  }
+
+  // ============================================
+  // Existing Endpoints (Legacy - keep for now)
+  // ============================================
 
   @Post('contents/:contentId/reading-sessions')
   async startSession(@Param('contentId') contentId: string, @Request() req) {

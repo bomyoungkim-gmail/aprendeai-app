@@ -19,7 +19,50 @@
 
 ---
 
-## ✅ COMPLETED FEATURES (14 Major Systems)
+## ✅ COMPLETED FEATURES (15 Major Systems)
+
+### 🎊 Phase 0: MVP-Hardening (NEW!) ✅
+
+**Status:** 90% Complete (47/52 tasks)  
+**Implementation:** 6 hours  
+**Deployment:** Local DB ✅ | Staging/Prod Pending
+
+**Workstream 1: Security** ✅
+
+- HMAC authentication (NestJS ↔ FastAPI)
+- Request signing with SHA-256
+- Correlation ID end-to-end tracing
+- Structured JSON logging
+
+**Workstream 2: Multi-Tenancy** ✅
+
+- Schema migrations (8 tables + `institution_id`)
+- Backfill completed: **0 NULL values**
+- Prisma middleware (auto-filtering)
+- TenantGuard (cross-tenant protection)
+- AsyncLocalStorage context management
+
+**Workstream 3: Event Schema Registry** ✅
+
+- 5 JSON Schema definitions (Ajv validation)
+- EventSchemaService implementation
+- Schema versioning (`event_version` column)
+- Payload validation (400 on invalid)
+
+**Impact:**
+
+- 🔒 AI Service protected from unauthorized access
+- 🏢 Multi-institution support with tenant isolation
+- 📋 Data integrity via event schema validation
+- 🔍 End-to-end request tracing
+
+**Documentation:**
+
+- [Phase 0 Implementation Plan](../brain/phase0_implementation_plan.md)
+- [Migration Deployment Guide](../brain/migration_deployment_guide.md)
+- [Complete Walkthrough](../brain/walkthrough.md)
+
+---
 
 ### Epic 30-Hour Session Deliverables
 
@@ -552,3 +595,50 @@ _Last Updated: 2025-12-20_
 _Status: 100%+ Production Ready_  
 _Session: 30+ hours - LEGENDARY! 👑_
 _Latest: Family Plan + Full Gamification System ✅_
+
+---
+
+## 🔮 Phase 4: OpsCoach & Operational Excellence (IN PROGRESS)
+
+### Objective
+
+Transition from "Study Platform" to "AI-Managed Learning Operation". The system not only provides content but **manages** the user's time, energy, and focus.
+
+### 1. OpsCoach Core Agent 🏗️
+
+- **Status**: In Progress
+- **Architecture**: LangGraph State Machine
+- **key Features**:
+  - ✅ **Boot Node**: Daily kick-off and goal verification
+  - ✅ **Plan Node**: Weekly strategy and priority definitions
+  - ✅ **Execute Node**: Intelligent task queue management
+  - ✅ **Log Node**: Frictionless time tracking (/log command)
+  - ✅ **Audit Node**: Weekly performance review vs plan
+
+### 2. User Interface Updates 🏗️
+
+- **Status**: In Progress
+- **Key Changes**:
+  - ✅ **PromptDrawer**: Collapsible, persistent AI chat always available
+  - ⬜ **OpsDashboard**: New dashboard focused on "What's Next" + Daily Progress
+  - ⬜ **Context Cards**: Dynamic tasks injected into the feed
+
+### 3. Test Infrastructure Overhaul ✅
+
+- **Status**: Complete
+- **Deliverables**:
+  - ✅ Centralized `tests/` directories for Frontend & Backend
+  - ✅ Standardized `npm run test:all` scripts
+  - ✅ Jest + Playwright full configuration
+  - ✅ CI/Ready test suite
+
+### 4. Implementation Gap Analysis
+
+| Component     | Gap                         | Plan                                                |
+| ------------- | --------------------------- | --------------------------------------------------- |
+| **Planning**  | No clear "Week" concept     | Introduce `WeeklyPlan` event and Sunday Audit cycle |
+| **Execution** | Passive content consumption | Active "Push" notifications for next task           |
+| **Review**    | Simple stats (heatmaps)     | Deep variance analysis (Plan vs Actual)             |
+| **UI**        | Modal-heavy interactions    | Persistent Drawer + Command Bar                     |
+
+---

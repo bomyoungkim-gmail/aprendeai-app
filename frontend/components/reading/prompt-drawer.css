@@ -1,0 +1,322 @@
+/**
+ * Prompt Drawer - Collapsible Chat Interface
+ * Keeps Cornell as central focus while maintaining chat accessibility
+ */
+
+/* ============================================
+   Drawer Container
+   ============================================ */
+
+.prompt-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  z-index: 1000;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Collapsed State - Hidden */
+.prompt-drawer-collapsed {
+  transform: translateX(100%);
+  width: 0;
+}
+
+/* Peek State - Shows icon + unread */
+.prompt-drawer-peek {
+  transform: translateX(calc(100% - 60px));
+  width: 60px;
+}
+
+/* Expanded State - Full chat */
+.prompt-drawer-expanded {
+  transform: translateX(0);
+  width: 35%;
+  min-width: 400px;
+}
+
+/* ============================================
+   Floating Icon (Collapsed State)
+   ============================================ */
+
+.prompt-drawer-floating-icon {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--color-primary, #3b82f6);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  transition: all 0.2s ease;
+  z-index: 999;
+}
+
+.prompt-drawer-floating-icon:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5);
+}
+
+.prompt-drawer-floating-icon .unread-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  border: 2px solid white;
+}
+
+/* ============================================
+   Peek View
+   ============================================ */
+
+.prompt-drawer-peek {
+  width: 60px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0;
+  cursor: pointer;
+  background: var(--bg-primary, #f9fafb);
+  border-left: 1px solid var(--border-color, #e5e7eb);
+}
+
+.prompt-drawer-peek:hover {
+  background: var(--bg-secondary, #f3f4f6);
+}
+
+.peek-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.peek-unread {
+  background: #ef4444;
+  color: white;
+  border-radius: 12px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.peek-hint {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 11px;
+  color: var(--text-secondary, #6b7280);
+  margin-top: auto;
+}
+
+/* ============================================
+   Expanded View
+   ============================================ */
+
+.prompt-drawer-expanded {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-primary, #f9fafb);
+}
+
+.drawer-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  margin: 0;
+}
+
+.drawer-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.drawer-minimize,
+.drawer-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: all 0.2s;
+}
+
+.drawer-minimize:hover {
+  background: var(--bg-tertiary, #e5e7eb);
+  color: var(--color-primary, #3b82f6);
+}
+
+.drawer-close:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.drawer-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.drawer-hint {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  background: var(--bg-primary, #f9fafb);
+  font-size: 12px;
+  color: var(--text-secondary, #6b7280);
+  text-align: center;
+}
+
+.drawer-hint kbd {
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: white;
+  border: 1px solid var(--border-color, #e5e7eb);
+  font-size: 11px;
+  font-family: monospace;
+}
+
+/* ============================================
+   Overlay (for mobile/tablet)
+   ============================================ */
+
+.prompt-drawer-overlay {
+  display: none;
+}
+
+/* ============================================
+   Responsive Behavior
+   ============================================ */
+
+/* Tablet (<1024px) */
+@media (max-width: 1024px) {
+  .prompt-drawer-expanded {
+    width: 45%;
+    min-width: 320px;
+  }
+  
+  .prompt-drawer-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 999;
+  }
+}
+
+/* Mobile (<768px) - Bottom sheet style */
+@media (max-width: 768px) {
+  .prompt-drawer {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: auto;
+    max-height: 70vh;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+  }
+  
+  .prompt-drawer-collapsed {
+    transform: translateY(100%);
+  }
+  
+  .prompt-drawer-peek {
+    transform: translateY(calc(100% - 60px));
+    width: 100%;
+    height: 60px;
+    flex-direction: row;
+    justify-content: center;
+    padding: 0 20px;
+  }
+  
+  .prompt-drawer-expanded {
+    transform: translateY(0);
+    width: 100%;
+    min-width: 100%;
+    height: 70vh;
+  }
+  
+  .peek-hint {
+    writing-mode: horizontal-tb;
+    margin-top: 0;
+    margin-left: 12px;
+  }
+  
+  .prompt-drawer-floating-icon {
+    bottom: 16px;
+    right: 16px;
+    width: 56px;
+    height: 56px;
+  }
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+
+@keyframes drawerSlideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.prompt-drawer-expanded {
+  animation: drawerSlideIn 0.3s ease-out;
+}
+
+/* ============================================
+   Accessibility
+   ============================================ */
+
+.prompt-drawer-floating-icon:focus-visible,
+.drawer-minimize:focus-visible,
+.drawer-close:focus-visible {
+  outline: 2px solid var(--color-primary, #3b82f6);
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .prompt-drawer,
+  .prompt-drawer-floating-icon {
+    transition: none !important;
+    animation: none !important;
+  }
+}

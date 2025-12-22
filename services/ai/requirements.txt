@@ -1,15 +1,43 @@
-fastapi
-uvicorn
-pydantic
-langchain
-langchain-openai
-langchain-anthropic
-langchain-google-genai
-python-dotenv
-httpx
-defusedxml
-# Script 5/5 dependencies
-pika
-sqlalchemy
-psycopg2-binary
-tiktoken
+# AprendeAI Educator Service - Python Dependencies
+# Phase 2 Requirements
+
+# ============================================
+# FastAPI & Web Server
+# ============================================
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-dotenv==1.0.0
+pydantic==2.5.3
+
+# ============================================
+# LangChain & LLM
+# ============================================
+langchain==0.1.0
+langchain-core==0.1.20
+langchain-openai==0.0.5
+langchain-anthropic==0.1.0
+
+# ============================================
+# LangGraph (Educator Agent)
+# ============================================
+langgraph==0.0.40
+# langgraph-checkpoint-postgres==0.0.4  # Uncomment for Phase 2b
+
+# ============================================
+# HTTP Client
+# ============================================
+httpx==0.26.0
+
+# ============================================
+# Optional: Vector Store (Phase 2b)
+# ============================================
+# pinecone-client==3.0.0
+# chromadb==0.4.20
+
+# ============================================
+# Development & Testing
+# ============================================
+pytest==7.4.3
+pytest-asyncio==0.21.1
+black==23.12.1
+flake8==7.0.0

@@ -1,17 +1,382 @@
-from fastapi import FastAPI, HTTPException, Body
-from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
+"""
+AprendeAI Educator Service - Main Application
+
+Refactored for Phase 2:
+- Centralized configuration
+- Proper middleware (CORS, logging, error handling)
+- No hardcoded routes
+- Environment-based settings
+"""
+
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from middleware import HMACAuthMiddleware  # Phase 0: HMAC Auth
+from fastapi.responses import JSONResponse
+from contextlib import asynccontextmanager
 import os
+import logging
+import time
 from dotenv import load_dotenv
 
-# LangChain Imports
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
-
+# Load environment variables
 load_dotenv()
 
-app = FastAPI(title="AprendeAI NLP Service")
+# Phase 0: Setup correlation-aware logging
+from utils.correlation import setup_logging
+logger = setup_logging()
+logger.setLevel(logging.INFO if os.getenv("ENV") == "production" else logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+
+# ============================================
+# Centralized Configuration
+# ============================================
+
+class Settings:
+    """Application settings from environment"""
+    
+    # Service
+    SERVICE_NAME: str = os.getenv("SERVICE_NAME", "AprendeAI Educator Service")
+    VERSION: str = os.getenv("VERSION", "2.0.0")
+    ENV: str = os.getenv("ENV", "development")
+    PORT: int = int(os.getenv("PORT", "8001"))
+    
+    # CORS
+    CORS_ORIGINS: list = os.getenv(
+        "CORS_ORIGINS", 
+        "http://localhost:3000,http://localhost:3001"
+    ).split(",")
+    
+    # Phase 0: Security - HMAC Authentication
+    AI_SERVICE_SECRET: str = os.getenv("AI_SERVICE_SECRET", "")
+    
+    @classmethod
+    def validate(cls):
+        """Validate critical settings"""
+        if not cls.AI_SERVICE_SECRET or len(cls.AI_SERVICE_SECRET) < 32:
+            raise ValueError(
+                "AI_SERVICE_SECRET must be set and at least 32 characters. "
+                "Generate with: openssl rand -hex 32"
+            )
+    
+    # Security
+    ALLOWED_HOSTS: list = os.getenv(
+        "ALLOWED_HOSTS",
+        "localhost,127.0.0.1"
+    ).split(",") if os.getenv("ENV") == "production" else ["*"]
+    
+    # External Services
+    NESTJS_API_URL: str = os.getenv("NESTJS_API_URL", "http://localhost:3001/api/v1")
+    
+    # LLM
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    
+    # Feature Flags
+    ENABLE_LEGACY_ENDPOINTS: bool = os.getenv("ENABLE_LEGACY_ENDPOINTS", "false").lower() == "true"
+
+
+settings = Settings()
+
+# Validate settings on startup (Phase 0: Security)
+settings.validate()
+
+
+# ============================================
+# Lifespan Events
+# ============================================
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup and shutdown events"""
+    # Startup
+    logger.info(f"Starting {settings.SERVICE_NAME} v{settings.VERSION}")
+    logger.info(f"Environment: {settings.ENV}")
+    logger.info(f"NestJS API: {settings.NESTJS_API_URL}")
+    logger.info(f"OpenAI configured: {bool(settings.OPENAI_API_KEY)}")
+    logger.info(f"HMAC Auth: ENABLED (Phase 0)")
+    
+    # Verify critical dependencies
+    if not settings.OPENAI_API_KEY:
+        logger.warning("⚠️  OPENAI_API_KEY not set - LLM features will fail")
+    
+    yield
+    
+    # Shutdown
+    logger.info("Shutting down gracefully")
+
+
+# ============================================
+# Create Application
+# ============================================
+
+app = FastAPI(
+    title=settings.SERVICE_NAME,
+    description="LangGraph-based Educator Agent for reading sessions",
+    version=settings.VERSION,
+    lifespan=lifespan,
+    docs_url="/docs" if settings.ENV != "production" else None,  # Disable docs in prod
+    redoc_url="/redoc" if settings.ENV != "production" else None,
+)
+
+
+# ============================================
+# Middleware
+# ============================================
+
+# Phase 0: HMAC Authentication Middleware (FIRST - before CORS)
+app.add_middleware(
+    HMACAuthMiddleware,
+    secret=settings.AI_SERVICE_SECRET
+)
+
+# CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["X-Request-ID"],
+)
+
+# Trusted Host Middleware (production only)
+if settings.ENV == "production":
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=settings.ALLOWED_HOSTS
+    )
+
+
+# Request Logging Middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+from contextlib import asynccontextmanager
+import os
+import logging
+import time
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO if os.getenv("ENV") == "production" else logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+
+# ============================================
+# Centralized Configuration
+# ============================================
+
+class Settings:
+    """Application settings from environment"""
+    
+    # Service
+    SERVICE_NAME: str = os.getenv("SERVICE_NAME", "AprendeAI Educator Service")
+    VERSION: str = os.getenv("VERSION", "2.0.0")
+    ENV: str = os.getenv("ENV", "development")
+    PORT: int = int(os.getenv("PORT", "8001"))
+    
+    # CORS
+    CORS_ORIGINS: list = os.getenv(
+        "CORS_ORIGINS", 
+        "http://localhost:3000,http://localhost:3001"
+    ).split(",")
+    
+    # Phase 0: Security - HMAC Authentication
+    AI_SERVICE_SECRET: str = os.getenv("AI_SERVICE_SECRET", "")
+    
+    @classmethod
+    def validate(cls):
+        """Validate critical settings"""
+        if not cls.AI_SERVICE_SECRET or len(cls.AI_SERVICE_SECRET) < 32:
+            raise ValueError(
+                "AI_SERVICE_SECRET must be set and at least 32 characters. "
+                "Generate with: openssl rand -hex 32"
+            )
+    
+    # Security
+    ALLOWED_HOSTS: list = os.getenv(
+        "ALLOWED_HOSTS",
+        "localhost,127.0.0.1"
+    ).split(",") if os.getenv("ENV") == "production" else ["*"]
+    
+    # External Services
+    NESTJS_API_URL: str = os.getenv("NESTJS_API_URL", "http://localhost:3001/api/v1")
+    
+    # LLM
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    
+    # Feature Flags
+    ENABLE_LEGACY_ENDPOINTS: bool = os.getenv("ENABLE_LEGACY_ENDPOINTS", "false").lower() == "true"
+
+
+settings = Settings()
+
+
+# ============================================
+# Lifespan Events
+# ============================================
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup and shutdown events"""
+    # Startup
+    logger.info(f"Starting {settings.SERVICE_NAME} v{settings.VERSION}")
+    logger.info(f"Environment: {settings.ENV}")
+    logger.info(f"NestJS API: {settings.NESTJS_API_URL}")
+    logger.info(f"OpenAI configured: {bool(settings.OPENAI_API_KEY)}")
+    
+    # Verify critical dependencies
+    if not settings.OPENAI_API_KEY:
+        logger.warning("⚠️  OPENAI_API_KEY not set - LLM features will fail")
+    
+    yield
+    
+    # Shutdown
+    logger.info("Shutting down gracefully")
+
+
+# ============================================
+# Create Application
+# ============================================
+
+app = FastAPI(
+    title=settings.SERVICE_NAME,
+    description="LangGraph-based Educator Agent for reading sessions",
+    version=settings.VERSION,
+    lifespan=lifespan,
+    docs_url="/docs" if settings.ENV != "production" else None,  # Disable docs in prod
+    redoc_url="/redoc" if settings.ENV != "production" else None,
+)
+
+
+# ============================================
+# Middleware
+# ============================================
+
+# CORS Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["X-Request-ID"],
+)
+
+# Trusted Host Middleware (production only)
+if settings.ENV == "production":
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=settings.ALLOWED_HOSTS
+    )
+
+
+# Request Logging Middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Log all requests with timing"""
+    request_id = request.headers.get("X-Request-ID", "unknown")
+    start_time = time.time()
+    
+    logger.info(f"[{request_id}] {request.method} {request.url.path}")
+    
+    response = await call_next(request)
+    
+    duration = time.time() - start_time
+    logger.info(
+        f"[{request_id}] {request.method} {request.url.path} "
+        f"completed in {duration:.3f}s with status {response.status_code}"
+    )
+    
+    # Add custom headers
+    response.headers["X-Request-ID"] = request_id
+    response.headers["X-Response-Time"] = f"{duration:.3f}s"
+    
+    return response
+
+
+# ============================================
+# Error Handlers
+# ============================================
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Global exception handler"""
+    logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
+    
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal server error",
+            "type": type(exc).__name__,
+            "path": request.url.path
+        }
+    )
+
+
+# ============================================
+# Routes
+# ============================================
+
+# Main health check (root)
+@app.get("/health")
+async def root_health():
+    """Root health check"""
+    return {
+        "status": "healthy",
+        "service": settings.SERVICE_NAME,
+        "version": settings.VERSION,
+        "env": settings.ENV
+    }
+
+
+# Include Educator Router
+from api.routes import educator_router
+app.include_router(educator_router)
+
+
+# Legacy endpoints (optional)
+if settings.ENABLE_LEGACY_ENDPOINTS:
+    logger.info("✅ Legacy endpoints enabled")
+    
+    @app.post("/simplify")
+    async def simplify_legacy():
+        """Legacy simplify endpoint"""
+        return JSONResponse(
+            status_code=501,
+            content={"detail": "Legacy endpoint - use new Educator service"}
+        )
+    
+    @app.post("/translate")
+    async def translate_legacy():
+        """Legacy translate endpoint"""
+        return JSONResponse(
+            status_code=501,
+            content={"detail": "Legacy endpoint - use new Educator service"}
+        )
+
+
+# ============================================
+# Entry Point
+# ============================================
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=settings.PORT,
+        log_level="info" if settings.ENV == "production" else "debug",
+        access_log=True
+    )
+
 
 # -- Models --
 
