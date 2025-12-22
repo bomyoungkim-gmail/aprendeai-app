@@ -32,6 +32,27 @@ function setupEventListeners() {
 
   // Teacher mode button
   document.getElementById('assignToClass')?.addEventListener('click', assignToClassroom);
+  
+  // History button
+  document.getElementById('viewHistory')?.addEventListener('click', loadSessionHistory);
+}
+
+function setupEventListeners() {
+  // Login
+  document.getElementById('loginBtn')?.addEventListener('click', startLogin);
+  document.getElementById('openVerifyBtn')?.addEventListener('click', openVerificationPage);
+  document.getElementById('logoutBtn')?.addEventListener('click', logout);
+  
+  // Mode toggle
+  document.getElementById('studentMode')?.addEventListener('click', () => setMode(false));
+  document.getElementById('teacherMode')?.addEventListener('click', () => setMode(true));
+
+  // Capture buttons
+  document.getElementById('captureSelection')?.addEventListener('click', () => captureWebClip('SELECTION'));
+  document.getElementById('capturePage')?.addEventListener('click', () => captureWebClip('READABILITY'));
+
+  // Teacher mode button
+  document.getElementById('assignToClass')?.addEventListener('click', assignToClassroom);
 }
 
 /**
@@ -292,3 +313,65 @@ function setStatus(message: string, type: 'info' | 'success' | 'error') {
     statusEl.className = `status ${type}`;
   }
 }
+
+/**
+ * Load and display session history
+ */
+async function loadSessionHistory() {
+  const historyContainer = document.getElementById('historyList');
+  if (!historyContainer) return;
+  
+  setStatus('Loading history...', 'info');
+  
+  try {
+    const config = await chrome.storage.sync.get(['apiBaseUrl', 'accessToken']);
+    if (!config.apiBaseUrl || !config.accessToken) {
+      setStatus('Not authenticated', 'error');
+      return;
+    }
+    
+    const apiClient = new APIClient(config.apiBaseUrl, config.accessToken);
+    const data = await apiClient.getSessionsHistory({ limit: 10 });
+    
+    historyContainer.innerHTML = '';
+    
+    if (data.sessions.length === 0) {
+      historyContainer.innerHTML = '<p class="empty">No sessions found</p>';
+      return;
+    }
+    
+    data.sessions.forEach((session: any) => {
+      const item = document.createElement('div');
+      item.className = 'session-item';
+      
+      const date = new Date(session.startedAt).toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      
+      item.innerHTML = `
+        <div class="session-title">${session.content.title}</div>
+        <div class="session-meta">
+          <span class="phase">${session.phase}</span>
+          <span class="date">${date}</span>
+        </div>
+        <button class="continue-btn" data-session-id="${session.id}">Continue</button>
+      `;
+      
+      const continueBtn = item.querySelector('.continue-btn');
+      continueBtn?.addEventListener('click', () => {
+        chrome.tabs.create({ url: `${config.apiBaseUrl.replace('/api', '')}/reading/${session.id}` });
+      });
+      
+      historyContainer.appendChild(item);
+    });
+    
+    setStatus(`Loaded ${data.sessions.length} sessions`, 'success');
+  } catch (error) {
+    setStatus(`Failed to load history: ${error}`, 'error');
+    console.error('History error:', error);
+  }
+}
+

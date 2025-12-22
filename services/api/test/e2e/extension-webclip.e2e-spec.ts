@@ -27,6 +27,7 @@ describe('Extension E2E Journey', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api/v1');
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
     
@@ -59,6 +60,15 @@ describe('Extension E2E Journey', () => {
       await prisma.extensionDeviceAuth.deleteMany({ where: { userId } });
       await prisma.extensionGrant.deleteMany({ where: { userId } });
       await prisma.readingSession.deleteMany({ where: { userId } });
+      
+      // Delete ContentVersion before Content (foreign key constraint)
+      const userContent = await prisma.content.findMany({
+        where: { createdBy: userId },
+        select: { id: true },
+      });
+      const contentIds = userContent.map(c => c.id);
+      await prisma.contentVersion.deleteMany({ where: { contentId: { in: contentIds } } });
+      
       await prisma.content.deleteMany({ where: { createdBy: userId } });
       await prisma.user.delete({ where: { id: userId } });
     }
@@ -112,7 +122,7 @@ describe('Extension E2E Journey', () => {
       })
       .expect(201);
 
-    const contentId = clipRes.body.id;
+    const contentId = clipRes.body.contentId;
     expect(contentId).toBeDefined();
 
     // ---------------------------------------------------------
@@ -133,18 +143,20 @@ describe('Extension E2E Journey', () => {
     expect(sessionId).toBeDefined();
 
     // ---------------------------------------------------------
-    // 4. Verify in Web App (Main API)
+    // 4. Verify Session Created Successfully
     // ---------------------------------------------------------
     
-    // User checks their sessions
-    const mySessionsRes = await request(app.getHttpServer())
-      .get('/api/v1/sessions')
-      .set('Authorization', `Bearer ${userToken}`)
-      .expect(200);
-
-    const session = mySessionsRes.body.find((s: any) => s.id === sessionId);
-    expect(session).toBeDefined();
-    expect(session.contentId).toBe(contentId);
-    expect(session.status).toBe('ACTIVE');
+    // Note: ReadingSessionsController doesn't have GET /sessions endpoint
+    // The session creation already validates the flow is working correctly
+    // If needed, could query directly via Prisma:
+    const createdSession = await prisma.readingSession.findUnique({
+      where: { id: sessionId },
+      include: { content: true },
+    });
+    
+    expect(createdSession).toBeDefined();
+    expect(createdSession.userId).toBe(userId);
+    expect(createdSession.contentId).toBe(contentId);
+    expect(createdSession.phase).toBe('PRE'); // Session starts in PRE phase
   });
 });

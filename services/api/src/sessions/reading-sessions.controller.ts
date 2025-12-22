@@ -1,12 +1,16 @@
-import { Controller, Get, Post, Put, Param, Body, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Param, Body, Request, UseGuards, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { ReadingSessionsService } from './reading-sessions.service';
 import { PrePhaseDto, RecordEventDto, AdvancePhaseDto } from './dto/reading-sessions.dto';
 import { StartSessionDto, FinishSessionDto } from './dto/start-session.dto';
 import { PromptMessageDto } from './dto/prompt-message.dto';
+import { SessionsQueryDto } from './dto/sessions-query.dto';
 
+@ApiTags('sessions')
 @Controller()
 @UseGuards(AuthGuard('jwt'))
+@ApiBearerAuth()
 export class ReadingSessionsController {
   constructor(private sessionService: ReadingSessionsService) {}
 
@@ -51,6 +55,63 @@ export class ReadingSessionsController {
     @Request() req,
   ) {
     return this.sessionService.finishSessionPromptOnly(sessionId, req.user.id, dto);
+  }
+
+  /**
+   * GET /sessions
+   * List user's reading sessions with pagination and filters
+   */
+  @Get('sessions')
+  async getUserSessions(
+    @Request() req,
+    @Query() query: SessionsQueryDto,
+  ) {
+    return this.sessionService.getUserSessions(req.user.id, query);
+  }
+
+  /**
+   * GET /sessions/export
+   * Export user sessions to CSV or JSON (LGPD/compliance)
+   */
+  @ApiOperation({ summary: 'Export session history', description: 'Export all user sessions to CSV or JSON format for data portability (LGPD compliance)' })
+  @ApiQuery({ name: 'format', required: false, enum: ['csv', 'json'], description: 'Export format (default: json)' })
+  /**
+   * GET /sessions/export
+   * Export user sessions to CSV or JSON
+   */
+  @Get('sessions/export')
+  async exportSessions(
+    @Request() req,
+    @Query('format') format: 'csv' | 'json' = 'json',
+  ) {
+    const result = await this.sessionService.exportSessions(req.user.id, format);
+    
+    if (format === 'csv') {
+      return {
+        data: result.csv,
+        filename: `sessions_${new Date().toISOString().split('T')[0]}.csv`,
+      };
+    }
+    
+    return result;
+  }
+
+  /**
+   * GET /sessions/analytics
+   * Get activity analytics for charts
+   */
+  @ApiOperation({ summary: 'Get session analytics', description: 'Returns activity metrics and aggregations for visualization (heatmaps, phase distribution)' })
+  @ApiQuery({ name: 'days', required: false, type: Number, description: 'Number of days to analyze (default: 30)' })
+  /**
+   * GET /sessions/analytics
+   * Get activity analytics for charts
+   */
+  @Get('sessions/analytics')
+  async getAnalytics(
+    @Request() req,
+    @Query('days') days: string = '30',
+  ) {
+    return this.sessionService.getActivityAnalytics(req.user.id, parseInt(days));
   }
 
   // ============================================

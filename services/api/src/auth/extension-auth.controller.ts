@@ -17,6 +17,7 @@ import {
   DeviceCodeApproveDto,
   RefreshTokenDto,
 } from './dto/extension-auth.dto';
+import { Public } from './decorators/public.decorator';
 
 @ApiTags('Extension Auth')
 @Controller('auth/extension') // Matches ROUTES.AUTH.EXTENSION_* pattern
@@ -29,6 +30,11 @@ export class ExtensionAuthController {
    * Start device code flow (extension calls this)
    * No auth required - public endpoint
    */
+  /**
+   * Start device code flow (extension calls this)
+   * No auth required - public endpoint
+   */
+  @Public()
   @Post('device/start')
   @ApiOperation({ summary: 'Start device code flow for browser extension' })
   async startDeviceCode(@Body() dto: DeviceCodeStartDto) {
@@ -39,6 +45,11 @@ export class ExtensionAuthController {
    * Poll device code status (extension calls this repeatedly)
    * No auth required - uses deviceCode as credential
    */
+  /**
+   * Poll device code status (extension calls this repeatedly)
+   * No auth required - uses deviceCode as credential
+   */
+  @Public()
   @Post('device/poll')
   @ApiOperation({ summary: 'Poll device code authorization status' })
   async pollDeviceCode(@Body() dto: DeviceCodePollDto) {
@@ -68,6 +79,11 @@ export class ExtensionAuthController {
    * Refresh access token
    * No JWT guard - uses refresh token as credential
    */
+  /**
+   * Refresh access token
+   * No JWT guard - uses refresh token as credential
+   */
+  @Public()
   @Post('token/refresh')
   @ApiOperation({ summary: 'Refresh access token using refresh token' })
   async refreshToken(@Body() dto: RefreshTokenDto) {

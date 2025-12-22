@@ -275,6 +275,9 @@ model ReadingSession {
   VocabAttempt     VocabAttempt[]
   coReadingSession CoReadingSession?
 
+  // Indexes for session history queries
+  @@index([userId, startedAt(sort: Desc)], name: "user_sessions_list")
+  @@index([userId, phase, startedAt], name: "user_sessions_phase")
   @@map("reading_sessions")
 }
 

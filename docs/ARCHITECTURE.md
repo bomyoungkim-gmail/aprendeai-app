@@ -19,6 +19,7 @@
                       ↓
 ┌─────────────────────────────────────────────────────┐
 │              Frontend (Next.js 14)                  │
+│                Port 3000                            │
 │  ┌──────────────────────────────────────────────┐  │
 │  │  Pages Layer                                 │  │
 │  │  - /reading/[sessionId]  (NEW Phase 3)       │  │
@@ -44,7 +45,7 @@
                       ↓
 ┌─────────────────────────────────────────────────────┐
 │           Backend API (NestJS)                      │
-│                Port 3001                            │
+│                Port 4000                            │
 │  ┌──────────────────────────────────────────────┐  │
 │  │  Controllers                                 │  │
 │  │  - SessionsController (Phase 1)              │  │
@@ -565,6 +566,103 @@ try {
 ---
 
 ## Scaling Considerations
+
+### Chrome Extension Architecture
+
+The Chrome extension provides browser-based content capture and session management:
+
+**Components:**
+
+- **Background Service Worker**: Handles Readability.js extraction and API communication
+- **Content Script**: Injects selection capture UI
+- **Sidepanel**: Main UI for authentication and content management
+- **Device Code Flow**: OAuth2-style authentication for extensions
+
+**Key Files:**
+
+- `browser-extension/src/background.ts` - Service worker with message handlers
+- `browser-extension/src/content.ts` - Selection capture injection
+- `browser-extension/src/sidepanel.ts` - Main UI with login and capture
+- `browser-extension/src/api.ts` - Centralized API client
+
+**Authentication Flow:**
+
+1. Extension initiates device code flow via `POST /auth/extension/device/start`
+2. User visits verification URL and enters code
+3. Extension polls `POST /auth/extension/device/poll` until approved
+4. Tokens stored in `chrome.storage.sync` with auto-refresh logic
+
+---
+
+### Session History Management
+
+**Overview**: Provides comprehensive access to user's reading session history with pagination, filtering, and analytics.
+
+**Backend API Endpoints:**
+
+| Endpoint                     | Method | Purpose       | Features                                  |
+| ---------------------------- | ------ | ------------- | ----------------------------------------- |
+| `/api/v1/sessions`           | GET    | List sessions | Pagination, filters (date, phase), search |
+| `/api/v1/sessions/export`    | GET    | Export data   | CSV/JSON for LGPD compliance              |
+| `/api/v1/sessions/analytics` | GET    | Get metrics   | Activity heatmap, phase distribution      |
+
+**Query Parameters** (`GET /sessions`):
+
+- `page` - Page number (default: 1)
+- `limit` - Items per page (default: 20, max: 100)
+- `since` - Filter since date (ISO 8601)
+- `until` - Filter until date (ISO 8601)
+- `phase` - Filter by phase (PRE, DURING, POST)
+- `query` - Search in content title
+
+**Response Format:**
+
+```json
+{
+  "sessions": [
+    {
+      "id": "uuid",
+      "startedAt": "2025-01-15T10:30:00Z",
+      "finishedAt": "2025-01-15T11:00:00Z",
+      "duration": 30,
+      "phase": "POST",
+      "content": {
+        "id": "uuid",
+        "title": "Article Title",
+        "type": "ARTICLE"
+      },
+      "eventsCount": 12
+    }
+  ],
+  "pagination": {
+    "total": 150,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 8
+  }
+}
+```
+
+**Database Optimization:**
+
+- Composite index: `(userId, startedAt DESC)` for list queries
+- Composite index: `(userId, phase, startedAt)` for filtered queries
+- Performance: <10ms for paginated queries
+
+**Frontend Integration:**
+
+- **Page**: `/history` with tabs (Sessions | Analytics)
+- **Hook**: `useSessionsHistory(params)` using React Query
+- **Components**: `SessionCard`, `SessionAnalytics`
+- **Features**: Infinite scroll, filters UI, export buttons, activity heatmap
+
+**Browser Extension:**
+
+- Recent sessions visible in sidepanel
+- "Continue Session" feature
+- Uses same `GET /sessions` endpoint
+
+---
 
 ### Horizontal Scaling
 

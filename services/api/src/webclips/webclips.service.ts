@@ -68,12 +68,23 @@ export class WebClipsService {
       throw new BadRequestException('WebClip not found or access denied');
     }
 
+    // Create ContentVersion for this WebClip (ReadingSession requires it)
+    const version = await this.prisma.contentVersion.create({
+      data: {
+        contentId,
+        targetLanguage: content.originalLanguage,
+        schoolingLevelTarget: 'HIGHER_EDUCATION',
+        simplifiedText: content.rawText, // Use rawText as simplified version
+        summary: content.title,
+      },
+    });
+
     // Create reading session
     const session = await this.prisma.readingSession.create({
       data: {
         userId,
         contentId,
-        contentVersionId: content.id, // Use content ID as version
+        contentVersionId: version.id, // Use ContentVersion ID
         phase: 'PRE',
         modality: 'READING',
         assetLayer: dto.assetLayer || 'L1',
@@ -88,6 +99,7 @@ export class WebClipsService {
 
     return {
       readingSessionId: session.id,
+      sessionId: session.id,
       threadId,
       nextPrompt: 'Meta do dia em 1 linha + porquê em 1 linha.',
     };

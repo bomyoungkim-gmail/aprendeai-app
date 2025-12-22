@@ -35,13 +35,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       },
     });
     
-    // console.log('[JwtStrategy.validate] User data:', { 
-    //   id: user?.id, 
-    //   email: user?.email,
-    //   settings: user?.settings 
-    // });
+    if (!user) {
+      return null; // This causes 401
+    }
     
-    return user;
+    // ✅ FIX: Include scopes from JWT payload for ExtensionScopeGuard
+    // Extension tokens have { sub, scopes, clientId }, web app tokens don't
+    const userWithScopes = {
+      ...user,
+      ...(payload.scopes && { scopes: payload.scopes }),
+      ...(payload.clientId && { clientId: payload.clientId }),
+    };
+    
+    return userWithScopes;
   }
 }
 

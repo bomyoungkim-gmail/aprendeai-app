@@ -52,6 +52,27 @@ export class APIClient {
   }
 
   /**
+   * Get user's session history
+   * Route: GET /api/v1/sessions
+   */
+  async getSessionsHistory(params?: {
+    page?: number;
+    limit?: number;
+    since?: string;
+    until?: string;
+    phase?: 'PRE' | 'DURING' | 'POST';
+    query?: string;
+  }) {
+    const queryString = params ? '?' + new URLSearchParams(
+      Object.entries(params)
+        .filter(([_, v]) => v !== undefined)
+        .map(([k, v]) => [k, String(v)])
+    ).toString() : '';
+    
+    return this.fetch(`/api/v1/sessions${queryString}`, 'GET');
+  }
+
+  /**
    * Generic fetch wrapper
    */
   private async fetch(path: string, method: string, body?: any): Promise<any> {

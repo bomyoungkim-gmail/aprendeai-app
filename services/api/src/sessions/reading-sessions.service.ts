@@ -13,6 +13,8 @@ import { QuickCommandParser } from './parsers/quick-command.parser';
 import { AiServiceClient } from '../ai-service/ai-service.client';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { v4 as uuid } from 'uuid';
+import { SessionsQueryDto } from './dto/sessions-query.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ReadingSessionsService {
@@ -445,5 +447,188 @@ export class ReadingSessionsService {
       sessionId,
       eventTypes: events.map(e => e.eventType),
     });
+  }
+
+  /**
+   * Get user's reading sessions with pagination and filters
+   * Reuses patterns from SearchService and admin controllers
+   */
+  async getUserSessions(userId: string, dto: SessionsQueryDto) {
+    const page = dto.page || 1;
+    const limit = Math.min(dto.limit || 20, 100);
+    const skip = (page - 1) * limit;
+    
+    // Build where clause (SAME pattern as SearchService)
+    const where: Prisma.ReadingSessionWhereInput = {
+      userId,
+    };
+    
+    // Date filters (SAME pattern as admin/dashboard.controller.ts)
+    if (dto.since || dto.until) {
+      where.startedAt = {};
+      if (dto.since) where.startedAt.gte = new Date(dto.since);
+      if (dto.until) where.startedAt.lte = new Date(dto.until);
+    }
+    
+    if (dto.phase) {
+      where.phase = dto.phase;
+    }
+    
+    // Search in content title (SAME pattern as SearchService)
+    if (dto.query) {
+      where.content = {
+        title: { contains: dto.query, mode: 'insensitive' },
+      };
+    }
+    
+    // Count total for pagination
+    const total = await this.prisma.readingSession.count({ where });
+    
+    // Fetch sessions
+    const sessions = await this.prisma.readingSession.findMany({
+      where,
+      include: {
+        content: {
+          select: { id: true, title: true, type: true },
+        },
+        _count: {
+          select: { events: true },
+        },
+      },
+      orderBy: dto.sortBy === 'duration' 
+        ? [{ finishedAt: dto.sortOrder }]
+        : [{ startedAt: dto.sortOrder }],
+      skip,
+      take: limit,
+    });
+    
+    return {
+      sessions: sessions.map(s => this.transformToSessionSummary(s)),
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * Transform session to summary format
+   */
+  private transformToSessionSummary(session: any) {
+    const duration = session.finishedAt
+      ? Math.round((session.finishedAt.getTime() - session.startedAt.getTime()) / 60000)
+      : null;
+    
+    return {
+      id: session.id,
+      startedAt: session.startedAt.toISOString(),
+      finishedAt: session.finishedAt?.toISOString() || null,
+      duration,
+      phase: session.phase,
+      content: {
+        id: session.content.id,
+        title: session.content.title,
+        type: session.content.type,
+      },
+      eventsCount: session._count?.events || 0,
+    };
+  }
+
+  /**
+   * Export user sessions to CSV/JSON
+   * For LGPD/compliance data export
+   */
+  async exportSessions(userId: string, format: 'csv' | 'json') {
+    const sessions = await this.prisma.readingSession.findMany({
+      where: { userId },
+      include: {
+        content: {
+          select: { id: true, title: true, type: true },
+        },
+        _count: {
+          select: { events: true },
+        },
+      },
+      orderBy: { startedAt: 'desc' },
+    });
+
+    const data = sessions.map(s => this.transformToSessionSummary(s));
+
+    if (format === 'json') {
+      return { data, count: sessions.length };
+    }
+
+    // CSV format
+    const headers = ['ID', 'Started At', 'Finished At', 'Duration (min)', 'Phase', 'Content Title', 'Content Type', 'Events Count'];
+    const rows = data.map(s => [
+      s.id,
+      s.startedAt,
+      s.finishedAt || 'N/A',
+      s.duration?.toString() || 'N/A',
+      s.phase,
+      s.content.title,
+      s.content.type,
+      s.eventsCount.toString(),
+    ]);
+
+    const csv = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+    ].join('\n');
+
+    return { csv, count: sessions.length };
+  }
+
+  /**
+   * Get activity analytics for charts
+   */
+  async getActivityAnalytics(userId: string, days: number = 30) {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const sessions = await this.prisma.readingSession.findMany({
+      where: {
+        userId,
+        startedAt: { gte: startDate },
+      },
+      select: {
+        startedAt: true,
+        finishedAt: true,
+        phase: true,
+      },
+      orderBy: { startedAt: 'asc' },
+    });
+
+    // Group by date
+    const activityByDate: Record<string, { count: number; minutes: number }> = {};
+    
+    sessions.forEach(s => {
+      const dateKey = s.startedAt.toISOString().split('T')[0];
+      if (!activityByDate[dateKey]) {
+        activityByDate[dateKey] = { count: 0, minutes: 0 };
+      }
+      activityByDate[dateKey].count++;
+      
+      if (s.finishedAt) {
+        const duration = Math.round((s.finishedAt.getTime() - s.startedAt.getTime()) / 60000);
+        activityByDate[dateKey].minutes += duration;
+      }
+    });
+
+    // Phase distribution
+    const phaseDistribution = {
+      PRE: sessions.filter(s => s.phase === 'PRE').length,
+      DURING: sessions.filter(s => s.phase === 'DURING').length,
+      POST: sessions.filter(s => s.phase === 'POST').length,
+    };
+
+    return {
+      activityByDate,
+      phaseDistribution,
+      totalSessions: sessions.length,
+      periodDays: days,
+    };
   }
 }
