@@ -1,0 +1,193 @@
+  console.log
+    [FamilyService.create] BEFORE UPDATE: { userId: '7c08a8ad-2938-4c3f-a8f4-648bcf69f3f4', currentSettings: {} }
+
+      at ../src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: fb9bae8f-f550-4d9c-9834-c265b3ed4257
+
+      at ../src/family/family.service.ts:62:15
+
+  console.log
+    Inviting new user: newuser@family-test.com
+
+      at FamilyService.inviteMember (../src/family/family.service.ts:164:16)
+
+  console.log
+    Inviting new user: existing@family-test.com
+
+      at FamilyService.inviteMember (../src/family/family.service.ts:164:16)
+
+  console.log
+    [FamilyService.create] BEFORE UPDATE: {
+      userId: '7c08a8ad-2938-4c3f-a8f4-648bcf69f3f4',
+      currentSettings: { primaryFamilyId: 'fb9bae8f-f550-4d9c-9834-c265b3ed4257' }
+    }
+
+      at ../src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: e68e73e6-4f98-497a-8387-f196d75d21ee
+
+      at ../src/family/family.service.ts:62:15
+
+  console.log
+    [FamilyService.create] BEFORE UPDATE: {
+      userId: '7c08a8ad-2938-4c3f-a8f4-648bcf69f3f4',
+      currentSettings: { primaryFamilyId: 'e68e73e6-4f98-497a-8387-f196d75d21ee' }
+    }
+
+      at ../src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: 9f253052-cd6f-4b2f-bd36-82a4ef21ffa0
+
+      at ../src/family/family.service.ts:62:15
+
+FAIL test/integration/family.spec.ts (7.484 s)
+  ● Family Plan (Integration) › POST /families/:id/invite › should add existing user as GUARDIAN
+
+    expected 201 "Created", got 400 "Bad Request"
+
+      156 |           schoolingLevel: 'UNDERGRADUATE',
+      157 |         })
+    > 158 |         .expect(201);
+          |          ^
+      159 |
+      160 |       const response = await request(app.getHttpServer())
+      161 |         .post(apiUrl(ROUTES.FAMILY.INVITE(familyId)))
+
+      at Object.<anonymous> (integration/family.spec.ts:158:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › POST /families/:id/invite › should reject duplicate invitations
+
+    expected 409 "Conflict", got 201 "Created"
+
+      218 |           role: 'GUARDIAN',
+      219 |         })
+    > 220 |         .expect(409);
+          |          ^
+      221 |     });
+      222 |
+      223 |     it('should only allow owner to invite members', async () => {
+
+      at Object.<anonymous> (integration/family.spec.ts:220:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › POST /families/:id/invite › should only allow owner to invite members
+
+    expected 403 "Forbidden", got 401 "Unauthorized"
+
+      249 |           role: 'CHILD',
+      250 |         })
+    > 251 |         .expect(403);
+          |          ^
+      252 |     });
+      253 |   });
+      254 |
+
+      at Object.<anonymous> (integration/family.spec.ts:251:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › POST /families/:id/transfer-ownership › should prevent non-owner from transferring
+
+    expected 403 "Forbidden", got 201 "Created"
+
+      305 |           newOwnerId: ownerUserId,
+      306 |         })
+    > 307 |         .expect(403);
+          |          ^
+      308 |     });
+      309 |
+      310 |     afterAll(async () => {
+
+      at Object.<anonymous> (integration/family.spec.ts:307:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › POST /families/:id/primary › should only allow family members to set as primary
+
+    expected 403 "Forbidden", got 401 "Unauthorized"
+
+      365 |         .post(apiUrl(ROUTES.FAMILY.SET_PRIMARY(familyId)))
+      366 |         .set('Authorization', `Bearer ${outsiderLogin.body.access_token}`)
+    > 367 |         .expect(403);
+          |          ^
+      368 |     });
+      369 |   });
+      370 |
+
+      at Object.<anonymous> (integration/family.spec.ts:367:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › DELETE /families/:id › should only allow owner to delete family
+
+    expected 403 "Forbidden", got 401 "Unauthorized"
+
+      442 |         .delete(apiUrl(ROUTES.FAMILY.BY_ID(familyId)))
+      443 |         .set('Authorization', `Bearer ${newOwnerLogin.body.access_token}`)
+    > 444 |         .expect(403);
+          |          ^
+      445 |     });
+      446 |
+      447 |     it('should return 404 if family does not exist', async () => {
+
+      at Object.<anonymous> (integration/family.spec.ts:444:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+
+  ● Test suite failed to run
+
+    expected 201 "Created", got 401 "Unauthorized"
+
+      323 |           newOwnerId: ownerUserId,
+      324 |         })
+    > 325 |         .expect(201);
+          |          ^
+      326 |     });
+      327 |   });
+      328 |
+
+      at Object.<anonymous> (integration/family.spec.ts:325:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+Test Suites: 1 failed, 1 total
+Tests:       6 failed, 3 skipped, 13 passed, 22 total
+Snapshots:   0 total
+Time:        7.844 s
+Ran all test suites matching /test\\integration\\family.spec.ts/i.

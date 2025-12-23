@@ -134,6 +134,14 @@ export class FamilyController {
     return this.policyService.getConfirmationPrompt(policyId);
   }
 
+  @Post('co-sessions/:id/finish')
+  @ApiOperation({ summary: 'Finish co-reading session' })
+  finishCoSession(@Param('id') sessionId: string, @Body() body: { context: any }) { 
+    if (body.context.startedAt) body.context.startedAt = new Date(body.context.startedAt);
+    if (body.context.phaseStartedAt) body.context.phaseStartedAt = new Date(body.context.phaseStartedAt);
+    return this.coReadingService.finish(sessionId, body.context);
+  }
+
   @Post('co-sessions/:id/prompt')
   @ApiOperation({ summary: 'Get co-reading session prompt' })
   getCoSessionPrompt(@Param('id') sessionId: string, @Body() body: { phase: string }) {

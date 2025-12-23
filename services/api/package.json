@@ -113,6 +113,10 @@
       "ts"
     ],
     "rootDir": ".",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/"
+    ],
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },

@@ -1,0 +1,13 @@
+PASS test/integration/webclip-creation.integration.spec.ts (7.357 s)
+  WebClip Creation Integration Tests
+    WebClip Creation
+      √ should create WebClip with valid extension token (97 ms)
+      √ should reject creation without required scope (36 ms)
+    Session Start
+      √ should start session with valid extension token (29 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       3 passed, 3 total
+Snapshots:   0 total
+Time:        7.551 s, estimated 8 s
+Ran all test suites matching /test\\integration\\webclip-creation.integration.spec.ts/i.

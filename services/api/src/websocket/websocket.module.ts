@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { StudyGroupsWebSocketGateway } from './study-groups-ws.gateway';
 import { AuthModule } from '../auth/auth.module';
 
+import { WsJwtGuard } from './guards/ws-jwt.guard';
+
 @Module({
-  imports: [AuthModule, JwtModule],
-  providers: [StudyGroupsWebSocketGateway],
+  imports: [AuthModule],
+  providers: [StudyGroupsWebSocketGateway, WsJwtGuard],
   exports: [StudyGroupsWebSocketGateway], // Export for use in other modules
 })
 export class WebSocketModule {}

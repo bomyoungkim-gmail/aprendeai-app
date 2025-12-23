@@ -817,12 +817,12 @@ model LearnerProfile {
 
 model SessionEvent {
   id               String    @id @default(uuid())
-  readingSessionId String    @map("reading_session_id")
+  readingSessionId String?   @map("reading_session_id")
   eventType        EventType
   payloadJson      Json      @map("payload_json")
   createdAt        DateTime  @default(now()) @map("created_at")
 
-  session ReadingSession @relation(fields: [readingSessionId], references: [id], onDelete: Cascade)
+  session ReadingSession? @relation(fields: [readingSessionId], references: [id], onDelete: Cascade)
 
   @@index([readingSessionId])
   @@index([eventType])
@@ -860,6 +860,15 @@ enum EventType {
   CHECKPOINT_RESPONSE
   QUIZ_RESPONSE
   PRODUCTION_SUBMIT
+  CLASS_ALERT_RAISED
+  CLASS_POLICY_SET
+  CLASS_WEEKLY_PLAN_CREATED
+  FAMILY_POLICY_SET
+  CO_SESSION_STARTED
+  CO_SESSION_PHASE_CHANGED
+  EDUCATOR_INTERVENTION_CHOSEN
+  FAMILY_ALERT_RAISED
+  CO_SESSION_FINISHED
 }
 
 enum EducationLevel {

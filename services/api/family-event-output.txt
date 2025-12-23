@@ -1,0 +1,93 @@
+FAIL src/events/family-event.service.spec.ts
+  FamilyEventService
+    √ should be defined (13 ms)
+    logPolicySet
+      × should persist FAMILY_POLICY_SET event (15 ms)
+      √ should reject invalid event payload (8 ms)
+    logCoSessionStarted
+      √ should persist CO_SESSION_STARTED event (2 ms)
+    getSessionEvents
+      × should query FAMILY events for a session (3 ms)
+
+  ● FamilyEventService › logPolicySet › should persist FAMILY_POLICY_SET event
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    - Expected
+    + Received
+
+    @@ -1,7 +1,8 @@
+      Object {
+        "data": Object {
+    +     "eventType": "FAMILY_POLICY_SET",
+          "payloadJson": Object {
+            "data": Object {
+              "householdId": "hh_123",
+              "learnerUserId": "user_456",
+              "policy": Object {
+    @@ -19,10 +20,8 @@
+              },
+            },
+            "domain": "FAMILY",
+            "type": "FAMILY_POLICY_SET",
+          },
+    -     "sessionId": "session_1",
+    -     "timestamp": Any<Date>,
+    -     "userId": "user_456",
+    +     "readingSessionId": "session_1",
+        },
+      },
+
+    Number of calls: 1
+
+      71 |
+      72 |       expect(result).toBeDefined();
+    > 73 |       expect(mockPrismaService.sessionEvent.create).toHaveBeenCalledWith({
+         |                                                     ^
+      74 |         data: {
+      75 |           sessionId: 'session_1',
+      76 |           userId: 'user_456',
+
+      at Object.<anonymous> (src/events/family-event.service.spec.ts:73:53)
+
+  ● FamilyEventService › getSessionEvents › should query FAMILY events for a session
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    - Expected
+    + Received
+
+      Object {
+        "orderBy": Object {
+    -     "timestamp": "asc",
+    +     "createdAt": "asc",
+        },
+        "where": Object {
+          "payloadJson": Object {
+            "equals": "FAMILY",
+            "path": Array [
+              "domain",
+            ],
+          },
+    -     "sessionId": "session_1",
+    +     "readingSessionId": "session_1",
+        },
+      },
+
+    Number of calls: 1
+
+      133 |
+      134 |       expect(events).toHaveLength(1);
+    > 135 |       expect(mockPrismaService.sessionEvent.findMany).toHaveBeenCalledWith({
+          |                                                       ^
+      136 |         where: {
+      137 |           sessionId: 'session_1',
+      138 |           payloadJson: {
+
+      at Object.<anonymous> (src/events/family-event.service.spec.ts:135:55)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 3 passed, 5 total
+Snapshots:   0 total
+Time:        4.766 s, estimated 7 s
+Ran all test suites matching /src\\events\\family-event.service.spec.ts/i.

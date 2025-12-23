@@ -33,7 +33,12 @@ export class ClassDashboardService {
       throw new Error(`Classroom ${classroomId} not found`);
     }
 
-    const privacyMode = ClassPrivacyMode.AGGREGATED_ONLY; // Use enum value
+    // Get class policy
+    const policy = await this.prisma.classPolicy.findUnique({
+      where: { classroomId },
+    });
+
+    const privacyMode = (policy?.privacyMode as unknown as ClassPrivacyMode) || ClassPrivacyMode.AGGREGATED_ONLY;
 
     // Calculate stats for each student
     const studentsData: StudentData[] = await Promise.all(

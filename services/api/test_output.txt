@@ -1,0 +1,403 @@
+  console.log
+    DEBUG: DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/aprendeai
+
+      at Object.<anonymous> (integration/family.spec.ts:24:13)
+
+  console.log
+    DEBUG: Router not accessible via standard Express property
+
+      at Object.<anonymous> (integration/family.spec.ts:41:17)
+
+FAIL test/integration/family.spec.ts (7.656 s)
+  ● Family Plan (Integration) › Authentication Setup › should register and login owner user
+
+    expected 201 "Created", got 404 "Not Found"
+
+      75 |           schoolingLevel: 'UNDERGRADUATE',
+      76 |         })
+    > 77 |         .expect(201);
+         |          ^
+      78 |
+      79 |       // Login
+      80 |       const loginResponse = await request(app.getHttpServer())
+
+      at Object.<anonymous> (integration/family.spec.ts:77:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › POST /families › should create family with current user as owner
+
+    expected 201 "Created", got 401 "Unauthorized"
+
+      101 |           name: 'Test Family',
+      102 |         })
+    > 103 |         .expect(201);
+          |          ^
+      104 |
+      105 |       familyId = response.body.id;
+      106 |
+
+      at Object.<anonymous> (integration/family.spec.ts:103:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › POST /families › should create owner membership record
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 0
+    Received array:  []
+
+      116 |       });
+      117 |
+    > 118 |       expect(members).toHaveLength(1);
+          |                       ^
+      119 |       expect(members[0]).toMatchObject({
+      120 |         userId: ownerUserId,
+      121 |         role: 'OWNER',
+
+      at Object.<anonymous> (integration/family.spec.ts:118:23)
+
+  ● Family Plan (Integration) › POST /families › should return family with members array
+
+    expected 200 "OK", got 401 "Unauthorized"
+
+      128 |         .get(apiUrl(ROUTES.FAMILY.BY_ID(familyId)))
+      129 |         .set('Authorization', `Bearer ${authToken}`)
+    > 130 |         .expect(200);
+          |          ^
+      131 |
+      132 |       expect(response.body.members).toBeDefined();
+      133 |       expect(response.body.members).toHaveLength(1);
+
+      at Object.<anonymous> (integration/family.spec.ts:130:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › GET /families › should list all families user belongs to
+
+    expected 200 "OK", got 401 "Unauthorized"
+
+      141 |         .get(apiUrl(ROUTES.FAMILY.BASE))
+      142 |         .set('Authorization', `Bearer ${authToken}`)
+    > 143 |         .expect(200);
+          |          ^
+      144 |
+      145 |       expect(response.body).toHaveLength(1);
+      146 |       expect(response.body[0].name).toBe('Test Family');
+
+      at Object.<anonymous> (integration/family.spec.ts:143:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › POST /families/:id/invite › should add existing user as GUARDIAN
+
+    expected 201 "Created", got 404 "Not Found"
+
+      160 |           schoolingLevel: 'UNDERGRADUATE',
+      161 |         })
+    > 162 |         .expect(201);
+          |          ^
+      163 |
+      164 |       const response = await request(app.getHttpServer())
+      165 |         .post(apiUrl(ROUTES.FAMILY.INVITE(familyId)))
+
+      at Object.<anonymous> (integration/family.spec.ts:162:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › POST /families/:id/invite › should create placeholder user for new email
+
+    expected 201 "Created", got 401 "Unauthorized"
+
+      200 |           role: 'CHILD',
+      201 |         })
+    > 202 |         .expect(201);
+          |          ^
+      203 |
+      204 |       // expect(response.body.message).toContain('invited'); // Controllers return data directly
+      205 |
+
+      at Object.<anonymous> (integration/family.spec.ts:202:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › POST /families/:id/invite › should reject duplicate invitations
+
+    expected 409 "Conflict", got 401 "Unauthorized"
+
+      222 |           role: 'GUARDIAN',
+      223 |         })
+    > 224 |         .expect(409);
+          |          ^
+      225 |     });
+      226 |
+      227 |     it('should only allow owner to invite members', async () => {
+
+      at Object.<anonymous> (integration/family.spec.ts:224:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › POST /families/:id/invite › should only allow owner to invite members
+
+    expected 403 "Forbidden", got 401 "Unauthorized"
+
+      253 |           role: 'CHILD',
+      254 |         })
+    > 255 |         .expect(403);
+          |          ^
+      256 |     });
+      257 |   });
+      258 |
+
+      at Object.<anonymous> (integration/family.spec.ts:255:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › POST /families/:id/transfer-ownership › should transfer ownership to existing member
+
+    TypeError: Cannot read properties of null (reading 'id')
+
+      264 |         where: { email: 'existing@family-test.com' },
+      265 |       });
+    > 266 |       memberUserId = existingUser.id;
+          |                                   ^
+      267 |     });
+      268 |
+      269 |     it('should transfer ownership to existing member', async () => {
+
+      at Object.<anonymous> (integration/family.spec.ts:266:35)
+
+  ● Family Plan (Integration) › POST /families/:id/transfer-ownership › should prevent non-owner from transferring
+
+    TypeError: Cannot read properties of null (reading 'id')
+
+      264 |         where: { email: 'existing@family-test.com' },
+      265 |       });
+    > 266 |       memberUserId = existingUser.id;
+          |                                   ^
+      267 |     });
+      268 |
+      269 |     it('should transfer ownership to existing member', async () => {
+
+      at Object.<anonymous> (integration/family.spec.ts:266:35)
+
+  ● Family Plan (Integration) › POST /families/:id/primary › should set family as primary for user
+
+    expected 201 "Created", got 401 "Unauthorized"
+
+      336 |         .post(apiUrl(ROUTES.FAMILY.SET_PRIMARY(familyId)))
+      337 |         .set('Authorization', `Bearer ${authToken}`)
+    > 338 |         .expect(201);
+          |          ^
+      339 |
+      340 |       // expect(response.body.message).toContain('primary'); // Controllers return data directly
+      341 |
+
+      at Object.<anonymous> (integration/family.spec.ts:338:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › POST /families/:id/primary › should only allow family members to set as primary
+
+    expected 403 "Forbidden", got 401 "Unauthorized"
+
+      369 |         .post(apiUrl(ROUTES.FAMILY.SET_PRIMARY(familyId)))
+      370 |         .set('Authorization', `Bearer ${outsiderLogin.body.access_token}`)
+    > 371 |         .expect(403);
+          |          ^
+      372 |     });
+      373 |   });
+      374 |
+
+      at Object.<anonymous> (integration/family.spec.ts:371:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › DELETE /families/:id › should delete family and all members
+
+    expected 200 "OK", got 401 "Unauthorized"
+
+      420 |         .delete(apiUrl(ROUTES.FAMILY.BY_ID(tempFamilyId)))
+      421 |         .set('Authorization', `Bearer ${authToken}`)
+    > 422 |         .expect(200);
+          |          ^
+      423 |
+      424 |       // Verify family deleted
+      425 |       const family = await prisma.family.findUnique({
+
+      at Object.<anonymous> (integration/family.spec.ts:422:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › DELETE /families/:id › should only allow owner to delete family
+
+    expected 403 "Forbidden", got 401 "Unauthorized"
+
+      446 |         .delete(apiUrl(ROUTES.FAMILY.BY_ID(familyId)))
+      447 |         .set('Authorization', `Bearer ${newOwnerLogin.body.access_token}`)
+    > 448 |         .expect(403);
+          |          ^
+      449 |     });
+      450 |
+      451 |     it('should return 404 if family does not exist', async () => {
+
+      at Object.<anonymous> (integration/family.spec.ts:448:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › DELETE /families/:id › should return 404 if family does not exist
+
+    expected 404 "Not Found", got 401 "Unauthorized"
+
+      453 |         .delete(apiUrl(ROUTES.FAMILY.BY_ID('non-existent-id')))
+      454 |         .set('Authorization', `Bearer ${authToken}`)
+    > 455 |         .expect(404);
+          |          ^
+      456 |     });
+      457 |   });
+      458 |
+
+      at Object.<anonymous> (integration/family.spec.ts:455:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › Multi-Family Scenarios › should create second family
+
+    expected 201 "Created", got 401 "Unauthorized"
+
+      467 |           name: 'Second Family',
+      468 |         })
+    > 469 |         .expect(201);
+          |          ^
+      470 |
+      471 |       secondFamilyId = response.body.id;
+      472 |       expect(response.body.name).toBe('Second Family');
+
+      at Object.<anonymous> (integration/family.spec.ts:469:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › Multi-Family Scenarios › should list both families
+
+    expected 200 "OK", got 401 "Unauthorized"
+
+      477 |         .get(apiUrl(ROUTES.FAMILY.BASE))
+      478 |         .set('Authorization', `Bearer ${authToken}`)
+    > 479 |         .expect(200);
+          |          ^
+      480 |
+      481 |       expect(response.body.length).toBeGreaterThanOrEqual(2);
+      482 |       const familyNames = response.body.map(f => f.name);
+
+      at Object.<anonymous> (integration/family.spec.ts:479:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Family Plan (Integration) › Multi-Family Scenarios › should switch primary family
+
+    expected 201 "Created", got 401 "Unauthorized"
+
+      489 |         .post(apiUrl(ROUTES.FAMILY.SET_PRIMARY(secondFamilyId)))
+      490 |         .set('Authorization', `Bearer ${authToken}`)
+    > 491 |         .expect(201);
+          |          ^
+      492 |
+      493 |       const user = await prisma.user.findUnique({
+      494 |         where: { id: ownerUserId },
+
+      at Object.<anonymous> (integration/family.spec.ts:491:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+
+  ● Test suite failed to run
+
+    expected 201 "Created", got 401 "Unauthorized"
+
+      327 |           newOwnerId: ownerUserId,
+      328 |         })
+    > 329 |         .expect(201);
+          |          ^
+      330 |     });
+      331 |   });
+      332 |
+
+      at Object.<anonymous> (integration/family.spec.ts:329:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+Test Suites: 1 failed, 1 total
+Tests:       19 failed, 3 skipped, 22 total
+Snapshots:   0 total
+Time:        7.964 s, estimated 8 s
+Ran all test suites matching /test\\integration\\family.spec.ts/i.

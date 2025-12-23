@@ -145,14 +145,14 @@ describe('Primary Family Logic (Integration)', () => {
 
       // 2. Owner invites dependent
       await request(app.getHttpServer())
-        .post(`/families/${familyId}/invite`)
+        .post(apiUrl(ROUTES.FAMILY.INVITE(familyId)))
         .set('Authorization', `Bearer ${ownerToken}`)
         .send({ email: dependentEmail, role: 'CHILD' })
         .expect(201);
 
       // 3. Dependent accepts invite
       await request(app.getHttpServer())
-        .post(`/families/${familyId}/accept`)
+        .post(apiUrl(ROUTES.FAMILY.ACCEPT(familyId)))
         .set('Authorization', `Bearer ${dependentToken}`)
         .expect(201);
 
@@ -171,13 +171,13 @@ describe('Primary Family Logic (Integration)', () => {
       const familyAId = resA.body.id;
 
       await request(app.getHttpServer())
-        .post(`/families/${familyAId}/invite`)
+        .post(apiUrl(ROUTES.FAMILY.INVITE(familyAId)))
         .set('Authorization', `Bearer ${ownerToken}`)
         .send({ email: dependentEmail, role: 'CHILD' })
         .expect(201);
 
       await request(app.getHttpServer())
-        .post(`/families/${familyAId}/accept`)
+        .post(apiUrl(ROUTES.FAMILY.ACCEPT(familyAId)))
         .set('Authorization', `Bearer ${dependentToken}`)
         .expect(201);
 
@@ -194,14 +194,14 @@ describe('Primary Family Logic (Integration)', () => {
 
       // Invite to Family B
       await request(app.getHttpServer())
-        .post(`/families/${familyBId}/invite`)
+        .post(apiUrl(ROUTES.FAMILY.INVITE(familyBId)))
         .set('Authorization', `Bearer ${ownerToken}`)
         .send({ email: dependentEmail, role: 'CHILD' })
         .expect(201);
 
       // Accept Family B
       await request(app.getHttpServer())
-        .post(`/families/${familyBId}/accept`)
+        .post(apiUrl(ROUTES.FAMILY.ACCEPT(familyBId)))
         .set('Authorization', `Bearer ${dependentToken}`)
         .expect(201);
 

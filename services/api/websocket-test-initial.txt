@@ -1,0 +1,267 @@
+FAIL test/integration/websocket.spec.ts (41.124 s)
+  WebSocket Real-Time Events (Integration)
+    WebSocket Connection
+      √ should connect with valid JWT token (32 ms)
+      × should reject connection with invalid token (15 ms)
+      × should reject connection without token (20 ms)
+    Session Membership Events
+      × should notify other users when someone joins session (5038 ms)
+      × should notify other users when someone leaves session (5022 ms)
+    Real-Time Session Events
+      × should broadcast SESSION_STARTED event to all members (5148 ms)
+      × should broadcast ROUND_ADVANCED event when round status changes (5149 ms)
+      × should broadcast VOTE_SUBMITTED event when user votes (5132 ms)
+      × should broadcast CHAT_MESSAGE event when user sends message (5133 ms)
+    Event Isolation
+      × should NOT receive events from other sessions (5015 ms)
+
+  ● WebSocket Real-Time Events (Integration) › WebSocket Connection › should reject connection with invalid token
+
+    Should not connect with invalid token
+
+      194 |       badClient.on('connect', () => {
+      195 |         badClient.disconnect();
+    > 196 |         done(new Error('Should not connect with invalid token'));
+          |              ^
+      197 |       });
+      198 |
+      199 |       badClient.on('connect_error', (error) => {
+
+      at Socket.<anonymous> (test/integration/websocket.spec.ts:196:14)
+      at Socket.Object.<anonymous>.Emitter.emit (node_modules/@socket.io/component-emitter/lib/cjs/index.js:143:20)
+      at Socket.onconnect (node_modules/socket.io-client/build/cjs/socket.js:618:14)
+      at Socket.onpacket (node_modules/socket.io-client/build/cjs/socket.js:506:26)
+      at Manager.Object.<anonymous>.Emitter.emit (node_modules/@socket.io/component-emitter/lib/cjs/index.js:143:20)
+      at node_modules/socket.io-client/build/cjs/manager.js:246:18
+
+  ● WebSocket Real-Time Events (Integration) › WebSocket Connection › should reject connection without token
+
+    Should not connect without token
+
+      211 |       badClient.on('connect', () => {
+      212 |         badClient.disconnect();
+    > 213 |         done(new Error('Should not connect without token'));
+          |              ^
+      214 |       });
+      215 |
+      216 |       badClient.on('connect_error', (error) => {
+
+      at Socket.<anonymous> (test/integration/websocket.spec.ts:213:14)
+      at Socket.Object.<anonymous>.Emitter.emit (node_modules/@socket.io/component-emitter/lib/cjs/index.js:143:20)
+      at Socket.onconnect (node_modules/socket.io-client/build/cjs/socket.js:618:14)
+      at Socket.onpacket (node_modules/socket.io-client/build/cjs/socket.js:506:26)
+      at Manager.Object.<anonymous>.Emitter.emit (node_modules/@socket.io/component-emitter/lib/cjs/index.js:143:20)
+      at node_modules/socket.io-client/build/cjs/manager.js:246:18
+
+  ● WebSocket Real-Time Events (Integration) › Session Membership Events › should notify other users when someone joins session
+
+    thrown: "Exceeded timeout of 5000 ms for a test while waiting for `done()` to be called.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      243 |     });
+      244 |
+    > 245 |     it('should notify other users when someone joins session', (done) => {
+          |     ^
+      246 |       // User 2 listens for join event
+      247 |       client2.on('userJoined', (data) => {
+      248 |         expect(data.userId).toBe(user1Id);
+
+      at test/integration/websocket.spec.ts:245:5
+      at test/integration/websocket.spec.ts:224:3
+      at Object.<anonymous> (test/integration/websocket.spec.ts:10:1)
+
+  ● WebSocket Real-Time Events (Integration) › Session Membership Events › should notify other users when someone leaves session
+
+    thrown: "Exceeded timeout of 5000 ms for a test while waiting for `done()` to be called.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      256 |     });
+      257 |
+    > 258 |     it('should notify other users when someone leaves session', (done) => {
+          |     ^
+      259 |       // Both join first
+      260 |       client1.emit('joinSession', { sessionId });
+      261 |       client2.emit('joinSession', { sessionId });
+
+      at test/integration/websocket.spec.ts:258:5
+      at test/integration/websocket.spec.ts:224:3
+      at Object.<anonymous> (test/integration/websocket.spec.ts:10:1)
+
+  ● WebSocket Real-Time Events (Integration) › Real-Time Session Events › should broadcast SESSION_STARTED event to all members
+
+    Nest could not find StudyGroupsWebSocketGateway element (this provider does not exist in the current context)
+
+      316 |         });
+      317 |         // Manually trigger emission (service would do this)
+    > 318 |         const gateway = app.get('StudyGroupsWebSocketGateway');
+          |                             ^
+      319 |         gateway.emitToSession(sessionId, 'session.started', {
+      320 |           sessionId,
+      321 |           status: 'RUNNING',
+
+      at InstanceLinksHost.get (node_modules/@nestjs/core/injector/instance-links-host.js:15:19)
+      at Proxy.find (node_modules/@nestjs/core/injector/abstract-instance-resolver.js:8:60)
+      at Proxy.get (node_modules/@nestjs/core/nest-application-context.js:77:20)
+      at Timeout._onTimeout (test/integration/websocket.spec.ts:318:29)
+
+  ● WebSocket Real-Time Events (Integration) › Real-Time Session Events › should broadcast SESSION_STARTED event to all members
+
+    thrown: "Exceeded timeout of 5000 ms for a test while waiting for `done()` to be called.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      299 |     });
+      300 |
+    > 301 |     it('should broadcast SESSION_STARTED event to all members', (done) => {
+          |     ^
+      302 |       // User 2 listens for session started
+      303 |       client2.on('session.started', (data) => {
+      304 |         expect(data.sessionId).toBe(sessionId);
+
+      at test/integration/websocket.spec.ts:301:5
+      at test/integration/websocket.spec.ts:276:3
+      at Object.<anonymous> (test/integration/websocket.spec.ts:10:1)
+
+  ● WebSocket Real-Time Events (Integration) › Real-Time Session Events › should broadcast ROUND_ADVANCED event when round status changes
+
+    Nest could not find StudyGroupsWebSocketGateway element (this provider does not exist in the current context)
+
+      344 |         });
+      345 |
+    > 346 |         const gateway = app.get('StudyGroupsWebSocketGateway');
+          |                             ^
+      347 |         gateway.emitToSession(sessionId, 'round.advanced', {
+      348 |           sessionId,
+      349 |           roundId: round!.id,
+
+      at InstanceLinksHost.get (node_modules/@nestjs/core/injector/instance-links-host.js:15:19)
+      at Proxy.find (node_modules/@nestjs/core/injector/abstract-instance-resolver.js:8:60)
+      at Proxy.get (node_modules/@nestjs/core/nest-application-context.js:77:20)
+      at Timeout._onTimeout (test/integration/websocket.spec.ts:346:29)
+
+  ● WebSocket Real-Time Events (Integration) › Real-Time Session Events › should broadcast ROUND_ADVANCED event when round status changes
+
+    thrown: "Exceeded timeout of 5000 ms for a test while waiting for `done()` to be called.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      325 |     });
+      326 |
+    > 327 |     it('should broadcast ROUND_ADVANCED event when round status changes', (done) => {
+          |     ^
+      328 |       client2.on('round.advanced', (data) => {
+      329 |         expect(data.sessionId).toBe(sessionId);
+      330 |         expect(data.roundIndex).toBe(1);
+
+      at test/integration/websocket.spec.ts:327:5
+      at test/integration/websocket.spec.ts:276:3
+      at Object.<anonymous> (test/integration/websocket.spec.ts:10:1)
+
+  ● WebSocket Real-Time Events (Integration) › Real-Time Session Events › should broadcast VOTE_SUBMITTED event when user votes
+
+    Nest could not find StudyGroupsWebSocketGateway element (this provider does not exist in the current context)
+
+      377 |         });
+      378 |
+    > 379 |         const gateway = app.get('StudyGroupsWebSocketGateway');
+          |                             ^
+      380 |         gateway.emitToSession(sessionId, 'vote.submitted', {
+      381 |           sessionId,
+      382 |           roundId: round!.id,
+
+      at InstanceLinksHost.get (node_modules/@nestjs/core/injector/instance-links-host.js:15:19)
+      at Proxy.find (node_modules/@nestjs/core/injector/abstract-instance-resolver.js:8:60)
+      at Proxy.get (node_modules/@nestjs/core/nest-application-context.js:77:20)
+      at Timeout._onTimeout (test/integration/websocket.spec.ts:379:29)
+
+  ● WebSocket Real-Time Events (Integration) › Real-Time Session Events › should broadcast VOTE_SUBMITTED event when user votes
+
+    thrown: "Exceeded timeout of 5000 ms for a test while waiting for `done()` to be called.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      354 |     });
+      355 |
+    > 356 |     it('should broadcast VOTE_SUBMITTED event when user votes', (done) => {
+          |     ^
+      357 |       client2.on('vote.submitted', (data) => {
+      358 |         expect(data.sessionId).toBe(sessionId);
+      359 |         expect(data.userId).toBe(user1Id);
+
+      at test/integration/websocket.spec.ts:356:5
+      at test/integration/websocket.spec.ts:276:3
+      at Object.<anonymous> (test/integration/websocket.spec.ts:10:1)
+
+  ● WebSocket Real-Time Events (Integration) › Real-Time Session Events › should broadcast CHAT_MESSAGE event when user sends message
+
+    Nest could not find StudyGroupsWebSocketGateway element (this provider does not exist in the current context)
+
+      397 |
+      398 |       setTimeout(() => {
+    > 399 |         const gateway = app.get('StudyGroupsWebSocketGateway');
+          |                             ^
+      400 |         gateway.emitToSession(sessionId, 'chat.message', {
+      401 |           message: 'Hello from user 1!',
+      402 |           userId: user1Id,
+
+      at InstanceLinksHost.get (node_modules/@nestjs/core/injector/instance-links-host.js:15:19)
+      at Proxy.find (node_modules/@nestjs/core/injector/abstract-instance-resolver.js:8:60)
+      at Proxy.get (node_modules/@nestjs/core/nest-application-context.js:77:20)
+      at Timeout._onTimeout (test/integration/websocket.spec.ts:399:29)
+
+  ● WebSocket Real-Time Events (Integration) › Real-Time Session Events › should broadcast CHAT_MESSAGE event when user sends message
+
+    thrown: "Exceeded timeout of 5000 ms for a test while waiting for `done()` to be called.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      388 |     });
+      389 |
+    > 390 |     it('should broadcast CHAT_MESSAGE event when user sends message', (done) => {
+          |     ^
+      391 |       client2.on('chat.message', (data) => {
+      392 |         expect(data.message).toBe('Hello from user 1!');
+      393 |         expect(data.userId).toBe(user1Id);
+
+      at test/integration/websocket.spec.ts:390:5
+      at test/integration/websocket.spec.ts:276:3
+      at Object.<anonymous> (test/integration/websocket.spec.ts:10:1)
+
+  ● WebSocket Real-Time Events (Integration) › Event Isolation › should NOT receive events from other sessions
+
+    Nest could not find StudyGroupsWebSocketGateway element (this provider does not exist in the current context)
+
+      446 |       // Emit event to session 1
+      447 |       setTimeout(() => {
+    > 448 |         const gateway = app.get('StudyGroupsWebSocketGateway');
+          |                             ^
+      449 |         gateway.emitToSession(sessionId, 'session.started', {
+      450 |           sessionId,
+      451 |           status: 'RUNNING',
+
+      at InstanceLinksHost.get (node_modules/@nestjs/core/injector/instance-links-host.js:15:19)
+      at Proxy.find (node_modules/@nestjs/core/injector/abstract-instance-resolver.js:8:60)
+      at Proxy.get (node_modules/@nestjs/core/nest-application-context.js:77:20)
+      at Timeout._onTimeout (test/integration/websocket.spec.ts:448:29)
+
+  ● WebSocket Real-Time Events (Integration) › Event Isolation › should NOT receive events from other sessions
+
+    thrown: "Exceeded timeout of 5000 ms for a test while waiting for `done()` to be called.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      427 |     });
+      428 |
+    > 429 |     it('should NOT receive events from other sessions', (done) => {
+          |     ^
+      430 |       client1 = io(SOCKET_URL, { auth: { token: user1Token } });
+      431 |       client2 = io(SOCKET_URL, { auth: { token: user2Token } });
+      432 |
+
+      at test/integration/websocket.spec.ts:429:5
+      at test/integration/websocket.spec.ts:408:3
+      at Object.<anonymous> (test/integration/websocket.spec.ts:10:1)
+
+Test Suites: 1 failed, 1 total
+Tests:       9 failed, 1 passed, 10 total
+Snapshots:   0 total
+Time:        41.319 s, estimated 44 s
+Ran all test suites matching /test\\integration\\websocket.spec.ts/i.
+Jest did not exit one second after the test run has completed.
+
+'This usually means that there are asynchronous operations that weren't stopped in your tests. Consider running Jest with `--detectOpenHandles` to troubleshoot this issue.

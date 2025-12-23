@@ -1,0 +1,253 @@
+
+> api@0.0.1 test:e2e
+> jest --config ./test/jest-e2e.json session-history.e2e-spec.ts --runInBand
+
+FAIL test/e2e/session-history.e2e-spec.ts (7.42 s)
+  Session History API (E2E)
+    GET /api/v1/sessions
+      × should return paginated sessions with default params (1 ms)
+      × should respect page and limit parameters
+      × should filter by phase
+      × should filter by date range
+      × should search by content title
+      × should enforce max limit of 100
+      × should return 401 without auth token
+    GET /api/v1/sessions/export
+      × should export as JSON by default
+      × should export as CSV when format=csv
+      × should return 401 without auth token (1 ms)
+    GET /api/v1/sessions/analytics
+      × should return analytics with default 30 days
+      × should respect custom days parameter
+      × should return activity grouped by date
+      × should return 401 without auth token
+
+  ● Session History API (E2E) › GET /api/v1/sessions › should return paginated sessions with default params
+
+    secretOrPrivateKey must have a value
+
+      40 |
+      41 |     // Generate real JWT token
+    > 42 |     const token = jwtService.sign({ sub: userId, email: user.email });
+         |                              ^
+      43 |     authToken = `Bearer ${token}`;
+      44 |
+      45 |     // Create test content
+
+      at Object.<anonymous>.module.exports [as sign] (node_modules/jsonwebtoken/sign.js:111:20)
+      at JwtService.sign (node_modules/@nestjs/jwt/dist/jwt.service.js:41:20)
+      at Object.<anonymous> (test/e2e/session-history.e2e-spec.ts:42:30)
+
+  ● Session History API (E2E) › GET /api/v1/sessions › should respect page and limit parameters
+
+    secretOrPrivateKey must have a value
+
+      40 |
+      41 |     // Generate real JWT token
+    > 42 |     const token = jwtService.sign({ sub: userId, email: user.email });
+         |                              ^
+      43 |     authToken = `Bearer ${token}`;
+      44 |
+      45 |     // Create test content
+
+      at Object.<anonymous>.module.exports [as sign] (node_modules/jsonwebtoken/sign.js:111:20)
+      at JwtService.sign (node_modules/@nestjs/jwt/dist/jwt.service.js:41:20)
+      at Object.<anonymous> (test/e2e/session-history.e2e-spec.ts:42:30)
+
+  ● Session History API (E2E) › GET /api/v1/sessions › should filter by phase
+
+    secretOrPrivateKey must have a value
+
+      40 |
+      41 |     // Generate real JWT token
+    > 42 |     const token = jwtService.sign({ sub: userId, email: user.email });
+         |                              ^
+      43 |     authToken = `Bearer ${token}`;
+      44 |
+      45 |     // Create test content
+
+      at Object.<anonymous>.module.exports [as sign] (node_modules/jsonwebtoken/sign.js:111:20)
+      at JwtService.sign (node_modules/@nestjs/jwt/dist/jwt.service.js:41:20)
+      at Object.<anonymous> (test/e2e/session-history.e2e-spec.ts:42:30)
+
+  ● Session History API (E2E) › GET /api/v1/sessions › should filter by date range
+
+    secretOrPrivateKey must have a value
+
+      40 |
+      41 |     // Generate real JWT token
+    > 42 |     const token = jwtService.sign({ sub: userId, email: user.email });
+         |                              ^
+      43 |     authToken = `Bearer ${token}`;
+      44 |
+      45 |     // Create test content
+
+      at Object.<anonymous>.module.exports [as sign] (node_modules/jsonwebtoken/sign.js:111:20)
+      at JwtService.sign (node_modules/@nestjs/jwt/dist/jwt.service.js:41:20)
+      at Object.<anonymous> (test/e2e/session-history.e2e-spec.ts:42:30)
+
+  ● Session History API (E2E) › GET /api/v1/sessions › should search by content title
+
+    secretOrPrivateKey must have a value
+
+      40 |
+      41 |     // Generate real JWT token
+    > 42 |     const token = jwtService.sign({ sub: userId, email: user.email });
+         |                              ^
+      43 |     authToken = `Bearer ${token}`;
+      44 |
+      45 |     // Create test content
+
+      at Object.<anonymous>.module.exports [as sign] (node_modules/jsonwebtoken/sign.js:111:20)
+      at JwtService.sign (node_modules/@nestjs/jwt/dist/jwt.service.js:41:20)
+      at Object.<anonymous> (test/e2e/session-history.e2e-spec.ts:42:30)
+
+  ● Session History API (E2E) › GET /api/v1/sessions › should enforce max limit of 100
+
+    secretOrPrivateKey must have a value
+
+      40 |
+      41 |     // Generate real JWT token
+    > 42 |     const token = jwtService.sign({ sub: userId, email: user.email });
+         |                              ^
+      43 |     authToken = `Bearer ${token}`;
+      44 |
+      45 |     // Create test content
+
+      at Object.<anonymous>.module.exports [as sign] (node_modules/jsonwebtoken/sign.js:111:20)
+      at JwtService.sign (node_modules/@nestjs/jwt/dist/jwt.service.js:41:20)
+      at Object.<anonymous> (test/e2e/session-history.e2e-spec.ts:42:30)
+
+  ● Session History API (E2E) › GET /api/v1/sessions › should return 401 without auth token
+
+    secretOrPrivateKey must have a value
+
+      40 |
+      41 |     // Generate real JWT token
+    > 42 |     const token = jwtService.sign({ sub: userId, email: user.email });
+         |                              ^
+      43 |     authToken = `Bearer ${token}`;
+      44 |
+      45 |     // Create test content
+
+      at Object.<anonymous>.module.exports [as sign] (node_modules/jsonwebtoken/sign.js:111:20)
+      at JwtService.sign (node_modules/@nestjs/jwt/dist/jwt.service.js:41:20)
+      at Object.<anonymous> (test/e2e/session-history.e2e-spec.ts:42:30)
+
+  ● Session History API (E2E) › GET /api/v1/sessions/export › should export as JSON by default
+
+    secretOrPrivateKey must have a value
+
+      40 |
+      41 |     // Generate real JWT token
+    > 42 |     const token = jwtService.sign({ sub: userId, email: user.email });
+         |                              ^
+      43 |     authToken = `Bearer ${token}`;
+      44 |
+      45 |     // Create test content
+
+      at Object.<anonymous>.module.exports [as sign] (node_modules/jsonwebtoken/sign.js:111:20)
+      at JwtService.sign (node_modules/@nestjs/jwt/dist/jwt.service.js:41:20)
+      at Object.<anonymous> (test/e2e/session-history.e2e-spec.ts:42:30)
+
+  ● Session History API (E2E) › GET /api/v1/sessions/export › should export as CSV when format=csv
+
+    secretOrPrivateKey must have a value
+
+      40 |
+      41 |     // Generate real JWT token
+    > 42 |     const token = jwtService.sign({ sub: userId, email: user.email });
+         |                              ^
+      43 |     authToken = `Bearer ${token}`;
+      44 |
+      45 |     // Create test content
+
+      at Object.<anonymous>.module.exports [as sign] (node_modules/jsonwebtoken/sign.js:111:20)
+      at JwtService.sign (node_modules/@nestjs/jwt/dist/jwt.service.js:41:20)
+      at Object.<anonymous> (test/e2e/session-history.e2e-spec.ts:42:30)
+
+  ● Session History API (E2E) › GET /api/v1/sessions/export › should return 401 without auth token
+
+    secretOrPrivateKey must have a value
+
+      40 |
+      41 |     // Generate real JWT token
+    > 42 |     const token = jwtService.sign({ sub: userId, email: user.email });
+         |                              ^
+      43 |     authToken = `Bearer ${token}`;
+      44 |
+      45 |     // Create test content
+
+      at Object.<anonymous>.module.exports [as sign] (node_modules/jsonwebtoken/sign.js:111:20)
+      at JwtService.sign (node_modules/@nestjs/jwt/dist/jwt.service.js:41:20)
+      at Object.<anonymous> (test/e2e/session-history.e2e-spec.ts:42:30)
+
+  ● Session History API (E2E) › GET /api/v1/sessions/analytics › should return analytics with default 30 days
+
+    secretOrPrivateKey must have a value
+
+      40 |
+      41 |     // Generate real JWT token
+    > 42 |     const token = jwtService.sign({ sub: userId, email: user.email });
+         |                              ^
+      43 |     authToken = `Bearer ${token}`;
+      44 |
+      45 |     // Create test content
+
+      at Object.<anonymous>.module.exports [as sign] (node_modules/jsonwebtoken/sign.js:111:20)
+      at JwtService.sign (node_modules/@nestjs/jwt/dist/jwt.service.js:41:20)
+      at Object.<anonymous> (test/e2e/session-history.e2e-spec.ts:42:30)
+
+  ● Session History API (E2E) › GET /api/v1/sessions/analytics › should respect custom days parameter
+
+    secretOrPrivateKey must have a value
+
+      40 |
+      41 |     // Generate real JWT token
+    > 42 |     const token = jwtService.sign({ sub: userId, email: user.email });
+         |                              ^
+      43 |     authToken = `Bearer ${token}`;
+      44 |
+      45 |     // Create test content
+
+      at Object.<anonymous>.module.exports [as sign] (node_modules/jsonwebtoken/sign.js:111:20)
+      at JwtService.sign (node_modules/@nestjs/jwt/dist/jwt.service.js:41:20)
+      at Object.<anonymous> (test/e2e/session-history.e2e-spec.ts:42:30)
+
+  ● Session History API (E2E) › GET /api/v1/sessions/analytics › should return activity grouped by date
+
+    secretOrPrivateKey must have a value
+
+      40 |
+      41 |     // Generate real JWT token
+    > 42 |     const token = jwtService.sign({ sub: userId, email: user.email });
+         |                              ^
+      43 |     authToken = `Bearer ${token}`;
+      44 |
+      45 |     // Create test content
+
+      at Object.<anonymous>.module.exports [as sign] (node_modules/jsonwebtoken/sign.js:111:20)
+      at JwtService.sign (node_modules/@nestjs/jwt/dist/jwt.service.js:41:20)
+      at Object.<anonymous> (test/e2e/session-history.e2e-spec.ts:42:30)
+
+  ● Session History API (E2E) › GET /api/v1/sessions/analytics › should return 401 without auth token
+
+    secretOrPrivateKey must have a value
+
+      40 |
+      41 |     // Generate real JWT token
+    > 42 |     const token = jwtService.sign({ sub: userId, email: user.email });
+         |                              ^
+      43 |     authToken = `Bearer ${token}`;
+      44 |
+      45 |     // Create test content
+
+      at Object.<anonymous>.module.exports [as sign] (node_modules/jsonwebtoken/sign.js:111:20)
+      at JwtService.sign (node_modules/@nestjs/jwt/dist/jwt.service.js:41:20)
+      at Object.<anonymous> (test/e2e/session-history.e2e-spec.ts:42:30)
+
+Test Suites: 1 failed, 1 total
+Tests:       14 failed, 14 total
+Snapshots:   0 total
+Time:        7.609 s
+Ran all test suites matching /session-history.e2e-spec.ts/i.

@@ -1,0 +1,230 @@
+FAIL test/integration/classroom-mode.integration.spec.ts (7.264 s)
+  Classroom Mode Integration Tests (e2e)
+    Classroom CRUD Flow
+      × should create a classroom (25 ms)
+      × should get classroom by ID (5 ms)
+      × should update classroom (4 ms)
+    Enrollment Flow
+      × should enroll student in classroom (3 ms)
+      × should get enrollments for classroom (3 ms)
+    Classroom Policy Flow
+      × should create classroom policy (3 ms)
+      × should get policy prompt (4 ms)
+    Weekly Planning Flow
+      × should create weekly plan (3 ms)
+      × should get current week plan (4 ms)
+    Dashboard with Privacy Filtering
+      × should get teacher dashboard with privacy filtering (3 ms)
+    Intervention Flow
+      × should log student help request (3 ms)
+      × should get intervention prompt (3 ms)
+
+  ● Classroom Mode Integration Tests (e2e) › Classroom CRUD Flow › should create a classroom
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 404
+
+      68 |         });
+      69 |
+    > 70 |       expect(response.status).toBe(201);
+         |                               ^
+      71 |       expect(response.body).toHaveProperty('id');
+      72 |       expect(response.body.name).toBe('Turma 5A - Teste');
+      73 |       
+
+      at Object.<anonymous> (integration/classroom-mode.integration.spec.ts:70:31)
+
+  ● Classroom Mode Integration Tests (e2e) › Classroom CRUD Flow › should get classroom by ID
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 404
+
+      80 |         .set('Authorization', `Bearer ${authToken}`);
+      81 |
+    > 82 |       expect(response.status).toBe(200);
+         |                               ^
+      83 |       expect(response.body.id).toBe(classroomId);
+      84 |       expect(response.body).toHaveProperty('enrollments');
+      85 |     });
+
+      at Object.<anonymous> (integration/classroom-mode.integration.spec.ts:82:31)
+
+  ● Classroom Mode Integration Tests (e2e) › Classroom CRUD Flow › should update classroom
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 404
+
+      93 |         });
+      94 |
+    > 95 |       expect(response.status).toBe(200);
+         |                               ^
+      96 |       expect(response.body.name).toBe('Turma 5A - Atualizada');
+      97 |     });
+      98 |   });
+
+      at Object.<anonymous> (integration/classroom-mode.integration.spec.ts:95:31)
+
+  ● Classroom Mode Integration Tests (e2e) › Enrollment Flow › should enroll student in classroom
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 404
+
+      108 |         });
+      109 |
+    > 110 |       expect(response.status).toBe(201);
+          |                               ^
+      111 |       expect(response.body.learnerUserId).toBe(studentId);
+      112 |       expect(response.body.status).toBe('ACTIVE');
+      113 |     });
+
+      at Object.<anonymous> (integration/classroom-mode.integration.spec.ts:110:31)
+
+  ● Classroom Mode Integration Tests (e2e) › Enrollment Flow › should get enrollments for classroom
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 404
+
+      118 |         .set('Authorization', `Bearer ${authToken}`);
+      119 |
+    > 120 |       expect(response.status).toBe(200);
+          |                               ^
+      121 |       expect(Array.isArray(response.body)).toBe(true);
+      122 |       expect(response.body.length).toBeGreaterThan(0);
+      123 |       expect(response.body[0].learnerUserId).toBe(studentId);
+
+      at Object.<anonymous> (integration/classroom-mode.integration.spec.ts:120:31)
+
+  ● Classroom Mode Integration Tests (e2e) › Classroom Policy Flow › should create classroom policy
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 404
+
+      137 |         });
+      138 |
+    > 139 |       expect(response.status).toBe(201);
+          |                               ^
+      140 |       expect(response.body.weeklyUnitsTarget).toBe(3);
+      141 |       expect(response.body.privacyMode).toBe('AGGREGATED_PLUS_HELP_REQUESTS');
+      142 |     });
+
+      at Object.<anonymous> (integration/classroom-mode.integration.spec.ts:139:31)
+
+  ● Classroom Mode Integration Tests (e2e) › Classroom Policy Flow › should get policy prompt
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 404
+
+      151 |         });
+      152 |
+    > 153 |       expect(response.status).toBe(201);
+          |                               ^
+      154 |       expect(response.body).toHaveProperty('nextPrompt');
+      155 |       expect(response.body.nextPrompt).toContain('3');
+      156 |     });
+
+      at Object.<anonymous> (integration/classroom-mode.integration.spec.ts:153:31)
+
+  ● Classroom Mode Integration Tests (e2e) › Weekly Planning Flow › should create weekly plan
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 404
+
+      171 |         });
+      172 |
+    > 173 |       expect(response.status).toBe(201);
+          |                               ^
+      174 |       expect(response.body).toHaveProperty('itemsJson');
+      175 |       expect(response.body.itemsJson).toHaveLength(3);
+      176 |     });
+
+      at Object.<anonymous> (integration/classroom-mode.integration.spec.ts:173:31)
+
+  ● Classroom Mode Integration Tests (e2e) › Weekly Planning Flow › should get current week plan
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 404
+
+      181 |         .set('Authorization', `Bearer ${authToken}`);
+      182 |
+    > 183 |       expect(response.status).toBe(200);
+          |                               ^
+      184 |       expect(response.body).toHaveProperty('itemsJson');
+      185 |     });
+      186 |   });
+
+      at Object.<anonymous> (integration/classroom-mode.integration.spec.ts:183:31)
+
+  ● Classroom Mode Integration Tests (e2e) › Dashboard with Privacy Filtering › should get teacher dashboard with privacy filtering
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 404
+
+      192 |         .set('Authorization', `Bearer ${authToken}`);
+      193 |
+    > 194 |       expect(response.status).toBe(200);
+          |                               ^
+      195 |       expect(response.body).toHaveProperty('activeStudents');
+      196 |       expect(response.body).toHaveProperty('students');
+      197 |       expect(response.body.privacyMode).toBe('AGGREGATED_PLUS_HELP_REQUESTS');
+
+      at Object.<anonymous> (integration/classroom-mode.integration.spec.ts:194:31)
+
+  ● Classroom Mode Integration Tests (e2e) › Intervention Flow › should log student help request
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 404
+
+      217 |         });
+      218 |
+    > 219 |       expect(response.status).toBe(201);
+          |                               ^
+      220 |       expect(response.body).toHaveProperty('timestamp');
+      221 |       expect(response.body.status).toBe('PENDING');
+      222 |     });
+
+      at Object.<anonymous> (integration/classroom-mode.integration.spec.ts:219:31)
+
+  ● Classroom Mode Integration Tests (e2e) › Intervention Flow › should get intervention prompt
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 404
+
+      231 |         });
+      232 |
+    > 233 |       expect(response.status).toBe(201);
+          |                               ^
+      234 |       expect(response.body).toHaveProperty('nextPrompt');
+      235 |       expect(response.body.nextPrompt).toContain('Maria');
+      236 |     });
+
+      at Object.<anonymous> (integration/classroom-mode.integration.spec.ts:233:31)
+
+Test Suites: 1 failed, 1 total
+Tests:       12 failed, 12 total
+Snapshots:   0 total
+Time:        7.459 s
+Ran all test suites matching /test\\integration\\classroom-mode.integration.spec.ts/i.

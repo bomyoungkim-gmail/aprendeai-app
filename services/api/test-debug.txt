@@ -1,0 +1,65 @@
+  console.log
+    Registration failed: 400 {
+      message: [ 'Institution ID must be a valid UUID' ],
+      error: 'Bad Request',
+      statusCode: 400
+    }
+
+      at Object.<anonymous> (integration/family.spec.ts:71:17)
+
+FAIL test/integration/family.spec.ts (6.316 s)
+  Family Plan (Integration)
+    Authentication Setup
+      × should register and login owner user (59 ms)
+    POST /families
+      ○ skipped should create family with current user as owner
+      ○ skipped should create owner membership record
+      ○ skipped should return family with members array
+    GET /families
+      ○ skipped should list all families user belongs to
+    POST /families/:id/invite
+      ○ skipped should add existing user as GUARDIAN
+      ○ skipped should create placeholder user for new email
+      ○ skipped should reject duplicate invitations
+      ○ skipped should only allow owner to invite members
+    POST /families/:id/transfer-ownership
+      ○ skipped should transfer ownership to existing member
+      ○ skipped should prevent non-owner from transferring
+    POST /families/:id/primary
+      ○ skipped should set family as primary for user
+      ○ skipped should only allow family members to set as primary
+    GET /families/:id/billing-hierarchy (NOT IMPLEMENTED)
+      ○ skipped should resolve to primary family
+      ○ skipped should fall back to user scope if no families
+    DELETE /families/:id
+      ○ skipped should delete family and all members
+      ○ skipped should only allow owner to delete family
+      ○ skipped should return 404 if family does not exist
+    Multi-Family Scenarios
+      ○ skipped should create second family
+      ○ skipped should list both families
+      ○ skipped should switch primary family
+      ○ skipped should resolve billing to new primary family (NOT IMPLEMENTED)
+
+  ● Family Plan (Integration) › Authentication Setup › should register and login owner user
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 400
+
+      71 |         console.log('Registration failed:', registerResponse.status, registerResponse.body);
+      72 |       }
+    > 73 |       expect(registerResponse.status).toBe(201);
+         |                                       ^
+      74 |
+      75 |       // Login
+      76 |       const loginResponse = await request(app.getHttpServer())
+
+      at Object.<anonymous> (integration/family.spec.ts:73:39)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 21 skipped, 22 total
+Snapshots:   0 total
+Time:        6.598 s, estimated 9 s
+Ran all test suites matching /test\\integration\\family.spec.ts/i with tests matching "should register and login owner user".

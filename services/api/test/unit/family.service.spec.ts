@@ -437,7 +437,7 @@ describe('FamilyService (Unit)', () => {
       });
     });
 
-    it('should downgrade old owner to ADMIN', async () => {
+    it('should downgrade old owner to GUARDIAN', async () => {
       (prismaService.family.findUnique as jest.Mock).mockResolvedValue(mockFamily);
       // Mocks for transaction
       // Fix: transaction callback execution is mocked in beforeEach
@@ -448,7 +448,7 @@ describe('FamilyService (Unit)', () => {
         where: {
           familyId_userId: { familyId, userId: currentOwnerId },
         },
-        data: expect.objectContaining({ role: 'ADMIN' }),
+        data: expect.objectContaining({ role: 'GUARDIAN' }),
       });
     });
 

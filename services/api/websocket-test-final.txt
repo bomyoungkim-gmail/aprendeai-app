@@ -1,0 +1,491 @@
+  console.log
+    DEBUG: handleConnection called for rrOxDC671Ru2rmOMAAAB
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: Yes
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: Token verified for user: a5f7beef-ed73-477f-afb9-9cd71433fb2e
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:51:17)
+
+  console.log
+    DEBUG: handleConnection called for _T_9nGqqOmwUSyrbAAAD
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: Yes
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: Token verification failed: jwt malformed
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:53:17)
+
+  console.log
+    DEBUG: handleConnection called for Rj1wj7cN-JQTtmUvAAAF
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: No
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: No token, disconnecting
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:39:17)
+
+  console.log
+    DEBUG: handleConnection called for zQ6HSNLHhmEiBFboAAAI
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: Yes
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: Token verified for user: a5f7beef-ed73-477f-afb9-9cd71433fb2e
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:51:17)
+
+  console.log
+    DEBUG: handleConnection called for Qci-R39kgAhRt4hZAAAJ
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: Yes
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: Token verified for user: 6fca6519-4d8b-4b8c-92c5-927bfa234832
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:51:17)
+
+  console.log
+    DEBUG: handleJoinSession called
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:86:13)
+
+  console.log
+    DEBUG: User in joinSession: {
+      userId: '6fca6519-4d8b-4b8c-92c5-927bfa234832',
+      email: 'ws-user2@example.com',
+      name: 'WS User 2'
+    }
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:89:13)
+
+  console.log
+    DEBUG: handleJoinSession called
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:86:13)
+
+  console.log
+    DEBUG: User in joinSession: {
+      userId: 'a5f7beef-ed73-477f-afb9-9cd71433fb2e',
+      email: 'ws-user1@example.com',
+      name: 'WS User 1'
+    }
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:89:13)
+
+  console.log
+    DEBUG: handleConnection called for e8Yd02FUM5KEkBUAAAAM
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: Yes
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: Token verified for user: a5f7beef-ed73-477f-afb9-9cd71433fb2e
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:51:17)
+
+  console.log
+    DEBUG: handleConnection called for 63AXPmjCryqE_wVjAAAN
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: Yes
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: Token verified for user: 6fca6519-4d8b-4b8c-92c5-927bfa234832
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:51:17)
+
+  console.log
+    DEBUG: handleJoinSession called
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:86:13)
+
+  console.log
+    DEBUG: User in joinSession: {
+      userId: '6fca6519-4d8b-4b8c-92c5-927bfa234832',
+      email: 'ws-user2@example.com',
+      name: 'WS User 2'
+    }
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:89:13)
+
+  console.log
+    DEBUG: handleJoinSession called
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:86:13)
+
+  console.log
+    DEBUG: User in joinSession: {
+      userId: 'a5f7beef-ed73-477f-afb9-9cd71433fb2e',
+      email: 'ws-user1@example.com',
+      name: 'WS User 1'
+    }
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:89:13)
+
+  console.log
+    DEBUG: handleConnection called for vt2-JUjSFsLf7NF5AAAQ
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: Yes
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: Token verified for user: a5f7beef-ed73-477f-afb9-9cd71433fb2e
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:51:17)
+
+  console.log
+    DEBUG: handleConnection called for bi8aKhPERke9LELfAAAR
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: Yes
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: Token verified for user: 6fca6519-4d8b-4b8c-92c5-927bfa234832
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:51:17)
+
+  console.log
+    DEBUG: handleJoinSession called
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:86:13)
+
+  console.log
+    DEBUG: User in joinSession: {
+      userId: 'a5f7beef-ed73-477f-afb9-9cd71433fb2e',
+      email: 'ws-user1@example.com',
+      name: 'WS User 1'
+    }
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:89:13)
+
+  console.log
+    DEBUG: handleJoinSession called
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:86:13)
+
+  console.log
+    DEBUG: User in joinSession: {
+      userId: '6fca6519-4d8b-4b8c-92c5-927bfa234832',
+      email: 'ws-user2@example.com',
+      name: 'WS User 2'
+    }
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:89:13)
+
+  console.log
+    DEBUG: handleConnection called for tAn7t5qxjn7GMIb7AAAU
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: Yes
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: Token verified for user: a5f7beef-ed73-477f-afb9-9cd71433fb2e
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:51:17)
+
+  console.log
+    DEBUG: handleConnection called for HYKpoBFqmBN71BKMAAAV
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: Yes
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: Token verified for user: 6fca6519-4d8b-4b8c-92c5-927bfa234832
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:51:17)
+
+  console.log
+    DEBUG: handleJoinSession called
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:86:13)
+
+  console.log
+    DEBUG: User in joinSession: {
+      userId: '6fca6519-4d8b-4b8c-92c5-927bfa234832',
+      email: 'ws-user2@example.com',
+      name: 'WS User 2'
+    }
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:89:13)
+
+  console.log
+    DEBUG: handleJoinSession called
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:86:13)
+
+  console.log
+    DEBUG: User in joinSession: {
+      userId: 'a5f7beef-ed73-477f-afb9-9cd71433fb2e',
+      email: 'ws-user1@example.com',
+      name: 'WS User 1'
+    }
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:89:13)
+
+  console.log
+    DEBUG: handleConnection called for ZhjuYfCqUjqwn-dFAAAY
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: Yes
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: Token verified for user: a5f7beef-ed73-477f-afb9-9cd71433fb2e
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:51:17)
+
+  console.log
+    DEBUG: handleConnection called for N05vDFeH5ysRgU_iAAAZ
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: Yes
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: Token verified for user: 6fca6519-4d8b-4b8c-92c5-927bfa234832
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:51:17)
+
+  console.log
+    DEBUG: handleJoinSession called
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:86:13)
+
+  console.log
+    DEBUG: User in joinSession: {
+      userId: 'a5f7beef-ed73-477f-afb9-9cd71433fb2e',
+      email: 'ws-user1@example.com',
+      name: 'WS User 1'
+    }
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:89:13)
+
+  console.log
+    DEBUG: handleJoinSession called
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:86:13)
+
+  console.log
+    DEBUG: User in joinSession: {
+      userId: '6fca6519-4d8b-4b8c-92c5-927bfa234832',
+      email: 'ws-user2@example.com',
+      name: 'WS User 2'
+    }
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:89:13)
+
+  console.log
+    DEBUG: handleConnection called for oulWon_ox3ZRWGC5AAAc
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: Yes
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: Token verified for user: a5f7beef-ed73-477f-afb9-9cd71433fb2e
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:51:17)
+
+  console.log
+    DEBUG: handleConnection called for c4jNOuaGsDceTsOJAAAd
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: Yes
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: Token verified for user: 6fca6519-4d8b-4b8c-92c5-927bfa234832
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:51:17)
+
+  console.log
+    DEBUG: handleJoinSession called
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:86:13)
+
+  console.log
+    DEBUG: User in joinSession: {
+      userId: '6fca6519-4d8b-4b8c-92c5-927bfa234832',
+      email: 'ws-user2@example.com',
+      name: 'WS User 2'
+    }
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:89:13)
+
+  console.log
+    DEBUG: handleJoinSession called
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:86:13)
+
+  console.log
+    DEBUG: User in joinSession: {
+      userId: 'a5f7beef-ed73-477f-afb9-9cd71433fb2e',
+      email: 'ws-user1@example.com',
+      name: 'WS User 1'
+    }
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:89:13)
+
+  console.log
+    DEBUG: handleConnection called for lXiQ775S9Zi4RwtPAAAg
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: Yes
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: Token verified for user: a5f7beef-ed73-477f-afb9-9cd71433fb2e
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:51:17)
+
+  console.log
+    DEBUG: handleConnection called for nLMdNOA2GmeeWIBqAAAh
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: Yes
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: Token verified for user: 6fca6519-4d8b-4b8c-92c5-927bfa234832
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:51:17)
+
+  console.log
+    DEBUG: handleJoinSession called
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:86:13)
+
+  console.log
+    DEBUG: User in joinSession: {
+      userId: 'a5f7beef-ed73-477f-afb9-9cd71433fb2e',
+      email: 'ws-user1@example.com',
+      name: 'WS User 1'
+    }
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:89:13)
+
+  console.log
+    DEBUG: handleJoinSession called
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:86:13)
+
+  console.log
+    DEBUG: User in joinSession: {
+      userId: '6fca6519-4d8b-4b8c-92c5-927bfa234832',
+      email: 'ws-user2@example.com',
+      name: 'WS User 2'
+    }
+
+      at StudyGroupsWebSocketGateway.handleJoinSession (src/websocket/study-groups-ws.gateway.ts:89:13)
+
+  console.log
+    DEBUG: handleConnection called for uI7hupZH22hdpDncAAAj
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:34:13)
+
+  console.log
+    DEBUG: Token extracted: Yes
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:37:15)
+
+  console.log
+    DEBUG: Token verified for user: c6cb6996-a013-467c-9f0e-7404c263837f
+
+      at StudyGroupsWebSocketGateway.handleConnection (src/websocket/study-groups-ws.gateway.ts:51:17)
+
+PASS test/integration/websocket.spec.ts (10.193 s)
+  WebSocket Real-Time Events (Integration)
+    WebSocket Connection
+      √ should connect with valid JWT token (81 ms)
+      √ should reject connection with invalid token (20 ms)
+      √ should reject connection without token (30 ms)
+    Session Membership Events
+      √ should notify other users when someone joins session (239 ms)
+      √ should notify other users when someone leaves session (154 ms)
+    Real-Time Session Events
+      √ should broadcast SESSION_STARTED event to all members (252 ms)
+      √ should broadcast ROUND_ADVANCED event when round status changes (256 ms)
+      √ should broadcast VOTE_SUBMITTED event when user votes (261 ms)
+      √ should broadcast CHAT_MESSAGE event when user sends message (250 ms)
+    Event Isolation
+      √ should NOT receive events from other sessions (731 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       10 passed, 10 total
+Snapshots:   0 total
+Time:        10.396 s, estimated 16 s
+Ran all test suites matching /test\\integration\\websocket.spec.ts/i.
+Jest did not exit one second after the test run has completed.
+
+'This usually means that there are asynchronous operations that weren't stopped in your tests. Consider running Jest with `--detectOpenHandles` to troubleshoot this issue.

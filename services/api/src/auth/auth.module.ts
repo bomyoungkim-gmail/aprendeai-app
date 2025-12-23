@@ -40,6 +40,6 @@ import { EmailModule } from '../email/email.module';
     ExtensionAuthService,
   ],
   controllers: [AuthController, ExtensionAuthController],
-  exports: [AuthService],
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

@@ -1,0 +1,14 @@
+FAIL test/integration/classroom-mode.integration.spec.ts
+  ● Test suite failed to run
+
+    src/classroom/services/class-dashboard.service.ts:53:7 - error TS2345: Argument of type 'ClassPrivacyMode | ClassPrivacyMode.AGGREGATED_ONLY' is not assignable to parameter of type 'ClassPrivacyMode'.
+      Type '"AGGREGATED_ONLY"' is not assignable to type 'ClassPrivacyMode'.
+
+    53       privacyMode,
+             ~~~~~~~~~~~
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        7.403 s, estimated 8 s
+Ran all test suites matching /test\\integration\\classroom-mode.integration.spec.ts/i.

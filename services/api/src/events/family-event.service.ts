@@ -32,12 +32,14 @@ export class FamilyEventService {
 
     const validatedPayload = schema.parse(eventPayload);
 
+    // FIX: If sessionId is a "fake" ID (e.g. policy_...), do not link to ReadingSession table
+    const isRealSessionId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId);
+
     return this.prisma.sessionEvent.create({
       data: {
-        readingSessionId: sessionId, // Correct field name
-        eventType: eventType as any, // EventType enum
+        readingSessionId: isRealSessionId ? sessionId : undefined,
+        eventType: eventType as any, 
         payloadJson: validatedPayload as any,
-        // createdAt auto-generated
       },
     });
   }

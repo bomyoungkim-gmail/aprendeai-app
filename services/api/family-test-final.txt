@@ -1,0 +1,100 @@
+  console.log
+    [FamilyService.create] BEFORE UPDATE: { userId: '2042092e-8e98-4526-bded-9c125950dd21', currentSettings: {} }
+
+      at ../src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: bac7bb7b-14ee-47f6-8a38-dbc0a5bbbc5b
+
+      at ../src/family/family.service.ts:62:15
+
+  console.log
+    Inviting new user: newuser@family-test.com
+
+      at FamilyService.inviteMember (../src/family/family.service.ts:164:16)
+
+  console.log
+    [FamilyService.create] BEFORE UPDATE: {
+      userId: '2042092e-8e98-4526-bded-9c125950dd21',
+      currentSettings: { primaryFamilyId: 'bac7bb7b-14ee-47f6-8a38-dbc0a5bbbc5b' }
+    }
+
+      at ../src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: e758c837-f31d-4d69-ab29-1494ac9daff2
+
+      at ../src/family/family.service.ts:62:15
+
+  console.log
+    [FamilyService.create] BEFORE UPDATE: {
+      userId: '2042092e-8e98-4526-bded-9c125950dd21',
+      currentSettings: { primaryFamilyId: 'e758c837-f31d-4d69-ab29-1494ac9daff2' }
+    }
+
+      at ../src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: 606ab684-e591-4135-96c7-876089542e5d
+
+      at ../src/family/family.service.ts:62:15
+
+FAIL test/integration/family.spec.ts (10.636 s)
+  Family Plan (Integration)
+    Authentication Setup
+      √ should register and login owner user (244 ms)
+    POST /families
+      √ should create family with current user as owner (84 ms)
+      √ should create owner membership record (5 ms)
+      √ should return family with members array (21 ms)
+    GET /families
+      √ should list all families user belongs to (17 ms)
+    POST /families/:id/invite
+      √ should add existing user as GUARDIAN (146 ms)
+      √ should create placeholder user for new email (41 ms)
+      √ should reject duplicate invitations (28 ms)
+      √ should only allow owner to invite members (229 ms)
+    POST /families/:id/transfer-ownership
+      √ should transfer ownership to existing member (38 ms)
+      × should prevent non-owner from transferring (9 ms)
+    POST /families/:id/primary
+      √ should set family as primary for user (21 ms)
+      √ should only allow family members to set as primary (219 ms)
+    GET /families/:id/billing-hierarchy (NOT IMPLEMENTED)
+      ○ skipped should resolve to primary family
+      ○ skipped should fall back to user scope if no families
+    DELETE /families/:id
+      √ should delete family and all members (37 ms)
+      √ should only allow owner to delete family (103 ms)
+      √ should return 404 if family does not exist (14 ms)
+    Multi-Family Scenarios
+      √ should create second family (60 ms)
+      √ should list both families (22 ms)
+      √ should switch primary family (19 ms)
+      ○ skipped should resolve billing to new primary family (NOT IMPLEMENTED)
+
+  ● Family Plan (Integration) › POST /families/:id/transfer-ownership › should prevent non-owner from transferring
+
+    expected 403 "Forbidden", got 201 "Created"
+
+      303 |           newOwnerId: ownerUserId,
+      304 |         })
+    > 305 |         .expect(403);
+          |          ^
+      306 |     });
+      307 |
+      308 |     afterAll(async () => {
+
+      at Object.<anonymous> (integration/family.spec.ts:305:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 3 skipped, 18 passed, 22 total
+Snapshots:   0 total
+Time:        10.867 s
+Ran all test suites matching /test\\integration\\family.spec.ts/i.

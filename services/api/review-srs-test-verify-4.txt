@@ -1,0 +1,39 @@
+FAIL test/integration/review-srs.spec.ts (7.609 s)
+  Review & SRS Integration Tests
+    GET /review/queue - Queue Retrieval
+      √ should return empty queue when no due items (42 ms)
+      √ should return due vocabulary items (31 ms)
+      √ should NOT return future items (13 ms)
+      √ should respect daily review cap (53 ms)
+    POST /review/attempt - SRS Transitions
+      √ should transition NEW + OK -> D1 (39 ms)
+      × should transition with FAIL -> D1 (reset) (24 ms)
+      √ should update due date correctly for D30 (20 ms)
+      √ should record attempt in history (16 ms)
+    SRS Edge Cases
+      √ should keep MASTERED on OK (18 ms)
+      √ should regress MASTERED on FAIL (16 ms)
+
+  ● Review & SRS Integration Tests › POST /review/attempt - SRS Transitions › should transition with FAIL -> D1 (reset)
+
+    expect(received).toBeGreaterThan(expected)
+
+    Matcher error: received value must be a number or bigint
+
+    Received has value: undefined
+
+      232 |       
+      233 |       expect(response.body.srsStage).toBe('D1');
+    > 234 |       expect(response.body.lapseCount).toBeGreaterThan(0);
+          |                                        ^
+      235 |     });
+      236 |     
+      237 |     it('should update due date correctly for D30', async () => {
+
+      at Object.<anonymous> (integration/review-srs.spec.ts:234:40)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 9 passed, 10 total
+Snapshots:   0 total
+Time:        7.806 s, estimated 8 s
+Ran all test suites matching /test\\integration\\review-srs.spec.ts/i.

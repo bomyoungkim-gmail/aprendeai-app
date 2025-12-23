@@ -381,14 +381,39 @@ export class FamilyService {
   }
 
   /**
-   * Transfer family ownership
+   * Transfer family ownership to another member.
+   * 
+   * This executes a transaction to ensure atomicity:
+   * 1. Updates the Family record to point to the new owner.
+   * 2. Downgrades the OLD owner to 'GUARDIAN' role (so they remain an admin-like member).
+   * 3. Upgrades the NEW owner to 'OWNER' role.
+   * 
+   * @param familyId The ID of the family
+   * @param currentOwnerId The ID of the current owner (must match family.ownerId)
+   * @param newOwnerId The ID of the member to become the new owner
    */
+
   async transferOwnership(familyId: string, currentOwnerId: string, newOwnerId: string) {
     const family = await this.findOne(familyId, currentOwnerId);
 
-    // Verify current owner
+    // Verify current owner FIRST (before self-transfer check)
     if (family.ownerId !== currentOwnerId) {
       throw new ForbiddenException('Only the current owner can transfer ownership');
+    }
+
+    // Prevent transferring to self (no-op) - AFTER validation
+    if (currentOwnerId === newOwnerId) {
+       return { success: true };
+    }
+
+    // DEBUG: Log ownership state
+    if (process.env.NODE_ENV === 'test') {
+      console.log('[transferOwnership] Validation:', {
+        familyOwnerId: family.ownerId,
+        currentOwnerId,
+        match: family.ownerId === currentOwnerId,
+        willThrow: family.ownerId !== currentOwnerId,
+      });
     }
 
     // Verify new owner is a member
@@ -405,7 +430,8 @@ export class FamilyService {
         data: { ownerId: newOwnerId },
       });
 
-      // 2. Update Old Owner Role to ADMIN (or MEMBER)
+      // 2. Update Old Owner Role to GUARDIAN
+      // We downgrade them so they don't lose access, but there can be only 1 OWNER.
       await tx.familyMember.update({
         where: {
           familyId_userId: { familyId, userId: currentOwnerId },
@@ -414,6 +440,7 @@ export class FamilyService {
       });
 
       // 3. Update New Owner Role to OWNER
+      // We upgrade the selected member to be the new OWNER.
       await tx.familyMember.update({
         where: {
           familyId_userId: { familyId, userId: newOwnerId },

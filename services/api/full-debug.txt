@@ -1,0 +1,120 @@
+  console.log
+    [FamilyService.create] BEFORE UPDATE: { userId: '282d58e3-8b55-4051-8c40-0568dbfb0e9d', currentSettings: {} }
+
+      at ../src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: c289633d-776d-41c4-aa60-9d4ced431465
+
+      at ../src/family/family.service.ts:62:15
+
+  console.log
+    Inviting new user: newuser@family-test.com
+
+      at FamilyService.inviteMember (../src/family/family.service.ts:164:16)
+
+  console.log
+    [transferOwnership] Validation: {
+      familyOwnerId: '282d58e3-8b55-4051-8c40-0568dbfb0e9d',
+      currentOwnerId: '282d58e3-8b55-4051-8c40-0568dbfb0e9d',
+      match: true,
+      willThrow: false
+    }
+
+      at FamilyService.transferOwnership (../src/family/family.service.ts:406:15)
+
+  console.log
+    [transferOwnership] Validation: {
+      familyOwnerId: '8f0e4190-becd-4597-9a33-4624a1b26fde',
+      currentOwnerId: '8f0e4190-becd-4597-9a33-4624a1b26fde',
+      match: true,
+      willThrow: false
+    }
+
+      at FamilyService.transferOwnership (../src/family/family.service.ts:406:15)
+
+  console.log
+    [FamilyService.create] BEFORE UPDATE: {
+      userId: '282d58e3-8b55-4051-8c40-0568dbfb0e9d',
+      currentSettings: { primaryFamilyId: 'c289633d-776d-41c4-aa60-9d4ced431465' }
+    }
+
+      at ../src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: 7af1cad4-0cd7-43e8-8629-796b789dcb91
+
+      at ../src/family/family.service.ts:62:15
+
+  console.log
+    [FamilyService.create] BEFORE UPDATE: {
+      userId: '282d58e3-8b55-4051-8c40-0568dbfb0e9d',
+      currentSettings: { primaryFamilyId: '7af1cad4-0cd7-43e8-8629-796b789dcb91' }
+    }
+
+      at ../src/family/family.service.ts:50:15
+
+  console.log
+    [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: ceeaca74-4470-4790-bc07-4c5c08fed20f
+
+      at ../src/family/family.service.ts:62:15
+
+FAIL test/integration/family.spec.ts (8.512 s)
+  Family Plan (Integration)
+    Authentication Setup
+      √ should register and login owner user (268 ms)
+    POST /families
+      √ should create family with current user as owner (75 ms)
+      √ should create owner membership record (8 ms)
+      √ should return family with members array (27 ms)
+    GET /families
+      √ should list all families user belongs to (30 ms)
+    POST /families/:id/invite
+      √ should add existing user as GUARDIAN (212 ms)
+      √ should create placeholder user for new email (44 ms)
+      √ should reject duplicate invitations (57 ms)
+      √ should only allow owner to invite members (249 ms)
+    POST /families/:id/transfer-ownership
+      √ should transfer ownership to existing member (50 ms)
+      × should prevent non-owner from transferring (12 ms)
+    POST /families/:id/primary
+      √ should set family as primary for user (30 ms)
+      √ should only allow family members to set as primary (214 ms)
+    GET /families/:id/billing-hierarchy (NOT IMPLEMENTED)
+      ○ skipped should resolve to primary family
+      ○ skipped should fall back to user scope if no families
+    DELETE /families/:id
+      √ should delete family and all members (36 ms)
+      √ should only allow owner to delete family (102 ms)
+      √ should return 404 if family does not exist (16 ms)
+    Multi-Family Scenarios
+      √ should create second family (48 ms)
+      √ should list both families (26 ms)
+      √ should switch primary family (23 ms)
+      ○ skipped should resolve billing to new primary family (NOT IMPLEMENTED)
+
+  ● Family Plan (Integration) › POST /families/:id/transfer-ownership › should prevent non-owner from transferring
+
+    expected 403 "Forbidden", got 201 "Created"
+
+      303 |           newOwnerId: ownerUserId,
+      304 |         })
+    > 305 |         .expect(403);
+          |          ^
+      306 |     });
+      307 |
+      308 |     afterAll(async () => {
+
+      at Object.<anonymous> (integration/family.spec.ts:305:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 3 skipped, 18 passed, 22 total
+Snapshots:   0 total
+Time:        8.748 s, estimated 10 s
+Ran all test suites matching /test\\integration\\family.spec.ts/i.

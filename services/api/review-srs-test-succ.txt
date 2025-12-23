@@ -1,0 +1,21 @@
+PASS test/integration/review-srs.spec.ts (8.648 s)
+  Review & SRS Integration Tests
+    GET /review/queue - Queue Retrieval
+      √ should return empty queue when no due items (45 ms)
+      √ should return due vocabulary items (35 ms)
+      √ should NOT return future items (21 ms)
+      √ should respect daily review cap (65 ms)
+    POST /review/attempt - SRS Transitions
+      √ should transition NEW + OK -> D1 (46 ms)
+      √ should transition with FAIL -> D1 (reset) (30 ms)
+      √ should update due date correctly for D30 (23 ms)
+      √ should record attempt in history (19 ms)
+    SRS Edge Cases
+      √ should keep MASTERED on OK (19 ms)
+      √ should regress MASTERED on FAIL (19 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       10 passed, 10 total
+Snapshots:   0 total
+Time:        8.855 s
+Ran all test suites matching /test\\integration\\review-srs.spec.ts/i.

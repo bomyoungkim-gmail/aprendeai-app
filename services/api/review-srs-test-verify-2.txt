@@ -1,0 +1,221 @@
+FAIL test/integration/review-srs.spec.ts (7.534 s)
+  Review & SRS Integration Tests
+    GET /review/queue - Queue Retrieval
+      × should return empty queue when no due items (20 ms)
+      × should return due vocabulary items (11 ms)
+      × should NOT return future items (8 ms)
+      × should respect daily review cap (40 ms)
+    POST /review/attempt - SRS Transitions
+      × should transition NEW + OK -> D1 (19 ms)
+      × should transition with FAIL -> D1 (reset) (13 ms)
+      × should update due date correctly for D30 (10 ms)
+      × should record attempt in history (8 ms)
+    SRS Edge Cases
+      × should keep MASTERED on OK (8 ms)
+      × should regress MASTERED on FAIL (7 ms)
+
+  ● Review & SRS Integration Tests › GET /review/queue - Queue Retrieval › should return empty queue when no due items
+
+    expected 200 "OK", got 404 "Not Found"
+
+      101 |         .get(apiUrl('review/queue'))
+      102 |         .set('Authorization', authToken)
+    > 103 |         .expect(200);
+          |          ^
+      104 |       
+      105 |       expect(response.body).toEqual([]);
+      106 |     });
+
+      at Object.<anonymous> (integration/review-srs.spec.ts:103:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Review & SRS Integration Tests › GET /review/queue - Queue Retrieval › should return due vocabulary items
+
+    expected 200 "OK", got 404 "Not Found"
+
+      122 |         .get(apiUrl('review/queue'))
+      123 |         .set('Authorization', authToken)
+    > 124 |         .expect(200);
+          |          ^
+      125 |       
+      126 |       expect(response.body.length).toBeGreaterThan(0);
+      127 |       expect(response.body[0].word).toBe('test');
+
+      at Object.<anonymous> (integration/review-srs.spec.ts:124:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Review & SRS Integration Tests › GET /review/queue - Queue Retrieval › should NOT return future items
+
+    expected 200 "OK", got 404 "Not Found"
+
+      144 |         .get(apiUrl('review/queue'))
+      145 |         .set('Authorization', authToken)
+    > 146 |         .expect(200);
+          |          ^
+      147 |       
+      148 |       expect(response.body).toEqual([]);
+      149 |     });
+
+      at Object.<anonymous> (integration/review-srs.spec.ts:146:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Review & SRS Integration Tests › GET /review/queue - Queue Retrieval › should respect daily review cap
+
+    expected 200 "OK", got 404 "Not Found"
+
+      171 |         .get(apiUrl('review/queue'))
+      172 |         .set('Authorization', authToken)
+    > 173 |         .expect(200);
+          |          ^
+      174 |       
+      175 |       expect(response.body.length).toBeLessThanOrEqual(20);
+      176 |     });
+
+      at Object.<anonymous> (integration/review-srs.spec.ts:173:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Review & SRS Integration Tests › POST /review/attempt - SRS Transitions › should transition NEW + OK -> D1
+
+    expected 201 "Created", got 404 "Not Found"
+
+      208 |           sessionId: 'test-session', // Added required field
+      209 |         })
+    > 210 |         .expect(201);
+          |          ^
+      211 |       
+      212 |       expect(response.body.srsStage).toBe('D1');
+      213 |       expect(response.body.dueAt).toBeDefined();
+
+      at Object.<anonymous> (integration/review-srs.spec.ts:210:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Review & SRS Integration Tests › POST /review/attempt - SRS Transitions › should transition with FAIL -> D1 (reset)
+
+    expected 201 "Created", got 404 "Not Found"
+
+      230 |           sessionId: 'test-session',
+      231 |         })
+    > 232 |         .expect(201);
+          |          ^
+      233 |       
+      234 |       expect(response.body.srsStage).toBe('D1');
+      235 |       expect(response.body.lapseCount).toBeGreaterThan(0);
+
+      at Object.<anonymous> (integration/review-srs.spec.ts:232:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Review & SRS Integration Tests › POST /review/attempt - SRS Transitions › should update due date correctly for D30
+
+    expected 201 "Created", got 404 "Not Found"
+
+      254 |           sessionId: 'test-session',
+      255 |         })
+    > 256 |         .expect(201);
+          |          ^
+      257 |       
+      258 |       expect(response.body.srsStage).toBe('D30');
+      259 |       
+
+      at Object.<anonymous> (integration/review-srs.spec.ts:256:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Review & SRS Integration Tests › POST /review/attempt - SRS Transitions › should record attempt in history
+
+    expected 201 "Created", got 404 "Not Found"
+
+      276 |           sessionId: 'test-session',
+      277 |         })
+    > 278 |         .expect(201);
+          |          ^
+      279 |       
+      280 |       expect(vocabId).toBeDefined();
+      281 |     });
+
+      at Object.<anonymous> (integration/review-srs.spec.ts:278:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Review & SRS Integration Tests › SRS Edge Cases › should keep MASTERED on OK
+
+    expected 201 "Created", got 404 "Not Found"
+
+      312 |           sessionId: 'test-session',
+      313 |         })
+    > 314 |         .expect(201);
+          |          ^
+      315 |       
+      316 |       expect(response.body.srsStage).toBe('MASTERED');
+      317 |     });
+
+      at Object.<anonymous> (integration/review-srs.spec.ts:314:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+  ● Review & SRS Integration Tests › SRS Edge Cases › should regress MASTERED on FAIL
+
+    expected 201 "Created", got 404 "Not Found"
+
+      327 |           sessionId: 'test-session',
+      328 |         })
+    > 329 |         .expect(201);
+          |          ^
+      330 |       
+      331 |       expect(response.body.srsStage).toBe('D1');
+      332 |     });
+
+      at Object.<anonymous> (integration/review-srs.spec.ts:329:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+Test Suites: 1 failed, 1 total
+Tests:       10 failed, 10 total
+Snapshots:   0 total
+Time:        7.727 s, estimated 8 s
+Ran all test suites matching /test\\integration\\review-srs.spec.ts/i.

@@ -29,9 +29,14 @@ export class ClassroomEventService {
 
     const validatedPayload = schema.parse(eventPayload);
 
+    // For classroom events using fake IDs (policy_, plan_, help_), do not set readingSessionId
+    const isFakeSessionId = sessionId.startsWith('policy_') || 
+                           sessionId.startsWith('plan_') || 
+                           sessionId.startsWith('help_');
+
     return this.prisma.sessionEvent.create({
       data: {
-        readingSessionId: sessionId, // Correct field name
+        readingSessionId: isFakeSessionId ? undefined : sessionId,
         eventType: eventType as any, // EventType enum
         payloadJson: validatedPayload as any,
         // createdAt auto-generated

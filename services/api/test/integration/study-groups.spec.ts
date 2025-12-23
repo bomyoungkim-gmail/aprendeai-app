@@ -84,6 +84,7 @@ describe('Study Groups API (Integration)', () => {
     }
     await prisma.content.delete({ where: { id: contentId } });
     await prisma.user.delete({ where: { id: userId } });
+    await prisma.user.deleteMany({ where: { email: 'member2-groups@example.com' } });
 
     await app.close();
   });
@@ -91,7 +92,7 @@ describe('Study Groups API (Integration)', () => {
   describe('Groups Management', () => {
     it('POST /groups - should create group', async () => {
       const res = await request(app.getHttpServer())
-        .post('/groups')
+        .post(apiUrl('groups'))
         .set('Authorization', authToken)
         .send({ name: 'Integration Test Group' })
         .expect(201);
@@ -105,7 +106,7 @@ describe('Study Groups API (Integration)', () => {
 
     it('GET /groups - should list user groups', async () => {
       const res = await request(app.getHttpServer())
-        .get('/groups')
+        .get(apiUrl('groups'))
         .set('Authorization', authToken)
         .expect(200);
 
@@ -116,7 +117,7 @@ describe('Study Groups API (Integration)', () => {
 
     it('GET /groups/:groupId - should get group details', async () => {
       const res = await request(app.getHttpServer())
-        .get(`/groups/${groupId}`)
+        .get(apiUrl(`groups/${groupId}`))
         .set('Authorization', authToken)
         .expect(200);
 
@@ -143,7 +144,7 @@ describe('Study Groups API (Integration)', () => {
       });
 
       await request(app.getHttpServer())
-        .post(`/groups/${groupId}/members/invite`)
+        .post(apiUrl(`groups/${groupId}/members/invite`))
         .set('Authorization', authToken)
         .send({ userId: user2.id, role: 'MEMBER' })
         .expect(201);
@@ -157,12 +158,15 @@ describe('Study Groups API (Integration)', () => {
       expect(member!.status).toBe('INVITED');
 
       // Cleanup
+      await prisma.studyGroupMember.delete({
+        where: { groupId_userId: { groupId, userId: user2.id } },
+      });
       await prisma.user.delete({ where: { id: user2.id } });
     });
 
     it('POST /groups/:groupId/contents - should add content', async () => {
       await request(app.getHttpServer())
-        .post(`/groups/${groupId}/contents`)
+        .post(apiUrl(`groups/${groupId}/contents`))
         .set('Authorization', authToken)
         .send({ contentId })
         .expect(201);
@@ -192,7 +196,7 @@ describe('Study Groups API (Integration)', () => {
       });
 
       await request(app.getHttpServer())
-        .delete(`/groups/${groupId}/contents/${content2.id}`)
+        .delete(apiUrl(`groups/${groupId}/contents/${content2.id}`))
         .set('Authorization', authToken)
         .expect(200);
 
@@ -238,7 +242,7 @@ describe('Study Groups API (Integration)', () => {
 
     it('POST /group-sessions - should create session', async () => {
       const res = await request(app.getHttpServer())
-        .post(`/group-sessions?groupId=${groupId}`)
+        .post(apiUrl(`group-sessions?groupId=${groupId}`))
         .set('Authorization', authToken)
         .send({
           contentId,
@@ -266,7 +270,7 @@ describe('Study Groups API (Integration)', () => {
 
     it('GET /group-sessions/:sessionId - should get session details', async () => {
       const res = await request(app.getHttpServer())
-        .get(`/group-sessions/${sessionId}`)
+        .get(apiUrl(`group-sessions/${sessionId}`))
         .set('Authorization', authToken)
         .expect(200);
 
@@ -276,7 +280,7 @@ describe('Study Groups API (Integration)', () => {
 
     it('PUT /group-sessions/:sessionId/start - should start session', async () => {
       await request(app.getHttpServer())
-        .put(`/group-sessions/${sessionId}/start`)
+        .put(apiUrl(`group-sessions/${sessionId}/start`))
         .set('Authorization', authToken)
         .expect(200);
 
@@ -290,7 +294,7 @@ describe('Study Groups API (Integration)', () => {
 
     it('POST /group-sessions/:sessionId/events - should submit vote', async () => {
       await request(app.getHttpServer())
-        .post(`/group-sessions/${sessionId}/events`)
+        .post(apiUrl(`group-sessions/${sessionId}/events`))
         .set('Authorization', authToken)
         .send({
           roundIndex: 1,
@@ -309,7 +313,7 @@ describe('Study Groups API (Integration)', () => {
 
     it('POST /group-sessions/:sessionId/rounds/:roundIndex/advance - should block with 409 if incomplete', async () => {
       const res = await request(app.getHttpServer())
-        .post(`/group-sessions/${sessionId}/rounds/1/advance`)
+        .post(apiUrl(`group-sessions/${sessionId}/rounds/1/advance`))
         .set('Authorization', authToken)
         .send({ toStatus: 'DISCUSSING' })
         .expect(409);
@@ -353,10 +357,10 @@ describe('Study Groups API (Integration)', () => {
       }
 
       await request(app.getHttpServer())
-        .post(`/group-sessions/${sessionId}/rounds/1/advance`)
+        .post(apiUrl(`group-sessions/${sessionId}/rounds/1/advance`))
         .set('Authorization', authToken)
         .send({ toStatus: 'DISCUSSING' })
-        .expect(200);
+        .expect(201);
 
       // Verify round status changed
       const round = await prisma.groupRound.findFirst({
@@ -368,7 +372,7 @@ describe('Study Groups API (Integration)', () => {
 
     it('GET /group-sessions/:sessionId/events - should get events', async () => {
       const res = await request(app.getHttpServer())
-        .get(`/group-sessions/${sessionId}/events?roundIndex=1`)
+        .get(apiUrl(`group-sessions/${sessionId}/events?roundIndex=1`))
         .set('Authorization', authToken)
         .expect(200);
 
@@ -378,7 +382,7 @@ describe('Study Groups API (Integration)', () => {
 
     it('GET /group-sessions/:sessionId/shared-cards - should get shared cards', async () => {
       const res = await request(app.getHttpServer())
-        .get(`/group-sessions/${sessionId}/shared-cards`)
+        .get(apiUrl(`group-sessions/${sessionId}/shared-cards`))
         .set('Authorization', authToken)
         .expect(200);
 
@@ -390,14 +394,16 @@ describe('Study Groups API (Integration)', () => {
   describe('Permission Tests', () => {
     it('should reject unauthorized access (no token)', async () => {
       await request(app.getHttpServer())
-        .get('/groups')
+        .get(apiUrl('groups'))
         .expect(401);
     });
 
     it('should reject MEMBER trying to invite', async () => {
       // Create a MEMBER user
-      const memberUser = await prisma.user.create({
-        data: {
+      // Create a MEMBER user
+      const memberUser = await prisma.user.upsert({
+        where: { email: 'member-only@example.com' },
+        create: {
           email: 'member-only@example.com',
           name: 'Member Only',
           passwordHash: 'hash',
@@ -405,6 +411,7 @@ describe('Study Groups API (Integration)', () => {
           schoolingLevel: 'ADULT',
           status: 'ACTIVE',
         },
+        update: {},
       });
 
       await prisma.studyGroupMember.create({
@@ -424,7 +431,7 @@ describe('Study Groups API (Integration)', () => {
       });
 
       await request(app.getHttpServer())
-        .post(`/groups/${groupId}/members/invite`)
+        .post(apiUrl(`groups/${groupId}/members/invite`))
         .set('Authorization', memberToken)
         .send({ userId: 'some-user-id', role: 'MEMBER' })
         .expect(403);
@@ -444,14 +451,14 @@ describe('Study Groups API (Integration)', () => {
       });
 
       await request(app.getHttpServer())
-        .get('/groups')
+        .get(apiUrl('groups'))
         .set('Authorization', `Bearer ${expiredToken}`)
         .expect(401);
     });
 
     it('should reject invalid JWT token', async () => {
       await request(app.getHttpServer())
-        .get('/groups')
+        .get(apiUrl('groups'))
         .set('Authorization', 'Bearer invalid-token-12345')
         .expect(401);
     });

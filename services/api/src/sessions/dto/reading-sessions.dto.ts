@@ -21,6 +21,7 @@ export class RecordEventDto {
   @IsNotEmpty()
   eventType: 'MARK_UNKNOWN_WORD' | 'MARK_KEY_IDEA' | 'CHECKPOINT_RESPONSE' | 'QUIZ_RESPONSE' | 'PRODUCTION_SUBMIT';
 
+  @IsNotEmpty()
   payload: any;
 }
 

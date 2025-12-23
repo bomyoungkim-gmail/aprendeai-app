@@ -2,7 +2,7 @@
 
 **Purpose:** Document unit test coverage and patterns  
 **Audience:** Dev | Antigravity  
-**Last updated:** 2025-12-18  
+**Last updated:** 2025-12-22  
 **Owner:** Engineering Team
 
 ## Invariants (cannot break)
@@ -10,6 +10,7 @@
 - Business logic has 100% unit test coverage
 - SRS: 31 tests (all transitions)
 - Gating: 18 tests (all criteria)
+- Family: 23 tests (all ownership/membership flows)
 - Tests run in isolation (no DB, no external deps)
 - All tests must pass before merge
 
@@ -28,7 +29,7 @@
 - API endpoints (integration tests)
 - User flows (E2E tests)
 
-## Backend Unit Tests (49 total)
+## Backend Unit Tests (72 total)
 
 ### SRS Service (31 tests)
 
@@ -190,6 +191,88 @@ it("should fallback L3 -> L2 -> L1", async () => {
   expect(layer).toBe("L2");
   // L3: ineligible (only 3 sessions, need 5)
   // L2: eligible (3 sessions, good scores)
+});
+```
+
+````
+
+---
+
+### Family Service (23 tests)
+
+**File:** `services/api/test/unit/family.service.spec.ts`
+
+**Coverage:**
+
+```typescript
+describe('FamilyService', () => {
+  // Family Creation (3 tests)
+  ✅ should create family with current user as owner
+  ✅ should set owner role to OWNER
+  ✅ should set status to ACTIVE
+
+  // Member Invitation (3 tests)
+  ✅ should invite existing user
+  ✅ should create placeholder for new email
+  ✅ should reject duplicate invitations
+
+  // Invite Acceptance (2 tests)
+  ✅ should accept invitation
+  ✅ should activate placeholder user
+
+  // Ownership Transfer (5 tests)
+  ✅ should update family ownerId
+  ✅ should downgrade old owner to GUARDIAN
+  ✅ should upgrade new owner to OWNER
+  ✅ should prevent non-owner from transferring
+  ✅ should reject transfer to non-member
+
+  // Billing Hierarchy (2 tests)
+  ✅ should resolve to primary family
+  ✅ should fallback to user scope if no families
+
+  // Family Deletion (3 tests)
+  ✅ should delete family and all members
+  ✅ should only allow owner to delete
+  ✅ should throw if family not found
+
+  // Validation (5 tests)
+  ✅ should validate family membership
+  ✅ should validate owner permissions
+  ✅ should prevent duplicate family names
+  ✅ should enforce role constraints
+  ✅ should maintain referential integrity
+});
+````
+
+**Example Test:**
+
+```typescript
+it("should downgrade old owner to GUARDIAN", async () => {
+  (prismaService.family.findUnique as jest.Mock).mockResolvedValue(mockFamily);
+
+  await service.transferOwnership(familyId, currentOwnerId, newOwnerId);
+
+  expect(prismaService.familyMember.update).toHaveBeenCalledWith({
+    where: {
+      familyId_userId: { familyId, userId: currentOwnerId },
+    },
+    data: expect.objectContaining({ role: "GUARDIAN" }),
+  });
+});
+
+it("should create family with owner membership", async () => {
+  const result = await service.create(userId, { name: "My Family" });
+
+  expect(result.ownerId).toBe(userId);
+  expect(prismaService.familyMember.create).toHaveBeenCalledWith({
+    data: {
+      userId,
+      familyId: result.id,
+      role: "OWNER",
+      status: "ACTIVE",
+    },
+  });
 });
 ```
 
@@ -409,6 +492,7 @@ npm test -- --coverage
 | ----------------- | ---------- | -------- | --------- | ----- |
 | srs.service.ts    | 100%       | 100%     | 100%      | 100%  |
 | gating.service.ts | 100%       | 100%     | 100%      | 100%  |
+| family.service.ts | 100%       | 100%     | 100%      | 100%  |
 | CornellPanel.tsx  | 85%        | 78%      | 90%       | 85%   |
 | HighlightLink.tsx | 80%        | 75%      | 85%       | 80%   |
 
@@ -448,4 +532,4 @@ npm test -- --coverage
 
 **Backend Tests:** `services/api/test/unit/`  
 **Frontend Tests:** `frontend/tests/unit/`  
-**Total:** 49 backend + 21 frontend = 70 unit tests
+**Total:** 72 backend + 21 frontend = 93 unit tests

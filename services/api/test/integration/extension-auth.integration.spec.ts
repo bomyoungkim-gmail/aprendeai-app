@@ -5,6 +5,7 @@ import { PrismaService } from '../../src/prisma/prisma.service';
 import * as request from 'supertest';
 import { TestAuthHelper, createTestUser } from '../helpers/auth.helper';
 import { JwtService } from '@nestjs/jwt';
+import { apiUrl, ROUTES } from '../../src/common/constants/routes.constants';
 
 describe('Extension Auth Integration Tests (e2e)', () => {
   let app: INestApplication;
@@ -19,6 +20,7 @@ describe('Extension Auth Integration Tests (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api/v1');
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     
     await app.init();
@@ -71,7 +73,7 @@ describe('Extension Auth Integration Tests (e2e)', () => {
 
     it('should start device code flow', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/v1/auth/extension/device/start')
+        .post(apiUrl(ROUTES.AUTH.EXTENSION_DEVICE_START))
         .send({
           clientId: 'browser-extension',
           scopes: ['extension:webclip:create'],
@@ -88,7 +90,7 @@ describe('Extension Auth Integration Tests (e2e)', () => {
 
     it('should return PENDING when polling immediately', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/v1/auth/extension/device/poll')
+        .post(apiUrl(ROUTES.AUTH.EXTENSION_DEVICE_POLL))
         .send({
           clientId: 'browser-extension',
           deviceCode,
@@ -100,7 +102,7 @@ describe('Extension Auth Integration Tests (e2e)', () => {
 
     it('should approve device code (as logged in user)', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/v1/auth/extension/device/approve')
+        .post(apiUrl(ROUTES.AUTH.EXTENSION_DEVICE_APPROVE))
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           userCode,
@@ -113,7 +115,7 @@ describe('Extension Auth Integration Tests (e2e)', () => {
 
     it('should return APPROVED and tokens when polling after approval', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/v1/auth/extension/device/poll')
+        .post(apiUrl(ROUTES.AUTH.EXTENSION_DEVICE_POLL))
         .send({
           clientId: 'browser-extension',
           deviceCode,
@@ -132,7 +134,7 @@ describe('Extension Auth Integration Tests (e2e)', () => {
     it('should use extension token to access protected endpoint', async () => {
       // Trying to access me endpoint
       const response = await request(app.getHttpServer())
-        .get('/api/v1/auth/extension/me')
+        .get(apiUrl(ROUTES.AUTH.EXTENSION_ME))
         .set('Authorization', `Bearer ${accessToken}`);
 
       expect(response.status).toBe(200);
@@ -140,8 +142,11 @@ describe('Extension Auth Integration Tests (e2e)', () => {
     });
 
     it('should refresh token', async () => {
+      // Wait 1.1s to ensure new token has different 'iat' claim
+      await new Promise((resolve) => setTimeout(resolve, 1100));
+
       const response = await request(app.getHttpServer())
-        .post('/api/v1/auth/extension/token/refresh')
+        .post(apiUrl(ROUTES.AUTH.EXTENSION_TOKEN_REFRESH))
         .send({ refreshToken });
 
       expect(response.status).toBe(201);

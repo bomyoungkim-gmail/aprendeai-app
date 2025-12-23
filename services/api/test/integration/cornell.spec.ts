@@ -1,3 +1,4 @@
+
 /**
  * Integration Tests - Cornell Notes
  * 
@@ -9,11 +10,12 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { ROUTES, apiUrl } from '../helpers/routes';
+import { InstitutionType } from '@prisma/client';
 
 describe('Cornell Notes Integration Tests', () => {
   let app: INestApplication;
@@ -21,6 +23,7 @@ describe('Cornell Notes Integration Tests', () => {
   let authToken: string;
   let testUserId: string;
   let testContentId: string;
+  let testInstitutionId: string;
   
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -28,25 +31,54 @@ describe('Cornell Notes Integration Tests', () => {
     }).compile();
     
     app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api/v1'); // Match production
+    app.setGlobalPrefix('api/v1');
+    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true })); // Enable validation
     await app.init();
     
     prisma = app.get<PrismaService>(PrismaService);
     
-    // Setup test user
-    const user = await prisma.user.create({
+    // Create Institution
+    const institution = await prisma.institution.create({
       data: {
-        email: `cornell-test-${Date.now()}@example.com`,
+        name: 'Cornell Test University',
+        type: InstitutionType.UNIVERSITY,
+        city: 'Test City',
+        country: 'Test Country'
+      }
+    });
+    testInstitutionId = institution.id;
+
+    const testEmail = `cornell-test-${Date.now()}@example.com`;
+
+    // Register user via API
+    await request(app.getHttpServer())
+      .post(apiUrl(ROUTES.AUTH.REGISTER))
+      .send({
+        email: testEmail,
+        password: 'Test123!@#',
         name: 'Cornell Test User',
-        passwordHash: 'hash',
         role: 'COMMON_USER',
         schoolingLevel: 'ADULT',
-        status: 'ACTIVE',
-      },
-    });
+        institutionId: testInstitutionId,
+      })
+      .expect(201);
+
+    // Login (Auth token will belong to THIS user)
+    const loginResponse = await request(app.getHttpServer())
+      .post(apiUrl(ROUTES.AUTH.LOGIN))
+      .send({
+        email: testEmail,
+        password: 'Test123!@#',
+      })
+      .expect(201);
+    
+    authToken = `Bearer ${loginResponse.body.access_token}`;
+    
+    // Fetch the REAL user ID from DB
+    const user = await prisma.user.findUnique({ where: { email: testEmail } });
     testUserId = user.id;
     
-    // Create test content
+    // Create test content OWNED by THIS user
     const content = await prisma.content.create({
       data: {
         ownerUserId: testUserId,
@@ -57,35 +89,19 @@ describe('Cornell Notes Integration Tests', () => {
       },
     });
     testContentId = content.id;
-    
-    const testEmail = `cornell-test-${Date.now()}@example.com`;
-
-    // Real authentication - register and login
-    await request(app.getHttpServer())
-      .post(apiUrl(ROUTES.AUTH.REGISTER))
-      .send({
-        email: testEmail,
-        password: 'Test123!@#',
-        name: 'Cornell Test User',
-        role: 'COMMON_USER',
-        schoolingLevel: 'ADULT',
-      })
-      .expect(201);
-    const loginResponse = await request(app.getHttpServer())
-      .post(apiUrl(ROUTES.AUTH.LOGIN))
-      .send({
-        email: testEmail,
-        password: 'Test123!@#',
-      })
-      .expect(201);
-    authToken = `Bearer ${loginResponse.body.access_token}`;
   });
   
   afterAll(async () => {
-    // Cleanup
-    await prisma.cornellNote.deleteMany({ where: { userId: testUserId } });
-    await prisma.content.deleteMany({ where: { id: testContentId } });
-    await prisma.user.deleteMany({ where: { id: testUserId } });
+    try {
+        await prisma.cornellNotes.deleteMany({ where: { userId: testUserId } });
+        // Delete contents (allow failure if deps exist)
+        await prisma.content.deleteMany({ where: { id: testContentId } });
+        await prisma.user.deleteMany({ where: { id: testUserId } });
+        await prisma.institution.deleteMany({ where: { id: testInstitutionId } });
+    } catch (e) {
+        // Ignore cleanup errors
+        console.warn('Cleanup failed:', e.message);
+    }
     await app.close();
   });
   
@@ -99,9 +115,9 @@ describe('Cornell Notes Integration Tests', () => {
       expect(response.body).toHaveProperty('id');
       expect(response.body.contentId).toBe(testContentId);
       expect(response.body.userId).toBe(testUserId);
-      expect(response.body.mainNotes).toEqual({});
-      expect(response.body.cueColumn).toBeNull();
-      expect(response.body.summaryText).toBeNull();
+      expect(response.body.notesJson).toEqual([]);
+      expect(response.body.cuesJson).toEqual([]);
+      expect(response.body.summaryText).toBe('');
     });
     
     it('should return existing Cornell notes on subsequent GET', async () => {
@@ -122,63 +138,58 @@ describe('Cornell Notes Integration Tests', () => {
       expect(second.body.id).toBe(createdId);
     });
   });
-  
+
   describe('PUT /contents/:id/cornell - Save Notes', () => {
     beforeEach(async () => {
-      // Clean existing notes
-      await prisma.cornellNote.deleteMany({
+      await prisma.cornellNotes.deleteMany({
         where: { userId: testUserId },
       });
     });
     
-    it('should save main notes', async () => {
-      const mainNotes = {
-        '1': 'First note about the content',
-        '2': 'Second important point',
-        '3': 'Third observation',
-      };
+    it('should save notes', async () => {
+      const notes_json = [
+        { id: '1', text: 'First note about the content' },
+        { id: '2', text: 'Second important point' }
+      ];
       
       const response = await request(app.getHttpServer())
         .put(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
-        .send({ mainNotes })
+        .send({ notes_json })
         .expect(200);
       
-      expect(response.body.mainNotes).toEqual(mainNotes);
+      expect(response.body.notesJson).toEqual(notes_json);
     });
     
-    it('should save cue column', async () => {
-      const cueColumn = 'Key questions:\n- What is X?\n- Why Y?\n- How Z?';
+    it('should save cues', async () => {
+      const cues_json = ['What is X?', 'Why Y?'];
       
       const response = await request(app.getHttpServer())
         .put(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
-        .send({ cueColumn })
+        .send({ cues_json })
         .expect(200);
       
-      expect(response.body.cueColumn).toBe(cueColumn);
+      expect(response.body.cuesJson).toEqual(cues_json);
     });
     
     it('should save summary text', async () => {
-      const summaryText = 'This is a comprehensive summary of everything I learned from this content.';
+      const summary_text = 'This is a comprehensive summary.';
       
       const response = await request(app.getHttpServer())
         .put(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
-        .send({ summaryText })
+        .send({ summary_text })
         .expect(200);
       
-      expect(response.body.summaryText).toBe(summaryText);
+      expect(response.body.summaryText).toBe(summary_text);
     });
     
     it('should save all fields together', async () => {
       const data = {
-        mainNotes: {
-          '1': 'Note 1',
-          '2': 'Note 2',
-        },
-        cueColumn: 'Question 1\nQuestion 2',
-        summaryText: 'Complete summary of the content',
+        notes_json: [{ id: '1', text: 'Note 1' }],
+        cues_json: ['Question 1'],
+        summary_text: 'Complete summary',
       };
       
       const response = await request(app.getHttpServer())
@@ -187,17 +198,17 @@ describe('Cornell Notes Integration Tests', () => {
         .send(data)
         .expect(200);
       
-      expect(response.body.mainNotes).toEqual(data.mainNotes);
-      expect(response.body.cueColumn).toBe(data.cueColumn);
-      expect(response.body.summaryText).toBe(data.summaryText);
+      expect(response.body.notesJson).toEqual(data.notes_json);
+      expect(response.body.cuesJson).toEqual(data.cues_json);
+      expect(response.body.summaryText).toBe(data.summary_text);
     });
   });
-  
+
   describe('Cornell Notes Persistence', () => {
     it('should persist changes across GET requests', async () => {
       const data = {
-        mainNotes: { '1': 'Persisted note' },
-        summaryText: 'Persisted summary',
+        notes_json: [{ id: '1', text: 'Persisted note' }],
+        summary_text: 'Persisted summary',
       };
       
       // Save
@@ -213,8 +224,8 @@ describe('Cornell Notes Integration Tests', () => {
         .set('Authorization', authToken)
         .expect(200);
       
-      expect(response.body.mainNotes).toEqual(data.mainNotes);
-      expect(response.body.summaryText).toBe(data.summaryText);
+      expect(response.body.notesJson).toEqual(data.notes_json);
+      expect(response.body.summaryText).toBe(data.summary_text);
     });
     
     it('should update existing notes without losing data', async () => {
@@ -223,36 +234,35 @@ describe('Cornell Notes Integration Tests', () => {
         .put(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
         .send({
-          mainNotes: { '1': 'Original' },
-          summaryText: 'Original summary',
+          notes_json: [{ id: '1', text: 'Original' }],
+          summary_text: 'Original summary',
         })
         .expect(200);
       
-      // Update only cueColumn
+      // Update only cues
       const updated = await request(app.getHttpServer())
         .put(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
         .send({
-          cueColumn: 'New cue column',
+          cues_json: ['New cue'],
         })
         .expect(200);
       
-      // Should keep original data
-      expect(updated.body.mainNotes).toEqual({ '1': 'Original' });
+      expect(updated.body.notesJson).toEqual([{ id: '1', text: 'Original' }]);
       expect(updated.body.summaryText).toBe('Original summary');
-      expect(updated.body.cueColumn).toBe('New cue column');
+      expect(updated.body.cuesJson).toEqual(['New cue']);
     });
   });
-  
+
   describe('Cornell Notes Validation', () => {
-    it('should reject invalid mainNotes format', async () => {
+    it('should reject invalid notes_json format', async () => {
       await request(app.getHttpServer())
         .put(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
         .send({
-          mainNotes: 'not an object',  // Should be object
+          notes_json: 'not an array',  // Should be array
         })
-        .expect(400);
+        .expect(400); 
     });
     
     it('should allow empty cornell notes', async () => {
@@ -260,15 +270,13 @@ describe('Cornell Notes Integration Tests', () => {
         .put(apiUrl(ROUTES.CONTENT.CORNELL(testContentId)))
         .set('Authorization', authToken)
         .send({
-          mainNotes: {},
-          cueColumn: '',
-          summaryText: '',
+          notes_json: [],
+          cues_json: [],
+          summary_text: '',
         })
         .expect(200);
       
-      expect(response.body.mainNotes).toEqual({});
+      expect(response.body.notesJson).toEqual([]);
     });
   });
 });
-
-

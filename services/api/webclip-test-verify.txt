@@ -1,0 +1,91 @@
+FAIL test/integration/webclip-creation.integration.spec.ts (7.314 s)
+  ● WebClip Creation Integration Tests › WebClip Creation › should create WebClip with valid extension token
+
+    expect(received).toHaveProperty(path)
+
+    Expected path: "id"
+    Received path: []
+
+    Received value: {"contentId": "f3dbfa99-94a9-47a9-a1de-477a833fc829", "readerUrl": "/reader/f3dbfa99-94a9-47a9-a1de-477a833fc829"}
+
+      89 |
+      90 |       expect(response.status).toBe(201);
+    > 91 |       expect(response.body).toHaveProperty('id');
+         |                             ^
+      92 |       expect(response.body.type).toBe('WEB_CLIP');
+      93 |       expect(response.body.metadata.sourceUrl).toBe('https://example.com/article');
+      94 |     });
+
+      at Object.<anonymous> (test/integration/webclip-creation.integration.spec.ts:91:29)
+
+  ● WebClip Creation Integration Tests › WebClip Creation › should reject creation without required scope
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 403
+    Received: 401
+
+      113 |         });
+      114 |
+    > 115 |       expect(response.status).toBe(403); // Forbidden
+          |                               ^
+      116 |     });
+      117 |   });
+      118 |
+
+      at Object.<anonymous> (test/integration/webclip-creation.integration.spec.ts:115:31)
+
+  ● WebClip Creation Integration Tests › Session Start › should start session with valid extension token
+
+    expect(received).toHaveProperty(path)
+
+    Expected path: "initialPrompt"
+    Received path: []
+
+    Received value: {"nextPrompt": "Meta do dia em 1 linha + porquê em 1 linha.", "readingSessionId": "8a48a57d-0487-44b0-847b-de2b658f00f0", "sessionId": "8a48a57d-0487-44b0-847b-de2b658f00f0", "threadId": "th_web_8a48a57d-0487-44b0-847b-de2b658f00f0"}
+
+      146 |       expect(response.status).toBe(201);
+      147 |       expect(response.body).toHaveProperty('sessionId');
+    > 148 |       expect(response.body).toHaveProperty('initialPrompt');
+          |                             ^
+      149 |       expect(response.body.initialPrompt).toContain('15 minutos');
+      150 |     });
+      151 |   });
+
+      at Object.<anonymous> (test/integration/webclip-creation.integration.spec.ts:148:29)
+
+
+  ● Test suite failed to run
+
+    PrismaClientKnownRequestError: 
+    Invalid `prisma.content.deleteMany()` invocation in
+    C:\projects\aprendeai-app\services\api\test\integration\webclip-creation.integration.spec.ts:67:28
+
+      64 
+      65 afterAll(async () => {
+      66   if (userId) {
+    → 67     await prisma.content.deleteMany(
+    Foreign key constraint violated: `content_versions_content_id_fkey (index)`
+
+      65 |   afterAll(async () => {
+      66 |     if (userId) {
+    > 67 |       await prisma.content.deleteMany({ where: { createdBy: userId } });
+         |       ^
+      68 |       await prisma.readingSession.deleteMany({ where: { userId } });
+      69 |       await prisma.user.delete({ where: { id: userId } });
+      70 |     }
+
+      at $n.handleRequestError (node_modules/@prisma/client/runtime/library.js:121:7315)
+      at $n.handleAndLogRequestError (node_modules/@prisma/client/runtime/library.js:121:6623)
+      at $n.request (node_modules/@prisma/client/runtime/library.js:121:6307)
+      at l (node_modules/@prisma/client/runtime/library.js:130:9633)
+      at Object.<anonymous> (test/integration/webclip-creation.integration.spec.ts:67:7)
+
+Test Suites: 1 failed, 1 total
+Tests:       3 failed, 3 total
+Snapshots:   0 total
+Time:        7.51 s
+Ran all test suites matching /test\\integration\\webclip-creation.integration.spec.ts/i.
+Jest did not exit one second after the test run has completed.
+
+'This usually means that there are asynchronous operations that weren't stopped in your tests. Consider running Jest with `--detectOpenHandles` to troubleshoot this issue.

@@ -1,0 +1,117 @@
+FAIL test/integration/extension-auth.integration.spec.ts (7.324 s)
+  Extension Auth Integration Tests (e2e)
+    Device Code Flow
+      × should start device code flow (27 ms)
+      × should return PENDING when polling immediately (6 ms)
+      × should approve device code (as logged in user) (3 ms)
+      × should return APPROVED and tokens when polling after approval (6 ms)
+      × should use extension token to access protected endpoint (4 ms)
+      × should refresh token (3 ms)
+
+  ● Extension Auth Integration Tests (e2e) › Device Code Flow › should start device code flow
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 404
+
+      78 |         });
+      79 |
+    > 80 |       expect(response.status).toBe(201);
+         |                               ^
+      81 |       expect(response.body).toHaveProperty('deviceCode');
+      82 |       expect(response.body).toHaveProperty('userCode');
+      83 |       expect(response.body).toHaveProperty('verificationUrl');
+
+      at Object.<anonymous> (integration/extension-auth.integration.spec.ts:80:31)
+
+  ● Extension Auth Integration Tests (e2e) › Device Code Flow › should return PENDING when polling immediately
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 404
+
+       95 |         });
+       96 |
+    >  97 |       expect(response.status).toBe(201);
+          |                               ^
+       98 |       expect(response.body.status).toBe('PENDING');
+       99 |     });
+      100 |
+
+      at Object.<anonymous> (integration/extension-auth.integration.spec.ts:97:31)
+
+  ● Extension Auth Integration Tests (e2e) › Device Code Flow › should approve device code (as logged in user)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 404
+
+      108 |         });
+      109 |
+    > 110 |       expect(response.status).toBe(201);
+          |                               ^
+      111 |       expect(response.body.ok).toBe(true);
+      112 |     });
+      113 |
+
+      at Object.<anonymous> (integration/extension-auth.integration.spec.ts:110:31)
+
+  ● Extension Auth Integration Tests (e2e) › Device Code Flow › should return APPROVED and tokens when polling after approval
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 404
+
+      120 |         });
+      121 |
+    > 122 |       expect(response.status).toBe(201);
+          |                               ^
+      123 |       expect(response.body.status).toBe('APPROVED');
+      124 |       expect(response.body).toHaveProperty('accessToken');
+      125 |       expect(response.body).toHaveProperty('refreshToken');
+
+      at Object.<anonymous> (integration/extension-auth.integration.spec.ts:122:31)
+
+  ● Extension Auth Integration Tests (e2e) › Device Code Flow › should use extension token to access protected endpoint
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 404
+
+      136 |         .set('Authorization', `Bearer ${accessToken}`);
+      137 |
+    > 138 |       expect(response.status).toBe(200);
+          |                               ^
+      139 |       expect(response.body.userId).toBe(userId);
+      140 |     });
+      141 |
+
+      at Object.<anonymous> (integration/extension-auth.integration.spec.ts:138:31)
+
+  ● Extension Auth Integration Tests (e2e) › Device Code Flow › should refresh token
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 404
+
+      145 |         .send({ refreshToken });
+      146 |
+    > 147 |       expect(response.status).toBe(201);
+          |                               ^
+      148 |       expect(response.body).toHaveProperty('accessToken');
+      149 |       
+      150 |       // Old token should still be valid until expiry, but let's just check we got a new one
+
+      at Object.<anonymous> (integration/extension-auth.integration.spec.ts:147:31)
+
+Test Suites: 1 failed, 1 total
+Tests:       6 failed, 6 total
+Snapshots:   0 total
+Time:        7.526 s
+Ran all test suites matching /test\\integration\\extension-auth.integration.spec.ts/i.

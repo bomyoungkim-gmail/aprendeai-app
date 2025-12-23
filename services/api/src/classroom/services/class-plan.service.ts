@@ -21,11 +21,16 @@ export class ClassPlanService {
     items: string[], // Array of content IDs
     toolWords?: string[],
   ) {
+    // Normalize to start of week (Sunday 00:00:00)
+    const normalizedWeekStart = new Date(weekStart);
+    normalizedWeekStart.setDate(normalizedWeekStart.getDate() - normalizedWeekStart.getDay());
+    normalizedWeekStart.setHours(0, 0, 0, 0);
+
     const plan = await this.prisma.classPlanWeek.create({
       data: {
         classroom: { connect: { id: classroomId } },
         creator: { connect: { id: educatorUserId } },
-        weekStart,
+        weekStart: normalizedWeekStart,
         itemsJson: items, // Required Json field
         toolWordsJson: toolWords || null, // Optional Json field
       },

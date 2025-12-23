@@ -35,13 +35,15 @@ describe('PromptLibraryService', () => {
       expect(prompt.nextPrompt).toContain('15 min');
     });
 
-    it('should interpolate variables in quickReplies', () => {
+    it('should interpolate variables in nextPrompt for OPS_QUEUE_NEXT', () => {
       const prompt = service.getPrompt('OPS_QUEUE_NEXT', {
         TITLE: 'História do Brasil',
         MIN: 20,
       });
-      expect(prompt.quickReplies[0]).toContain('História do Brasil');
-      expect(prompt.quickReplies[0]).toContain('20 min');
+      expect(prompt.nextPrompt).toContain('História do Brasil');
+      expect(prompt.nextPrompt).toContain('20 min');
+      // quickReplies are static for this prompt
+      expect(prompt.quickReplies[0]).toBe('Sim, começar');
     });
 
     it('should preserve placeholders for missing variables', () => {

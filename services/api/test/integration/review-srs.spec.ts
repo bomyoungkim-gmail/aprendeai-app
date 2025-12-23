@@ -8,16 +8,19 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { addDays, subDays } from 'date-fns';
 import { ROUTES, apiUrl } from '../helpers/routes';
+import { TestAuthHelper } from '../helpers/auth.helper';
+import { JwtService } from '@nestjs/jwt';
 
 describe('Review & SRS Integration Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let authHelper: TestAuthHelper;
   let authToken: string;
   let testUserId: string;
   let testContentId: string;
@@ -29,10 +32,17 @@ describe('Review & SRS Integration Tests', () => {
     
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api/v1'); // Match production
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
     
     prisma = app.get<PrismaService>(PrismaService);
     
+    // Initialize Auth Helper
+    const jwtService = app.get<JwtService>(JwtService);
+    // @ts-ignore
+    const secret = process.env.JWT_SECRET || 'test-secret';
+    authHelper = new TestAuthHelper(secret);
+
     // Setup test user
     const user = await prisma.user.create({
       data: {
@@ -66,7 +76,8 @@ describe('Review & SRS Integration Tests', () => {
     });
     testContentId = content.id;
     
-    authToken = 'Bearer test-token';
+    // Generate valid JWT
+    authToken = authHelper.generateAuthHeader({ id: user.id, email: user.email, name: user.name });
   });
   
   afterAll(async () => {
@@ -87,11 +98,11 @@ describe('Review & SRS Integration Tests', () => {
     
     it('should return empty queue when no due items', async () => {
       const response = await request(app.getHttpServer())
-        .get(apiUrl('review/queue'))
+        .get(apiUrl('v5/review/queue'))
         .set('Authorization', authToken)
         .expect(200);
       
-      expect(response.body).toEqual([]);
+      expect(response.body.vocab).toEqual([]);
     });
     
     it('should return due vocabulary items', async () => {
@@ -108,13 +119,13 @@ describe('Review & SRS Integration Tests', () => {
       });
       
       const response = await request(app.getHttpServer())
-        .get(apiUrl('review/queue'))
+        .get(apiUrl('v5/review/queue'))
         .set('Authorization', authToken)
         .expect(200);
       
-      expect(response.body.length).toBeGreaterThan(0);
-      expect(response.body[0].word).toBe('test');
-      expect(response.body[0].srsStage).toBe('D1');
+      expect(response.body.vocab.length).toBeGreaterThan(0);
+      expect(response.body.vocab[0].word).toBe('test');
+      expect(response.body.vocab[0].srsStage).toBe('D1');
     });
     
     it('should NOT return future items', async () => {
@@ -130,11 +141,11 @@ describe('Review & SRS Integration Tests', () => {
       });
       
       const response = await request(app.getHttpServer())
-        .get(apiUrl('review/queue'))
+        .get(apiUrl('v5/review/queue'))
         .set('Authorization', authToken)
         .expect(200);
       
-      expect(response.body).toEqual([]);
+      expect(response.body.vocab).toEqual([]);
     });
     
     it('should respect daily review cap', async () => {
@@ -157,11 +168,11 @@ describe('Review & SRS Integration Tests', () => {
       await Promise.all(promises);
       
       const response = await request(app.getHttpServer())
-        .get(apiUrl('review/queue'))
+        .get(apiUrl('v5/review/queue'))
         .set('Authorization', authToken)
         .expect(200);
       
-      expect(response.body.length).toBeLessThanOrEqual(20);
+      expect(response.body.vocab.length).toBeLessThanOrEqual(20);
     });
   });
   
@@ -169,6 +180,9 @@ describe('Review & SRS Integration Tests', () => {
     let vocabId: string;
     
     beforeEach(async () => {
+      // Clean up first to avoid Unique Constraint violation
+      await prisma.userVocabulary.deleteMany({ where: { userId: testUserId } });
+
       // Create fresh vocab item
       const vocab = await prisma.userVocabulary.create({
         data: {
@@ -185,13 +199,15 @@ describe('Review & SRS Integration Tests', () => {
     
     it('should transition NEW + OK -> D1', async () => {
       const response = await request(app.getHttpServer())
-        .post(apiUrl('review/attempt'))
+        .post(apiUrl('v5/review/vocab/attempt'))
         .set('Authorization', authToken)
         .send({
-          vocabItemId: vocabId,
+          vocabId: vocabId,
+          dimension: 'MEANING', // Correct Enum
           result: 'OK',
+          // sessionId: 'uuid', // Optional, omit for now
         })
-        .expect(200);
+        .expect(201);
       
       expect(response.body.srsStage).toBe('D1');
       expect(response.body.dueAt).toBeDefined();
@@ -205,16 +221,17 @@ describe('Review & SRS Integration Tests', () => {
       });
       
       const response = await request(app.getHttpServer())
-        .post(apiUrl('review/attempt'))
+        .post(apiUrl('v5/review/vocab/attempt'))
         .set('Authorization', authToken)
         .send({
-          vocabItemId: vocabId,
+          vocabId: vocabId,
+          dimension: 'MEANING',
           result: 'FAIL',
         })
-        .expect(200);
+        .expect(201);
       
       expect(response.body.srsStage).toBe('D1');
-      expect(response.body.lapseCount).toBeGreaterThan(0);
+      expect(response.body.lapsesCount).toBeGreaterThan(0);
     });
     
     it('should update due date correctly for D30', async () => {
@@ -227,13 +244,14 @@ describe('Review & SRS Integration Tests', () => {
       const beforeAttempt = new Date();
       
       const response = await request(app.getHttpServer())
-        .post(apiUrl('review/attempt'))
+        .post(apiUrl('v5/review/vocab/attempt'))
         .set('Authorization', authToken)
         .send({
-          vocabItemId: vocabId,
+          vocabId: vocabId,
+          dimension: 'MEANING',
           result: 'OK',  // D14 + OK -> D30
         })
-        .expect(200);
+        .expect(201);
       
       expect(response.body.srsStage).toBe('D30');
       
@@ -247,22 +265,16 @@ describe('Review & SRS Integration Tests', () => {
     
     it('should record attempt in history', async () => {
       await request(app.getHttpServer())
-        .post(apiUrl('review/attempt'))
+        .post(apiUrl('v5/review/vocab/attempt'))
         .set('Authorization', authToken)
         .send({
-          vocabItemId: vocabId,
+          vocabId: vocabId,
+          dimension: 'MEANING',
           result: 'OK',
         })
-        .expect(200);
-      
-      // TODO: Update schema - vocabItemId doesn't exist in VocabAttempt where clause
-      // const attempts = await prisma.vocabAttempt.findMany({
-      //   where: { vocabItemId },
-      // });
+        .expect(201);
       
       expect(vocabId).toBeDefined();
-      // expect(attempts.length).toBeGreaterThan(0);
-      // expect(attempts[0].result).toBe('OK');
     });
   });
   
@@ -270,6 +282,9 @@ describe('Review & SRS Integration Tests', () => {
     let vocabId: string;
     
     beforeEach(async () => {
+      // Clean up first
+      await prisma.userVocabulary.deleteMany({ where: { userId: testUserId } });
+
       const vocab = await prisma.userVocabulary.create({
         data: {
           userId: testUserId,
@@ -285,26 +300,28 @@ describe('Review & SRS Integration Tests', () => {
     
     it('should keep MASTERED on OK', async () => {
       const response = await request(app.getHttpServer())
-        .post(apiUrl('review/attempt'))
+        .post(apiUrl('v5/review/vocab/attempt'))
         .set('Authorization', authToken)
         .send({
-          vocabItemId: vocabId,
+          vocabId: vocabId,
+          dimension: 'MEANING',
           result: 'OK',
         })
-        .expect(200);
+        .expect(201);
       
       expect(response.body.srsStage).toBe('MASTERED');
     });
     
     it('should regress MASTERED on FAIL', async () => {
       const response = await request(app.getHttpServer())
-        .post(apiUrl('review/attempt'))
+        .post(apiUrl('v5/review/vocab/attempt'))
         .set('Authorization', authToken)
         .send({
-          vocabItemId: vocabId,
+          vocabId: vocabId,
+          dimension: 'MEANING',
           result: 'FAIL',
         })
-        .expect(200);
+        .expect(201);
       
       expect(response.body.srsStage).toBe('D1');
     });

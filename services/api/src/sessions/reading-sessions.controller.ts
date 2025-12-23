@@ -6,9 +6,10 @@ import { PrePhaseDto, RecordEventDto, AdvancePhaseDto } from './dto/reading-sess
 import { StartSessionDto, FinishSessionDto } from './dto/start-session.dto';
 import { PromptMessageDto } from './dto/prompt-message.dto';
 import { SessionsQueryDto } from './dto/sessions-query.dto';
+import { ROUTES } from '../common/constants/routes.constants';
 
 @ApiTags('sessions')
-@Controller()
+@Controller() // Empty base - routes define full paths
 @UseGuards(AuthGuard('jwt'))
 @ApiBearerAuth()
 export class ReadingSessionsController {
@@ -144,6 +145,63 @@ export class ReadingSessionsController {
 
   @Post('reading-sessions/:id/advance')
   async advancePhase(
+    @Param('id') id: string,
+    @Body() dto: AdvancePhaseDto,
+    @Request() req,
+  ) {
+    return this.sessionService.advancePhase(id, req.user.id, dto.toPhase);
+  }
+
+  // ============================================
+  // NEW: Test-Compatible Session Endpoints
+  // ============================================
+
+  /**
+   * POST /contents/:id/sessions
+   * Create reading session for content (test-compatible)
+   */
+  @Post('contents/:id/sessions')
+  async createSessionForContent(@Param('id') contentId: string, @Request() req) {
+    return this.sessionService.startSession(req.user.id, contentId);
+  }
+
+  /**
+   * GET /sessions/:id
+   * Get session by ID (test-compatible)
+   */
+  @Get('sessions/:id')
+  async getSessionById(@Param('id') id: string, @Request() req) {
+    return this.sessionService.getSession(id, req.user.id);
+  }
+
+  /**
+   * PUT /sessions/:id/pre
+   * Update PRE phase (test-compatible)
+   */
+  @Put('sessions/:id/pre')
+  async updateSessionPrePhase(
+    @Param('id') id: string,
+    @Body() dto: PrePhaseDto,
+    @Request() req,
+  ) {
+    return this.sessionService.updatePrePhase(id, req.user.id, dto);
+  }
+
+  /**
+   * POST /sessions/:id/events
+   * Record session event (test-compatible)
+   */
+  @Post('sessions/:id/events')
+  async recordSessionEvent(@Param('id') id: string, @Body() dto: RecordEventDto) {
+    return this.sessionService.recordEvent(id, dto.eventType, dto.payload);
+  }
+
+  /**
+   * POST /sessions/:id/advance
+   * Advance session phase (test-compatible)
+   */
+  @Post('sessions/:id/advance')
+  async advanceSessionPhase(
     @Param('id') id: string,
     @Body() dto: AdvancePhaseDto,
     @Request() req,

@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
+import { ConfigService } from '@nestjs/config';
+import { TestAuthHelper } from '../helpers/auth.helper';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { AppModule } from '../../src/app.module';
 import { ROUTES, apiUrl } from '../helpers/routes';
@@ -8,10 +10,12 @@ import { ROUTES, apiUrl } from '../helpers/routes';
 describe('Annotations Integration Tests', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let authHelper: TestAuthHelper;
   let authToken: string;
   let testUserId: string;
   let testContentId: string;
   let testGroupId: string;
+  let testUserEmail: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -23,17 +27,37 @@ describe('Annotations Integration Tests', () => {
     await app.init();
 
     prisma = app.get<PrismaService>(PrismaService);
+    const configService = app.get<ConfigService>(ConfigService);
 
-    // Get auth token and setup test data
-    const loginRes = await request(app.getHttpServer())
-      .post(apiUrl(ROUTES.AUTH.LOGIN))
-      .send({
-        email: 'test@example.com',
-        password: 'password123',
-      });
+    // Initialize auth helper
+    const jwtSecret = configService.get<string>('JWT_SECRET') || 'test-secret-key';
+    authHelper = new TestAuthHelper(jwtSecret);
 
-    authToken = loginRes.body.access_token;
-    testUserId = loginRes.body.user.id;
+    // Create unique test user (Dynamic Data)
+    testUserEmail = `annotations-test-${Date.now()}@example.com`;
+    
+    // Explicitly create user in DB
+    const user = await prisma.user.upsert({
+      where: { email: testUserEmail },
+      create: {
+        email: testUserEmail,
+        name: 'Annotations Tester',
+        passwordHash: 'hash', // Not used for JWT auth skip
+        role: 'COMMON_USER',
+        schoolingLevel: 'ADULT',
+        status: 'ACTIVE',
+      },
+      update: {},
+    });
+    
+    testUserId = user.id;
+
+    // Generate JWT token directly
+    authToken = authHelper.generateAuthHeader({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+    });
 
     // Create test content
     const content = await prisma.content.create({
@@ -55,23 +79,42 @@ describe('Annotations Integration Tests', () => {
       },
     });
     testGroupId = group.id;
+    
+    // Add user to group
+    await prisma.studyGroupMember.create({
+      data: {
+        groupId: testGroupId,
+        userId: testUserId,
+        role: 'OWNER',
+        status: 'ACTIVE',
+      },
+    });
   });
 
   afterAll(async () => {
-    // Cleanup
-    await prisma.annotation.deleteMany({
-      where: { contentId: testContentId },
-    });
-    await prisma.content.delete({ where: { id: testContentId } });
-    await prisma.studyGroup.delete({ where: { id: testGroupId } });
+    // Cleanup in correct order
+    if (testContentId) {
+       await prisma.annotation.deleteMany({ where: { contentId: testContentId } });
+       await prisma.content.delete({ where: { id: testContentId } });
+    }
+    
+    if (testGroupId) {
+       await prisma.studyGroupMember.deleteMany({ where: { groupId: testGroupId } });
+       await prisma.studyGroup.delete({ where: { id: testGroupId } });
+    }
+    
+    if (testUserId) {
+       await prisma.user.delete({ where: { id: testUserId } });
+    }
+    
     await app.close();
   });
 
   describe('POST /contents/:contentId/annotations', () => {
     it('should create a highlight annotation', async () => {
       const res = await request(app.getHttpServer())
-        .post(`/contents/${testContentId}/annotations`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .post(apiUrl(`contents/${testContentId}/annotations`))
+        .set('Authorization', authToken)
         .send({
           type: 'HIGHLIGHT',
           startOffset: 0,
@@ -92,8 +135,8 @@ describe('Annotations Integration Tests', () => {
 
     it('should create a note annotation', async () => {
       const res = await request(app.getHttpServer())
-        .post(`/contents/${testContentId}/annotations`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .post(apiUrl(`contents/${testContentId}/annotations`))
+        .set('Authorization', authToken)
         .send({
           type: 'NOTE',
           startOffset: 25,
@@ -110,8 +153,8 @@ describe('Annotations Integration Tests', () => {
 
     it('should create a group annotation', async () => {
       const res = await request(app.getHttpServer())
-        .post(`/contents/${testContentId}/annotations`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .post(apiUrl(`contents/${testContentId}/annotations`))
+        .set('Authorization', authToken)
         .send({
           type: 'HIGHLIGHT',
           startOffset: 50,
@@ -131,8 +174,8 @@ describe('Annotations Integration Tests', () => {
   describe('GET /contents/:contentId/annotations', () => {
     it('should return all annotations for content', async () => {
       const res = await request(app.getHttpServer())
-        .get(`/contents/${testContentId}/annotations`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .get(apiUrl(`contents/${testContentId}/annotations`))
+        .set('Authorization', authToken)
         .expect(200);
 
       expect(Array.isArray(res.body)).toBe(true);
@@ -142,8 +185,8 @@ describe('Annotations Integration Tests', () => {
 
     it('should filter by groupId', async () => {
       const res = await request(app.getHttpServer())
-        .get(`/contents/${testContentId}/annotations?groupId=${testGroupId}`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .get(apiUrl(`contents/${testContentId}/annotations?groupId=${testGroupId}`))
+        .set('Authorization', authToken)
         .expect(200);
 
       const groupAnnotations = res.body.filter((a: any) => a.groupId === testGroupId);
@@ -155,8 +198,8 @@ describe('Annotations Integration Tests', () => {
     it('should update annotation text', async () => {
       // First create an annotation
       const createRes = await request(app.getHttpServer())
-        .post(`/contents/${testContentId}/annotations`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .post(apiUrl(`contents/${testContentId}/annotations`))
+        .set('Authorization', authToken)
         .send({
           type: 'NOTE',
           startOffset: 0,
@@ -169,8 +212,8 @@ describe('Annotations Integration Tests', () => {
 
       // Then update it
       const updateRes = await request(app.getHttpServer())
-        .put(`/contents/${testContentId}/annotations/${annotationId}`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .put(apiUrl(`contents/${testContentId}/annotations/${annotationId}`))
+        .set('Authorization', authToken)
         .send({ text: 'Updated text' })
         .expect(200);
 
@@ -182,8 +225,8 @@ describe('Annotations Integration Tests', () => {
     it('should delete annotation', async () => {
       // Create annotation
       const createRes = await request(app.getHttpServer())
-        .post(`/contents/${testContentId}/annotations`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .post(apiUrl(`contents/${testContentId}/annotations`))
+        .set('Authorization', authToken)
         .send({
           type: 'HIGHLIGHT',
           startOffset: 0,
@@ -196,8 +239,8 @@ describe('Annotations Integration Tests', () => {
 
       // Delete it
       await request(app.getHttpServer())
-        .delete(`/contents/${testContentId}/annotations/${annotationId}`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .delete(apiUrl(`contents/${testContentId}/annotations/${annotationId}`))
+        .set('Authorization', authToken)
         .expect(200);
 
       // Verify deletion

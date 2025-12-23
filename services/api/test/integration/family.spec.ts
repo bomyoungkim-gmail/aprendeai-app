@@ -18,9 +18,20 @@ describe('Family Plan (Integration)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api/v1'); // Match production config
+    
+    // Match production configuration from main.ts
+    app.setGlobalPrefix('api/v1');
+    
+    // Enable validation globally (same as main.ts)
+    const { ValidationPipe } = await import('@nestjs/common');
+    app.useGlobalPipes(new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }));
+    
     await app.init();
-
+    
     prisma = app.get<PrismaService>(PrismaService);
 
     // Clean up test data
@@ -52,6 +63,7 @@ describe('Family Plan (Integration)', () => {
           password: 'Test123!@#',
           name: 'Family Owner',
           role: 'COMMON_USER',
+          institutionId: '550e8400-e29b-41d4-a716-446655440000', // Valid UUID v4 for testing
           schoolingLevel: 'UNDERGRADUATE',
         })
         .expect(201);
@@ -137,6 +149,7 @@ describe('Family Plan (Integration)', () => {
           password: 'Test123!@#',
           name: 'Existing User',
           role: 'COMMON_USER',
+          institutionId: '550e8400-e29b-41d4-a716-446655440000', // Valid UUID v4 for testing
           schoolingLevel: 'UNDERGRADUATE',
         })
         .expect(201);
@@ -213,6 +226,7 @@ describe('Family Plan (Integration)', () => {
           password: 'Test123!@#',
           name: 'Non Owner',
           role: 'COMMON_USER',
+          institutionId: '550e8400-e29b-41d4-a716-446655440000', // Valid UUID v4 for testing
           schoolingLevel: 'UNDERGRADUATE',
         });
 
@@ -335,6 +349,7 @@ describe('Family Plan (Integration)', () => {
           password: 'Test123!@#',
           name: 'Outsider',
           role: 'COMMON_USER',
+          institutionId: '550e8400-e29b-41d4-a716-446655440000', // Valid UUID v4 for testing
           schoolingLevel: 'UNDERGRADUATE',
         });
 

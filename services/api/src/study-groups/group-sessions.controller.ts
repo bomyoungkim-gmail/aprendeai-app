@@ -18,17 +18,17 @@ export class GroupSessionsController {
 
   @Post()
   async createSession(@Query('groupId') groupId: string, @Body() dto: CreateSessionDto, @Request() req) {
-    return this.groupSessionsService.createSession(groupId, req.user.userId, dto);
+    return this.groupSessionsService.createSession(groupId, req.user.id, dto);
   }
 
   @Get(':sessionId')
   async getSession(@Param('sessionId') sessionId: string, @Request() req) {
-    return this.groupSessionsService.getSession(sessionId, req.user.userId);
+    return this.groupSessionsService.getSession(sessionId, req.user.id);
   }
 
   @Put(':sessionId/start')
   async startSession(@Param('sessionId') sessionId: string, @Request() req) {
-    await this.groupSessionsService.startSession(sessionId, req.user.userId);
+    await this.groupSessionsService.startSession(sessionId, req.user.id);
     return { message: 'Session started' };
   }
 
@@ -38,7 +38,7 @@ export class GroupSessionsController {
     @Body() dto: UpdateSessionStatusDto,
     @Request() req,
   ) {
-    await this.groupSessionsService.updateSessionStatus(sessionId, req.user.userId, dto.status);
+    await this.groupSessionsService.updateSessionStatus(sessionId, req.user.id, dto.status);
     return { message: 'Session status updated' };
   }
 
@@ -49,7 +49,7 @@ export class GroupSessionsController {
     @Body() dto: UpdatePromptDto,
     @Request() req,
   ) {
-    return this.groupRoundsService.updatePrompt(sessionId, parseInt(roundIndex), req.user.userId, dto);
+    return this.groupRoundsService.updatePrompt(sessionId, parseInt(roundIndex), req.user.id, dto);
   }
 
   @Post(':sessionId/rounds/:roundIndex/advance')
@@ -59,12 +59,12 @@ export class GroupSessionsController {
     @Body() dto: AdvanceRoundDto,
     @Request() req,
   ) {
-    return this.groupRoundsService.advanceRound(sessionId, parseInt(roundIndex), req.user.userId, dto.toStatus);
+    return this.groupRoundsService.advanceRound(sessionId, parseInt(roundIndex), req.user.id, dto.toStatus);
   }
 
   @Post(':sessionId/events')
   async submitEvent(@Param('sessionId') sessionId: string, @Body() dto: SubmitEventDto, @Request() req) {
-    return this.groupRoundsService.submitEvent(sessionId, req.user.userId, dto);
+    return this.groupRoundsService.submitEvent(sessionId, req.user.id, dto);
   }
 
   @Get(':sessionId/events')

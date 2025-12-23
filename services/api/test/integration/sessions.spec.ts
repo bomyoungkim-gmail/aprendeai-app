@@ -30,36 +30,59 @@ describe('Sessions Integration Tests', () => {
     
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api/v1');
-    app.setGlobalPrefix('api/v1'); // Match production
+    
+    // Enable validation globally (same as main.ts)
+    const { ValidationPipe } = await import('@nestjs/common');
+    app.useGlobalPipes(new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }));
+    
     await app.init();
     
     prisma = app.get<PrismaService>(PrismaService);
     
-    // Setup: Create test user and content
-    const user = await prisma.user.create({
-      data: {
-        email: `test-${Date.now()}@example.com`,
-        name: 'Test User',
-        passwordHash: 'hash',
-        role: 'COMMON_USER',
-        schoolingLevel: 'ADULT',
-        status: 'ACTIVE',
-      },
-    });
-    testUserId = user.id;
+    // STEP 1: Auth first to get real userId
+    const testEmail = `test-${Date.now()}@example.com`;
     
-    // Create learner profile
+    // Register user via API
+    await request(app.getHttpServer())
+      .post(apiUrl(ROUTES.AUTH.REGISTER))
+      .send({
+        email: testEmail,
+        password: 'Test123!@#',
+        name: 'Test User',
+        role: 'COMMON_USER',
+        institutionId: '550e8400-e29b-41d4-a716-446655440000', // Valid UUID v4 for testing
+        schoolingLevel: 'ADULT',
+      })
+      .expect(201);
+    
+    // Login to get token and userId
+    const loginResponse = await request(app.getHttpServer())
+      .post(apiUrl(ROUTES.AUTH.LOGIN))
+      .send({
+        email: testEmail,
+        password: 'Test123!@#',
+      })
+      .expect(201);
+    
+    authToken = `Bearer ${loginResponse.body.access_token}`;
+    testUserId = loginResponse.body.user.id;
+    
+    // Create learner profile for the authenticated user
     await prisma.learnerProfile.create({
       data: {
         userId: testUserId,
         dailyReviewCap: 20,
       },
     });
-    
-    // Create test content
+
+    // STEP 2: Now create content with real userId    
     const content = await prisma.content.create({
       data: {
-        ownerUserId: testUserId,
+        ownerUserId: testUserId, // Use real userId from auth
         title: 'Test Content for Integration',
         type: 'PDF',
         originalLanguage: 'EN',
@@ -70,7 +93,7 @@ describe('Sessions Integration Tests', () => {
     });
     testContentId = content.id;
     
-    // Create content chunks
+    // STEP 3: Create content chunks
     await prisma.contentChunk.createMany({
       data: [
         { contentId: testContentId, chunkIndex: 0, text: 'First chunk of text.' },
@@ -78,18 +101,16 @@ describe('Sessions Integration Tests', () => {
         { contentId: testContentId, chunkIndex: 2, text: 'Third chunk of text.' },
       ],
     });
-    
-    // TODO: Get real auth token
-    authToken = 'Bearer test-token';
   });
   
   afterAll(async () => {
-    // Cleanup
+    // Cleanup - in correct order to respect foreign keys
     await prisma.sessionEvent.deleteMany({ where: { readingSessionId: { in: await prisma.readingSession.findMany({ where: { userId: testUserId }, select: { id: true } }).then(s => s.map(x => x.id)) } } });
     await prisma.sessionOutcome.deleteMany({ where: { readingSessionId: { in: await prisma.readingSession.findMany({ where: { userId: testUserId }, select: { id: true } }).then(s => s.map(x => x.id)) } } });
+    await prisma.cornellNote.deleteMany({ where: { userId: testUserId } }); // DELETE BEFORE readingSession!
     await prisma.readingSession.deleteMany({ where: { userId: testUserId } });
     await prisma.contentChunk.deleteMany({ where: { contentId: testContentId } });
-    await prisma.cornellNote.deleteMany({ where: { userId: testUserId } });
+    await prisma.contentVersion.deleteMany({ where: { contentId: testContentId } }); // DELETE BEFORE content!
     await prisma.content.deleteMany({ where: { id: testContentId } });
     await prisma.learnerProfile.deleteMany({ where: { userId: testUserId } });
     await prisma.user.deleteMany({ where: { id: testUserId } });
@@ -100,7 +121,7 @@ describe('Sessions Integration Tests', () => {
   describe('POST /contents/:id/sessions - Create Session', () => {
     it('should create a new reading session', async () => {
       const response = await request(app.getHttpServer())
-        .post(`/contents/${testContentId}/sessions`)
+        .post(`/api/v1/contents/${testContentId}/sessions`)
         .set('Authorization', authToken)
         .expect(201);
       
@@ -139,20 +160,21 @@ describe('Sessions Integration Tests', () => {
     it('should advance from PRE to DURING', async () => {
       // First, set PRE phase data
       await request(app.getHttpServer())
-        .put(`/sessions/${sessionId}/pre`)
+        .put(`/api/v1/sessions/${sessionId}/pre`)
         .set('Authorization', authToken)
         .send({
-          goal: 'Learn about integration testing',
-          targetWords: ['test', 'integration', 'jest'],
+          goalStatement: 'Learn about integration testing',
+          predictionText: 'I predict this test will pass correctly.',
+          targetWordsJson: ['test', 'integration', 'jest', 'debugging', 'success'],
         })
         .expect(200);
       
       // Then advance to DURING
       const response = await request(app.getHttpServer())
-        .post(`/sessions/${sessionId}/advance`)
+        .post(`/api/v1/sessions/${sessionId}/advance`)
         .set('Authorization', authToken)
         .send({ toPhase: 'POST' })  // Actually goes PRE -> DURING -> POST
-        .expect(200);
+        .expect(201);
       
       expect(response.body.phase).toBe('POST');
     });
@@ -166,7 +188,7 @@ describe('Sessions Integration Tests', () => {
       
       // Try to finish without meeting DoD
       await request(app.getHttpServer())
-        .post(`/sessions/${sessionId}/advance`)
+        .post(`/api/v1/sessions/${sessionId}/advance`)
         .set('Authorization', authToken)
         .send({ toPhase: 'FINISHED' })
         .expect(400);  // Should fail DoD validation
@@ -180,10 +202,20 @@ describe('Sessions Integration Tests', () => {
       });
       
       // Meet DoD requirement 1: Summary
-      await prisma.cornellNote.updateMany({
-        where: { readingSessionId: sessionId },
-        data: {
-          summary: 'This is a comprehensive summary of what I learned from this integration test.',
+      await prisma.cornellNotes.upsert({
+        where: {
+          contentId_userId: {
+            contentId: testContentId,
+            userId: testUserId,
+          },
+        },
+        create: {
+          userId: testUserId,
+          contentId: testContentId,
+          summaryText: 'DoD Summary satisfied',
+        },
+        update: {
+          summaryText: 'DoD Summary satisfied',
         },
       });
       
@@ -207,10 +239,10 @@ describe('Sessions Integration Tests', () => {
       
       // Now should succeed
       const response = await request(app.getHttpServer())
-        .post(`/sessions/${sessionId}/advance`)
+        .post(`/api/v1/sessions/${sessionId}/advance`)
         .set('Authorization', authToken)
         .send({ toPhase: 'FINISHED' })
-        .expect(200);
+        .expect(201);
       
       expect(response.body.phase).toBe('FINISHED');
       expect(response.body.finishedAt).toBeDefined();
@@ -233,7 +265,7 @@ describe('Sessions Integration Tests', () => {
     
     it('should record quiz response event', async () => {
       const response = await request(app.getHttpServer())
-        .post(`/sessions/${sessionId}/events`)
+        .post(`/api/v1/sessions/${sessionId}/events`)
         .set('Authorization', authToken)
         .send({
           eventType: 'QUIZ_RESPONSE',
@@ -247,7 +279,7 @@ describe('Sessions Integration Tests', () => {
     
     it('should record production submit event', async () => {
       const response = await request(app.getHttpServer())
-        .post(`/sessions/${sessionId}/events`)
+        .post(`/api/v1/sessions/${sessionId}/events`)
         .set('Authorization', authToken)
         .send({
           eventType: 'PRODUCTION_SUBMIT',

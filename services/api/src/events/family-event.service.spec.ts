@@ -72,9 +72,8 @@ describe('FamilyEventService', () => {
       expect(result).toBeDefined();
       expect(mockPrismaService.sessionEvent.create).toHaveBeenCalledWith({
         data: {
-          sessionId: 'session_1',
-          userId: 'user_456',
-          timestamp: expect.any(Date),
+          readingSessionId: 'session_1',
+          eventType: 'FAMILY_POLICY_SET',
           payloadJson: mockEvent,
         },
       });
@@ -134,13 +133,13 @@ describe('FamilyEventService', () => {
       expect(events).toHaveLength(1);
       expect(mockPrismaService.sessionEvent.findMany).toHaveBeenCalledWith({
         where: {
-          sessionId: 'session_1',
+          readingSessionId: 'session_1',
           payloadJson: {
             path: ['domain'],
             equals: 'FAMILY',
           },
         },
-        orderBy: { timestamp: 'asc' },
+        orderBy: { createdAt: 'asc' },
       });
     });
   });

@@ -37,7 +37,7 @@ export class GroupSessionsService {
     }
 
     // Create session with rounds and role assignments in transaction
-    return this.prisma.$transaction(async (tx) => {
+    const newSession = await this.prisma.$transaction(async (tx) => {
       // 1. Create session
       const session = await tx.groupSession.create({
         data: {
@@ -73,6 +73,8 @@ export class GroupSessionsService {
 
       return session;
     });
+
+    return this.getSession(newSession.id, userId);
   }
 
   async getSession(sessionId: string, userId: string) {
@@ -185,7 +187,7 @@ export class GroupSessionsService {
     const completedCount = await tx.groupSession.count({
       where: {
         groupId,
-        status: { in: ['FINISHED', 'CANCELLED'] },
+        status: { in: ['FINISHED'] },
       },
     });
 

@@ -1,0 +1,179 @@
+FAIL test/integration/annotations.integration.spec.ts (7.264 s)
+  ● Annotations Integration Tests › POST /contents/:contentId/annotations › should create a highlight annotation
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      34 |
+      35 |     authToken = loginRes.body.access_token;
+    > 36 |     testUserId = loginRes.body.user.id;
+         |                                     ^
+      37 |
+      38 |     // Create test content
+      39 |     const content = await prisma.content.create({
+
+      at Object.<anonymous> (integration/annotations.integration.spec.ts:36:37)
+
+  ● Annotations Integration Tests › POST /contents/:contentId/annotations › should create a note annotation
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      34 |
+      35 |     authToken = loginRes.body.access_token;
+    > 36 |     testUserId = loginRes.body.user.id;
+         |                                     ^
+      37 |
+      38 |     // Create test content
+      39 |     const content = await prisma.content.create({
+
+      at Object.<anonymous> (integration/annotations.integration.spec.ts:36:37)
+
+  ● Annotations Integration Tests › POST /contents/:contentId/annotations › should create a group annotation
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      34 |
+      35 |     authToken = loginRes.body.access_token;
+    > 36 |     testUserId = loginRes.body.user.id;
+         |                                     ^
+      37 |
+      38 |     // Create test content
+      39 |     const content = await prisma.content.create({
+
+      at Object.<anonymous> (integration/annotations.integration.spec.ts:36:37)
+
+  ● Annotations Integration Tests › GET /contents/:contentId/annotations › should return all annotations for content
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      34 |
+      35 |     authToken = loginRes.body.access_token;
+    > 36 |     testUserId = loginRes.body.user.id;
+         |                                     ^
+      37 |
+      38 |     // Create test content
+      39 |     const content = await prisma.content.create({
+
+      at Object.<anonymous> (integration/annotations.integration.spec.ts:36:37)
+
+  ● Annotations Integration Tests › GET /contents/:contentId/annotations › should filter by groupId
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      34 |
+      35 |     authToken = loginRes.body.access_token;
+    > 36 |     testUserId = loginRes.body.user.id;
+         |                                     ^
+      37 |
+      38 |     // Create test content
+      39 |     const content = await prisma.content.create({
+
+      at Object.<anonymous> (integration/annotations.integration.spec.ts:36:37)
+
+  ● Annotations Integration Tests › PUT /contents/:contentId/annotations/:id › should update annotation text
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      34 |
+      35 |     authToken = loginRes.body.access_token;
+    > 36 |     testUserId = loginRes.body.user.id;
+         |                                     ^
+      37 |
+      38 |     // Create test content
+      39 |     const content = await prisma.content.create({
+
+      at Object.<anonymous> (integration/annotations.integration.spec.ts:36:37)
+
+  ● Annotations Integration Tests › DELETE /contents/:contentId/annotations/:id › should delete annotation
+
+    TypeError: Cannot read properties of undefined (reading 'id')
+
+      34 |
+      35 |     authToken = loginRes.body.access_token;
+    > 36 |     testUserId = loginRes.body.user.id;
+         |                                     ^
+      37 |
+      38 |     // Create test content
+      39 |     const content = await prisma.content.create({
+
+      at Object.<anonymous> (integration/annotations.integration.spec.ts:36:37)
+
+
+  ● Test suite failed to run
+
+    PrismaClientValidationError: 
+    Invalid `prisma.content.delete()` invocation in
+    C:\projects\aprendeai-app\services\api\test\integration\annotations.integration.spec.ts:65:32
+
+      62 await prisma.annotation.deleteMany({
+      63   where: { contentId: testContentId },
+      64 });
+    → 65 await prisma.content.delete({
+           where: {
+             id: undefined,
+         ?   AND?: ContentWhereInput | ContentWhereInput[],
+         ?   OR?: ContentWhereInput[],
+         ?   NOT?: ContentWhereInput | ContentWhereInput[],
+         ?   institutionId?: StringNullableFilter | String | Null,
+         ?   type?: EnumContentTypeFilter | ContentType,
+         ?   sourceId?: StringNullableFilter | String | Null,
+         ?   title?: StringFilter | String,
+         ?   originalLanguage?: EnumLanguageFilter | Language,
+         ?   rawText?: StringFilter | String,
+         ?   metadata?: JsonNullableFilter,
+         ?   createdBy?: StringNullableFilter | String | Null,
+         ?   createdAt?: DateTimeFilter | DateTime,
+         ?   updatedAt?: DateTimeFilter | DateTime,
+         ?   scopeType?: EnumScopeTypeFilter | ScopeType,
+         ?   familyId?: StringNullableFilter | String | Null,
+         ?   fileId?: StringNullableFilter | String | Null,
+         ?   languageGuess?: StringNullableFilter | String | Null,
+         ?   ownerUserId?: StringNullableFilter | String | Null,
+         ?   scopeId?: StringNullableFilter | String | Null,
+         ?   sourceUrl?: StringNullableFilter | String | Null,
+         ?   family?: FamilyNullableRelationFilter | FamilyWhereInput | Null,
+         ?   assessments?: AssessmentListRelationFilter,
+         ?   extractions?: ContentExtractionListRelationFilter,
+         ?   versions?: ContentVersionListRelationFilter,
+         ?   creator?: UserNullableRelationFilter | UserWhereInput | Null,
+         ?   file?: FileNullableRelationFilter | FileWhereInput | Null,
+         ?   institution?: InstitutionNullableRelationFilter | InstitutionWhereInput | Null,
+         ?   ownerUser?: UserNullableRelationFilter | UserWhereInput | Null,
+         ?   cornellNotes?: CornellNotesListRelationFilter,
+         ?   highlights?: HighlightListRelationFilter,
+         ?   chunks?: ContentChunkListRelationFilter,
+         ?   learningAssets?: LearningAssetListRelationFilter,
+         ?   lessons?: LessonListRelationFilter,
+         ?   UserLibraryItem?: UserLibraryItemListRelationFilter,
+         ?   ReadingSession?: ReadingSessionListRelationFilter,
+         ?   UserVocabulary?: UserVocabularyListRelationFilter,
+         ?   groupContents?: GroupContentListRelationFilter,
+         ?   groupSessions?: GroupSessionListRelationFilter,
+         ?   annotations?: AnnotationListRelationFilter
+           }
+         })
+
+    Argument `where` of type ContentWhereUniqueInput needs at least one of `id` arguments. Available options are marked with ?.
+
+      63 |       where: { contentId: testContentId },
+      64 |     });
+    > 65 |     await prisma.content.delete({ where: { id: testContentId } });
+         |     ^
+      66 |     await prisma.studyGroup.delete({ where: { id: testGroupId } });
+      67 |     await app.close();
+      68 |   });
+
+      at wn (../node_modules/@prisma/client/runtime/library.js:29:1363)
+      at $n.handleRequestError (../node_modules/@prisma/client/runtime/library.js:121:6958)
+      at $n.handleAndLogRequestError (../node_modules/@prisma/client/runtime/library.js:121:6623)
+      at $n.request (../node_modules/@prisma/client/runtime/library.js:121:6307)
+      at l (../node_modules/@prisma/client/runtime/library.js:130:9633)
+      at Object.<anonymous> (integration/annotations.integration.spec.ts:65:5)
+
+Test Suites: 1 failed, 1 total
+Tests:       7 failed, 7 total
+Snapshots:   0 total
+Time:        7.457 s
+Ran all test suites matching /test\\integration\\annotations.integration.spec.ts/i.
+Jest did not exit one second after the test run has completed.
+
+'This usually means that there are asynchronous operations that weren't stopped in your tests. Consider running Jest with `--detectOpenHandles` to troubleshoot this issue.

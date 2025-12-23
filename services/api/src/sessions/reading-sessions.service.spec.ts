@@ -2,6 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ReadingSessionsService } from './reading-sessions.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { SessionsQueryDto } from './dto/sessions-query.dto';
+import { ProfileService } from '../profiles/profile.service';
+import { GamificationService } from '../gamification/gamification.service';
+import { VocabService } from '../vocab/vocab.service';
+import { OutcomesService } from '../outcomes/outcomes.service';
+import { GatingService } from '../gating/gating.service';
+import { QuickCommandParser } from './parsers/quick-command.parser';
+import { AiServiceClient } from '../ai-service/ai-service.client';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 describe('ReadingSessionsService - Session History', () => {
   let service: ReadingSessionsService;
@@ -22,15 +30,15 @@ describe('ReadingSessionsService - Session History', () => {
           provide: PrismaService,
           useValue: mockPrisma,
         },
-        // Mock other dependencies
-        { provide: 'ProfileService', useValue: {} },
-        { provide: 'GamificationService', useValue: {} },
-        { provide: 'VocabService', useValue: {} },
-        { provide: 'OutcomesService', useValue: {} },
-        { provide: 'GatingService', useValue: {} },
-        { provide: 'QuickCommandParser', useValue: {} },
-        { provide: 'AiServiceClient', useValue: {} },
-        { provide: 'EventEmitter2', useValue: { emit: jest.fn() } },
+        // Mock other dependencies with actual class tokens
+        { provide: ProfileService, useValue: {} },
+        { provide: GamificationService, useValue: {} },
+        { provide: VocabService, useValue: {} },
+        { provide: OutcomesService, useValue: {} },
+        { provide: GatingService, useValue: {} },
+        { provide: QuickCommandParser, useValue: {} },
+        { provide: AiServiceClient, useValue: {} },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
       ],
     }).compile();
 

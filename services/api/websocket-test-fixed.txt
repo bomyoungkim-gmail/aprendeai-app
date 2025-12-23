@@ -1,0 +1,165 @@
+FAIL test/integration/websocket.spec.ts (38.791 s)
+  WebSocket Real-Time Events (Integration)
+    WebSocket Connection
+      √ should connect with valid JWT token (43 ms)
+      × should reject connection with invalid token (17 ms)
+      × should reject connection without token (11 ms)
+    Session Membership Events
+      × should notify other users when someone joins session (5016 ms)
+      × should notify other users when someone leaves session (5031 ms)
+    Real-Time Session Events
+      × should broadcast SESSION_STARTED event to all members (5134 ms)
+      × should broadcast ROUND_ADVANCED event when round status changes (5141 ms)
+      × should broadcast VOTE_SUBMITTED event when user votes (5132 ms)
+      × should broadcast CHAT_MESSAGE event when user sends message (5136 ms)
+    Event Isolation
+      √ should NOT receive events from other sessions (730 ms)
+
+  ● WebSocket Real-Time Events (Integration) › WebSocket Connection › should reject connection with invalid token
+
+    Should not connect with invalid token
+
+      198 |       badClient.on('connect', () => {
+      199 |         badClient.disconnect();
+    > 200 |         done(new Error('Should not connect with invalid token'));
+          |              ^
+      201 |       });
+      202 |
+      203 |       badClient.on('connect_error', (error) => {
+
+      at Socket.<anonymous> (test/integration/websocket.spec.ts:200:14)
+      at Socket.Object.<anonymous>.Emitter.emit (node_modules/@socket.io/component-emitter/lib/cjs/index.js:143:20)
+      at Socket.onconnect (node_modules/socket.io-client/build/cjs/socket.js:618:14)
+      at Socket.onpacket (node_modules/socket.io-client/build/cjs/socket.js:506:26)
+      at Manager.Object.<anonymous>.Emitter.emit (node_modules/@socket.io/component-emitter/lib/cjs/index.js:143:20)
+      at node_modules/socket.io-client/build/cjs/manager.js:246:18
+
+  ● WebSocket Real-Time Events (Integration) › WebSocket Connection › should reject connection without token
+
+    Should not connect without token
+
+      215 |       badClient.on('connect', () => {
+      216 |         badClient.disconnect();
+    > 217 |         done(new Error('Should not connect without token'));
+          |              ^
+      218 |       });
+      219 |
+      220 |       badClient.on('connect_error', (error) => {
+
+      at Socket.<anonymous> (test/integration/websocket.spec.ts:217:14)
+      at Socket.Object.<anonymous>.Emitter.emit (node_modules/@socket.io/component-emitter/lib/cjs/index.js:143:20)
+      at Socket.onconnect (node_modules/socket.io-client/build/cjs/socket.js:618:14)
+      at Socket.onpacket (node_modules/socket.io-client/build/cjs/socket.js:506:26)
+      at Manager.Object.<anonymous>.Emitter.emit (node_modules/@socket.io/component-emitter/lib/cjs/index.js:143:20)
+      at node_modules/socket.io-client/build/cjs/manager.js:246:18
+
+  ● WebSocket Real-Time Events (Integration) › Session Membership Events › should notify other users when someone joins session
+
+    thrown: "Exceeded timeout of 5000 ms for a test while waiting for `done()` to be called.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      247 |     });
+      248 |
+    > 249 |     it('should notify other users when someone joins session', (done) => {
+          |     ^
+      250 |       // User 2 listens for join event
+      251 |       client2.on('userJoined', (data) => {
+      252 |         expect(data.userId).toBe(user1Id);
+
+      at test/integration/websocket.spec.ts:249:5
+      at test/integration/websocket.spec.ts:228:3
+      at Object.<anonymous> (test/integration/websocket.spec.ts:13:1)
+
+  ● WebSocket Real-Time Events (Integration) › Session Membership Events › should notify other users when someone leaves session
+
+    thrown: "Exceeded timeout of 5000 ms for a test while waiting for `done()` to be called.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      260 |     });
+      261 |
+    > 262 |     it('should notify other users when someone leaves session', (done) => {
+          |     ^
+      263 |       // Both join first
+      264 |       client1.emit('joinSession', { sessionId });
+      265 |       client2.emit('joinSession', { sessionId });
+
+      at test/integration/websocket.spec.ts:262:5
+      at test/integration/websocket.spec.ts:228:3
+      at Object.<anonymous> (test/integration/websocket.spec.ts:13:1)
+
+  ● WebSocket Real-Time Events (Integration) › Real-Time Session Events › should broadcast SESSION_STARTED event to all members
+
+    thrown: "Exceeded timeout of 5000 ms for a test while waiting for `done()` to be called.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      303 |     });
+      304 |
+    > 305 |     it('should broadcast SESSION_STARTED event to all members', (done) => {
+          |     ^
+      306 |       // User 2 listens for session started
+      307 |       client2.on('session.started', (data) => {
+      308 |         expect(data.sessionId).toBe(sessionId);
+
+      at test/integration/websocket.spec.ts:305:5
+      at test/integration/websocket.spec.ts:280:3
+      at Object.<anonymous> (test/integration/websocket.spec.ts:13:1)
+
+  ● WebSocket Real-Time Events (Integration) › Real-Time Session Events › should broadcast ROUND_ADVANCED event when round status changes
+
+    thrown: "Exceeded timeout of 5000 ms for a test while waiting for `done()` to be called.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      329 |     });
+      330 |
+    > 331 |     it('should broadcast ROUND_ADVANCED event when round status changes', (done) => {
+          |     ^
+      332 |       client2.on('round.advanced', (data) => {
+      333 |         expect(data.sessionId).toBe(sessionId);
+      334 |         expect(data.roundIndex).toBe(1);
+
+      at test/integration/websocket.spec.ts:331:5
+      at test/integration/websocket.spec.ts:280:3
+      at Object.<anonymous> (test/integration/websocket.spec.ts:13:1)
+
+  ● WebSocket Real-Time Events (Integration) › Real-Time Session Events › should broadcast VOTE_SUBMITTED event when user votes
+
+    thrown: "Exceeded timeout of 5000 ms for a test while waiting for `done()` to be called.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      358 |     });
+      359 |
+    > 360 |     it('should broadcast VOTE_SUBMITTED event when user votes', (done) => {
+          |     ^
+      361 |       client2.on('vote.submitted', (data) => {
+      362 |         expect(data.sessionId).toBe(sessionId);
+      363 |         expect(data.userId).toBe(user1Id);
+
+      at test/integration/websocket.spec.ts:360:5
+      at test/integration/websocket.spec.ts:280:3
+      at Object.<anonymous> (test/integration/websocket.spec.ts:13:1)
+
+  ● WebSocket Real-Time Events (Integration) › Real-Time Session Events › should broadcast CHAT_MESSAGE event when user sends message
+
+    thrown: "Exceeded timeout of 5000 ms for a test while waiting for `done()` to be called.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      392 |     });
+      393 |
+    > 394 |     it('should broadcast CHAT_MESSAGE event when user sends message', (done) => {
+          |     ^
+      395 |       client2.on('chat.message', (data) => {
+      396 |         expect(data.message).toBe('Hello from user 1!');
+      397 |         expect(data.userId).toBe(user1Id);
+
+      at test/integration/websocket.spec.ts:394:5
+      at test/integration/websocket.spec.ts:280:3
+      at Object.<anonymous> (test/integration/websocket.spec.ts:13:1)
+
+Test Suites: 1 failed, 1 total
+Tests:       8 failed, 2 passed, 10 total
+Snapshots:   0 total
+Time:        38.996 s, estimated 42 s
+Ran all test suites matching /test\\integration\\websocket.spec.ts/i.
+Jest did not exit one second after the test run has completed.
+
+'This usually means that there are asynchronous operations that weren't stopped in your tests. Consider running Jest with `--detectOpenHandles` to troubleshoot this issue.

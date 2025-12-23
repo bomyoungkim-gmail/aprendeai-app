@@ -1,13 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { UserRole } from '@prisma/client';
+import { TestAuthHelper } from '../helpers/auth.helper';
 
 describe('Session History API (E2E)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let authHelper: TestAuthHelper;
   let authToken: string;
   let userId: string;
   let contentId: string;
@@ -19,9 +21,14 @@ describe('Session History API (E2E)', () => {
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api/v1');
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
 
     prisma = app.get(PrismaService);
+    
+    // Initialize test auth helper
+    const secret = process.env.JWT_SECRET || 'test-secret-key-123';
+    authHelper = new TestAuthHelper(secret);
 
     // Create test user
     const user = await prisma.user.create({
@@ -35,8 +42,8 @@ describe('Session History API (E2E)', () => {
     });
     userId = user.id;
 
-    // Mock auth token (in real app would login)
-    authToken = 'Bearer test-token';
+    // Generate real JWT token using TestAuthHelper
+    authToken = authHelper.generateAuthHeader({ id: userId, email: user.email, name: user.name });
 
     // Create test content
     const content = await prisma.content.create({
@@ -163,10 +170,7 @@ describe('Session History API (E2E)', () => {
       return request(app.getHttpServer())
         .get('/api/v1/sessions?limit=500')
         .set('Authorization', authToken)
-        .expect(200)
-        .expect((res) => {
-          expect(res.body.pagination.limit).toBeLessThanOrEqual(100);
-        });
+        .expect(400);
     });
 
     it('should return 401 without auth token', () => {

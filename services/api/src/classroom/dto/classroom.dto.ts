@@ -1,4 +1,5 @@
 import { IsString, IsNumber, IsOptional, IsEnum, IsDate, IsArray } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateClassroomDto {
   @IsString()
@@ -28,7 +29,8 @@ export class UpdateClassroomDto {
 
 export class EnrollStudentDto {
   @IsString()
-  classroomId: string;
+  @IsOptional()
+  classroomId?: string;
 
   @IsString()
   learnerUserId: string;
@@ -40,7 +42,8 @@ export class EnrollStudentDto {
 
 export class CreateClassPolicyDto {
   @IsString()
-  classroomId: string;
+  @IsOptional()
+  classroomId?: string;
 
   @IsNumber()
   @IsOptional()
@@ -65,6 +68,7 @@ export class CreateClassPolicyDto {
 
 export class CreateWeeklyPlanDto {
   @IsDate()
+  @Type(() => Date)
   weekStart: Date;
 
   @IsArray()

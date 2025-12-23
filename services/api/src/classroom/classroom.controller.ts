@@ -120,7 +120,7 @@ export class ClassroomController {
     return this.classPlanService.createWeeklyPlan(
       classroomId,
       dto.weekStart,
-      req.user.userId, // Get educator ID from authenticated user
+      req.user.id, // Get educator ID from authenticated user
       dto.items,
       dto.toolWords,
     );

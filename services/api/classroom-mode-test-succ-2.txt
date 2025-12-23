@@ -1,0 +1,62 @@
+FAIL test/integration/classroom-mode.integration.spec.ts (7.882 s)
+  Classroom Mode Integration Tests (e2e)
+    Classroom CRUD Flow
+      √ should create a classroom (42 ms)
+      √ should get classroom by ID (23 ms)
+      √ should update classroom (11 ms)
+    Enrollment Flow
+      √ should enroll student in classroom (33 ms)
+      √ should get enrollments for classroom (13 ms)
+    Classroom Policy Flow
+      √ should create classroom policy (16 ms)
+      √ should get policy prompt (8 ms)
+    Weekly Planning Flow
+      √ should create weekly plan (17 ms)
+      × should get current week plan (11 ms)
+    Dashboard with Privacy Filtering
+      × should get teacher dashboard with privacy filtering (17 ms)
+    Intervention Flow
+      √ should log student help request (10 ms)
+      √ should get intervention prompt (7 ms)
+
+  ● Classroom Mode Integration Tests (e2e) › Weekly Planning Flow › should get current week plan
+
+    expect(received).toHaveProperty(path)
+
+    Expected path: "itemsJson"
+    Received path: []
+
+    Received value: {}
+
+      216 |
+      217 |       expect(response.status).toBe(200);
+    > 218 |       expect(response.body).toHaveProperty('itemsJson');
+          |                             ^
+      219 |     });
+      220 |   });
+      221 |
+
+      at Object.<anonymous> (integration/classroom-mode.integration.spec.ts:218:29)
+
+  ● Classroom Mode Integration Tests (e2e) › Dashboard with Privacy Filtering › should get teacher dashboard with privacy filtering
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "AGGREGATED_PLUS_HELP_REQUESTS"
+    Received: "AGGREGATED_ONLY"
+
+      229 |       expect(response.body).toHaveProperty('activeStudents');
+      230 |       expect(response.body).toHaveProperty('students');
+    > 231 |       expect(response.body.privacyMode).toBe('AGGREGATED_PLUS_HELP_REQUESTS');
+          |                                         ^
+      232 |       
+      233 |       // With AGGREGATED_PLUS_HELP_REQUESTS: should have helpRequests but not comprehensionScore
+      234 |       const student = response.body.students[0];
+
+      at Object.<anonymous> (integration/classroom-mode.integration.spec.ts:231:41)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 10 passed, 12 total
+Snapshots:   0 total
+Time:        8.072 s
+Ran all test suites matching /test\\integration\\classroom-mode.integration.spec.ts/i.

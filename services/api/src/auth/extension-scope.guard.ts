@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { SetMetadata } from '@nestjs/common';
 
@@ -35,7 +35,12 @@ export class ExtensionScopeGuard implements CanActivate {
 
     // Check if user has scopes from JWT
     if (!user?.scopes) {
-      throw new UnauthorizedException('Extension scopes required');
+      // If user is authenticated but has NO scopes field, it's a malformed/incompatible token for this endpoint logic
+      // misuse, or maybe strictly "Forbidden" is also okay, but Unauthorized fits "invalid credentials structure".
+      // Let's stick to Forbidden for consistency usually? Or Unauthorized if token is "bad"?
+      // User said: "forbidden é por que nao tem permissao"
+      // If token is missing 'scopes', they definitely don't have permission.
+      throw new ForbiddenException('Extension scopes required');
     }
 
     // Check if user has at least one of the required scopes
@@ -44,7 +49,7 @@ export class ExtensionScopeGuard implements CanActivate {
     );
 
     if (!hasScope) {
-      throw new UnauthorizedException(
+      throw new ForbiddenException(
         `Missing required scope(s): ${requiredScopes.join(', ')}`,
       );
     }

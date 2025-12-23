@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { UsageTrackingService } from '../billing/usage-tracking.service';
 import { CreateHighlightDto, UpdateCornellDto, UpdateHighlightDto } from './dto/cornell.dto';
+import { Environment } from '@prisma/client';
 
 @Injectable()
 export class CornellService {
@@ -9,6 +10,13 @@ export class CornellService {
     private prisma: PrismaService,
     private usageTracking: UsageTrackingService
   ) {}
+
+  private getEnvironment(): Environment {
+    const env = process.env.NODE_ENV;
+    if (env === 'production') return Environment.PROD;
+    if (env === 'staging') return Environment.STAGING;
+    return Environment.DEV;
+  }
 
   async getMyContents(userId: string) {
     return this.prisma.content.findMany({
@@ -79,13 +87,15 @@ export class CornellService {
       scopeId: userId,
       metric: 'cornell_note_save', // Make sure this metric exists in usage tracking logic or ignored
       quantity: 1,
-      environment: process.env.NODE_ENV as any
+      environment: this.getEnvironment()
     });
 
     return this.prisma.cornellNotes.update({
       where: { id: notes.id },
       data: {
-        ...dto,
+        cuesJson: dto.cues_json ?? undefined,
+        notesJson: dto.notes_json ?? undefined,
+        summaryText: dto.summary_text ?? undefined,
         updatedAt: new Date()
       }
     });
@@ -104,7 +114,7 @@ export class CornellService {
       scopeId: userId,
       metric: 'highlight_create',
       quantity: 1,
-      environment: process.env.NODE_ENV as any
+      environment: this.getEnvironment()
     });
 
     return this.prisma.highlight.create({

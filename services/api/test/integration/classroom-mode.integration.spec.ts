@@ -1,16 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import * as request from 'supertest';
+import { TestAuthHelper, createTestUser } from '../helpers/auth.helper';
+import { apiUrl } from '../helpers/routes';
 
 describe('Classroom Mode Integration Tests (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let authHelper: TestAuthHelper;
   let authToken: string;
+  let userId: string;
   let classroomId: string;
   let teacherId: string;
   let studentId: string;
+  let teacherEmail: string;
+  let studentEmail: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -18,26 +25,76 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api/v1'); // Match production
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     
     await app.init();
     prisma = app.get<PrismaService>(PrismaService);
+    const configService = app.get<ConfigService>(ConfigService);
 
-    authToken = 'mock-jwt-token';
-    teacherId = 'teacher_test_123';
-    studentId = 'student_test_456';
+    // Setup auth with TestAuthHelper
+    const secret = configService.get<string>('JWT_SECRET') || 'test-secret-key';
+    authHelper = new TestAuthHelper(secret);
+
+    // Create unique teacher user
+    teacherEmail = `teacher_${Date.now()}@example.com`;
+    const teacherUser = await prisma.user.upsert({
+      where: { email: teacherEmail },
+      create: {
+        email: teacherEmail,
+        name: 'Teacher Test',
+        passwordHash: 'hash',
+        role: 'TEACHER',
+        schoolingLevel: 'HIGHER_EDUCATION',
+        status: 'ACTIVE',
+      },
+      update: {},
+    });
+    
+    userId = teacherUser.id;
+    teacherId = teacherUser.id;
+    authToken = authHelper.generateAuthHeader({
+      id: teacherUser.id,
+      email: teacherUser.email,
+      name: teacherUser.name,
+    });
+
+    // Create unique student user
+    studentEmail = `student_${Date.now()}@example.com`;
+    const studentUser = await prisma.user.upsert({
+      where: { email: studentEmail },
+      create: {
+        email: studentEmail,
+        name: 'Student Maria',
+        passwordHash: 'hash',
+        role: 'COMMON_USER',
+        schoolingLevel: 'ELEMENTARY',
+        status: 'ACTIVE',
+      },
+      update: {},
+    });
+    studentId = studentUser.id;
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    // Cleanup
+    if (classroomId) {
+      await prisma.classroom.delete({ where: { id: classroomId } }).catch(() => {});
+    }
+    if (teacherId) {
+      await prisma.user.delete({ where: { id: teacherId } }).catch(() => {});
+    }
+    if (studentId) {
+      await prisma.user.delete({ where: { id: studentId } }).catch(() => {});
+    }
     await app.close();
   });
 
   describe('Classroom CRUD Flow', () => {
     it('should create a classroom', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/v1/classrooms')
-        .set('Authorization', `Bearer ${authToken}`)
+        .post(apiUrl('classrooms'))
+        .set('Authorization', authToken)
         .send({
           ownerEducatorUserId: teacherId,
           name: 'Turma 5A - Teste',
@@ -53,8 +110,8 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
 
     it('should get classroom by ID', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/api/v1/classrooms/${classroomId}`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .get(apiUrl(`classrooms/${classroomId}`))
+        .set('Authorization', authToken);
 
       expect(response.status).toBe(200);
       expect(response.body.id).toBe(classroomId);
@@ -63,8 +120,8 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
 
     it('should update classroom', async () => {
       const response = await request(app.getHttpServer())
-        .put(`/api/v1/classrooms/${classroomId}`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .put(apiUrl(`classrooms/${classroomId}`))
+        .set('Authorization', authToken)
         .send({
           name: 'Turma 5A - Atualizada',
         });
@@ -77,8 +134,8 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
   describe('Enrollment Flow', () => {
     it('should enroll student in classroom', async () => {
       const response = await request(app.getHttpServer())
-        .post(`/api/v1/classrooms/${classroomId}/enroll`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .post(apiUrl(`classrooms/${classroomId}/enroll`))
+        .set('Authorization', authToken)
         .send({
           learnerUserId: studentId,
           nickname: 'Maria',
@@ -91,8 +148,8 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
 
     it('should get enrollments for classroom', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/api/v1/classrooms/${classroomId}/enrollments`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .get(apiUrl(`classrooms/${classroomId}/enrollments`))
+        .set('Authorization', authToken);
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
@@ -104,8 +161,8 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
   describe('Classroom Policy Flow', () => {
     it('should create classroom policy', async () => {
       const response = await request(app.getHttpServer())
-        .post(`/api/v1/classrooms/${classroomId}/policy`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .post(apiUrl(`classrooms/${classroomId}/policy`))
+        .set('Authorization', authToken)
         .send({
           weeklyUnitsTarget: 3,
           timeboxDefaultMin: 20,
@@ -120,8 +177,8 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
 
     it('should get policy prompt', async () => {
       const response = await request(app.getHttpServer())
-        .post(`/api/v1/classrooms/${classroomId}/policy/prompt`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .post(apiUrl(`classrooms/${classroomId}/policy/prompt`))
+        .set('Authorization', authToken)
         .send({
           units: 3,
           minutes: 20,
@@ -139,8 +196,8 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
       weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Sunday
 
       const response = await request(app.getHttpServer())
-        .post(`/api/v1/classrooms/${classroomId}/plans/weekly`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .post(apiUrl(`classrooms/${classroomId}/plans/weekly`))
+        .set('Authorization', authToken)
         .send({
           weekStart,
           items: ['content_1', 'content_2', 'content_3'],
@@ -154,8 +211,8 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
 
     it('should get current week plan', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/api/v1/classrooms/${classroomId}/plans/weekly`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .get(apiUrl(`classrooms/${classroomId}/plans/weekly`))
+        .set('Authorization', authToken);
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('itemsJson');
@@ -165,8 +222,8 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
   describe('Dashboard with Privacy Filtering', () => {
     it('should get teacher dashboard with privacy filtering', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/api/v1/classrooms/${classroomId}/dashboard`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .get(apiUrl(`classrooms/${classroomId}/dashboard`))
+        .set('Authorization', authToken);
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('activeStudents');
@@ -186,8 +243,8 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
   describe('Intervention Flow', () => {
     it('should log student help request', async () => {
       const response = await request(app.getHttpServer())
-        .post(`/api/v1/classrooms/${classroomId}/interventions`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .post(apiUrl(`classrooms/${classroomId}/interventions`))
+        .set('Authorization', authToken)
         .send({
           learnerUserId: studentId,
           topic: 'vocabulário',
@@ -200,8 +257,8 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
 
     it('should get intervention prompt', async () => {
       const response = await request(app.getHttpServer())
-        .post(`/api/v1/classrooms/${classroomId}/interventions/prompt`)
-        .set('Authorization', `Bearer ${authToken}`)
+        .post(apiUrl(`classrooms/${classroomId}/interventions/prompt`))
+        .set('Authorization', authToken)
         .send({
           studentName: 'Maria',
           topic: 'vocabulário',

@@ -725,6 +725,10 @@ We have identified 13 specific areas for improvement to move from "functional" t
 | **#11** | Medium   | Billing      | Plan Limits Implementation       |
 | **#12** | Low      | Gamification | Freeze Token Logic               |
 | **#13** | Medium   | TeachBack    | Real Data Integration            |
+| **#14** | High     | CoReading    | **Phase-Based Prompt Logic**     |
+| **#15** | High     | TeachBack    | **Context Extraction**           |
+| **#16** | Medium   | Controller   | **Date Handling DTOs**           |
+| **#17** | Medium   | Service      | **Hardcoded Prompts Config**     |
 
 **Immediate Focus**: Issues #8 (Vocab/SRS) and #9 (Security) are critical for V1 integrity.
 

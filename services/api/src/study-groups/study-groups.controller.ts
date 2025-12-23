@@ -22,17 +22,17 @@ export class StudyGroupsController {
 
   @Post()
   async createGroup(@Request() req, @Body() dto: CreateGroupDto) {
-    return this.studyGroupsService.createGroup(req.user.userId, dto);
+    return this.studyGroupsService.createGroup(req.user.id, dto);
   }
 
   @Get()
   async getMyGroups(@Request() req) {
-    return this.studyGroupsService.getGroupsByUser(req.user.userId);
+    return this.studyGroupsService.getGroupsByUser(req.user.id);
   }
 
   @Get(':groupId')
   async getGroup(@Param('groupId') groupId: string, @Request() req) {
-    return this.studyGroupsService.getGroup(groupId, req.user.userId);
+    return this.studyGroupsService.getGroup(groupId, req.user.id);
   }
 
   @Post(':groupId/members/invite')
@@ -41,7 +41,7 @@ export class StudyGroupsController {
     @Body() dto: InviteGroupMemberDto,
     @Request() req,
   ) {
-    await this.studyGroupsService.inviteMember(groupId, req.user.userId, dto);
+    await this.studyGroupsService.inviteMember(groupId, req.user.id, dto);
     return { message: 'Member invited successfully' };
   }
 
@@ -51,7 +51,7 @@ export class StudyGroupsController {
     @Param('userId') userId: string,
     @Request() req,
   ) {
-    await this.studyGroupsService.removeMember(groupId, req.user.userId, userId);
+    await this.studyGroupsService.removeMember(groupId, req.user.id, userId);
     return { message: 'Member removed successfully' };
   }
 
@@ -61,7 +61,7 @@ export class StudyGroupsController {
     @Body() dto: AddContentDto,
     @Request() req,
   ) {
-    await this.studyGroupsService.addContent(groupId, req.user.userId, dto.contentId);
+    await this.studyGroupsService.addContent(groupId, req.user.id, dto.contentId);
     return { message: 'Content added to playlist' };
   }
 
@@ -71,7 +71,7 @@ export class StudyGroupsController {
     @Param('contentId') contentId: string,
     @Request() req,
   ) {
-    await this.studyGroupsService.removeContent(groupId, req.user.userId, contentId);
+    await this.studyGroupsService.removeContent(groupId, req.user.id, contentId);
     return { message: 'Content removed from playlist' };
   }
 
@@ -81,7 +81,7 @@ export class StudyGroupsController {
     @Request() req,
   ) {
     // Verify membership
-    await this.studyGroupsService.getGroup(groupId, req.user.userId);
+    await this.studyGroupsService.getGroup(groupId, req.user.id);
     
     // Return sessions using injected GroupSessionsService
     return this.groupSessionsService.getGroupSessions(groupId);
@@ -94,7 +94,7 @@ export class StudyGroupsController {
     @Body() dto: SendChatMessageDto,
     @Request() req,
   ) {
-    const chatMessage = await this.groupChatService.sendMessage(sessionId, req.user.userId, dto);
+    const chatMessage = await this.groupChatService.sendMessage(sessionId, req.user.id, dto);
     
     // Emit WebSocket event
     this.wsGateway.emitToSession(sessionId, StudyGroupEvent.CHAT_MESSAGE, {
@@ -112,6 +112,6 @@ export class StudyGroupsController {
     @Request() req,
   ) {
     const roundIdx = parseInt(roundIndex, 10);
-    return this.groupChatService.getMessages(sessionId, roundIdx, req.user.userId);
+    return this.groupChatService.getMessages(sessionId, roundIdx, req.user.id);
   }
 }

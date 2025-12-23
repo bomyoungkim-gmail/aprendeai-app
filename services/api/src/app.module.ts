@@ -49,8 +49,16 @@ import { RouteValidationMiddleware } from './common/middleware/route-validation.
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'], // .env.local takes precedence for local dev
+      envFilePath: process.env.NODE_ENV === 'test' 
+        ? ['.env.test', '.env.local', '.env'] 
+        : ['.env.local', '.env'], // .env.local takes precedence for local dev
       cache: false, // Disable caching to ensure fresh values
+      // Add default test values
+      load: [() => ({
+        JWT_SECRET: process.env.JWT_SECRET || 'test-jwt-secret-key-change-in-production',
+        DATABASE_URL: process.env.DATABASE_URL,
+        NODE_ENV: process.env.NODE_ENV || 'development',
+      })],
     }),
     EventEmitterModule.forRoot({ global: true }),
     PrismaModule,
