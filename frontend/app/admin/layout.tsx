@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import type { Metadata } from 'next';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function AdminLayout({
   children,
@@ -104,13 +105,14 @@ export default function AdminLayout({
                 </a>
               </div>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
               <button
                 onClick={() => {
                   localStorage.removeItem('admin_token');
                   window.location.href = '/login';
                 }}
-                className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
               >
                 Logout
               </button>

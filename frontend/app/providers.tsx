@@ -6,6 +6,7 @@ import { WebSocketProvider } from "@/contexts/WebSocketContext";
 import { HydrationWrapper } from "@/components/HydrationWrapper";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToastProvider } from "@/components/providers/toast-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -25,12 +26,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary>
       <HydrationWrapper>
-        <QueryClientProvider client={queryClient}>
-          <WebSocketProvider>
-            <ToastProvider />
-            {children}
-          </WebSocketProvider>
-        </QueryClientProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <QueryClientProvider client={queryClient}>
+            <WebSocketProvider>
+              <ToastProvider />
+              {children}
+            </WebSocketProvider>
+          </QueryClientProvider>
+        </ThemeProvider>
       </HydrationWrapper>
     </ErrorBoundary>
   );
