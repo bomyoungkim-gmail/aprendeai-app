@@ -16,6 +16,7 @@ import { AdminModule } from '../admin/admin.module';
     InstitutionInviteService,
     InstitutionDomainService,
     ApprovalService,
+    SSOService,
   ],
   exports: [
     InstitutionsService,

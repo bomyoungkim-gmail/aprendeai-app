@@ -17,6 +17,7 @@ import { InstitutionsService } from './institutions.service';
 import { InstitutionInviteService } from './institution-invite.service';
 import { InstitutionDomainService } from './institution-domain.service';
 import { ApprovalService } from './approval.service';
+import { SSOService } from './sso.service';
 import { 
   CreateInstitutionDto, 
   UpdateInstitutionDto,
@@ -36,6 +37,7 @@ export class InstitutionsController {
     private readonly inviteService: InstitutionInviteService,
     private readonly domainService: InstitutionDomainService,
     private readonly approvalService: ApprovalService,
+    private readonly ssoService: SSOService,
   ) {}
 
   // ==================== Institution CRUD ====================
@@ -188,8 +190,8 @@ export class InstitutionsController {
       return this.approvalService.approve(approvalId, req.user.id);
     } else {
       return this.approvalService.reject(
-        approvalId, 
-        req.user.id, 
+        approvalId,
+        req.user.id,
         processApprovalDto.reason || 'No reason provided'
       );
     }
