@@ -13,6 +13,7 @@ export default function FamilyLayout({
   const navigation = [
     { name: 'Dashboard', href: '/parent/dashboard', icon: '🏠' },
     { name: 'Manage Family', href: '/parent/manage-family', icon: '👨‍👩‍👧‍👦' },
+    { name: 'Analytics', href: '/parent/analytics', icon: '📊' },
     { name: 'Settings', href: '/parent/settings', icon: '⚙️' },
   ];
 
