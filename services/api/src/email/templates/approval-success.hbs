@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f3f4f6;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+    }
+    .header {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #ffffff;
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .content {
+      padding: 40px 30px;
+      color: #374151;
+      line-height: 1.6;
+    }
+    .success-card {
+      background: #f0fdf4;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      border-left: 4px solid #10b981;
+      text-align: center;
+    }
+    .success-card h2 {
+      margin: 0 0 10px 0;
+      color: #065f46;
+      font-size: 24px;
+    }
+    .success-icon {
+      font-size: 64px;
+      margin-bottom: 10px;
+    }
+    .button {
+      display: inline-block;
+      background: #10b981;
+      color: #ffffff !important;
+      padding: 14px 32px;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      margin: 20px 0;
+    }
+    .button:hover {
+      background: #059669;
+    }
+    .footer {
+      background-color: #f9fafb;
+      padding: 30px;
+      text-align: center;
+      color: #6b7280;
+      font-size: 14px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .footer a {
+      color: #10b981;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Cadastro Aprovado! 🎉</h1>
+    </div>
+    
+    <div class="content">
+      <p>Olá <strong>{{name}}</strong>,</p>
+      
+      <p>Temos ótimas notícias! Seu cadastro no <strong>{{institutionName}}</strong> foi aprovado com sucesso!</p>
+      
+      <div class="success-card">
+        <div class="success-icon">✅</div>
+        <h2>Bem-vindo ao AprendeAI!</h2>
+        <p style="color: #065f46; margin: 10px 0;">
+          Você já pode acessar todos os recursos da plataforma.
+        </p>
+      </div>
+      
+      <p><strong>Comece agora:</strong></p>
+      <ul>
+        <li>📚 Acesse conteúdos e materiais da instituição</li>
+        <li>✏️ Crie anotações e Cornell notes</li>
+        <li>👥 Colabore com outros membros</li>
+        <li>🎯 Acompanhe seu progresso de estudos</li>
+      </ul>
+      
+      <div style="text-align: center;">
+        <a href="{{loginUrl}}" class="button">Acessar AprendeAI</a>
+      </div>
+      
+      <p><strong>Suas credenciais:</strong></p>
+      <ul>
+        <li><strong>Email:</strong> {{email}}</li>
+        <li><strong>Instituição:</strong> {{institutionName}}</li>
+      </ul>
+      
+      <p style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; border-radius: 6px;">
+        <strong>💡 Dica:</strong> Use a senha que você criou durante o cadastro para fazer login.
+      </p>
+      
+      <p>Se tiver alguma dúvida, nossa equipe está sempre disponível para ajudar!</p>
+      
+      <p>Bons estudos! 📖<br>
+        <strong>Equipe AprendeAI</strong></p>
+    </div>
+    
+    <div class="footer">
+      <p>© {{year}} AprendeAI. Todos os direitos reservados.</p>
+      <p>
+        <a href="{{frontendUrl}}">Visitar site</a> •
+        <a href="{{frontendUrl}}/settings/notifications">Preferências de email</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

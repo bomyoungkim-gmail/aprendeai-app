@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f3f4f6;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+    }
+    .header {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626100%);
+      color: #ffffff;
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .content {
+      padding: 40px 30px;
+      color: #374151;
+      line-height: 1.6;
+    }
+    .rejection-card {
+      background: #fef2f2;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      border-left: 4px solid #ef4444;
+      text-align: center;
+    }
+    .rejection-card h2 {
+      margin: 0 0 10px 0;
+      color: #991b1b;
+      font-size: 24px;
+    }
+    .reason-box {
+      background: #f3f4f6;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 20px 0;
+      border-left: 4px solid #6b7280;
+    }
+    .contact-box {
+      background: #eff6ff;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 20px 0;
+      border-left: 4px solid #3b82f6;
+    }
+    .footer {
+      background-color: #f9fafb;
+      padding: 30px;
+      text-align: center;
+      color: #6b7280;
+      font-size: 14px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .footer a {
+      color: #ef4444;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Atualização sobre seu Cadastro</h1>
+    </div>
+    
+    <div class="content">
+      <p>Olá <strong>{{name}}</strong>,</p>
+      
+      <p>Recebemos uma atualização sobre sua solicitação de cadastro no <strong>{{institutionName}}</strong>.</p>
+      
+      <div class="rejection-card">
+        <h2>Solicitação Não Aprovada</h2>
+        <p style="color: #991b1b; margin: 10px 0;">
+          Infelizmente, sua solicitação de cadastro não foi aprovada neste momento.
+        </p>
+      </div>
+      
+      {{#if reason}}
+      <div class="reason-box">
+        <p><strong>Motivo:</strong></p>
+        <p style="margin: 10px 0;">{{reason}}</p>
+      </div>
+      {{/if}}
+      
+      <div class="contact-box">
+        <p><strong>💬 Quer entender melhor?</strong></p>
+        <p style="margin: 10px 0;">
+          Se você acredita que houve um erro ou gostaria de mais informações, 
+          entre em contato diretamente com os administradores do <strong>{{institutionName}}</strong>.
+        </p>
+      </div>
+      
+      <p><strong>Outras opções:</strong></p>
+      <ul>
+        <li>📧 Verifique se usou o email correto da instituição</li>
+        <li>👥 Confirme com um administrador se você deveria ter acesso</li>
+        <li>🔄 Você pode tentar novamente caso a situação mude</li>
+      </ul>
+      
+      <p style="color: #6b7280; font-size: 14px;">
+        Esta decisão foi tomada pelos administradores do {{institutionName}}. 
+        A equipe do AprendeAI não tem autoridade para reverter esta decisão.
+      </p>
+      
+      <p>Atenciosamente,<br>
+        <strong>Equipe AprendeAI</strong></p>
+    </div>
+    
+    <div class="footer">
+      <p>© {{year}} AprendeAI. Todos os direitos reservados.</p>
+      <p>
+        <a href="{{frontendUrl}}">Visitar site</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

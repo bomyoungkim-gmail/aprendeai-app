@@ -1,0 +1,143 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background-color: #f3f4f6;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+      }
+      .header {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: #ffffff;
+        padding: 40px 30px;
+        text-align: center;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 700;
+      }
+      .content {
+        padding: 40px 30px;
+        color: #374151;
+        line-height: 1.6;
+      }
+      .institution-card {
+        background: #f0fdf4;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px 0;
+        border-left: 4px solid #10b981;
+      }
+      .institution-card h2 {
+        margin: 0 0 10px 0;
+        color: #1f2937;
+        font-size: 22px;
+      }
+      .institution-card p {
+        margin: 5px 0;
+        color: #6b7280;
+      }
+      .button {
+        display: inline-block;
+        background: #10b981;
+        color: #ffffff !important;
+        padding: 14px 32px;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        margin: 20px 0;
+      }
+      .button:hover {
+        background: #059669;
+      }
+      .info-box {
+        background: #fef3c7;
+        border-left: 4px solid #f59e0b;
+        padding: 16px;
+        margin: 20px 0;
+        border-radius: 6px;
+      }
+      .footer {
+        background-color: #f9fafb;
+        padding: 30px;
+        text-align: center;
+        color: #6b7280;
+        font-size: 14px;
+        border-top: 1px solid #e5e7eb;
+      }
+      .footer a {
+        color: #10b981;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Convite Institucional 🏫</h1>
+      </div>
+
+      <div class="content">
+        <p>Olá,</p>
+
+        <p><strong>{{inviterName}}</strong>
+          convidou você para participar do
+          <strong>{{institutionName}}</strong>
+          no AprendeAI!</p>
+
+        <div class="institution-card">
+          <h2>{{institutionName}}</h2>
+          <p><strong>Sua função:</strong> {{role}}</p>
+          <p><strong>Email:</strong> {{email}}</p>
+        </div>
+
+        <p>Com este convite você terá acesso a:</p>
+        <ul>
+          <li>📚 Conteúdos e materiais da instituição</li>
+          <li>👥 Colaboração com outros membros</li>
+          <li>📊 Acompanhamento de progresso institucional</li>
+          <li>🎯 Recursos exclusivos para a instituição</li>
+        </ul>
+
+        <div class="info-box">
+          <strong>⏰ Importante:</strong>
+          Este convite expira em
+          {{expiresAt}}. Você deve usar o mesmo email ({{email}}) ao se
+          cadastrar.
+        </div>
+
+        <div style="text-align: center;">
+          <a href="{{inviteUrl}}" class="button">Aceitar Convite e Cadastrar</a>
+        </div>
+
+        <p style="color: #6b7280; font-size: 14px;">
+          Se você não esperava este convite ou não conhece o remetente, pode
+          ignorar este email com segurança.
+        </p>
+
+        <p>Bem-vindo ao AprendeAI! 🎉<br />
+          <strong>Equipe AprendeAI</strong></p>
+      </div>
+
+      <div class="footer">
+        <p>© {{year}} AprendeAI. Todos os direitos reservados.</p>
+        <p>
+          <a href="{{frontendUrl}}">Visitar site</a>
+          •
+          <a href="{{frontendUrl}}/settings/notifications">Preferências de email</a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
