@@ -148,6 +148,29 @@ export const ROUTES = {
     CLOSE_PROMPT: 'ops/close',
   },
   
+  // Institution routes
+  INSTITUTIONS: {
+    BASE: 'institutions',
+    BY_ID: (id: string) => `institutions/${id}`,
+    CREATE: 'institutions',
+    UPDATE: (id: string) => `institutions/${id}`,
+    DELETE: (id: string) => `institutions/${id}`,
+    
+    // Invites
+    INVITES: (id: string) => `institutions/${id}/invites`,
+    CREATE_INVITE: (id: string) => `institutions/${id}/invites`,
+    CANCEL_INVITE: (id: string, inviteId: string) => `institutions/${id}/invites/${inviteId}`,
+    
+    // Domains
+    DOMAINS: (id: string) => `institutions/${id}/domains`,
+    ADD_DOMAIN: (id: string) => `institutions/${id}/domains`,
+    REMOVE_DOMAIN: (id: string, domainId: string) => `institutions/${id}/domains/${domainId}`,
+    
+    // Approvals
+    PENDING: (id: string) => `institutions/${id}/pending`,
+    PROCESS_APPROVAL: (id: string, approvalId: string) => `institutions/${id}/pending/${approvalId}`,
+  },
+  
   // WebClip routes (Browser Extension)
   WEBCLIP: {
     BASE: 'webclips',

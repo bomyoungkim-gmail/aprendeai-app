@@ -87,4 +87,21 @@ export class AuthController {
     const frontendUrl = URL_CONFIG.frontend.base;
     res.redirect(`${frontendUrl}/auth/callback?token=${token.access_token}`);
   }
+
+  @Public()
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Request password reset email' })
+  @ApiBody({ type: LoginDto }) // Using LoginDto for email only or create specific if strictly needed, DTO has generic email field
+  // Actually let's reuse defined DTOs properly
+  async forgotPassword(@Body() dto: { email: string }) {
+    await this.authService.forgotPassword(dto.email);
+    return { message: 'If the email exists, a reset link has been sent.' };
+  }
+
+  @Public()
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset password using token' })
+  async resetPassword(@Body() dto: { token: string; password: string }) {
+    return this.authService.resetPassword(dto);
+  }
 }

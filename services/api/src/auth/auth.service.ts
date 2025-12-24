@@ -5,7 +5,8 @@ import { SubscriptionService } from '../billing/subscription.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
 import * as bcrypt from 'bcrypt';
-import { LoginDto, RegisterDto } from './dto/auth.dto';
+import { LoginDto, RegisterDto, ResetPasswordDto } from './dto/auth.dto';
+import { URL_CONFIG } from '../config/urls.config';
 import { UserRole } from '@prisma/client';
 
 @Injectable()
@@ -147,5 +148,69 @@ export class AuthService {
 
       return newUser;
     });
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.usersService.findOne(email);
+    if (!user) {
+      // Return true to prevent enumeration attacks
+      return true;
+    }
+
+    // Generate random 32-byte hex token
+    const token = [...Array(32)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+    const expires = new Date(Date.now() + 3600000); // 1 hour
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: token,
+        passwordResetExpires: expires,
+      },
+    });
+
+    const resetLink = `${URL_CONFIG.frontend.base}/reset-password?token=${token}`;
+
+    try {
+      await this.emailService.sendEmail({
+        to: user.email,
+        subject: 'Redefinição de Senha - AprendeAI 🔒',
+        template: 'password-reset', // We need to ensure this template exists or create a simple fallback
+        context: {
+          name: user.name,
+          resetUrl: resetLink,
+        },
+      });
+    } catch (e) {
+      console.error('Failed to send reset email:', e);
+    }
+
+    return true;
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        passwordResetToken: dto.token,
+        passwordResetExpires: { gt: new Date() },
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Token inválido ou expirado');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+      },
+    });
+
+    return { message: 'Password updated successfully' };
   }
 }

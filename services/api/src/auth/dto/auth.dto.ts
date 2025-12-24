@@ -20,13 +20,13 @@ export class RegisterDto {
   @IsEnum(UserRole, { message: 'Invalid user role' })
   role?: UserRole; // Default should be COMMON_USER if not provided
 
-  @IsNotEmpty({ message: 'Institution ID is required' })
+  @IsOptional()
   @IsUUID('4', { message: 'Institution ID must be a valid UUID' })
-  institutionId!: string;
+  institutionId?: string;
 
-  @IsNotEmpty({ message: 'Schooling level is required' })
+  @IsOptional()
   @IsString()
-  schoolingLevel!: string;
+  schoolingLevel?: string;
 }
 
 export class LoginDto {
@@ -34,5 +34,21 @@ export class LoginDto {
   email!: string;
 
   @IsNotEmpty({ message: 'Password is required' })
+  password!: string;
+}
+
+export class ForgotPasswordDto {
+  @IsEmail({}, { message: 'Please provide a valid email address' })
+  email!: string;
+}
+
+export class ResetPasswordDto {
+  @IsNotEmpty({ message: 'Token is required' })
+  @IsString()
+  token!: string;
+
+  @IsNotEmpty({ message: 'New password is required' })
+  @MinLength(8, { message: 'Password must be at least 8 characters for security' })
+  @MaxLength(100, { message: 'Password is too long' })
   password!: string;
 }
