@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { API_BASE_URL } from '@/lib/config/api';
+import toast from 'react-hot-toast';
+import { SkeletonCard } from '@/components/ui/skeleton';
 
 interface PlatformStats {
   totalUsers: number;
@@ -30,9 +32,12 @@ export default function AdminDashboard() {
       if (res.ok) {
         const data = await res.json();
         setStats(data);
+      } else {
+        toast.error('Failed to load platform statistics');
       }
     } catch (error) {
       console.error('Failed to fetch stats:', error);
+      toast.error('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -40,8 +45,16 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Platform Dashboard</h1>
+          <p className="text-gray-600 mt-1">Overview of AprendeAI platform metrics</p>
+        </div>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
       </div>
     );
   }

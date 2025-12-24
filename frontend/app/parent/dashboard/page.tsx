@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE_URL, API_ENDPOINTS } from '@/lib/config/api';
+import toast from 'react-hot-toast';
+import { SkeletonCard } from '@/components/ui/skeleton';
 
 interface FamilyData {
   id: string;
@@ -35,16 +37,29 @@ export default function FamilyDashboard() {
         setFamily(data);
       } else {
         console.error('Failed to fetch family data');
+        toast.error('Failed to load family data');
       }
     } catch (error) {
       console.error('Error fetching family:', error);
+      toast.error('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   if (loading) {
-    return <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
+    return (
+      <div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Loading...</h1>
+        </div>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          {[1, 2].map((i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (!family) {

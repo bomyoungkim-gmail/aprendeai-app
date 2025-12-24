@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { API_BASE_URL } from '@/lib/config/api';
+import toast from 'react-hot-toast';
+import { SkeletonTable } from '@/components/ui/skeleton';
 
 interface Institution {
   id: string;
@@ -52,9 +54,12 @@ export default function AdminInstitutionsPage() {
         const data = await res.json();
         setInstitutions(data.data);
         setPagination(data.pagination);
+      } else {
+        toast.error('Failed to load institutions');
       }
     } catch (error) {
       console.error('Failed to fetch institutions:', error);
+      toast.error('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -68,8 +73,12 @@ export default function AdminInstitutionsPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Institutions</h1>
+          <p className="text-gray-600 mt-1">Manage all platform institutions</p>
+        </div>
+        <SkeletonTable rows={5} />
       </div>
     );
   }

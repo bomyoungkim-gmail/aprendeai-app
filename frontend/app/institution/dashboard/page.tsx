@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE_URL, API_ENDPOINTS } from '@/lib/config/api';
+import toast from 'react-hot-toast';
+import { SkeletonCard } from '@/components/ui/skeleton';
 
 interface InstitutionData {
   id: string;
@@ -37,9 +39,11 @@ export default function InstitutionDashboard() {
         setInstitution(data);
       } else {
         console.error('Failed to fetch institution data');
+        toast.error('Failed to load institution data');
       }
     } catch (error) {
       console.error('Error fetching institution:', error);
+      toast.error('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -47,8 +51,15 @@ export default function InstitutionDashboard() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Loading...</h1>
+        </div>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
       </div>
     );
   }
