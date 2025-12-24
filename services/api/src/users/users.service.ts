@@ -29,7 +29,7 @@ export class UsersService {
           },
           where: { status: 'ACTIVE' },
         },
-        familyMemberships: {
+        memberships: {
           select: {
             familyId: true,
             role: true,
@@ -45,15 +45,15 @@ export class UsersService {
 
     if (!user) throw new NotFoundException('User not found');
 
-    const familySettings = user.familyMemberships[0]?.family?.settings as any;
+    const familySettings = user.memberships[0]?.family?.settings as any;
 
     return {
       userId: user.id,
       role: user.role,
       institutionId: user.institutionMemberships[0]?.institutionId,
       institutionRole: user.institutionMemberships[0]?.role,
-      familyId: user.familyMemberships[0]?.familyId,
-      familyRole: user.familyMemberships[0]?.role,
+      familyId: user.memberships[0]?.familyId,
+      familyRole: user.memberships[0]?.role,
       contentFilters: familySettings?.contentFilters || { minAge: 3, maxAge: 18 },
       screenTimeLimit: familySettings?.screenTimeLimit,
     };
