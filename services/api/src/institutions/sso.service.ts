@@ -11,7 +11,7 @@ interface CreateSSOConfigDto {
   certificate?: string;
   clientId?: string;
   clientSecret?: string;
-  attributeMappings?: any;
+  roleMapping?: any;
 }
 
 interface UpdateSSOConfigDto {
@@ -21,7 +21,7 @@ interface UpdateSSOConfigDto {
   certificate?: string;
   clientId?: string;
   clientSecret?: string;
-  attributeMappings?: any;
+  roleMapping?: any;
 }
 
 @Injectable()
@@ -66,7 +66,7 @@ export class SSOService {
         certificate: dto.certificate,
         clientId: dto.clientId,
         clientSecret: dto.clientSecret,
-        attributeMappings: dto.attributeMappings || {},
+        roleMapping: dto.roleMapping || {},
       },
     });
 
@@ -136,7 +136,7 @@ export class SSOService {
         certificate: dto.certificate || config.certificate,
         clientId: dto.clientId || config.clientId,
         clientSecret: dto.clientSecret || config.clientSecret,
-        attributeMappings: dto.attributeMappings || config.attributeMappings,
+        roleMapping: dto.roleMapping || config.roleMapping,
       },
     });
 
