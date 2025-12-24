@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { ThemeToggle } from '@/components/theme-toggle';
 import Link from 'next/link';
 
 export default function FamilyLayout({
@@ -27,7 +28,8 @@ export default function FamilyLayout({
               <h1 className="text-xl font-bold text-gray-900">Family Owner</h1>
             </div>
             <div className="flex items-center gap-4">
-              <Link href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900">
+              <ThemeToggle />
+              <Link href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
                 ← Back to Learning
               </Link>
             </div>
