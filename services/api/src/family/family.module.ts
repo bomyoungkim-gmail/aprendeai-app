@@ -11,6 +11,7 @@ import { PromptLibraryModule } from '../prompts/prompt-library.module';
 import { EventsModule } from '../events/events.module';
 import { StateMachineModule } from '../state-machine/state-machine.module';
 import { PrivacyModule } from '../privacy/privacy.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { PrivacyModule } from '../privacy/privacy.module';
     EventsModule,
     StateMachineModule,
     PrivacyModule,
+    EmailModule,
   ],
   controllers: [FamilyController],
   providers: [
