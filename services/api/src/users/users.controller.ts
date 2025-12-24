@@ -36,6 +36,13 @@ export class UsersController {
     return this.usersService.findById(req.user.id);
   }
 
+  @Get('me/context')
+  @ApiOperation({ summary: 'Get user context for browser extension' })
+  @ApiResponse({ status: 200, description: 'Returns user context with family/institution info' })
+  async getUserContext(@Request() req) {
+    return this.usersService.getUserContext(req.user.id);
+  }
+
   @Put('me')
   @ApiOperation({ summary: 'Update user profile' })
   @ApiResponse({ status: 200, description: 'Profile updated successfully' })

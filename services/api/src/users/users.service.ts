@@ -16,6 +16,49 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { id } });
   }
 
+  async getUserContext(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        role: true,
+        institutionMembers: {
+          select: {
+            institutionId: true,
+            role: true,
+          },
+          where: { status: 'ACTIVE' },
+        },
+        familyMembers: {
+          select: {
+            familyId: true,
+            role: true,
+            family: {
+              select: {
+                settings: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    const familySettings = user.familyMembers[0]?.family?.settings as any;
+
+    return {
+      userId: user.id,
+      role: user.role,
+      institutionId: user.institutionMembers[0]?.institutionId,
+      institutionRole: user.institutionMembers[0]?.role,
+      familyId: user.familyMembers[0]?.familyId,
+      familyRole: user.familyMembers[0]?.role,
+      contentFilters: familySettings?.contentFilters || { minAge: 3, maxAge: 18 },
+      screenTimeLimit: familySettings?.screenTimeLimit,
+    };
+  }
+
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
     const salt = await bcrypt.genSalt();
     const passwordHash = await bcrypt.hash(data.passwordHash, salt);
