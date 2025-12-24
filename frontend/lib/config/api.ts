@@ -27,6 +27,8 @@ export const API_ENDPOINTS = {
     PROFILE: '/auth/profile',
     GOOGLE: '/auth/google',
     MICROSOFT: '/auth/microsoft',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
   },
   
   // Health
@@ -51,6 +53,29 @@ export const API_ENDPOINTS = {
   // Study Groups
   STUDY_GROUPS: '/study-groups',
   STUDY_GROUP: (id: string) => `/study-groups/${id}`,
+  
+  // Institutions
+  INSTITUTIONS: {
+    LIST: '/institutions',
+    CREATE: '/institutions',
+    GET: (id: string) => `/institutions/${id}`,
+    UPDATE: (id: string) => `/institutions/${id}`,
+    DELETE: (id: string) => `/institutions/${id}`,
+    
+    // Invites
+    INVITES: (id: string) => `/institutions/${id}/invites`,
+    CREATE_INVITE: (id: string) => `/institutions/${id}/invites`,
+    CANCEL_INVITE: (id: string, inviteId: string) => `/institutions/${id}/invites/${inviteId}`,
+    
+    // Domains
+    DOMAINS: (id: string) => `/institutions/${id}/domains`,
+    ADD_DOMAIN: (id: string) => `/institutions/${id}/domains`,
+    REMOVE_DOMAIN: (id: string, domainId: string) => `/institutions/${id}/domains/${domainId}`,
+    
+    // Approvals
+    PENDING: (id: string) => `/institutions/${id}/pending`,
+    APPROVE: (id: string, approvalId: string) => `/institutions/${id}/pending/${approvalId}`,
+  },
   
   // Reading Sessions (NEW - Phase 3)
   SESSIONS: {

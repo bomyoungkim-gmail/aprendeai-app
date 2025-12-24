@@ -44,7 +44,29 @@ export default function LoginPage() {
       router.push(ROUTES.DASHBOARD.HOME);
     } catch (err: any) {
       console.error(err);
-      setError(err.response?.data?.message || 'Erro ao realizar login');
+      
+      // Default error message
+      let errorMessage = 'Erro ao realizar login';
+
+      // Check specifically for 401 Unauthorized
+      if (err.response?.status === 401) {
+        errorMessage = 'Email ou senha inválidos.';
+      } else {
+        // Safe extraction for other errors
+        if (err.response?.data) {
+           const data = err.response.data;
+           if (typeof data.message === 'string') {
+              errorMessage = data.message;
+           } else if (typeof data.message === 'object' && data.message !== null) {
+              errorMessage = Array.isArray(data.message) ? data.message.join(', ') : JSON.stringify(data.message);
+           } else if (data.error) {
+              errorMessage = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
+           }
+        } else if (err.message) {
+           errorMessage = err.message;
+        }
+      }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -130,6 +152,14 @@ export default function LoginPage() {
               {errors.password && (
                 <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>
               )}
+            </div>
+
+            <div className="flex items-center justify-end">
+              <div className="text-sm">
+                <a href="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
+                  Esqueceu sua senha?
+                </a>
+              </div>
             </div>
 
             {error && <div className="text-sm text-red-600 text-center">{error}</div>}
