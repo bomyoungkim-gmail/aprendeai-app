@@ -57,6 +57,16 @@ export class InstitutionsController {
     return this.institutionsService.findAll();
   }
 
+  @ApiOperation({ summary: 'Get my institution (for INSTITUTION_ADMIN)' })
+  @ApiResponse({ status: 200, description: 'Returns institution data with stats' })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.INSTITUTION_ADMIN)
+  @Get('my-institution')
+  getMyInstitution(@Request() req) {
+    return this.institutionsService.getInstitutionForAdmin(req.user.id);
+  }
+
   @ApiOperation({ summary: 'Get institution by ID' })
   @Get(':id')
   findOne(@Param('id') id: string) {

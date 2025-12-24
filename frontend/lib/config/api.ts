@@ -82,6 +82,9 @@ export const API_ENDPOINTS = {
     SSO_UPDATE: (id: string) => `/institutions/${id}/sso`,
     SSO_DELETE: (id: string) => `/institutions/${id}/sso`,
     SSO_TEST: (id: string) => `/institutions/${id}/sso/test`,
+    
+    // My Institution (for INSTITUTION_ADMIN)
+    MY_INSTITUTION: '/institutions/my-institution',
   },
   
   // Reading Sessions (NEW - Phase 3)

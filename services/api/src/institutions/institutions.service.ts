@@ -35,4 +35,49 @@ export class InstitutionsService {
       where: { id },
     });
   }
+
+  async getInstitutionForAdmin(userId: string) {
+    // Find the institution where this user is an INSTITUTION_ADMIN
+    const institutionMember = await this.prisma.institutionMember.findFirst({
+      where: {
+        userId,
+        role: 'INSTITUTION_ADMIN',
+        status: 'ACTIVE',
+      },
+      include: {
+        institution: true,
+      },
+    });
+
+    if (!institutionMember) {
+      throw new Error('User is not an institution admin');
+    }
+
+    const institutionId = institutionMember.institutionId;
+
+    // Aggregate stats
+    const [memberCount, activeInvites, pendingApprovals, domains] = await Promise.all([
+      this.prisma.institutionMember.count({
+        where: { institutionId, status: 'ACTIVE' },
+      }),
+      this.prisma.institutionInvite.count({
+        where: { institutionId, usedAt: null, expiresAt: { gt: new Date() } },
+      }),
+      this.prisma.pendingUserApproval.count({
+        where: { institutionId, status: 'PENDING' },
+      }),
+      this.prisma.institutionDomain.findMany({
+        where: { institutionId },
+        select: { domain: true },
+      }),
+    ]);
+
+    return {
+      ...institutionMember.institution,
+      memberCount,
+      activeInvites,
+      pendingApprovals,
+      domains: domains.map(d => d.domain),
+    };
+  }
 }
