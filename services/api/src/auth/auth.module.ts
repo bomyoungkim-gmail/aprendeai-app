@@ -11,12 +11,14 @@ import { JwtStrategy } from './jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { MicrosoftStrategy } from './strategies/microsoft.strategy';
 import { EmailModule } from '../email/email.module';
+import { InstitutionsModule } from '../institutions/institutions.module';
 
 @Module({
   imports: [
     UsersModule,
     PassportModule,
     EmailModule,
+    InstitutionsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
