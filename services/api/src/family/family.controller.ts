@@ -40,6 +40,12 @@ export class FamilyController {
     return this.familyService.findAllForUser(user.id);
   }
 
+  @Get('my-family')
+  @ApiOperation({ summary: 'Get primary family for dashboard' })
+  getMyFamily(@CurrentUser() user: User) {
+    return this.familyService.getFamilyForOwner(user.id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get family details' })
   findOne(@Param('id') id: string, @CurrentUser() user: User) {

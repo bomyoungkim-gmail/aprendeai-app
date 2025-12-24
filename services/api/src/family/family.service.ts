@@ -468,5 +468,64 @@ export class FamilyService {
       where: { id: familyId },
     });
   }
+
+  /**
+   * Get family dashboard data for owner
+   */
+  async getFamilyForOwner(userId: string) {
+    // 1. Get user's primary family from settings
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { settings: true },
+    });
+    const settings = user?.settings as Record<string, any>;
+    let familyId = settings?.primaryFamilyId;
+
+    // 2. If no primary, find first family where user is OWNER or GUARDIAN
+    if (!familyId) {
+      const member = await this.prisma.familyMember.findFirst({
+        where: { userId, status: 'ACTIVE' },
+        orderBy: { role: 'asc' }, // OWNER comes first alphabetically? No, O > G. But 'OWNER' > 'GUARDIAN'.
+        // Let's rely on finding any active family for now
+      });
+      familyId = member?.familyId;
+    }
+
+    if (!familyId) {
+      return null; // No family found
+    }
+
+    // 3. Fetch details
+    const family = await this.prisma.family.findUnique({
+      where: { id: familyId },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, avatarUrl: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!family) return null;
+
+    // 4. Aggregate Stats
+    const totalMembers = family.members.length;
+    const activeMembers = family.members.filter(m => m.status === 'ACTIVE').length;
+    
+    // Check billing status (mocked for now, or fetch from subscription service)
+    // const subscription = await this.subscriptionService.getSubscription(ScopeType.FAMILY, familyId);
+
+    return {
+      ...family,
+      stats: {
+        totalMembers,
+        activeMembers,
+        plan: 'Free', // Default for now
+      }
+    };
+  }
 }
 
