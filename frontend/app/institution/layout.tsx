@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { ThemeToggle } from '@/components/theme-toggle';
 import Link from 'next/link';
 
 export default function InstitutionLayout({
@@ -28,7 +29,8 @@ export default function InstitutionLayout({
               <h1 className="text-xl font-bold text-gray-900">Institution Admin</h1>
             </div>
             <div className="flex items-center gap-4">
-              <Link href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900">
+              <ThemeToggle />
+              <Link href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100">
                 ← Back to Main Dashboard
               </Link>
             </div>
