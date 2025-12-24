@@ -157,6 +157,10 @@ model User {
   name          String
   email         String  @unique
   passwordHash  String? @map("password_hash") // Optional for OAuth users
+  
+  // Password Reset
+  passwordResetToken   String?   @map("password_reset_token")
+  passwordResetExpires DateTime? @map("password_reset_expires")
 
   // OAuth fields
   oauthProvider String? @map("oauth_provider") // 'google' | 'microsoft'

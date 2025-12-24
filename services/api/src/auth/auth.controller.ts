@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, Get, UnauthorizedException, Logger, Res } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Get, UnauthorizedException, Logger, Res, Query } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -19,9 +19,12 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'User successfully registered' })
   @ApiResponse({ status: 400, description: 'Bad request - validation failed' })
   @ApiBody({ type: RegisterDto })
-  async register(@Body() registerDto: RegisterDto) {
+  async register(
+    @Body() registerDto: RegisterDto,
+    @Query('inviteToken') inviteToken?: string,
+  ) {
     this.logger.log(`New user registration attempt: ${registerDto.email}`);
-    return this.authService.register(registerDto);
+    return this.authService.register(registerDto, inviteToken);
   }
 
   @Public()

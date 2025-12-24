@@ -1,0 +1,22 @@
+
+> api@0.0.1 test
+> jest institutions.integration.spec.ts
+
+FAIL test/integration/institutions.integration.spec.ts
+  ● Test suite failed to run
+
+    src/institutions/approval.service.ts:114:11 - error TS2353: Object literal may only specify known properties, and 'userId' does not exist in type '(Without<SubscriptionCreateInput, SubscriptionUncheckedCreateInput> & SubscriptionUncheckedCreateInput) | (Without<...> & SubscriptionCreateInput)'.
+
+    114           userId: user.id,
+                  ~~~~~~
+
+      node_modules/.prisma/client/index.d.ts:49611:5
+        49611     data: XOR<SubscriptionCreateInput, SubscriptionUncheckedCreateInput>
+                  ~~~~
+        The expected type comes from property 'data' which is declared here on type '{ select?: SubscriptionSelect<DefaultArgs>; include?: SubscriptionInclude<DefaultArgs>; data: (Without<SubscriptionCreateInput, SubscriptionUncheckedCreateInput> & SubscriptionUncheckedCreateInput) | (Without<...> & SubscriptionCreateInput); }'
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        7.299 s
+Ran all test suites matching /institutions.integration.spec.ts/i.

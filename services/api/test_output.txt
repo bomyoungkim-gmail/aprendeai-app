@@ -1,0 +1,40 @@
+
+> api@0.0.1 test
+> jest institutions.integration.spec.ts
+
+FAIL test/integration/institutions.integration.spec.ts
+  ● Test suite failed to run
+
+    src/auth/auth.service.ts:316:9 - error TS2353: Object literal may only specify known properties, and 'passwordResetToken' does not exist in type '(Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput)'.
+
+    316         passwordResetToken: token,
+                ~~~~~~~~~~~~~~~~~~
+
+      node_modules/.prisma/client/index.d.ts:16444:5
+        16444     data: XOR<UserUpdateInput, UserUncheckedUpdateInput>
+                  ~~~~
+        The expected type comes from property 'data' which is declared here on type '{ select?: UserSelect<DefaultArgs>; include?: UserInclude<DefaultArgs>; data: (Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput); where: UserWhereUniqueInput; }'
+    src/auth/auth.service.ts:343:9 - error TS2353: Object literal may only specify known properties, and 'passwordResetToken' does not exist in type 'UserWhereInput'.
+
+    343         passwordResetToken: dto.token,
+                ~~~~~~~~~~~~~~~~~~
+
+      node_modules/.prisma/client/index.d.ts:16257:5
+        16257     where?: UserWhereInput
+                  ~~~~~
+        The expected type comes from property 'where' which is declared here on type '{ select?: UserSelect<DefaultArgs>; include?: UserInclude<DefaultArgs>; where?: UserWhereInput; orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]; cursor?: UserWhereUniqueInput; take?: number; skip?: number; distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]; }'
+    src/auth/auth.service.ts:358:9 - error TS2353: Object literal may only specify known properties, and 'passwordResetToken' does not exist in type '(Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput)'.
+
+    358         passwordResetToken: null,
+                ~~~~~~~~~~~~~~~~~~
+
+      node_modules/.prisma/client/index.d.ts:16444:5
+        16444     data: XOR<UserUpdateInput, UserUncheckedUpdateInput>
+                  ~~~~
+        The expected type comes from property 'data' which is declared here on type '{ select?: UserSelect<DefaultArgs>; include?: UserInclude<DefaultArgs>; data: (Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput); where: UserWhereUniqueInput; }'
+
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        7.151 s
+Ran all test suites matching /institutions.integration.spec.ts/i.

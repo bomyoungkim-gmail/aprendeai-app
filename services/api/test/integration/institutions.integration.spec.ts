@@ -38,6 +38,21 @@ describe('Institutional Registration (Integration)', () => {
     await prisma.pendingUserApproval.deleteMany({});
     await prisma.institution.deleteMany({ where: { name: { contains: 'Test Institution' } } });
     await prisma.user.deleteMany({ where: { email: { contains: '@inst-test.com' } } });
+    
+    // Ensure FREE plan exists
+    await prisma.plan.upsert({
+      where: { code: 'FREE' },
+      update: {},
+      create: {
+        code: 'FREE',
+        name: 'Free Plan',
+        description: 'Basic access',
+        entitlements: {},
+        monthlyPrice: 0,
+        yearlyPrice: 0,
+        isActive: true,
+      },
+    });
   });
 
   afterAll(async () => {

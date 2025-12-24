@@ -1,0 +1,431 @@
+
+> api@0.0.1 test
+> jest institutions.integration.spec.ts
+
+FAIL test/integration/institutions.integration.spec.ts (6.212 s)
+  Institutional Registration (Integration)
+    Setup: Create Admin User and Institution
+      × should register admin user (115 ms)
+      × should create institution (9 ms)
+    POST /institutions/:id/invites - Invite Flow
+      × should create institution invite (5 ms)
+      × should register user with invite token (71 ms)
+      × should mark invite as used (12 ms)
+    POST /institutions/:id/domains - Domain Flow
+      × should add domain with auto-approve (5 ms)
+      × should auto-approve registration for domain email (74 ms)
+    POST /institutions/:id/pending - Manual Approval Flow
+      × should create pending approval instead of user
+      × should list pending approvals
+      × should approve pending user
+    DELETE /institutions/:id/invites/:inviteId - Cancel Invite
+      × should cancel invitation
+    GET /institutions/:id/invites - List Invites
+      × should list all invites for institution (5 ms)
+    GET /institutions/:id/domains - List Domains
+      × should list all domains for institution (5 ms)
+
+  ● Institutional Registration (Integration) › Setup: Create Admin User and Institution › should register admin user
+
+    expected 201 "Created", got 404 "Not Found"
+
+      62 |           role: 'ADMIN',
+      63 |         })
+    > 64 |         .expect(201);
+         |          ^
+      65 |
+      66 |       const loginResponse = await request(app.getHttpServer())
+      67 |         .post(apiUrl(ROUTES.AUTH.LOGIN))
+
+      at Object.<anonymous> (test/integration/institutions.integration.spec.ts:64:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Institutional Registration (Integration) › Setup: Create Admin User and Institution › should create institution
+
+    expected 201 "Created", got 401 "Unauthorized"
+
+      89 |           requiresApproval: false,
+      90 |         })
+    > 91 |         .expect(201);
+         |          ^
+      92 |
+      93 |       institutionId = response.body.id;
+      94 |       expect(response.body.name).toBe('Test Institution');
+
+      at Object.<anonymous> (test/integration/institutions.integration.spec.ts:91:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Institutional Registration (Integration) › POST /institutions/:id/invites - Invite Flow › should create institution invite
+
+    expected 201 "Created", got 401 "Unauthorized"
+
+      106 |           expiresInDays: 7,
+      107 |         })
+    > 108 |         .expect(201);
+          |          ^
+      109 |
+      110 |       expect(response.body).toHaveProperty('inviteUrl');
+      111 |       expect(response.body.email).toBe('teacher@inst-test.com');
+
+      at Object.<anonymous> (test/integration/institutions.integration.spec.ts:108:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Institutional Registration (Integration) › POST /institutions/:id/invites - Invite Flow › should register user with invite token
+
+    expected 201 "Created", got 404 "Not Found"
+
+      126 |         })
+      127 |         .query({ inviteToken }) // Pass token as query param
+    > 128 |         .expect(201);
+          |          ^
+      129 |
+      130 |       expect(registerResponse.body.email).toBe('teacher@inst-test.com');
+      131 |
+
+      at Object.<anonymous> (test/integration/institutions.integration.spec.ts:128:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Institutional Registration (Integration) › POST /institutions/:id/invites - Invite Flow › should mark invite as used
+
+    PrismaClientValidationError: 
+    Invalid `prisma.institutionInvite.findUnique()` invocation in
+    C:\projects\aprendeai-app\services\api\test\integration\institutions.integration.spec.ts:146:53
+
+      143 });
+      144 
+      145 it('should mark invite as used', async () => {
+    → 146   const invite = await prisma.institutionInvite.findUnique({
+              where: {
+                token: undefined,
+            ?   id?: String,
+            ?   AND?: InstitutionInviteWhereInput | InstitutionInviteWhereInput[],
+            ?   OR?: InstitutionInviteWhereInput[],
+            ?   NOT?: InstitutionInviteWhereInput | InstitutionInviteWhereInput[],
+            ?   institutionId?: StringFilter | String,
+            ?   email?: StringFilter | String,
+            ?   role?: EnumUserRoleFilter | UserRole,
+            ?   expiresAt?: DateTimeFilter | DateTime,
+            ?   usedAt?: DateTimeNullableFilter | DateTime | Null,
+            ?   invitedBy?: StringFilter | String,
+            ?   createdAt?: DateTimeFilter | DateTime,
+            ?   institution?: InstitutionRelationFilter | InstitutionWhereInput,
+            ?   inviter?: UserRelationFilter | UserWhereInput
+              }
+            })
+
+    Argument `where` of type InstitutionInviteWhereUniqueInput needs at least one of `id` or `token` arguments. Available options are marked with ?.
+
+      144 |
+      145 |     it('should mark invite as used', async () => {
+    > 146 |       const invite = await prisma.institutionInvite.findUnique({
+          |                      ^
+      147 |         where: { token: inviteToken },
+      148 |       });
+      149 |
+
+      at wn (node_modules/@prisma/client/runtime/library.js:29:1363)
+      at $n.handleRequestError (node_modules/@prisma/client/runtime/library.js:121:6958)
+      at $n.handleAndLogRequestError (node_modules/@prisma/client/runtime/library.js:121:6623)
+      at $n.request (node_modules/@prisma/client/runtime/library.js:121:6307)
+      at l (node_modules/@prisma/client/runtime/library.js:130:9633)
+      at Object.<anonymous> (test/integration/institutions.integration.spec.ts:146:22)
+
+  ● Institutional Registration (Integration) › POST /institutions/:id/domains - Domain Flow › should add domain with auto-approve
+
+    expected 201 "Created", got 401 "Unauthorized"
+
+      162 |           defaultRole: 'STUDENT',
+      163 |         })
+    > 164 |         .expect(201);
+          |          ^
+      165 |
+      166 |       expect(response.body.domain).toBe('@inst-test.com');
+      167 |       expect(response.body.autoApprove).toBe(true);
+
+      at Object.<anonymous> (test/integration/institutions.integration.spec.ts:164:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Institutional Registration (Integration) › POST /institutions/:id/domains - Domain Flow › should auto-approve registration for domain email
+
+    expected 201 "Created", got 404 "Not Found"
+
+      176 |           name: 'Student User',
+      177 |         })
+    > 178 |         .expect(201);
+          |          ^
+      179 |
+      180 |       expect(response.body.email).toBe('student@inst-test.com');
+      181 |
+
+      at Object.<anonymous> (test/integration/institutions.integration.spec.ts:178:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Institutional Registration (Integration) › POST /institutions/:id/pending - Manual Approval Flow › should create pending approval instead of user
+
+    PrismaClientValidationError: 
+    Invalid `prisma.institution.update()` invocation in
+    C:\projects\aprendeai-app\services\api\test\integration\institutions.integration.spec.ts:201:32
+
+      198 
+      199 beforeAll(async () => {
+      200   // Update institution to require approval
+    → 201   await prisma.institution.update({
+              where: {
+                id: undefined,
+            ?   slug?: String,
+            ?   AND?: InstitutionWhereInput | InstitutionWhereInput[],
+            ?   OR?: InstitutionWhereInput[],
+            ?   NOT?: InstitutionWhereInput | InstitutionWhereInput[],
+            ?   name?: StringFilter | String,
+            ?   type?: EnumInstitutionTypeFilter | InstitutionType,
+            ?   city?: StringNullableFilter | String | Null,
+            ?   state?: StringNullableFilter | String | Null,
+            ?   country?: StringNullableFilter | String | Null,
+            ?   maxMembers?: IntNullableFilter | Int | Null,
+            ?   requiresApproval?: BoolFilter | Boolean,
+            ?   ssoEnabled?: BoolFilter | Boolean,
+            ?   createdAt?: DateTimeFilter | DateTime,
+            ?   updatedAt?: DateTimeFilter | DateTime,
+            ?   assessments?: AssessmentListRelationFilter,
+            ?   classes?: ClassListRelationFilter,
+            ?   contents?: ContentListRelationFilter,
+            ?   users?: UserListRelationFilter,
+            ?   members?: InstitutionMemberListRelationFilter,
+            ?   invites?: InstitutionInviteListRelationFilter,
+            ?   domains?: InstitutionDomainListRelationFilter,
+            ?   pendingUsers?: PendingUserApprovalListRelationFilter,
+            ?   ssoConfig?: SSOConfigurationNullableRelationFilter | SSOConfigurationWhereInput | Null
+              },
+              data: {
+                requiresApproval: true
+              }
+            })
+
+    Argument `where` of type InstitutionWhereUniqueInput needs at least one of `id` or `slug` arguments. Available options are marked with ?.
+
+      199 |     beforeAll(async () => {
+      200 |       // Update institution to require approval
+    > 201 |       await prisma.institution.update({
+          |       ^
+      202 |         where: { id: institutionId },
+      203 |         data: { requiresApproval: true },
+      204 |       });
+
+      at wn (node_modules/@prisma/client/runtime/library.js:29:1363)
+      at $n.handleRequestError (node_modules/@prisma/client/runtime/library.js:121:6958)
+      at $n.handleAndLogRequestError (node_modules/@prisma/client/runtime/library.js:121:6623)
+      at $n.request (node_modules/@prisma/client/runtime/library.js:121:6307)
+      at l (node_modules/@prisma/client/runtime/library.js:130:9633)
+      at Object.<anonymous> (test/integration/institutions.integration.spec.ts:201:7)
+
+  ● Institutional Registration (Integration) › POST /institutions/:id/pending - Manual Approval Flow › should list pending approvals
+
+    PrismaClientValidationError: 
+    Invalid `prisma.institution.update()` invocation in
+    C:\projects\aprendeai-app\services\api\test\integration\institutions.integration.spec.ts:201:32
+
+      198 
+      199 beforeAll(async () => {
+      200   // Update institution to require approval
+    → 201   await prisma.institution.update({
+              where: {
+                id: undefined,
+            ?   slug?: String,
+            ?   AND?: InstitutionWhereInput | InstitutionWhereInput[],
+            ?   OR?: InstitutionWhereInput[],
+            ?   NOT?: InstitutionWhereInput | InstitutionWhereInput[],
+            ?   name?: StringFilter | String,
+            ?   type?: EnumInstitutionTypeFilter | InstitutionType,
+            ?   city?: StringNullableFilter | String | Null,
+            ?   state?: StringNullableFilter | String | Null,
+            ?   country?: StringNullableFilter | String | Null,
+            ?   maxMembers?: IntNullableFilter | Int | Null,
+            ?   requiresApproval?: BoolFilter | Boolean,
+            ?   ssoEnabled?: BoolFilter | Boolean,
+            ?   createdAt?: DateTimeFilter | DateTime,
+            ?   updatedAt?: DateTimeFilter | DateTime,
+            ?   assessments?: AssessmentListRelationFilter,
+            ?   classes?: ClassListRelationFilter,
+            ?   contents?: ContentListRelationFilter,
+            ?   users?: UserListRelationFilter,
+            ?   members?: InstitutionMemberListRelationFilter,
+            ?   invites?: InstitutionInviteListRelationFilter,
+            ?   domains?: InstitutionDomainListRelationFilter,
+            ?   pendingUsers?: PendingUserApprovalListRelationFilter,
+            ?   ssoConfig?: SSOConfigurationNullableRelationFilter | SSOConfigurationWhereInput | Null
+              },
+              data: {
+                requiresApproval: true
+              }
+            })
+
+    Argument `where` of type InstitutionWhereUniqueInput needs at least one of `id` or `slug` arguments. Available options are marked with ?.
+
+      199 |     beforeAll(async () => {
+      200 |       // Update institution to require approval
+    > 201 |       await prisma.institution.update({
+          |       ^
+      202 |         where: { id: institutionId },
+      203 |         data: { requiresApproval: true },
+      204 |       });
+
+      at wn (node_modules/@prisma/client/runtime/library.js:29:1363)
+      at $n.handleRequestError (node_modules/@prisma/client/runtime/library.js:121:6958)
+      at $n.handleAndLogRequestError (node_modules/@prisma/client/runtime/library.js:121:6623)
+      at $n.request (node_modules/@prisma/client/runtime/library.js:121:6307)
+      at l (node_modules/@prisma/client/runtime/library.js:130:9633)
+      at Object.<anonymous> (test/integration/institutions.integration.spec.ts:201:7)
+
+  ● Institutional Registration (Integration) › POST /institutions/:id/pending - Manual Approval Flow › should approve pending user
+
+    PrismaClientValidationError: 
+    Invalid `prisma.institution.update()` invocation in
+    C:\projects\aprendeai-app\services\api\test\integration\institutions.integration.spec.ts:201:32
+
+      198 
+      199 beforeAll(async () => {
+      200   // Update institution to require approval
+    → 201   await prisma.institution.update({
+              where: {
+                id: undefined,
+            ?   slug?: String,
+            ?   AND?: InstitutionWhereInput | InstitutionWhereInput[],
+            ?   OR?: InstitutionWhereInput[],
+            ?   NOT?: InstitutionWhereInput | InstitutionWhereInput[],
+            ?   name?: StringFilter | String,
+            ?   type?: EnumInstitutionTypeFilter | InstitutionType,
+            ?   city?: StringNullableFilter | String | Null,
+            ?   state?: StringNullableFilter | String | Null,
+            ?   country?: StringNullableFilter | String | Null,
+            ?   maxMembers?: IntNullableFilter | Int | Null,
+            ?   requiresApproval?: BoolFilter | Boolean,
+            ?   ssoEnabled?: BoolFilter | Boolean,
+            ?   createdAt?: DateTimeFilter | DateTime,
+            ?   updatedAt?: DateTimeFilter | DateTime,
+            ?   assessments?: AssessmentListRelationFilter,
+            ?   classes?: ClassListRelationFilter,
+            ?   contents?: ContentListRelationFilter,
+            ?   users?: UserListRelationFilter,
+            ?   members?: InstitutionMemberListRelationFilter,
+            ?   invites?: InstitutionInviteListRelationFilter,
+            ?   domains?: InstitutionDomainListRelationFilter,
+            ?   pendingUsers?: PendingUserApprovalListRelationFilter,
+            ?   ssoConfig?: SSOConfigurationNullableRelationFilter | SSOConfigurationWhereInput | Null
+              },
+              data: {
+                requiresApproval: true
+              }
+            })
+
+    Argument `where` of type InstitutionWhereUniqueInput needs at least one of `id` or `slug` arguments. Available options are marked with ?.
+
+      199 |     beforeAll(async () => {
+      200 |       // Update institution to require approval
+    > 201 |       await prisma.institution.update({
+          |       ^
+      202 |         where: { id: institutionId },
+      203 |         data: { requiresApproval: true },
+      204 |       });
+
+      at wn (node_modules/@prisma/client/runtime/library.js:29:1363)
+      at $n.handleRequestError (node_modules/@prisma/client/runtime/library.js:121:6958)
+      at $n.handleAndLogRequestError (node_modules/@prisma/client/runtime/library.js:121:6623)
+      at $n.request (node_modules/@prisma/client/runtime/library.js:121:6307)
+      at l (node_modules/@prisma/client/runtime/library.js:130:9633)
+      at Object.<anonymous> (test/integration/institutions.integration.spec.ts:201:7)
+
+  ● Institutional Registration (Integration) › DELETE /institutions/:id/invites/:inviteId - Cancel Invite › should cancel invitation
+
+    expected 201 "Created", got 401 "Unauthorized"
+
+      297 |           role: 'TEACHER',
+      298 |         })
+    > 299 |         .expect(201);
+          |          ^
+      300 |
+      301 |       cancelInviteId = response.body.id;
+      302 |     });
+
+      at Object.<anonymous> (test/integration/institutions.integration.spec.ts:299:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Institutional Registration (Integration) › GET /institutions/:id/invites - List Invites › should list all invites for institution
+
+    expected 200 "OK", got 401 "Unauthorized"
+
+      322 |         .get(apiUrl(ROUTES.INSTITUTIONS.INVITES(institutionId)))
+      323 |         .set('Authorization', `Bearer ${adminToken}`)
+    > 324 |         .expect(200);
+          |          ^
+      325 |
+      326 |       expect(Array.isArray(response.body)).toBe(true);
+      327 |       // Should have teacher@inst-test.com invite (used)
+
+      at Object.<anonymous> (test/integration/institutions.integration.spec.ts:324:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Institutional Registration (Integration) › GET /institutions/:id/domains - List Domains › should list all domains for institution
+
+    expected 200 "OK", got 401 "Unauthorized"
+
+      337 |         .get(apiUrl(ROUTES.INSTITUTIONS.DOMAINS(institutionId)))
+      338 |         .set('Authorization', `Bearer ${adminToken}`)
+    > 339 |         .expect(200);
+          |          ^
+      340 |
+      341 |       expect(Array.isArray(response.body)).toBe(true);
+      342 |       expect(response.body.length).toBeGreaterThan(0);
+
+      at Object.<anonymous> (test/integration/institutions.integration.spec.ts:339:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+Test Suites: 1 failed, 1 total
+Tests:       13 failed, 13 total
+Snapshots:   0 total
+Time:        6.508 s, estimated 9 s
+Ran all test suites matching /institutions.integration.spec.ts/i.

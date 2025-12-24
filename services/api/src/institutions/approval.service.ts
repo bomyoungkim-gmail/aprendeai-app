@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
 import { AdminService } from '../admin/admin.service';
+import { SubscriptionService } from '../billing/subscription.service';
 import { ProcessApprovalDto } from './dto/institution.dto';
 import * as bcrypt from 'bcrypt';
 import { UserRole } from '@prisma/client';
@@ -12,6 +13,7 @@ export class ApprovalService {
     private prisma: PrismaService,
     private emailService: EmailService,
     private adminService: AdminService,
+    private subscriptionService: SubscriptionService,
   ) {}
 
   /**
@@ -109,13 +111,7 @@ export class ApprovalService {
       });
       
       // Create subscription
-      await tx.subscription.create({
-        data: {
-          userId: user.id,
-          tier: 'FREE',
-          status: 'ACTIVE',
-        },
-      });
+      await this.subscriptionService.createInitialSubscription('USER', user.id, tx);
       
       // Update approval status
       await tx.pendingUserApproval.update({

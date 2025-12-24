@@ -39,6 +39,7 @@ import { ClassroomModule } from './classroom/classroom.module';
 import { OpsModule } from './ops/ops.module';
 import { WebClipsModule } from './webclips/webclips.module';
 import { GamesModule } from './games/games.module';
+import { InstitutionsModule } from './institutions/institutions.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common';
@@ -102,6 +103,8 @@ import { RouteValidationMiddleware } from './common/middleware/route-validation.
     WebClipsModule,
     // AI Games Module
     GamesModule,
+    // Institutional Registration
+    InstitutionsModule,
   ],
   controllers: [AppController],
   providers: [
