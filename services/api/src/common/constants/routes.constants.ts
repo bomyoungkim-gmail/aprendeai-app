@@ -74,6 +74,14 @@ export const ROUTES = {
     REPORTS_WEEKLY_PROMPT: 'families/reports/weekly/prompt',
   },
   
+  // Study Group routes
+  GROUPS: {
+    BASE: 'study-groups',
+    BY_ID: (id: string) => `study-groups/${id}`,
+    JOIN: (id: string) => `study-groups/${id}/join`,
+    LEAVE: (id: string) => `study-groups/${id}/leave`,
+  },
+  
   // Classroom routes
   CLASSROOM: {
     BASE: 'classrooms',
