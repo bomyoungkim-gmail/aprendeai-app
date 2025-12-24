@@ -35,11 +35,19 @@ export const API_ENDPOINTS = {
   HEALTH: '/health',
   
   // Family
-  FAMILIES: '/families',
-  FAMILY: (id: string) => `/families/${id}`,
-  FAMILY_USAGE: (id: string) => `/families/${id}/usage`,
-  FAMILY_MEMBERS: (id: string) => `/families/${id}/members`,
-  FAMILY_INVITE: (id: string) => `/families/${id}/invite`,
+  // Family
+  FAMILY: {
+    CREATE: '/families',
+    LIST: '/families', 
+    MY_FAMILY: '/families/my-family', 
+    DETAILS: (id: string) => `/families/${id}`,
+    USAGE: (id: string) => `/families/${id}/usage`,
+    MEMBERS: (id: string) => `/families/${id}/members`,
+    INVITE: (id: string) => `/families/${id}/invite`,
+    REMOVE_MEMBER: (id: string, userId: string) => `/families/${id}/members/${userId}`,
+    TRANSFER_OWNERSHIP: (id: string) => `/families/${id}/transfer-ownership`,
+    ACCEPT_INVITE: (id: string) => `/families/${id}/accept`,
+  },
   
   // Content
   CONTENTS: '/contents',
