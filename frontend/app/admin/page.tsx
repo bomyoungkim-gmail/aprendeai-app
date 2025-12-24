@@ -246,6 +246,22 @@ export default function AdminDashboard() {
                     <ArrowRight className="h-5 w-5 text-gray-400" />
                   </Link>
                 </li>
+
+                <li className="py-4">
+                  <Link
+                    href="/admin/ai-metrics"
+                    className="flex items-center space-x-4 hover:bg-gray-50 p-2 rounded-md"
+                  >
+                    <div className="flex-shrink-0">
+                      <Activity className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">AI Metrics</p>
+                      <p className="text-sm text-gray-500">Monitor optimization, cache hits, cost savings</p>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-gray-400" />
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>

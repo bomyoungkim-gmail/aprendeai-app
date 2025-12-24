@@ -1,179 +1,138 @@
-// Service Worker for AprendeAI PWA
-const CACHE_NAME = 'aprendeai-v1';
-const RUNTIME_CACHE = 'aprendeai-runtime';
-const OFFLINE_URL = '/offline.html';
+// Service Worker with Cache Versioning
+// Ensures old cache is cleared when app updates
 
-// Assets to cache on install
+const CACHE_VERSION = 'v1.0.0'; // INCREMENT THIS ON EACH DEPLOYMENT
+const CACHE_NAME = `aprendeai-${CACHE_VERSION}`;
+
+// Resources to cache for offline access
 const STATIC_ASSETS = [
   '/',
-  '/offline.html',
+  '/offline',
   '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
+  // Add critical assets
 ];
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing service worker...');
+  console.log(`[SW] Installing service worker ${CACHE_VERSION}`);
   
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[SW] Caching static assets');
       return cache.addAll(STATIC_ASSETS);
+    }).then(() => {
+      // Force activation immediately
+      return self.skipWaiting();
     })
   );
-  
-  // Force the waiting service worker to become the active service worker
-  self.skipWaiting();
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating service worker...');
+  console.log(`[SW] Activating service worker ${CACHE_VERSION}`);
   
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
-            console.log('[SW] Deleting old cache:', cacheName);
+          // Delete all caches except current version
+          if (cacheName !== CACHE_NAME) {
+            console.log(`[SW] Deleting old cache: ${cacheName}`);
             return caches.delete(cacheName);
           }
         })
       );
+    }).then(() => {
+      // Take control of all clients immediately
+      return self.clients.claim();
     })
   );
-  
-  // Take control of all pages immediately
-  self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - serve from cache with network fallback
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
-
-  // Skip non-GET requests
-  if (request.method !== 'GET') {
+  
+  // Skip cross-origin requests
+  if (url.origin !== location.origin) {
     return;
   }
-
-  // Handle API requests - Network First strategy
+  
+  // Skip API requests from caching (always fetch fresh)
   if (url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          // Clone and cache successful responses
-          if (response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, responseClone);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          // Try to serve from cache if network fails
-          return caches.match(request).then((cachedResponse) => {
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            // Return offline page for navigation requests
-            if (request.mode === 'navigate') {
-              return caches.match(OFFLINE_URL);
-            }
-          });
-        })
-    );
     return;
   }
-
-  // Handle static assets - Cache First strategy
-  if (
-    url.pathname.startsWith('/_next/') ||
-    url.pathname.startsWith('/static/') ||
-    url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|gif|woff2?)$/)
-  ) {
-    event.respondWith(
-      caches.match(request).then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        
-        return fetch(request).then((response) => {
-          // Cache successful responses
-          if (response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
-            });
-          }
-          return response;
-        });
-      })
-    );
-    return;
-  }
-
-  // Handle navigation requests - Network First with offline fallback
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          return response;
-        })
-        .catch(() => {
-          return caches.match(OFFLINE_URL);
-        })
-    );
-    return;
-  }
-
-  // Default: try cache first, then network
+  
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
-      return (
-        cachedResponse ||
-        fetch(request).then((response) => {
-          // Cache successful responses
-          if (response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, responseClone);
+      if (cachedResponse) {
+        // Serve from cache, but fetch update in background
+        fetch(request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, networkResponse);
             });
           }
-          return response;
-        })
-      );
+        }).catch(() => {
+          // Network failed, cached version is still valid
+        });
+        
+        return cachedResponse;
+      }
+      
+      // Not in cache, fetch from network
+      return fetch(request).then((networkResponse) => {
+        // Cache successful responses
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseClone);
+          });
+        }
+        return networkResponse;
+      }).catch(() => {
+        // Network failed and not in cache - show offline page
+        if (request.mode === 'navigate') {
+          return caches.match('/offline');
+        }
+      });
     })
   );
 });
 
-// Handle push notifications
+// Background sync for offline actions
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-game-data') {
+    event.waitUntil(syncGameData());
+  }
+});
+
+async function syncGameData() {
+  // Sync queued game submissions when back online
+  // This would integrate with IndexedDB queue
+  console.log('[SW] Syncing offline game data');
+}
+
+// Push notifications (optional)
 self.addEventListener('push', (event) => {
-  console.log('[SW] Push received:', event);
-  
+  const data = event.data?.json() || {};
+  const title = data.title || 'AprendeAI';
   const options = {
-    body: event.data ? event.data.text() : 'New notification from AprendeAI',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/badge-72x72.png',
-    vibrate: [200, 100, 200],
-    tag: 'aprendeai-notification',
-    requireInteraction: false,
+    body: data.body || 'Você tem uma nova notificação',
+    icon: '/icon-192.png',
+    badge: '/badge-72.png',
+    data: data.url || '/'
   };
   
   event.waitUntil(
-    self.registration.showNotification('AprendeAI', options)
+    self.registration.showNotification(title, options)
   );
 });
 
-// Handle notification click
 self.addEventListener('notificationclick', (event) => {
-  console.log('[SW] Notification clicked:', event);
-  
   event.notification.close();
-  
   event.waitUntil(
-    clients.openWindow('/')
+    clients.openWindow(event.notification.data)
   );
 });

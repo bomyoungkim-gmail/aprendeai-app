@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { randomBytes } from 'crypto';
 import { EXTENSION_SCOPES } from './dto/extension-auth.dto';
+import { URL_CONFIG } from '../config/urls.config';
 
 @Injectable()
 export class ExtensionAuthService {
@@ -36,12 +37,12 @@ export class ExtensionAuthService {
       },
     });
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = URL_CONFIG.frontend.verify;
 
     return {
       deviceCode,
       userCode,
-      verificationUrl: `${frontendUrl}/extension/verify`,
+      verificationUrl: frontendUrl,
       expiresInSec: 600,
       pollIntervalSec: 3,
     };

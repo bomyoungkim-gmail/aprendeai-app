@@ -228,6 +228,18 @@ export class AnnotationService {
       this.wsGateway.emitToGroup(parent.groupId, 'annotation:reply', reply);
     }
 
+    // Audit trail - track reply creation
+    await this.prisma.sessionEvent.create({
+      data: {
+        eventType: 'ANNOTATION_REPLY_CREATED',
+        payloadJson: {
+          annotationId: parentId,
+          replyId: reply.id,
+          userId,
+        },
+      },
+    });
+
     return reply;
   }
 
@@ -247,12 +259,26 @@ export class AnnotationService {
       throw new ForbiddenException('Not your annotation');
     }
 
-    return this.prisma.annotation.update({
+    const updated = await this.prisma.annotation.update({
       where: { id },
       data: { isFavorite: !annotation.isFavorite },
       include: {
         user: { select: { id: true, name: true } },
       },
     });
+
+    // Audit trail - track favorite toggle
+    await this.prisma.sessionEvent.create({
+      data: {
+        eventType: 'ANNOTATION_FAVORITE_TOGGLED',
+        payloadJson: {
+          annotationId: id,
+          favorite: updated.isFavorite,
+          userId,
+        },
+      },
+    });
+
+    return updated;
   }
 }

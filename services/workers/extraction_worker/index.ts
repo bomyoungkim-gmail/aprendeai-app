@@ -53,22 +53,22 @@ async function processExtraction(payload: ExtractionMessage) {
     let text = '';
     let metadata: any = {};
 
-    console.log(`[*] Extracting from ${content.contentType}`);
+    console.log(`[*] Extracting from ${content.type}`);
 
-    if (content.contentType === 'PDF') {
+    if (content.type === 'PDF') {
       ({ text, metadata } = await extractFromPDF(content.file));
-    } else if (content.contentType === 'DOCX') {
+    } else if (content.type === 'DOCX') {
       ({ text, metadata } = await extractFromDOCX(content.file));
-    } else if (content.contentType === 'IMAGE') {
+    } else if (content.type === 'IMAGE') {
       ({ text, metadata } = await extractFromImage(content.file));
     } else {
-      throw new Error(`Unsupported content type: ${content.contentType}`);
+      throw new Error(`Unsupported content type: ${content.type}`);
     }
 
     console.log(`[*] Extracted ${text.length} characters`);
 
     // 4. Generate chunks
-    const chunks = generateChunks(content.contentType, text, metadata);
+    const chunks = generateChunks(content.type, text, metadata);
     console.log(`[*] Generated ${chunks.length} chunks`);
 
     // 5. Save chunks to database
@@ -233,7 +233,7 @@ function generateChunks(
           chunkIndex: index++,
           text: chunkText,
           tokenEstimate: Math.ceil(chunkText.length / 4),
-          pageNumber: null, // TODO: Map to actual pages
+          pageNumber: undefined, // TODO: Map to actual pages
         });
       }
     }

@@ -10,13 +10,15 @@ import {
   Settings, 
   LogOut,
   TrendingUp,
-  X
+  X,
+  Gamepad2
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 
 const navItems = [
   { href: '/dashboard', label: 'Início', icon: LayoutDashboard },
   { href: '/dashboard/library', label: 'Biblioteca', icon: BookOpen },
+  { href: '/games', label: 'Jogos', icon: Gamepad2 },
   { href: '/dashboard/progress', label: 'Progresso', icon: TrendingUp },
   { href: '/dashboard/assessments', label: 'Avaliações', icon: GraduationCap },
   { href: '/settings', label: 'Configurações', icon: Settings },
@@ -93,3 +95,5 @@ export function DashboardSidebar({ isOpen, onClose }: DashboardSidebarProps) {
     </>
   );
 }
+
+export default DashboardSidebar;

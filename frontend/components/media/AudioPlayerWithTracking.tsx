@@ -21,7 +21,8 @@ export function AudioPlayerWithTracking({
   const [muted, setMuted] = useState(false);
   const [played, setPlayed] = useState(0);
   const [duration, setDuration] = useState(0);
-  const playerRef = useRef<ReactPlayer>(null);
+  const playerRef = useRef<any>(null);
+  const Player = ReactPlayer as any;
 
   // Auto-track audio listen time (using same hook as video)
   useAutoTrackVideo(contentId, playing);
@@ -51,7 +52,7 @@ export function AudioPlayerWithTracking({
 
   return (
     <div className="w-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 shadow-lg">
-      <ReactPlayer
+      <Player
         ref={playerRef}
         url={url}
         playing={playing}

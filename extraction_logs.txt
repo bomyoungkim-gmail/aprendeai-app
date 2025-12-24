@@ -1,0 +1,35 @@
+Prisma schema loaded from prisma/schema.prisma
+/app/node_modules/ts-node/src/index.ts:859
+
+✔ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client in 432ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+
+
+> extraction-worker@1.0.0 start
+> ts-node index.ts
+
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: ⨯ Unable to compile TypeScript:
+index.ts(56,48): error TS2339: Property 'contentType' does not exist on type '{ file: { id: string; createdAt: Date; storageProvider: string; storageKey: string; mimeType: string; sizeBytes: bigint; checksumSha256: string | null; originalFilename: string | null; } | null; } & { ...; }'.
+index.ts(58,17): error TS2339: Property 'contentType' does not exist on type '{ file: { id: string; createdAt: Date; storageProvider: string; storageKey: string; mimeType: string; sizeBytes: bigint; checksumSha256: string | null; originalFilename: string | null; } | null; } & { ...; }'.
+index.ts(60,24): error TS2339: Property 'contentType' does not exist on type '{ file: { id: string; createdAt: Date; storageProvider: string; storageKey: string; mimeType: string; sizeBytes: bigint; checksumSha256: string | null; originalFilename: string | null; } | null; } & { ...; }'.
+index.ts(62,24): error TS2339: Property 'contentType' does not exist on type '{ file: { id: string; createdAt: Date; storageProvider: string; storageKey: string; mimeType: string; sizeBytes: bigint; checksumSha256: string | null; originalFilename: string | null; } | null; } & { ...; }'.
+index.ts(65,60): error TS2339: Property 'contentType' does not exist on type '{ file: { id: string; createdAt: Date; storageProvider: string; storageKey: string; mimeType: string; sizeBytes: bigint; checksumSha256: string | null; originalFilename: string | null; } | null; } & { ...; }'.
+index.ts(71,43): error TS2339: Property 'contentType' does not exist on type '{ file: { id: string; createdAt: Date; storageProvider: string; storageKey: string; mimeType: string; sizeBytes: bigint; checksumSha256: string | null; originalFilename: string | null; } | null; } & { ...; }'.
+
+    at createTSError (/app/node_modules/ts-node/src/index.ts:859:12)
+    at reportTSError (/app/node_modules/ts-node/src/index.ts:863:19)
+    at getOutput (/app/node_modules/ts-node/src/index.ts:1077:36)
+    at Object.compile (/app/node_modules/ts-node/src/index.ts:1433:41)
+    at Module.m._compile (/app/node_modules/ts-node/src/index.ts:1617:30)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)
+    at Object.require.extensions.<computed> [as .ts] (/app/node_modules/ts-node/src/index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1266:32)
+    at Function.Module._load (node:internal/modules/cjs/loader:1091:12)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12) {
+  diagnosticCodes: [ 2339, 2339, 2339, 2339, 2339, 2339 ]
+}

@@ -99,6 +99,10 @@ services:
       - ./services/ai:/app
     environment:
       PORT: 8001
+      ENV: ${ENV:-development}
+      SERVICE_NAME: "AprendeAI Educator Service"
+      VERSION: "2.0.0"
+      AI_SERVICE_SECRET: ${AI_SERVICE_SECRET:-dev-insecure-secret-key-change-me-in-prod-12345}
       # Database for asset generation
       DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-aprendeai}
       # RabbitMQ for queue processing
@@ -106,8 +110,8 @@ services:
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
       # Run consumer by default
       RUN_CONSUMER: "true"
-      # LLM Provider API Keys (set in .env)
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # LLM API Keys (Required for startup)
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-dummy-key-for-startup-verification}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
       # Provider configuration
@@ -180,7 +184,7 @@ services:
     environment:
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-aprendeai}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
-      AI_SERVICE_URL: http://ai:8000
+      AI_SERVICE_URL: http://ai:8001
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -199,6 +203,7 @@ services:
     volumes:
       - ./services/workers/extraction_worker:/app
       - ./services/api/uploads:/app/uploads
+      - ./services/api/prisma:/app/prisma
       - /app/node_modules
     environment:
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-aprendeai}

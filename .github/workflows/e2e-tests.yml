@@ -1,0 +1,118 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run E2E tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: aprendeai_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install backend dependencies
+        run: |
+          cd services/ai
+          pip install -r requirements.txt
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Install Playwright browsers
+        run: |
+          cd frontend
+          npx playwright install --with-deps chromium
+
+      - name: Run database migrations
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aprendeai_e2e
+        run: |
+          cd services/ai
+          # Add migration command here if you have one
+          # alembic upgrade head
+
+      - name: Seed test data
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aprendeai_e2e
+        run: |
+          cd services/ai
+          # Add seed command here
+          # python scripts/seed_test_data.py
+
+      - name: Start backend server
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aprendeai_e2e
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          cd services/ai
+          python main.py &
+          sleep 10
+          curl http://localhost:8000/health || exit 1
+
+      - name: Start frontend server
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+        run: |
+          cd frontend
+          npm run build
+          npm run start &
+          sleep 15
+          curl http://localhost:3000 || exit 1
+
+      - name: Run E2E tests
+        run: |
+          cd frontend
+          npx playwright test tests/e2e/games.spec.ts --reporter=html
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 30
+
+      - name: Upload test videos
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-videos
+          path: frontend/test-results/
+          retention-days: 7

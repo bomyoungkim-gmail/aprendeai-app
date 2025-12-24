@@ -39,7 +39,14 @@ export default function EnhancedDashboardPage() {
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Your Activity
               </h2>
-              <ActivityStats />
+              <ActivityStats stats={{
+                totalDays: 10,
+                currentStreak: 3,
+                longestStreak: 7,
+                avgMinutesPerDay: 45,
+                thisWeekMinutes: 180,
+                thisMonthMinutes: 720
+              }} />
             </div>
           </div>
         </div>
@@ -50,7 +57,11 @@ export default function EnhancedDashboardPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
               Activity Heatmap
             </h2>
-            <ActivityHeatmap />
+            <ActivityHeatmap data={[
+              { date: new Date().toISOString().split('T')[0], minutesStudied: 45 },
+              { date: new Date(Date.now() - 86400000).toISOString().split('T')[0], minutesStudied: 30 },
+              { date: new Date(Date.now() - 172800000).toISOString().split('T')[0], minutesStudied: 60 }
+            ]} />
           </div>
         </div>
 

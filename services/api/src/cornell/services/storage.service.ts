@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { Response } from 'express';
 import * as path from 'path';
 import * as fs from 'fs';
+import { URL_CONFIG } from '../../config/urls.config';
 
 @Injectable()
 export class StorageService {
@@ -30,7 +31,7 @@ export class StorageService {
   }
 
   private getLocalFileUrl(file: any) {
-    const baseUrl = this.config.get('STORAGE_BASE_URL', 'http://localhost:3000');
+    const baseUrl = URL_CONFIG.storage.base;
     return {
       url: `${baseUrl}/api/files/${file.id}/proxy`,
       expiresAt: new Date(Date.now() + 86400000).toISOString() // 24 hours

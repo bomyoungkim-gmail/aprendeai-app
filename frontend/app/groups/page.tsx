@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useGroups } from '@/hooks/use-groups';
 import { GroupCard } from '@/components/study-groups/GroupCard';
 import { CreateGroupModal } from '@/components/study-groups/CreateGroupModal';
-import { AuthGuard } from '@/components/auth-guard';
+import AuthGuard from '@/components/auth-guard';
 import { Plus } from 'lucide-react';
 
 export default function GroupsPage() {

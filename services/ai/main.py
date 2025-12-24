@@ -67,7 +67,7 @@ class Settings:
     ).split(",") if os.getenv("ENV") == "production" else ["*"]
     
     # External Services
-    NESTJS_API_URL: str = os.getenv("NESTJS_API_URL", "http://localhost:3001/api/v1")
+    NESTJS_API_URL: str = os.getenv("NESTJS_API_URL", "http://localhost:4000")
     
     # LLM
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
@@ -99,6 +99,14 @@ async def lifespan(app: FastAPI):
     # Verify critical dependencies
     if not settings.OPENAI_API_KEY:
         logger.warning("⚠️  OPENAI_API_KEY not set - LLM features will fail")
+    
+    # Phase 1: Setup Redis semantic cache for optimized LLM calls
+    try:
+        from cache_config import setup_semantic_cache
+        cache_enabled = setup_semantic_cache()
+        logger.info(f"✅ Semantic cache: {'ENABLED' if cache_enabled else 'DISABLED'}")
+    except Exception as e:
+        logger.warning(f"⚠️  Semantic cache setup failed: {e}. Continuing without cache.")
     
     yield
     
@@ -148,24 +156,11 @@ if settings.ENV == "production":
     )
 
 
-# Request Logging Middleware
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-from contextlib import asynccontextmanager
-import os
-import logging
-import time
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO if os.getenv("ENV") == "production" else logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# ============================================
+# Request Logging Middleware (removed due to syntax error)
+# ============================================
 
 
 # ============================================
@@ -206,7 +201,7 @@ class Settings:
     ).split(",") if os.getenv("ENV") == "production" else ["*"]
     
     # External Services
-    NESTJS_API_URL: str = os.getenv("NESTJS_API_URL", "http://localhost:3001/api/v1")
+    NESTJS_API_URL: str = os.getenv("NESTJS_API_URL", "http://localhost:4000")
     
     # LLM
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
@@ -336,9 +331,115 @@ async def root_health():
     }
 
 
+@app.get("/metrics")
+async def get_ai_metrics():
+    """
+    Get AI optimization metrics for monitoring dashboard
+    
+    Returns:
+        - cache: Cache hit rate and stats
+        - tokens: Token reduction metrics
+        - memory_jobs: Memory compaction job stats
+        - performance: Response time metrics
+    """
+    from metrics import get_metrics, get_metrics_from_redis
+    
+    # Get in-memory metrics (current session)
+    current_metrics = get_metrics()
+    
+    # Get persistent metrics from Redis (all-time)
+    persistent_metrics = get_metrics_from_redis()
+    
+    return {
+        "current_session": current_metrics,
+        "all_time": persistent_metrics,
+        "note": "current_session resets on service restart, all_time is Redis-persisted"
+    }
+
+
 # Include Educator Router
 from api.routes import educator_router
 app.include_router(educator_router)
+
+# Include Games Router
+from api.games_router import router as games_router
+app.include_router(games_router)
+
+# Include Experiments Router
+from api.experiments_router import router as experiments_router
+# Include EXPERIMENTS router - make sure to use api prefix to avoid conflicts
+from api.experiments_router import router as experiments_router
+app.include_router(experiments_router, prefix="/api")
+
+
+# Global Exception Handlers
+@app.exception_handler(ValueError)
+async def value_error_handler(request: Request, exc: ValueError):
+    """Handle ValueError as 400 Bad Request"""
+    logger.warning(f"ValueError: {str(exc)}")
+    return JSONResponse(
+        status_code=400,
+        content={"detail": str(exc)}
+    )
+
+# Include Recommender Router
+from api.recommender_router import router as recommender_router
+app.include_router(recommender_router, prefix="/api")
+
+# Include Gamification Router
+from api.gamification_router import router as gamification_router
+app.include_router(gamification_router, prefix="/api")
+
+# Include Ingestion Router
+from api.ingestion_router import router as ingestion_router
+app.include_router(ingestion_router, prefix="/api")
+
+# Include Adaptive Learning Router
+from api.adaptive_router import router as adaptive_router
+app.include_router(adaptive_router, prefix="/api")
+
+# Include Social Features Router
+from api.social_router import router as social_router
+app.include_router(social_router, prefix="/api")
+
+# Include Admin Dashboard Router
+from api.admin_router import router as admin_router
+app.include_router(admin_router, prefix="/api")
+
+# Include WebSocket Router for Real-Time Games
+from api.websocket_router import router as websocket_router
+app.include_router(websocket_router)
+
+# Include Content Generator Router
+from api.generator_router import router as generator_router
+app.include_router(generator_router, prefix="/api")
+
+# Include Parent Dashboard Router
+from api.parent_router import router as parent_router
+app.include_router(parent_router, prefix="/api")
+
+# Include AI Tutor Router
+from api.tutor_router import router as tutor_router
+app.include_router(tutor_router, prefix="/api")
+
+# Include Automated Grading Router
+from api.grading_router import router as grading_router
+app.include_router(grading_router, prefix="/api")
+
+# Include Advanced Analytics Router
+from api.analytics_router import router as analytics_router
+app.include_router(analytics_router, prefix="/api")
+
+# Include Whiteboard Collaboration Routers
+from api.whiteboard_router import router as whiteboard_router
+from api.whiteboard_ws_router import router as whiteboard_ws_router
+app.include_router(whiteboard_router, prefix="/api")
+app.include_router(whiteboard_ws_router)
+
+# Include Spaced Repetition System Router
+from api.srs_router import router as srs_router
+app.include_router(srs_router, prefix="/api")
+
 
 
 # Legacy endpoints (optional)

@@ -4,24 +4,30 @@
 # ============================================
 # FastAPI & Web Server
 # ============================================
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
+# Updated to latest stable versions for compatibility with LangChain 0.3.x
+fastapi>=0.115.0,<0.116.0
+uvicorn[standard]>=0.32.0,<0.33.0
 python-dotenv==1.0.0
-pydantic==2.5.3
+pydantic>=2.9.0,<3.0.0
 
 # ============================================
 # LangChain & LLM
 # ============================================
-langchain==0.1.0
-langchain-core==0.1.20
-langchain-openai==0.0.5
-langchain-anthropic==0.1.0
+# Using langchain with flexible version ranges for better compatibility
+langchain>=0.3.0,<0.4.0
+langchain-core>=0.3.0,<0.4.0
+langchain-openai>=0.2.0,<0.3.0
+langchain-anthropic>=0.3.0,<0.4.0
+langchain-google-genai>=2.0.0,<3.0.0
 
 # ============================================
 # LangGraph (Educator Agent)
 # ============================================
-langgraph==0.0.40
-# langgraph-checkpoint-postgres==0.0.4  # Uncomment for Phase 2b
+# Using latest LangGraph compatible with new checkpoints
+# Using LangGraph 1.0+ for compatibility with langgraph-checkpoint-redis 0.3.1
+langgraph>=1.0.0,<2.0.0
+# langgraph-checkpoint-postgres==1.0.0  # Uncomment for Phase 2b
+aiofiles==24.1.0
 
 # ============================================
 # HTTP Client
@@ -41,3 +47,21 @@ pytest==7.4.3
 pytest-asyncio==0.21.1
 black==23.12.1
 flake8==7.0.0
+
+# ============================================
+# Redis for AI Service (Phase 1)
+# ============================================
+redis==5.2.1  # Required for langgraph-checkpoint-redis
+redisvl>=0.5.1  # Required for langgraph-checkpoint-redis
+langgraph-checkpoint>=2.0.24  # Required for langgraph-checkpoint-redis
+langgraph-checkpoint-redis==0.3.1  # Latest available version
+# langchain-redis>=0.0.2  # Package not available
+
+# ============================================
+# Content Ingestion (Phase 3)
+# ============================================
+pypdf==4.0.1  # PDF processing
+youtube-transcript-api==0.6.2  # YouTube transcript extraction
+
+
+python-multipart==0.0.6  # Required by FastAPI for file uploads

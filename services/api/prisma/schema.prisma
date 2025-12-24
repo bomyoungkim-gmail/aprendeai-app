@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -96,10 +97,40 @@ model User {
   // Extension Auth
   extensionDeviceAuths ExtensionDeviceAuth[]
   extensionGrants      ExtensionGrant[]
+  
+  // AI Games progress tracking
+  gameProgress GameProgress[]
 
   @@unique([oauthProvider, oauthId])
   @@map("users")
 }
+
+// AI Games Progress Tracking
+model GameProgress {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  gameId     String    @map("game_id") // e.g. "CONCEPT_LINKING", "BOSS_FIGHT_VOCAB"
+  
+  // Progress metrics
+  stars      Int       @default(0) // 0-3 stars earned for this game
+  bestScore  Float     @default(0) // Highest score achieved
+  totalPlays Int       @default(0) @map("total_plays") // Number of times played
+  streak     Int       @default(0) // Current win streak
+  
+  // Timestamps
+  lastPlayed DateTime? @map("last_played")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, gameId])
+  @@index([userId])
+  @@index([gameId])
+  @@map("game_progress")
+}
+
 
 model Class {
   id            String         @id @default(uuid())
@@ -173,6 +204,7 @@ model Content {
   originalLanguage Language    @map("original_language")
   rawText          String      @map("raw_text")
   metadata         Json?
+  duration         Int?        @map("duration")
   createdBy        String?     @map("created_by")
   createdAt        DateTime    @default(now()) @map("created_at")
   updatedAt        DateTime    @updatedAt @map("updated_at")
@@ -869,6 +901,10 @@ enum EventType {
   EDUCATOR_INTERVENTION_CHOSEN
   FAMILY_ALERT_RAISED
   CO_SESSION_FINISHED
+  ANNOTATION_FAVORITE_TOGGLED
+  ANNOTATION_REPLY_CREATED
+  PROMPT_SENT
+  PROMPT_RECEIVED
 }
 
 enum EducationLevel {
@@ -961,6 +997,8 @@ enum ContentType {
   DOCX
   ARTICLE
   WEB_CLIP
+  VIDEO
+  AUDIO
 }
 
 enum Language {

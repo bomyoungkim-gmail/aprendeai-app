@@ -43,6 +43,7 @@ export function PromptInput({
           className="prompt-input"
           rows={1}
           aria-label="Campo de mensagem"
+          data-testid="prompt-input"
         />
         
         <button
@@ -50,6 +51,7 @@ export function PromptInput({
           disabled={isLoading || !value.trim()}
           className="prompt-send-button"
           aria-label="Enviar mensagem"
+          data-testid="send-prompt"
         >
           {isLoading ? (
             <span className="loading-spinner">⏳</span>

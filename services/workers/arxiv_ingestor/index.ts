@@ -1,12 +1,14 @@
-import amqp from 'amqplib';
+import amqp, { ConsumeMessage } from 'amqplib';
 import dotenv from 'dotenv';
 import axios from 'axios';
 import { parseStringPromise } from 'xml2js';
 
+// Phase 1: Use env vars instead of shared config
+const API_URL = process.env.API_URL || 'http://api:4000/api/v1';
+
 dotenv.config();
 
 const QUEUE = 'arxiv.fetch';
-const API_URL = process.env.API_URL || 'http://localhost:4000';
 
 type CreateContentDto = {
   title: string;
@@ -34,7 +36,7 @@ async function start() {
   
   console.log(`[*] Arxiv Ingestor waiting for messages in ${QUEUE}.`);
 
-  channel.consume(QUEUE, async (msg) => {
+  channel.consume(QUEUE, async (msg: ConsumeMessage | null) => {
     if (msg !== null) {
       const content = msg.content.toString();
       console.log(`[x] Received Task: ${content}`);

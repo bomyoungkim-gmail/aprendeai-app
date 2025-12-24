@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { SaveStatus } from '@/lib/types/cornell';
 
 /**
  * Hook to detect online/offline status
@@ -33,8 +34,8 @@ export function useOnlineStatus() {
  * Hook to sync save status with online/offline
  */
 export function useSaveStatusWithOnline(
-  baseStatus: 'saved' | 'saving' | 'error'
-): 'saved' | 'saving' | 'offline' | 'error' {
+  baseStatus: SaveStatus
+): SaveStatus {
   const isOnline = useOnlineStatus();
 
   if (!isOnline && baseStatus === 'saved') {

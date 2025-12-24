@@ -307,6 +307,45 @@ export class AdminController {
   }
 
   // ========================================
+  // AI Service Metrics
+  // ========================================
+
+  @Get('ai/metrics')
+  @Roles(UserRole.ADMIN, UserRole.OPS)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get AI service optimization metrics' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Returns AI metrics including cache hit rate, token reduction, memory jobs, and response times' 
+  })
+  async getAIMetrics() {
+    // Fetch from AI service - Phase 1: Centralized URLs
+    const { URL_CONFIG } = require('../config/urls.config');
+    const aiServiceUrl = URL_CONFIG.ai.base;
+    
+    try {
+      const axios = require('axios');
+      const response = await axios.get(`${aiServiceUrl}/metrics`, {
+        timeout: 5000,
+      });
+      
+      return {
+        success: true,
+        data: response.data,
+        fetched_at: new Date().toISOString(),
+      };
+    } catch (error) {
+      // Graceful degradation
+      return {
+        success: false,
+        error: 'AI service metrics unavailable',
+        message: error.message,
+        data: null,
+      };
+    }
+  }
+
+  // ========================================
   // Helpers
   // ========================================
 

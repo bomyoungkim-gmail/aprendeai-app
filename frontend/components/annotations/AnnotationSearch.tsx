@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Search, Filter, Star, Download, X } from 'lucide-react';
-import { useSearchAnnotations } from '@/hooks/use-annotations';
-import { AnnotationType } from '@prisma/client';
+import { useSearchAnnotations, useToggleFavorite } from '@/hooks/use-annotations';
+export type AnnotationType = 'HIGHLIGHT' | 'NOTE' | 'COMMENT';
 
 interface Filters {
   type?: AnnotationType;
@@ -42,6 +42,7 @@ export function AnnotationSearch() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            data-testid="search-input"
           />
         </div>
         
@@ -162,7 +163,7 @@ export function AnnotationSearch() {
 // Annotation Card Component
 function AnnotationCard({ annotation }: { annotation: any }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow" data-testid="annotation-item">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
@@ -218,6 +219,7 @@ function FavoriteButton({
     <button
       onClick={() => toggleFavorite(annotationId)}
       className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+      data-testid="favorite-button"
     >
       <Star
         className={`h-5 w-5 ${

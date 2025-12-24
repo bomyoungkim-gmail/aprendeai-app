@@ -1,17 +1,32 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as Sentry from '@sentry/node';
+import { join, normalize } from 'path';
+import { existsSync, mkdirSync } from 'fs';
+import { URL_CONFIG } from './config/urls.config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const logger = new Logger('Bootstrap');
 
   // Set global prefix for all routes (versioning)
   app.setGlobalPrefix('api/v1');
   logger.log('🌐 Global prefix set to /api/v1');
+
+  // Static file serving for uploaded media
+  const uploadsDir = process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads');
+  if (process.env.NODE_ENV !== 'production' && !existsSync(uploadsDir)) {
+    mkdirSync(uploadsDir, { recursive: true });
+    logger.log(`📁 Created uploads directory: ${uploadsDir}`);
+  }
+  app.useStaticAssets(normalize(uploadsDir), {
+    prefix: '/api/uploads/',
+  });
+  logger.log(`📦 Static assets serving at /api/uploads/ → ${uploadsDir}`);
 
   // Initialize Sentry for error tracking
   if (process.env.SENTRY_DSN) {
@@ -87,11 +102,9 @@ async function bootstrap() {
   });
   logger.log('📚 Swagger documentation available at /api/docs');
   
-  // Enable CORS for frontend
+  // Enable CORS for frontend - Phase 1: Centralized URLs
   app.enableCors({
-    origin: process.env.NODE_ENV === 'production' 
-      ? ['https://aprendeai.com']
-      : ['http://localhost:3000'],
+    origin: URL_CONFIG.corsOrigins,
     credentials: true,
   });
   

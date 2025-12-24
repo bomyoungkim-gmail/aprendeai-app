@@ -11,10 +11,11 @@ import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
 import { Logger, UseGuards } from '@nestjs/common';
 import { WsJwtGuard } from './guards/ws-jwt.guard';
+import { URL_CONFIG } from '../config/urls.config';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: URL_CONFIG.corsOrigins,
     credentials: true,
   },
   namespace: '/study-groups',

@@ -1,6 +1,8 @@
 """
-RabbitMQ Consumer for asset generation jobs
-Listens to 'assets.generate' queue and processes generation requests
+RabbitMQ Consumer for asset generation and memory compaction
+Listens to:
+  - 'assets.generate' queue (asset generation)
+  - 'memory.compact' queue (pedagogical memory extraction)
 """
 import pika
 import json
@@ -8,6 +10,7 @@ import asyncio
 import os
 import traceback
 from asset_generator import generate_asset, persist_asset
+from consumers.memory_handler import handle_session_finished
 
 
 def start_consumer():
@@ -108,15 +111,47 @@ def start_consumer():
             
             print(f"[JOB {job_id}] Message rejected\n")
     
-    # Configure consumer
-    channel.basic_qos(prefetch_count=1)  # Process one message at a time
+    def callback_memory(ch, method, properties, body):
+        """Process memory compaction message."""
+        try:
+            job = json.loads(body)
+            tenant_id = job.get('tenantId')
+            content_id = job.get('contentId')
+            
+            print(f"\n{'='*60}")
+            print(f"[MEMORY] Processing session finished")
+            print(f"[MEMORY] Tenant: {tenant_id}, Content: {content_id}")
+            print(f"{'='*60}\n")
+            
+            handle_session_finished(job)
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            print(f"\n[MEMORY] ✅ Completed\n")
+            
+        except Exception as e:
+            print(f"\n[MEMORY] ❌ Error: {e}")
+            print(traceback.format_exc())
+            ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+            print(f"[MEMORY] Message rejected\n")
+    
+    # Configure consumers
+    channel.basic_qos(prefetch_count=1)
     channel.basic_consume(
         queue='assets.generate',
         on_message_callback=callback,
-        auto_ack=False  # Manual acknowledgment
+        auto_ack=False
     )
     
-    print("[CONSUMER] Waiting for asset generation jobs...")
+    # Phase 2: Memory compaction queue
+    channel.queue_declare(queue='memory.compact', durable=True)
+    channel.basic_consume(
+        queue='memory.compact',
+        on_message_callback=callback_memory,
+        auto_ack=False
+    )
+    
+    print("[CONSUMER] Listening on 2 queues:")
+    print("  - assets.generate (asset generation)")
+    print("  - memory.compact (pedagogical memories)")
     print("[CONSUMER] Press CTRL+C to exit\n")
     
     try:

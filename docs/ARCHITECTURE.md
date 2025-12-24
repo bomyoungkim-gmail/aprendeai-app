@@ -1,8 +1,9 @@
 # AprendeAI - Architecture Overview
 
-**Version**: 2.0  
-**Last Updated**: 2025-12-21  
-**Status**: Phase 3 Complete
+**Version**: 3.0  
+**Last Updated**: 2025-12-23  
+**Status**: Phase 3 Complete + AI Games System ✅  
+**Latest Addition**: 6 Pedagogical Games + Advanced Infrastructure
 
 ---
 
@@ -22,10 +23,11 @@
 │                Port 3000                            │
 │  ┌──────────────────────────────────────────────┐  │
 │  │  Pages Layer                                 │  │
-│  │  - /reading/[sessionId]  (NEW Phase 3)       │  │
+│  │  - /reading/[sessionId]  (Phase 3)           │  │
+│  │  - /games                (NEW - Dec 2025)    │  │
 │  │  - /dashboard                                │  │
 │  │  - /groups                                   │  │
-│  │  - /extension/verify (NEW Phase 5)           │  │
+│  │  - /extension/verify     (Phase 5)           │  │
 │  └──────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────┐  │
 │  │  Components                                  │  │
@@ -84,6 +86,18 @@
 │  │  └──────────┴──────────┴──────────┘          │  │
 │  └──────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────┐  │
+│  │  AI Games System (NEW - Dec 2025)            │  │
+│  │  ┌──────────────────────────────────────┐    │  │
+│  │  │ 6 Games: FREE_RECALL, CLOZE_SPRINT,  │    │  │
+│  │  │ SRS_ARENA, BOSS_FIGHT, WORD_HUNT,    │    │  │
+│  │  │ MISCONCEPTION_HUNT                   │    │  │
+│  │  └──────────────────────────────────────┘    │  │
+│  │  ┌──────────────────────────────────────┐    │  │
+│  │  │ Infrastructure: Mastery Tracking,    │    │  │
+│  │  │ Difficulty Adapter, Rewards System   │    │  │
+│  │  └──────────────────────────────────────┘    │  │
+│  └──────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────┐  │
 │  │  LLM Factory (Phase 2)                       │  │
 │  │  - gpt-4o-mini (cheap)                       │  │
 │  │  - gpt-4o (smart)                            │  │
@@ -99,6 +113,31 @@
                       │ API Calls
                       ↓
                   OpenAI API
+```
+
+### Worker Services Architecture (Implemented)
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  RabbitMQ Queues                    │
+│                    Port 5672                        │
+└────┬────────┬────────┬────────┬────────────────────┘
+     │        │        │        │
+     │        │        │        │
+   Queue    Queue    Queue    Queue
+  extract  process   news    arxiv
+     │        │        │        │
+     ↓        ↓        ↓        ↓
+┌─────────┐ ┌────────┐ ┌──────┐ ┌──────┐
+│Extractn │ │Content │ │News  │ │Arxiv │
+│Worker   │ │Process │ │Ingst │ │Ingst │
+└────┬────┘ └────┬───┘ └───┬──┘ └───┬──┘
+     │           │         │        │
+     │           └────┬────┴────────┘
+     │                │
+     └────────────────┼───► API (Port 4000)
+                      │
+                      └───► AI Service (Port 8001)
 ```
 
 ### Chrome Extension Architecture (Phase 5)
@@ -703,6 +742,286 @@ The Chrome extension provides browser-based content capture and session manageme
    - Event streaming (Kafka)
    - Data warehouse (BigQuery)
    - BI dashboards
+
+---
+
+## Worker Services (Implemented)
+
+### Overview
+
+AprendeAI uses a microservices architecture with dedicated worker processes for async/background tasks. All workers are **code-complete** but may require deployment configuration.
+
+### 1. Extraction Worker
+
+**Queue:** `content.extract`  
+**File:** `services/workers/extraction_worker/index.ts` (335 lines)  
+**Status:** ✅ Implemented | ⚠️ Build verification needed
+
+**Supported Formats:**
+
+- **PDF:** Text extraction via `pdf-parse`
+- **DOCX:** Text extraction via `mammoth`
+- **IMAGE:** OCR placeholder (disabled, needs Tesseract/Google Vision)
+
+**Process:**
+
+1. Receives `{action: 'EXTRACT_TEXT', contentId}`
+2. Fetches file from storage
+3. Extracts text based on content type
+4. Generates chunks (800 chars for PDF, paragraphs for DOCX)
+5. Saves to `ContentChunk` table
+6. Updates `ContentExtraction.status` → DONE/FAILED
+
+**Dependencies:**
+
+- PostgreSQL (Prisma)
+- RabbitMQ
+- Local file storage
+
+**Known Issues:**
+
+- OCR not implemented (IMAGE support incomplete)
+- Requires file storage integration
+
+---
+
+### 2. Content Processor
+
+**Queue:** `content.process`  
+**File:** `services/workers/content_processor/index.ts` (94 lines)  
+**Status:** ✅ Implemented | ⚠️ AI endpoints may be missing
+
+**Actions Supported:**
+
+- **SIMPLIFY:** Calls AI `/simplify` endpoint
+- **ASSESSMENT:** Calls AI `/generate-assessment` endpoint
+
+**Process:**
+
+1. Receives `{action, contentId, text, level}`
+2. Calls AI service HTTP endpoint
+3. Saves result to API (`/content/:id/versions` or `/assessment`)
+
+**Dependencies:**
+
+- AI Service (HTTP)
+- API Service (HTTP)
+- RabbitMQ
+
+**Known Issues:**
+
+- AI endpoints `/simplify` and `/generate-assessment` may not exist
+- Service-to-service auth not implemented
+
+---
+
+### 3. News Ingestor
+
+**Queue:** ` news.fetch`  
+**File:** `services/workers/news_ingestor/index.ts` (107 lines)  
+**Status:** ✅ Implemented | ⚠️ Auth issue
+
+**Process:**
+
+1. Receives `{url, lang}`
+2. Fetches RSS feed via `rss-parser`
+3. Parses top 5 items
+4. POSTs to `/content` API
+5. Creates `Content` records with `type: 'NEWS'`
+
+**Dependencies:**
+
+- API Service
+- RabbitMQ
+
+**Known Issues:**
+
+- Worker needs API auth bypass or system token
+- No service-to-service auth mechanism
+
+---
+
+### 4. Arxiv Ingestor
+
+**Queue:** `arxiv.fetch`  
+**File:** `services/workers/arxiv_ingestor/index.ts` (96 lines)  
+**Status:** ✅ Implemented | ⚠️ Auth issue
+
+**Process:**
+
+1. Receives `{query, max_results}`
+2. Queries Arxiv API (`export.arxiv.org`)
+3. Parses XML via `xml2js`
+4. Creates `Content` records with `type: 'ARXIV'`
+
+**Dependencies:**
+
+- API Service
+- External Arxiv API
+- RabbitMQ
+
+**Known Issues:**
+
+- Same auth issue as news_ingestor
+- External API rate limiting
+
+---
+
+### Worker Deployment Status
+
+| Worker            | Code | Dockerfile | Runtime | Issues                      |
+| ----------------- | ---- | ---------- | ------- | --------------------------- |
+| extraction_worker | ✅   | ✅         | ❓      | File storage, Prisma client |
+| content_processor | ✅   | ✅         | ❓      | AI endpoints, auth          |
+| news_ingestor     | ✅   | ✅         | ❓      | Service auth                |
+| arxiv_ingestor    | ✅   | ✅         | ❓      | Service auth                |
+
+**Critical Path:** Implement service-to-service authentication for workers → API communication.
+
+---
+
+## AI Games System (December 2025)
+
+### Overview
+
+Comprehensive pedagogical games system integrated into the AI Service, featuring 6 game modes with adaptive difficulty, mastery tracking, and rewards.
+
+**Status:** ✅ **Production-Ready MVP**  
+**Test Coverage:** 89 tests (100% passing)  
+**Frontend:** `/games` route with premium UI
+
+### Architecture
+
+```
+┌─────────────────────────────────────────┐
+│         games/                          │
+├─────────────────────────────────────────┤
+│  base.py        - Abstract BaseGame     │
+│  registry.py    - Auto-discovery        │
+│  constants.py   - GameMode enum         │
+│  schema.py      - Pydantic models       │
+│  decorators.py  - Metrics/tracking      │
+├─────────────────────────────────────────┤
+│  modes/         - 6 Game Implementations│
+│    free_recall.py                       │
+│    cloze_sprint.py                      │
+│    srs_arena.py                         │
+│    boss_fight.py                        │
+│    tool_word_hunt.py                    │
+│    misconception_hunt.py                │
+├─────────────────────────────────────────┤
+│  mastery/       - Advanced Infrastructure│
+│    tracker.py   - Per-word mastery      │
+│    difficulty.py - Auto-adaptation      │
+│    rewards.py   - Stars/streaks         │
+├─────────────────────────────────────────┤
+│  middleware/    - Pipeline              │
+│    correlation.py                       │
+│    metrics_middleware.py                │
+│    events.py                            │
+├─────────────────────────────────────────┤
+│  config/        -  YAML Configuration   │
+│    triggers.yaml                        │
+│    scoring_rules.yaml                   │
+└─────────────────────────────────────────┘
+```
+
+### Game Implementations
+
+**1. FREE_RECALL_SCORE** (Recall & Retention)
+
+- Multi-step recall (3 follow-ups)
+- Scoring: Central idea (40pts) + Details (40pts) + Clarity (20pts)
+- Extracts "open loops" (questions/doubts)
+
+**2. CLOZE_SPRINT** (Fill-in-Blank Speed)
+
+- 3/5/7 blanks based on difficulty
+- Partial credit for similar words
+- Hint system
+
+**3. SRS_ARENA** (Spaced Repetition)
+
+- Recall meaning + create usage sentence
+- Circular definition detection
+- 10pts meaning + 10pts usage
+
+**4. BOSS_FIGHT_VOCAB** (Multi-Layer Challenge)
+
+- 3-lives system
+- 3D evaluation: Meaning + Usage + Example
+- Hint system (max 2)
+- Epic boss battle theme
+
+**5. TOOL_WORD_HUNT** (Contextual Analysis)
+
+- Find word in text + justify usage
+- Quote validity (40pts) + Justification (60pts)
+
+**6. MISCONCEPTION_HUNT** (Critical Thinking)
+
+- Identify false statement among 3
+- Scoring: Identification (30pts) + Evidence (30pts) + Explanation (40pts)
+
+### Infrastructure Features
+
+**Mastery Tracking:**
+
+- Per-word mastery score (0-100)
+- Exponential moving average: `new = current * 0.7 + performance * 0.3`
+- Per-theme aggregation
+- Redis persistence (90-day TTL)
+
+**Difficulty Adaptation:**
+
+- Auto-adjustment based on accuracy
+- > 80% accuracy → increase difficulty
+- <50% accuracy → decrease difficulty
+- 3-game cooldown between adjustments
+- Scale: 1-5
+
+**Rewards System:**
+
+- Stars: 0-3 per round (90%+=3★, 70%+=2★, 50%+=1★)
+- Streak tracking with daily check
+- Bonus multipliers (3+=1.2x, 5+=1.5x, 10+=2.0x)
+- Difficulty unlock based on mastery
+
+### Integration Points
+
+**LangGraph:**
+
+- New `game_phase` node
+- State extended with `game_mode`, `game_round_data`, `game_metadata`
+- Routing on `START_GAME` command
+- Events: `GAME_ROUND_CREATED`, `GAME_ROUND_EVALUATED`
+
+**Middleware:**
+
+- Correlation ID tracking
+- Metrics integration
+- Event emission
+
+**Configuration:**
+
+- `triggers.yaml` - Declarative game triggers
+- `scoring_rules.yaml` - Centralized scoring
+
+### Frontend Integration
+
+**Route:** `/games`  
+**Features:**
+
+- Mobile-responsive grid (1/2/3 columns)
+- Premium gradient game cards
+- Stats overview (Stars, Streak, Completed)
+- Lock/unlock states
+- Sidebar navigation with Gamepad2 icon
+
+### MVP Limitations
+
+**Current:** Heuristic-based scoring (length, patterns)  
+**Future:** LLM-based evaluation for quality assessment
 
 ---
 

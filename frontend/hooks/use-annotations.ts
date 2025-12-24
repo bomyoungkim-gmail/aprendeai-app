@@ -69,3 +69,41 @@ export function useDeleteAnnotation(contentId: string) {
     },
   });
 }
+
+export function useSearchAnnotations(params: any) {
+  return useQuery({
+    queryKey: ['annotations', 'search', params],
+    queryFn: async () => {
+      const response = await api.get('/annotations/search', { params });
+      return response.data as Annotation[];
+    },
+  });
+}
+
+export function useToggleFavorite() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const response = await api.patch(`/annotations/${id}/favorite`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['annotations'] });
+    },
+  });
+}
+
+export function useCreateReply() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ annotationId, content }: { annotationId: string; content: string }) => {
+      const response = await api.post(`/annotations/${annotationId}/reply`, { text: content });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['annotations'] });
+    },
+  });
+}

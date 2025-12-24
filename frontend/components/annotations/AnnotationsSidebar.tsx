@@ -11,7 +11,7 @@ interface AnnotationsSidebarProps {
 }
 
 export function AnnotationsSidebar({ contentId, groupId }: AnnotationsSidebarProps) {
-  const { data: annotations, isLoading } = useAnnotations(contentId, groupId);
+  const { data: annotations, isLoading } = useAnnotations(contentId, groupId || undefined);
   const deleteMutation = useDeleteAnnotation(contentId);
   const [filter, setFilter] = useState<'all' | 'mine'>('all');
 
@@ -90,7 +90,7 @@ function AnnotationCard({ annotation, onDelete }: { annotation: Annotation; onDe
   const bgColor = annotation.color ? colorMap[annotation.color] : 'bg-white';
 
   return (
-    <div className={`p-3 rounded-lg border ${bgColor}`}>
+    <div className={`p-3 rounded-lg border ${bgColor}`} data-testid="annotation">
       <div className="flex items-start justify-between mb-2">
         <div className="flex-1">
           <div className="text-xs text-gray-600 mb-1">
@@ -108,6 +108,7 @@ function AnnotationCard({ annotation, onDelete }: { annotation: Annotation; onDe
           onClick={onDelete}
           className="p-1 hover:bg-white/50 rounded transition-colors"
           title="Delete annotation"
+          data-testid="delete-annotation"
         >
           <Trash2 className="w-3.5 h-3.5 text-gray-500" />
         </button>

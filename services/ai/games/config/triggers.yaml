@@ -1,0 +1,31 @@
+# Game Triggers Configuration
+# declarative logic for when to trigger games
+
+triggers:
+  # Trigger on reading session completion
+  on_reading_complete:
+    - game: FREE_RECALL_SCORE
+      probability: 0.8
+      min_content_length: 500
+      requires: [content_slice]
+    
+    - game: CLOZE_SPRINT
+      probability: 0.4
+      target_word_count: 3
+    
+  # Trigger on specific user intents
+  on_intent:
+    review:
+      - game: SRS_ARENA
+        priority: high
+        
+    challenge:
+      - game: BOSS_FIGHT_VOCAB
+        condition: "user_mastery > 0.7"
+
+  # Trigger based on learning gaps
+  on_gap_detected:
+    conceptual:
+      - game: FEYNMAN_TEACHER
+    misconception:
+      - game: MISCONCEPTION_HUNT

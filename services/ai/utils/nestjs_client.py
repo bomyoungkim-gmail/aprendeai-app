@@ -10,6 +10,9 @@ import os
 from typing import Dict, List, Optional
 import logging
 
+# Phase 1: Centralized URL Configuration
+from config.urls import NESTJS_API_URL
+
 logger = logging.getLogger(__name__)
 
 
@@ -17,7 +20,7 @@ class NestJSClient:
     """Client to interact with NestJS API"""
     
     def __init__(self):
-        self.base_url = os.getenv("NESTJS_API_URL", "http://localhost:3001/api/v1")
+        self.base_url = NESTJS_API_URL
         self.timeout = 10.0
         logger.info(f"NestJS Client initialized with base URL: {self.base_url}")
     

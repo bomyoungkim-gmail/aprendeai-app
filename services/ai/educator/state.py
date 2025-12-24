@@ -23,9 +23,14 @@ class EducatorState(TypedDict):
     context: Dict  # ContextPack from context_builder
     
     # === PROCESSING ===
-    current_phase: str  # PRE | DURING | POST
+    current_phase: str  # PRE | DURING | POST | GAME
     user_text: str  # Extracted from prompt_message
     parsed_events: List[Dict]  # Events parsed from quick commands
+    
+    # === GAME-SPECIFIC (added for games integration) ===
+    game_mode: Optional[str]  # Current game mode ID (e.g., "BOSS_FIGHT_VOCAB")
+    game_round_data: Optional[Dict]  # Current game round spec
+    game_metadata: Optional[Dict]  # Game-specific metadata
     
     # === OUTPUT ===
     next_prompt: str  # Agent's next question/instruction

@@ -3,16 +3,18 @@
 export interface Content {
   id: string;
   title: string;
-  contentType: 'PDF' | 'IMAGE' | 'DOCX' | 'ARTICLE';
+  contentType: 'PDF' | 'IMAGE' | 'DOCX' | 'ARTICLE' | 'VIDEO' | 'AUDIO';
   sourceUrl?: string;
   file?: {
     id: string;
     viewUrl: string;
     mimeType: string;
     originalFilename?: string;
+    storageKey?: string;
   };
   createdAt: string;
   updatedAt: string;
+  duration?: number;
 }
 
 export interface CornellNotes {

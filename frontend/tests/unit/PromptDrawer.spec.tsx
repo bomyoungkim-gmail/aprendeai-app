@@ -10,7 +10,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { PromptDrawer } from '@/components/reading/PromptDrawer';
 import { SessionProvider } from '@/contexts/SessionContext';
@@ -168,9 +168,9 @@ describe('PromptDrawer Component', () => {
       fireEvent.click(screen.getByLabelText(/minimize/i));
       await waitFor(() => expect(container.querySelector('.prompt-drawer-peek')).toBeInTheDocument());
 
-      // Click peek to expand
-      const peekArea = container.querySelector('.prompt-drawer-peek');
-      fireEvent.click(peekArea!);
+      // Click peek to expand - target text specifically to ensure event hits
+      const peekHint = screen.getByText('Click to expand');
+      fireEvent.click(peekHint);
 
       await waitFor(() => {
         expect(container.querySelector('.prompt-drawer-expanded')).toBeInTheDocument();
@@ -232,7 +232,9 @@ describe('PromptDrawer Component', () => {
       await waitFor(() => expect(container.querySelector('.prompt-drawer-expanded')).toBeInTheDocument());
 
       // Fast-forward 60 seconds
-      jest.advanceTimersByTime(60000);
+      act(() => {
+        jest.advanceTimersByTime(60000);
+      });
 
       await waitFor(() => {
         expect(container.querySelector('.prompt-drawer-peek')).toBeInTheDocument();
@@ -255,11 +257,15 @@ describe('PromptDrawer Component', () => {
       await waitFor(() => expect(container.querySelector('.prompt-drawer-expanded')).toBeInTheDocument());
 
       // Simulate activity after 30 seconds
-      jest.advanceTimersByTime(30000);
+      act(() => {
+        jest.advanceTimersByTime(30000);
+      });
       fireEvent.click(container.querySelector('.drawer-content')!);
 
       // Fast-forward another 30 seconds (total 60)
-      jest.advanceTimersByTime(30000);
+      act(() => {
+        jest.advanceTimersByTime(30000);
+      });
 
       // Should still be expanded (timer reset on activity)
       expect(container.querySelector('.prompt-drawer-expanded')).toBeInTheDocument();
@@ -271,13 +277,13 @@ describe('PromptDrawer Component', () => {
   describe('Unread Count', () => {
     it('should show unread badge on floating icon', () => {
       // TODO: Mock messages with newer timestamps
-      render(
+      const { container } = render(
         <PromptDrawer sessionId="test-123">
           <div>Content</div>
         </PromptDrawer>
       );
 
-      const badge = screen.queryByClassName('unread-badge');
+      const badge = container.querySelector('.unread-badge');
       // Badge should appear if there are unread messages
       // This requires proper message timestamp logic
     });

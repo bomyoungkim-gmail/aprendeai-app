@@ -44,7 +44,7 @@ export function ChatHistory({ messages, isLoading }: ChatHistoryProps) {
     <div ref={containerRef} className="chat-history">
       <div className="chat-history-content">
         {messages.map((message) => (
-          <ChatBubble key={message.id} message={message} />
+          <ChatBubble key={message.id} message={message} data-testid="message" />
         ))}
         
         {isLoading && <TypingIndicator />}

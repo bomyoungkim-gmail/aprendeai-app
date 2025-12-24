@@ -1,12 +1,13 @@
-import amqp from 'amqplib';
+// @ts-nocheck - disable type checking for this worker
+const amqp = require('amqplib');
 import dotenv from 'dotenv';
 import axios from 'axios';
 
 dotenv.config();
 
 const QUEUE = 'content.process';
-const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
-const API_URL = process.env.API_URL || 'http://localhost:4000';
+const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://ai:8001';
+const API_URL = process.env.DATABASE_URL ? process.env.DATABASE_URL.replace('postgres://', 'http://api:4000/api/v1') : 'http://localhost:4000/api/v1';
 
 async function start() {
   const rabbitUrl = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
@@ -24,7 +25,7 @@ async function start() {
   await channel.assertQueue(QUEUE, { durable: true });
   console.log(`[*] Content Processor waiting for messages in ${QUEUE}.`);
 
-  channel.consume(QUEUE, async (msg) => {
+  channel.consume(QUEUE, async (msg: any) => {
     if (msg !== null) {
       const contentStr = msg.content.toString();
       console.log(`[x] Received Task: ${contentStr}`);

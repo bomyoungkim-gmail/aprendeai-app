@@ -4,6 +4,7 @@ import { LoginDto, RegisterDto } from './dto/auth.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { Public } from './decorators/public.decorator';
+import { URL_CONFIG } from '../config/urls.config';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -66,7 +67,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Google OAuth callback' })
   async googleCallback(@Request() req, @Res() res) {
     const token = await this.authService.login(req.user);
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = URL_CONFIG.frontend.base;
     res.redirect(`${frontendUrl}/auth/callback?token=${token.access_token}`);
   }
 
@@ -83,7 +84,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Microsoft OAuth callback' })
   async microsoftCallback(@Request() req, @Res() res) {
     const token = await this.authService.login(req.user);
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = URL_CONFIG.frontend.base;
     res.redirect(`${frontendUrl}/auth/callback?token=${token.access_token}`);
   }
 }

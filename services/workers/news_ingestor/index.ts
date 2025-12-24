@@ -1,12 +1,14 @@
-import amqp from 'amqplib';
+import amqp, { ConsumeMessage } from 'amqplib';
 import dotenv from 'dotenv';
 import Parser from 'rss-parser';
 import axios from 'axios';
 
+// Phase 1: Use env vars instead of shared config
+const API_URL = process.env.API_URL || 'http://api:4000/api/v1';
+
 dotenv.config();
 
 const QUEUE = 'news.fetch';
-const API_URL = process.env.API_URL || 'http://localhost:4000'; // Accessing internal docker network url
 const parser = new Parser();
 
 // Types for API
@@ -36,7 +38,7 @@ async function start() {
   
   console.log(`[*] News Ingestor waiting for messages in ${QUEUE}.`);
 
-  channel.consume(QUEUE, async (msg) => {
+  channel.consume(QUEUE, async (msg: ConsumeMessage | null) => {
     if (msg !== null) {
       const content = msg.content.toString();
       console.log(`[x] Received Task: ${content}`);

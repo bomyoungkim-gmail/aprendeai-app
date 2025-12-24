@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, InstitutionType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import * as dotenv from 'dotenv';
 
@@ -75,10 +75,17 @@ const E2E_USERS = [
 async function main() {
   console.log('🌱 Seeding E2E test users...');
   
-  // Get default institution
-  const institution = await prisma.institution.findFirst();
+  // Get or Create default institution
+  let institution = await prisma.institution.findFirst();
   if (!institution) {
-    throw new Error('No institution found. Please run main seed first.');
+    console.log('⚠️ No institution found. Creating default "AprendeAI Institute"...');
+    institution = await prisma.institution.create({
+        data: {
+            name: 'AprendeAI Institute',
+            type: InstitutionType.OTHER,
+            country: 'BR'
+        }
+    });
   }
   console.log(`Using institution: ${institution.name} (${institution.id})`);
   
@@ -168,6 +175,42 @@ async function main() {
     });
 
     console.log(`✓ Created user: ${user.email}`);
+  }
+
+  console.log('📚 Ensuring Learning Assets (Quizzes) for E2E...');
+  const contents = await prisma.content.findMany();
+  for (const content of contents) {
+    // Check for L1/READING asset
+    const existingAsset = await prisma.learningAsset.findFirst({
+      where: { 
+        contentId: content.id, 
+        layer: 'L1', 
+        modality: 'READING' 
+      }
+    });
+
+    if (!existingAsset) {
+      console.log(`+ Creating mock asset for content: ${content.title}`);
+      await prisma.learningAsset.create({
+        data: {
+          contentId: content.id,
+          layer: 'L1',
+          modality: 'READING',
+          promptVersion: 'v1.0',
+          checkpointsJson: [
+            {
+              id: 'mock-quiz-1',
+              type: 'QUIZ',
+              question: {
+                text: 'E2E Test Quiz Question',
+                options: ['Option A (Correct)', 'Option B'],
+                correctIndex: 0
+              }
+            }
+          ]
+        }
+      });
+    }
   }
 
   console.log('✅ E2E test users seeded successfully!');

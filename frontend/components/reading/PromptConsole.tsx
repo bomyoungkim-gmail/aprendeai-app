@@ -44,7 +44,7 @@ export function PromptConsole({ sessionId, onComplete }: PromptConsoleProps) {
   };
 
   return (
-    <div className="prompt-console">
+    <div className="prompt-console" data-testid="prompt-console">
       <div className="prompt-console-header">
         <h2>Conversa com o Educador</h2>
         <button
@@ -63,7 +63,7 @@ export function PromptConsole({ sessionId, onComplete }: PromptConsoleProps) {
         />
       )}
 
-      <ChatHistory messages={messages} isLoading={isLoading} />
+      <ChatHistory messages={messages} isLoading={isLoading} data-testid="messages-container" />
 
       {quickReplies.length > 0 && (
         <QuickReplies

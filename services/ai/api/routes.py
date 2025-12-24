@@ -146,11 +146,4 @@ async def health_check():
 
 
 # Error handlers
-@educator_router.exception_handler(ValueError)
-async def value_error_handler(request: Request, exc: ValueError):
-    """Handle ValueError as 400 Bad Request"""
-    logger.warning(f"ValueError: {str(exc)}")
-    return JSONResponse(
-        status_code=400,
-        content={"detail": str(exc)}
-    )
+# Error handling moved to main.py (APIRouter does not support exception_handler decorator)

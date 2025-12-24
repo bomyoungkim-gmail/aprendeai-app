@@ -20,6 +20,7 @@ export default function HistoryPage() {
     page,
     limit: 20,
     ...filters,
+    phase: filters.phase as any,
   });
 
   return (
@@ -162,6 +163,8 @@ export default function HistoryPage() {
             </div>
           )}
         </>
+      )}
+      </>
       )}
     </div>
   );

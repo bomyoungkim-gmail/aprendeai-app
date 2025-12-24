@@ -1,92 +1,75 @@
 {
-  "name": "AprendeAI - AI-Powered Learning Platform",
+  "name": "AprendeAI - Aprenda Jogando",
   "short_name": "AprendeAI",
-  "description": "AI-powered learning platform with video transcription, annotations, Cornell notes, and study groups",
+  "description": "Plataforma de aprendizado gamificada com IA",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#3b82f6",
+  "theme_color": "#4f46e5",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icons/icon-72x72.png",
+      "src": "/icon-72.png",
       "sizes": "72x72",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-96x96.png",
+      "src": "/icon-96.png",
       "sizes": "96x96",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-128x128.png",
+      "src": "/icon-128.png",
       "sizes": "128x128",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-144x144.png",
+      "src": "/icon-144.png",
       "sizes": "144x144",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-152x152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-192x192.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-384x384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-512x512.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ],
+  "categories": ["education", "games"],
   "screenshots": [
     {
-      "src": "/screenshots/desktop-1.png",
+      "src": "/screenshot-wide.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide"
     },
     {
-      "src": "/screenshots/mobile-1.png",
+      "src": "/screenshot-mobile.png",
       "sizes": "750x1334",
       "type": "image/png",
       "form_factor": "narrow"
     }
   ],
-  "categories": ["education", "productivity", "utilities"],
   "shortcuts": [
     {
-      "name": "Upload Content",
-      "short_name": "Upload",
-      "description": "Upload new learning materials",
-      "url": "/upload",
-      "icons": [{ "src": "/icons/upload-96x96.png", "sizes": "96x96" }]
+      "name": "Jogos",
+      "url": "/games",
+      "description": "Acessar jogos educativos"
     },
     {
       "name": "Dashboard",
-      "short_name": "Dashboard",
-      "description": "View your learning dashboard",
       "url": "/dashboard",
-      "icons": [{ "src": "/icons/dashboard-96x96.png", "sizes": "96x96" }]
+      "description": "Ver seu progresso"
     }
-  ],
-  "prefer_related_applications": false
+  ]
 }

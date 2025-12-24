@@ -4,6 +4,7 @@ interface OAuthButtonProps {
   provider: 'google' | 'microsoft';
   onClick: () => void;
   isLoading?: boolean;
+  disabled?: boolean;
 }
 
 const providerConfig = {
@@ -50,14 +51,14 @@ const providerConfig = {
   },
 };
 
-export default function OAuthButton({ provider, onClick, isLoading = false }: OAuthButtonProps) {
+export default function OAuthButton({ provider, onClick, isLoading = false, disabled = false }: OAuthButtonProps) {
   const config = providerConfig[provider];
 
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={isLoading}
+      disabled={isLoading || disabled}
       className={`
         w-full flex items-center justify-center gap-3 px-4 py-3 
         border rounded-lg font-medium transition-all duration-200

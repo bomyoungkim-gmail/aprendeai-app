@@ -157,7 +157,7 @@ export default function BillingSettingsPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-700">{metricName}</span>
                     <span className="text-sm text-gray-600">
-                      {currentUsage.toLocaleString()} / {isUnlimited ? '∞' : limit.toLocaleString()}
+                      {currentUsage.toLocaleString()} / {isUnlimited ? '∞' : (limit as number).toLocaleString()}
                     </span>
                   </div>
 

@@ -24,6 +24,7 @@ export function QuickReplies({ replies, onSelect, disabled }: QuickRepliesProps)
             disabled={disabled}
             className="quick-reply-chip"
             data-reply={reply}
+            data-testid="quick-reply"
           >
             {reply}
           </button>

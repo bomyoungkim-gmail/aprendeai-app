@@ -21,7 +21,8 @@ export function VideoPlayerWithTracking({
   const [muted, setMuted] = useState(false);
   const [played, setPlayed] = useState(0);
   const [duration, setDuration] = useState(0);
-  const playerRef = useRef<ReactPlayer>(null);
+  const playerRef = useRef<any>(null);
+  const Player = ReactPlayer as any;
 
   // Auto-track video watch time
   useAutoTrackVideo(contentId, playing);
@@ -49,7 +50,7 @@ export function VideoPlayerWithTracking({
 
   return (
     <div className="relative w-full bg-black rounded-lg overflow-hidden">
-      <ReactPlayer
+      <Player
         ref={playerRef}
         url={url}
         playing={playing}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useUserSettings, useUpdateSettings } from '@/hooks/use-user-profile';
+import { UserSettings, useUserSettings, useUpdateSettings } from '@/hooks/use-user-profile';
 import { Toast, useToast } from '@/components/ui/Toast';
 
 export default function NotificationsPage() {
@@ -8,7 +8,7 @@ export default function NotificationsPage() {
   const updateSettings = useUpdateSettings();
   const { toast, show: showToast, hide: hideToast } = useToast();
 
-  const handleToggle = async (key: keyof typeof settings.notifications) => {
+  const handleToggle = async (key: keyof UserSettings['notifications']) => {
     if (!settings) return;
 
     const newValue = !settings.notifications[key];

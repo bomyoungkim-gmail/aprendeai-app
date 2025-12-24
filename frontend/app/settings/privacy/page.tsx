@@ -1,6 +1,6 @@
 'use client';
 
-import { useUserSettings, useUpdateSettings } from '@/hooks/use-user-profile';
+import { UserSettings, useUserSettings, useUpdateSettings } from '@/hooks/use-user-profile';
 import { Toast, useToast } from '@/components/ui/Toast';
 import { Download } from 'lucide-react';
 
@@ -9,7 +9,7 @@ export default function PrivacyPage() {
   const updateSettings = useUpdateSettings();
   const { toast, show: showToast, hide: hideToast } = useToast();
 
-  const handleToggle = async (key: string) => {
+  const handleToggle = async (key: keyof UserSettings['privacy']) => {
     if (!settings) return;
 
     const currentPrivacy = settings.privacy || {};
@@ -63,9 +63,9 @@ export default function PrivacyPage() {
   const privacy = settings.privacy || {};
 
   const privacySettings = [
-    { key: 'profileVisible', label: 'Public Profile', description: 'Make your profile visible to other users' },
-    { key: 'showStats', label: 'Show Statistics', description: 'Display your study statistics on your profile' },
-    { key: 'allowEmailDiscovery', label: 'Email Discovery', description: 'Allow others to find you by email address' },
+    { key: 'profileVisible' as const, label: 'Public Profile', description: 'Make your profile visible to other users' },
+    { key: 'showStats' as const, label: 'Show Statistics', description: 'Display your study statistics on your profile' },
+    { key: 'allowEmailDiscovery' as const, label: 'Email Discovery', description: 'Allow others to find you by email address' },
   ];
 
   return (

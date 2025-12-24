@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-microsoft';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from '../auth.service';
+import { URL_CONFIG } from '../../config/urls.config';
 
 @Injectable()
 export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
@@ -13,7 +14,7 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
     super({
       clientID: config.get('MICROSOFT_CLIENT_ID') || 'dummy-client-id',
       clientSecret: config.get('MICROSOFT_CLIENT_SECRET') || 'dummy-secret',
-      callbackURL: config.get('MICROSOFT_CALLBACK_URL', 'http://localhost:4000/auth/microsoft/callback'),
+      callbackURL: URL_CONFIG.oauth.microsoft,
       scope: ['user.read'],
       tenant: config.get('MICROSOFT_TENANT', 'common'),
     });

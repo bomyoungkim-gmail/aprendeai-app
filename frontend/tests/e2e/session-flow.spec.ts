@@ -30,11 +30,11 @@ test.describe('Complete Session Flow', () => {
     
     // Select content
     await page.click('[data-testid="content-item"]:first-child');
-    await page.waitForURL(/\/contents\/.+/);
+    await page.waitForURL(/\/(contents|reader)\/.+/);
     
     // Start new session
     await page.click('[data-testid="start-session-button"]');
-    await page.waitForURL(/\/sessions\/.+/);
+    await page.waitForURL(/\/(sessions|reading)\/.+/);
     
     // Verify PRE phase
     await expect(page.locator('[data-testid="current-phase"]')).toHaveText('PRE');

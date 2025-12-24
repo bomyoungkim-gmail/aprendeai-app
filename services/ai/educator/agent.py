@@ -6,9 +6,29 @@ Routes to phase-specific handlers based on session phase.
 """
 
 from langgraph.graph import StateGraph, END
-from langgraph.checkpoint.memory import MemorySaver
+
+# Robust import for RedisSaver handling potential package structure differences
+try:
+    # Try standard namespace path first
+    from langgraph.checkpoint.redis import RedisSaver
+except ImportError:
+    try:
+        # Try flat package name (common in newer refactors)
+        from langgraph_checkpoint_redis import RedisSaver
+    except ImportError:
+        try:
+            # Try legacy or alternative name
+            from langgraph_redis import RedisSaver
+        except ImportError:
+            # Fallback to MemorySaver if Redis unavailable (and log warning)
+            import logging
+            logging.getLogger(__name__).warning("RedisSaver not found. Falling back to MemorySaver.")
+            from langgraph.checkpoint.memory import MemorySaver as RedisSaver
+
 from .state import EducatorState
 import logging
+import redis
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -18,9 +38,16 @@ def route_by_phase(state: EducatorState) -> str:
     Route to appropriate phase handler.
     
     Returns:
-        "pre" | "during" | "post"
+        "pre" | "during" | "post" | "game"
     """
     phase = state['current_phase'].lower()
+    
+    # Check if starting a game
+    user_text = state.get('user_text', '').upper()
+    if user_text == 'START_GAME' or state.get('game_mode'):
+        logger.debug("Routing to game phase")
+        return "game"
+    
     logger.debug(f"Routing to phase: {phase}")
     return phase
 
@@ -41,6 +68,7 @@ def create_educator_graph():
     from educator.nodes.pre_phase import handle as pre_phase_handle
     from educator.nodes.during_phase import handle as during_phase_handle
     from educator.nodes.post_phase import handle as post_phase_handle
+    from educator.nodes.game_phase import handle as game_phase_handle
     
     workflow = StateGraph(EducatorState)
     
@@ -48,6 +76,7 @@ def create_educator_graph():
     workflow.add_node("pre", pre_phase_handle)
     workflow.add_node("during", during_phase_handle)
     workflow.add_node("post", post_phase_handle)
+    workflow.add_node("game", game_phase_handle)  # NEW: Game node
     
     # Set entry point with conditional routing
     workflow.set_conditional_entry_point(
@@ -55,7 +84,8 @@ def create_educator_graph():
         {
             "pre": "pre",
             "during": "during",
-            "post": "post"
+            "post": "post",
+            "game": "game",  # NEW: Route to game
         }
     )
     
@@ -63,13 +93,17 @@ def create_educator_graph():
     workflow.add_edge("pre", END)
     workflow.add_edge("during", END)
     workflow.add_edge("post", END)
+    workflow.add_edge("game", END)  # NEW: Game terminates
     
-    # Compile with memory checkpointer
-    # Phase 2a: In-memory (simple)
-    # Phase 2b: PostgresSaver for persistence
-    checkpointer = MemorySaver()
+    # Compile with Redis checkpointer for persistent, shared state
+    # Benefits: survives restarts, shared across instances, TTL support
+    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    redis_client = redis.Redis.from_url(redis_url, decode_responses=False)
     
-    logger.info("Educator graph compiled with MemorySaver checkpointer")
+    checkpointer = RedisSaver(redis_client)
+    checkpointer.setup()  # Creates necessary Redis structures
+    
+    logger.info(f"Educator graph compiled with RedisSaver (Redis: {redis_url})")
     
     return workflow.compile(checkpointer=checkpointer)
 

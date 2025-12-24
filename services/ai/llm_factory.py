@@ -4,7 +4,8 @@ Supports OpenAI, Anthropic, and Google Gemini with cost-optimized selection
 """
 import os
 from typing import Optional, Literal
-from langchain_openai import ChatOpenAI
+from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_google_genai import ChatGoogleGenerativeAI
 
@@ -29,9 +30,6 @@ TASK_TIERS = {
 }
 
 # Provider configurations
-PROVIDER_CONFIGS = {
-    TIER_PREMIUM: {
-
 load_dotenv()
 
 class LLMFactory:
@@ -58,6 +56,9 @@ class LLMFactory:
         
         # Anthropic
         self.anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+        
+        # Google Gemini
+        self.google_key = os.getenv("GOOGLE_API_KEY")
         
         self.default_temperature = float(os.getenv("LLM_TEMPERATURE", "0.0"))
     
@@ -107,6 +108,25 @@ class LLMFactory:
             temperature=temperature if temperature is not None else self.default_temperature,
             api_key=self.anthropic_key
         )
+
+    def get_google_llm(
+        self,
+        model: str = "gemini-1.5-flash",
+        temperature: Optional[float] = None,
+        timeout: Optional[float] = None,
+        max_retries: int = 2,
+    ) -> ChatGoogleGenerativeAI:
+        """Get Google Gemini LLM"""
+        if not self.google_key:
+            raise ValueError("GOOGLE_API_KEY not set")
+            
+        return ChatGoogleGenerativeAI(
+            model=model,
+            temperature=temperature if temperature is not None else self.default_temperature,
+            google_api_key=self.google_key,
+            timeout=timeout,
+            max_retries=max_retries,
+        )
     
     def get_default_llm(self, temperature: Optional[float] = None):
         """Get default LLM based on availability"""
@@ -129,7 +149,10 @@ class LLMFactory:
         Get cost-effective LLM for simple tasks.
         Use for: quick responses, checkpoints, simple prompts
         """
-        if self.openai_key:
+        # Google Gemini Flash is currently the most cost-effective and fast
+        if self.google_key:
+            return self.get_google_llm(model="gemini-1.5-flash", temperature=temperature)
+        elif self.openai_key:
             return ChatOpenAI(
                 model="gpt-4o-mini",  # Cheap and fast
                 temperature=temperature if temperature is not None else self.default_temperature,
@@ -150,5 +173,10 @@ class LLMFactory:
                 api_key=self.openai_key
             )
         elif self.anthropic_key:
-            return ChatAnthropic(
-        }
+            return self.get_anthropic_llm(model="claude-3-5-sonnet-20241022", temperature=temperature)
+        else:
+            # Fallback to default
+            return self.get_default_llm(temperature=temperature)
+
+# Global instance
+llm_factory = LLMFactory()

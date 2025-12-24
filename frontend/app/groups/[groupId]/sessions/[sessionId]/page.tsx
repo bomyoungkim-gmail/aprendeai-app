@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useSession } from '@/hooks/use-sessions';
-import { AuthGuard } from '@/components/auth-guard';
+import AuthGuard from '@/components/auth-guard';
 import { PISprintInterface } from '@/components/study-groups/PISprintInterface';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';

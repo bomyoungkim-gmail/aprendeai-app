@@ -82,13 +82,18 @@ export class ReadingSessionsService {
       where: { id: sessionId },
       include: {
         content: {
-          select: {
-            id: true,
-            title: true,
-            type: true,
-          },
+          include: { file: true }, // Expõe storageKey para media
         },
         outcome: true,
+        events: {
+          orderBy: { createdAt: 'asc' },
+          select: {
+            id: true,
+            eventType: true,
+            payloadJson: true,
+            createdAt: true,
+          },
+        },
       },
     });
 
@@ -100,13 +105,41 @@ export class ReadingSessionsService {
       throw new ForbiddenException('Access denied');
     }
 
-    return session;
+    // Transform events to messages format
+    // Events with payloadJson.role are actual messages
+    const messages = session.events
+      .filter(event => event.payloadJson && typeof event.payloadJson === 'object')
+      .filter(event => (event.payloadJson as any).role || (event.payloadJson as any).text)
+      .map(event => {
+        const payload = event.payloadJson as any;
+        return {
+          id: event.id,
+          role: payload.role || 'SYSTEM',
+          content: payload.text || payload.content || payload.message || '',
+          timestamp: event.createdAt,
+        };
+      });
+
+    // Extract quickReplies from last event that has them
+    const lastEventWithReplies = [...session.events]
+      .reverse()
+      .find(e => (e.payloadJson as any)?.quickReplies);
+    const quickReplies = lastEventWithReplies
+      ? (lastEventWithReplies.payloadJson as any).quickReplies
+      : [];
+
+    return {
+      session,
+      content: session.content,
+      messages,
+      quickReplies,
+    };
   }
 
   async updatePrePhase(sessionId: string, userId: string, data: PrePhaseDto) {
-    const session = await this.getSession(sessionId, userId);
+    const result = await this.getSession(sessionId, userId);
 
-    if (session.phase !== 'PRE') {
+    if (result.session.phase !== 'PRE') {
       throw new BadRequestException('Session not in PRE phase');
     }
 
@@ -152,20 +185,20 @@ export class ReadingSessionsService {
   }
 
   async advancePhase(sessionId: string, userId: string, toPhase: 'POST' | 'FINISHED') {
-    const session = await this.getSession(sessionId, userId);
+    const result = await this.getSession(sessionId, userId);
 
     // Validate transition
-    if (toPhase === 'POST' && session.phase !== 'DURING') {
+    if (toPhase === 'POST' && result.session.phase !== 'DURING') {
       throw new BadRequestException('Can only advance to POST from DURING phase');
     }
 
     if (toPhase === 'FINISHED') {
-      if (session.phase !== 'POST') {
+      if (result.session.phase !== 'POST') {
         throw new BadRequestException('Can only finish from POST phase');
       }
 
       // Validate DoD (Definition of Done)
-      await this.validatePostCompletion(sessionId, session.userId, session.contentId);
+      await this.validatePostCompletion(sessionId, result.session.userId, result.session.contentId);
     }
 
     // Update session
@@ -363,10 +396,87 @@ export class ReadingSessionsService {
   }
 
   /**
+   * Enrich prompt context with compact state, recent history, and content slice
+   * Phase 3: Token optimization (40K → 6K tokens)
+   */
+  private async enrichPromptContext(
+    sessionId: string,
+    userId: string,
+    contentId: string,
+    userText: string,
+  ): Promise<any> {
+    // 1. Load compact pedagogical state from Redis (Phase 3)
+    let pedState = null;
+    try {
+      const { loadCompactState } = await import('../common/helpers/redis-context.helper');
+      pedState = await loadCompactState(userId, contentId);
+      
+      if (pedState) {
+        this.logger.debug(`Loaded compact state for ${userId}/${contentId}`);
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to load compact state: ${err.message}`);
+    }
+    
+    // 2. Get last 6 turns (window for efficient context)
+    const lastTurns = await this.prisma.sessionEvent.findMany({
+      where: {
+        readingSessionId: sessionId,
+        eventType: { in: ['PROMPT_SENT', 'PROMPT_RECEIVED'] },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 6,
+      select: {
+        payloadJson: true,
+        createdAt: true,
+      },
+    });
+    
+    // Format turns for AI context
+    const formattedTurns = lastTurns.reverse().map((event: any) => ({
+      role: event.payloadJson?.role || 'user',
+      text: event.payloadJson?.text || event.payloadJson?.content || '',
+      timestamp: event.createdAt,
+    }));
+    
+    // 3. Get current content slice (NOT entire book!)
+    // For now, use first 12K chars. TODO: implement block-based slicing
+    let contentSlice = '';
+    try {
+      const content = await this.prisma.content.findUnique({
+        where: { id: contentId },
+        select: { rawText: true },
+      });
+      
+      if (content?.rawText) {
+        // Take first 12K chars (≈3K tokens)
+        contentSlice = content.rawText.substring(0, 12000);
+        this.logger.debug(`Content slice: ${contentSlice.length} chars`);
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to load content slice: ${err.message}`);
+    }
+    
+    return {
+      pedState: pedState || {},
+      lastTurns: formattedTurns,
+      contentSlice,
+      memoriesTopK: 6, // For AI service retrieval
+      contextPlan: {
+        prefixVersion: 'CANONICAL_PREFIX_V1',
+        lastTurnsWindow: 6,
+        memoriesTopK: 6,
+        contentSliceChars: contentSlice.length,
+      },
+    };
+  }
+
+  /**
    * POST /sessions/:id/prompt
    * Processes user prompt, parses commands, calls AI, returns response
    */
   async processPrompt(
+
     sessionId: string,
     dto: PromptMessageDto,
     userId: string,
@@ -385,13 +495,62 @@ export class ReadingSessionsService {
       await this.persistEvents(sessionId, parsedEvents);
     }
 
-    // 4. Call AI Service
-    const aiResponse = await this.aiServiceClient.sendPrompt(dto);
+    // 4. Phase 3: Enrich context for AI (token optimization)
+    const enrichedContext = await this.enrichPromptContext(
+      sessionId,
+      userId,
+      session.session.contentId,
+      dto.text,
+    );
+    
+    // Inject enriched metadata
+    const enrichedDto = {
+      ...dto,
+      metadata: {
+        ...dto.metadata,
+        tenantId: userId, // For memory namespacing
+        userId,
+        contentId: session.session.contentId,
+        ...enrichedContext, // pedState, lastTurns, contentSlice
+      },
+    };
+    
+    // Call AI Service with enriched context
+    const aiResponse = await this.aiServiceClient.sendPrompt(enrichedDto);
 
     // 5. Persist AI-suggested events (if any)
     if (aiResponse.eventsToWrite && aiResponse.eventsToWrite.length > 0) {
       this.logger.log(`Persisting ${aiResponse.eventsToWrite.length} AI-suggested events`);
       await this.persistEvents(sessionId, aiResponse.eventsToWrite);
+      
+      // Phase 3: Enqueue memory compaction if session finished
+      const hasFinishEvent = aiResponse.eventsToWrite.some(
+        (e: any) => e.eventType === 'CO_SESSION_FINISHED' || e.eventType === 'READING_SESSION_FINISHED'
+      );
+      
+      if (hasFinishEvent) {
+        this.logger.log('Session finished detected, enqueueing memory job');
+        try {
+          const { enqueueMemoryJob } = await import('../common/helpers/redis-context.helper');
+          
+          // Build lightweight outcome from session for memory extraction
+          const outcome = {
+            top_blockers: [], // TODO: extract from MARK_UNKNOWN_WORD events
+            best_intervention: null, // TODO: track from session
+            vocab_learned: [], // TODO: extract from events
+            phase: session.session.phase,
+          };
+          
+          await enqueueMemoryJob({
+            tenantId: userId,
+            userId,
+            contentId: session.session.contentId,
+            sessionOutcome: outcome,
+          });
+        } catch (err) {
+          this.logger.warn(`Failed to enqueue memory job: ${err.message}`);
+        }
+      }
     }
 
     return aiResponse;

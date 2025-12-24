@@ -20,7 +20,7 @@ export class ContentService {
   findOne(id: string) {
     return this.prisma.content.findUnique({
       where: { id },
-      include: { versions: true },
+      include: { versions: true, file: true },
     });
   }
 

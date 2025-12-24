@@ -52,8 +52,9 @@ export function VideoPlayer({
   onCreateAnnotation,
   className = ''
 }: VideoPlayerProps) {
-  const playerRef = useRef<ReactPlayer>(null);
+  const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const Player = ReactPlayer as any;
   
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -139,7 +140,7 @@ export function VideoPlayer({
         onMouseEnter={() => setShowControls(true)}
         onMouseLeave={() => setShowControls(false)}
       >
-        <ReactPlayer
+        <Player
           ref={playerRef}
           url={src}
           playing={playing}

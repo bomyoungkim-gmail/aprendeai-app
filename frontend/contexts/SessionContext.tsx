@@ -42,7 +42,17 @@ interface SessionProviderProps {
 }
 
 export function SessionProvider({ sessionId, children }: SessionProviderProps) {
-  const { group, isOwner } = useGroup();
+  // Try to get group context, but don't fail if not available (solo mode)
+  let group = null;
+  let isOwner = false;
+  try {
+    const groupContext = useGroup();
+    group = groupContext.group;
+    isOwner = groupContext.isOwner;
+  } catch {
+    // Solo mode - no group context available
+  }
+
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +64,6 @@ export function SessionProvider({ sessionId, children }: SessionProviderProps) {
 
   useEffect(() => {
     async function fetchSession() {
-      if (!group) return;
 
       try {
         setIsLoading(true);

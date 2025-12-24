@@ -60,6 +60,35 @@ async function main() {
 
   console.log('✅ Created PRO plan:', proPlan.id);
 
+  // Create test user
+  // Password: Test123!@#
+  // Hash generated specifically for this password
+  const hashedPassword = "$2b$10$wL4gqS.1v6Z1y6/1y6/1y6/1y6/1y6/1y6/1y6/1y6" // Placeholder hash or use bcrypt if import works
+  // Actually let's try to dynamic import or just use a fixed hash if we can't rely on bcrypt in seed
+  
+  // Real hash for 'Test123!@#' (generated online or via tool):
+  // $2b$10$tM.yK.jX.9.1.1.1.1.1.1.1.1.1.1.1.1 (Just kidding)
+  
+  // Let's use clean code with import since we installed it
+  const bcrypt = require('bcrypt');
+  const passHash = await bcrypt.hash('Test123!@#', 10);
+
+  const testUser = await prisma.user.upsert({
+    where: { email: 'student@e2e-test.com' },
+    update: {
+      password: passHash,
+      planId: proPlan.id
+    },
+    create: {
+      email: 'student@e2e-test.com',
+      name: 'E2E Student',
+      password: passHash,
+      role: 'STUDENT',
+      planId: proPlan.id
+    },
+  });
+  console.log('✅ Created Test User:', testUser.email);
+
   console.log('🎉 Seeding completed!');
 }
 

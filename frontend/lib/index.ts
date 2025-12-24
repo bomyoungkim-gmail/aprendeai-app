@@ -1,2 +1,2 @@
-export { default as api, cornellApi } from './api/cornell';
+export { cornellApi } from './api/cornell';
 export * from './types/cornell';

@@ -3,6 +3,7 @@ import * as nodemailer from 'nodemailer';
 import * as Handlebars from 'handlebars';
 import * as fs from 'fs';
 import * as path from 'path';
+import { URL_CONFIG } from '../config/urls.config';
 
 export interface EmailOptions {
   to: string;
@@ -102,10 +103,10 @@ export class EmailService {
       this.templatesCache.set(templateName, template);
     }
 
-    // Add common context
+    // Add common context - Phase 1: Centralized URLs
     const fullContext = {
       ...context,
-      frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+      frontendUrl: URL_CONFIG.frontend.base,
       year: new Date().getFullYear(),
     };
 
@@ -122,7 +123,7 @@ export class EmailService {
       template: 'welcome',
       context: {
         userName: user.name,
-        dashboardUrl: `${process.env.FRONTEND_URL}/dashboard`,
+        dashboardUrl: `${URL_CONFIG.frontend.base}/dashboard`,
       },
     });
   }
@@ -145,7 +146,7 @@ export class EmailService {
         inviterName: invitation.inviterName,
         groupName: invitation.groupName,
         groupDescription: invitation.groupDescription || 'Participe deste grupo de estudo!',
-        acceptUrl: `${process.env.FRONTEND_URL}/groups/invitations/${invitation.invitationId}`,
+        acceptUrl: `${URL_CONFIG.frontend.base}/groups/invitations/${invitation.invitationId}`,
       },
     });
   }
@@ -170,7 +171,7 @@ export class EmailService {
         annotatorName: notification.annotatorName,
         contentTitle: notification.contentTitle,
         annotationText: notification.annotationText,
-        contentUrl: `${process.env.FRONTEND_URL}/reader/${notification.contentId}`,
+        contentUrl: `${URL_CONFIG.frontend.base}/reader/${notification.contentId}`,
       },
     });
   }
