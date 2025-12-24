@@ -2,8 +2,8 @@ import { Controller, Post, Body, Get, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ContentClassificationService } from './content-classification.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../admin/guards/roles.guard';
+import { Roles } from '../admin/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
 
 @ApiTags('content-classification')
