@@ -32,8 +32,9 @@ describe('Institution Admin Dashboard (Integration)', () => {
   });
 
   describe('Setup: Create Institution Admin', () => {
-    it('should register institution admin user', async () => {
-      const res = await request(app.getHttpServer())
+    it('should register and login institution admin user', async () => {
+      // Register
+      const registerRes = await request(app.getHttpServer())
         .post('/auth/register')
         .send({
           email: 'admin@inst-admin-test.com',
@@ -42,12 +43,22 @@ describe('Institution Admin Dashboard (Integration)', () => {
         })
         .expect(201);
 
-      expect(res.body).toHaveProperty('access_token');
-      authToken = res.body.access_token;
-      institutionAdminId = res.body.user.id;
+      institutionAdminId = registerRes.body.id; // Register returns user directly
+
+      // Login to get token
+      const loginRes = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: 'admin@inst-admin-test.com',
+          password: 'Test123!',
+        })
+        .expect(201);
+
+      expect(loginRes.body).toHaveProperty('access_token');
+      authToken = loginRes.body.access_token;
     });
 
-    it('should create institution', async () => {
+    it('should create institution and assign admin', async () => {
       const institution = await prisma.institution.create({
         data: {
           name: 'Test Institution Admin School',
@@ -61,8 +72,8 @@ describe('Institution Admin Dashboard (Integration)', () => {
       // Make user an INSTITUTION_ADMIN
       await prisma.institutionMember.create({
         data: {
-          institutionId,
-          userId: institutionAdminId,
+          institution: { connect: { id: institutionId } },
+          user: { connect: { id: institutionAdminId } },
           role: 'INSTITUTION_ADMIN',
           status: 'ACTIVE',
         },
@@ -130,9 +141,9 @@ describe('Institution Admin Dashboard (Integration)', () => {
         .expect(401);
     });
 
-    it('should return error for non-institution-admin users', async () => {
+    it('should return 403 Forbidden for non-institution-admin users', async () => {
       // Create a regular user
-      const regularUserRes = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post('/auth/register')
         .send({
           email: 'regular@inst-admin-test.com',
@@ -141,14 +152,23 @@ describe('Institution Admin Dashboard (Integration)', () => {
         })
         .expect(201);
 
-      const regularUserToken = regularUserRes.body.access_token;
+      // Login to get token
+      const loginRes = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: 'regular@inst-admin-test.com',
+          password: 'Test123!',
+        })
+        .expect(201);
+
+      const regularUserToken = loginRes.body.access_token;
 
       const res = await request(app.getHttpServer())
         .get('/institutions/my-institution')
         .set('Authorization', `Bearer ${regularUserToken}`)
-        .expect(500); // Should return error because user is not an institution admin
+        .expect(403); // Strictly expect Forbidden
 
-      expect(res.body.message).toContain('User is not an institution admin');
+      expect(res.body.message).toBe('Insufficient permissions');
     });
   });
 });
