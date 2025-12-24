@@ -54,7 +54,7 @@ export class BulkService {
                   institutionId,
                   userId: user.id,
                   role: role as any,
-                  status: 'INVITED',
+                  status: 'PENDING' as any,
                 },
               });
 
@@ -118,7 +118,7 @@ export class BulkService {
     const csvRows = [
       'Email,Name,Role,Status,Joined',
       ...members.map(m => 
-        `${m.user.email},${m.user.name},${m.role},${m.status},${m.createdAt.toISOString()}`
+      `${m.user.email},${m.user.name},${m.role},${m.status},${m.joinedAt.toISOString()}`
       ),
     ];
 
