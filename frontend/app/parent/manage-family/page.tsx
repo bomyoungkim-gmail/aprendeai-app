@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { API_BASE_URL, API_ENDPOINTS } from '@/lib/config/api';
+import toast from 'react-hot-toast';
+import { SkeletonTable } from '@/components/ui/skeleton';
 
 interface FamilyMember {
   id: string;
@@ -61,6 +63,7 @@ export default function ManageFamilyPage() {
   const handleInvite = async (email: string, role: string) => {
     if (!family) return;
 
+    const loadingToast = toast.loading('Sending invite...');
     try {
       const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.FAMILY.INVITE(family.id)}`, {
         method: 'POST',
@@ -74,20 +77,21 @@ export default function ManageFamilyPage() {
       if (res.ok) {
         setShowInviteModal(false);
         fetchData();
-        alert('Invitation sent!');
+        toast.success('Invitation sent successfully!', { id: loadingToast });
       } else {
         const err = await res.json();
-        alert(`Failed: ${err.message}`);
+        toast.error(err.message || 'Failed to send invite', { id: loadingToast });
       }
     } catch (error) {
       console.error(error);
-      alert('Failed to send invite');
+      toast.error('Network error. Please try again.', { id: loadingToast });
     }
   };
 
   const handleRemoveMember = async (memberUserId: string) => {
     if (!family || !confirm('Are you sure you want to remove this member?')) return;
 
+    const loadingToast = toast.loading('Removing member...');
     try {
       const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.FAMILY.REMOVE_MEMBER(family.id, memberUserId)}`, {
         method: 'DELETE',
@@ -96,16 +100,20 @@ export default function ManageFamilyPage() {
 
       if (res.ok) {
         fetchData();
-        alert('Member removed');
+        toast.success('Member removed successfully', { id: loadingToast });
+      } else {
+        toast.error('Failed to remove member', { id: loadingToast });
       }
     } catch (error) {
       console.error('Failed to remove member:', error);
+      toast.error('Network error. Please try again.', { id: loadingToast });
     }
   };
 
   const handleTransferOwnership = async (newOwnerId: string) => {
     if (!family || !confirm('DANGER: Transfer ownership? You will become a GUARDIAN.')) return;
 
+    const loadingToast = toast.loading('Transferring ownership...');
     try {
       const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.FAMILY.TRANSFER_OWNERSHIP(family.id)}`, {
         method: 'POST',
@@ -119,19 +127,26 @@ export default function ManageFamilyPage() {
       if (res.ok) {
         setShowTransferModal(false);
         fetchData();
-        alert('Ownership transferred successfully!');
-        // Ideally redirect or refresh permissions here
+        toast.success('Ownership transferred successfully!', { id: loadingToast });
       } else {
         const err = await res.json();
-        alert(`Failed: ${err.message}`);
+        toast.error(err.message || 'Transfer failed', { id: loadingToast });
       }
     } catch (error) {
       console.error('Transfer failed:', error);
+      toast.error('Network error. Please try again.', { id: loadingToast });
     }
   };
 
   if (loading) {
-    return <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Manage Family</h1>
+        </div>
+        <SkeletonTable rows={3} />
+      </div>
+    );
   }
 
   if (!family) return <div>No family data</div>;

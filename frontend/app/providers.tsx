@@ -5,6 +5,7 @@ import { useState } from "react";
 import { WebSocketProvider } from "@/contexts/WebSocketContext";
 import { HydrationWrapper } from "@/components/HydrationWrapper";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ToastProvider } from "@/components/providers/toast-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -26,6 +27,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <HydrationWrapper>
         <QueryClientProvider client={queryClient}>
           <WebSocketProvider>
+            <ToastProvider />
             {children}
           </WebSocketProvider>
         </QueryClientProvider>
