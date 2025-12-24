@@ -196,4 +196,57 @@ export class InstitutionsController {
       );
     }
   }
+
+  // ==================== SSO Configuration ====================
+
+  @Post(':id/sso')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.INSTITUTION_ADMIN)
+  @ApiOperation({ summary: 'Configure SSO for institution' })
+  async createSSOConfig(
+    @Param('id') institutionId: string,
+    @Body() dto: any,
+    @Request() req,
+  ) {
+    return this.ssoService.createConfig({ ...dto, institutionId }, req.user.id);
+  }
+
+  @Get(':id/sso')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.INSTITUTION_ADMIN)
+  @ApiOperation({ summary: 'Get SSO configuration' })
+  async getSSOConfig(@Param('id') institutionId: string) {
+    return this.ssoService.getConfig(institutionId);
+  }
+
+  @Patch(':id/sso')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.INSTITUTION_ADMIN)
+  @ApiOperation({ summary: 'Update SSO configuration' })
+  async updateSSOConfig(
+    @Param('id') institutionId: string,
+    @Body() dto: any,
+    @Request() req,
+  ) {
+    return this.ssoService.updateConfig(institutionId, dto, req.user.id);
+  }
+
+  @Delete(':id/sso')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.INSTITUTION_ADMIN)
+  @ApiOperation({ summary: 'Delete SSO configuration' })
+  async deleteSSOConfig(
+    @Param('id') institutionId: string,
+    @Request() req,
+  ) {
+    return this.ssoService.deleteConfig(institutionId, req.user.id);
+  }
+
+  @Post(':id/sso/test')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.INSTITUTION_ADMIN)
+  @ApiOperation({ summary: 'Test SSO configuration' })
+  async testSSOConfig(@Param('id') institutionId: string) {
+    return this.ssoService.testConfig(institutionId);
+  }
 }

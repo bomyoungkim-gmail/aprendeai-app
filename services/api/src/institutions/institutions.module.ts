@@ -4,6 +4,7 @@ import { InstitutionsService } from './institutions.service';
 import { InstitutionInviteService } from './institution-invite.service';
 import { InstitutionDomainService } from './institution-domain.service';
 import { ApprovalService } from './approval.service';
+import { SSOService } from './sso.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { EmailModule } from '../email/email.module';
 import { AdminModule } from '../admin/admin.module';
