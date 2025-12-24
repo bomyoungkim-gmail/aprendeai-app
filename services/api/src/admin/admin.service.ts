@@ -259,6 +259,93 @@ export class AdminService {
     };
   }
 
+  /**
+   * Get platform-wide statistics for admin dashboard
+   */
+  async getPlatformStats() {
+    const [
+      totalUsers,
+      totalInstitutions,
+      totalFamilies,
+      totalContent,
+      activeUsersThisWeek,
+      newUsersThisMonth,
+    ] = await Promise.all([
+      this.prisma.user.count(),
+      this.prisma.institution.count(),
+      this.prisma.family.count(),
+      this.prisma.content.count(),
+      this.prisma.user.count({
+        where: {
+          lastLoginAt: {
+            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+          },
+        },
+      }),
+      this.prisma.user.count({
+        where: {
+          createdAt: {
+            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+          },
+        },
+      }),
+    ]);
+
+    return {
+      totalUsers,
+      totalInstitutions,
+      totalFamilies,
+      totalContent,
+      activeUsersThisWeek,
+      newUsersThisMonth,
+    };
+  }
+
+  /**
+   * List all institutions with pagination (for admin dashboard)
+   */
+  async listInstitutions(page: number = 1, limit: number = 20, search?: string) {
+    const skip = (page - 1) * limit;
+
+    const where = search
+      ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' as const } },
+            { city: { contains: search, mode: 'insensitive' as const } },
+            { state: { contains: search, mode: 'insensitive' as const } },
+          ],
+        }
+      : {};
+
+    const [institutions, total] = await Promise.all([
+      this.prisma.institution.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          _count: {
+            select: {
+              members: true,
+              domains: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.institution.count({ where }),
+    ]);
+
+    return {
+      data: institutions,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   // ... existing methods continue below ...
   
   async getUserWithRoles(userId: string) {

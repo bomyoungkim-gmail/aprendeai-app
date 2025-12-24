@@ -56,6 +56,35 @@ export class AdminController {
   }
 
   // ========================================
+  // Platform Dashboard
+  // ========================================
+
+  @Get('stats')
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get platform-wide statistics for admin dashboard' })
+  @ApiResponse({ status: 200, description: 'Returns platform statistics' })
+  async getPlatformStats() {
+    return this.adminService.getPlatformStats();
+  }
+
+  @Get('institutions')
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List all institutions with pagination' })
+  async listInstitutions(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.adminService.listInstitutions(
+      page ? parseInt(page) : 1,
+      limit ? parseInt(limit) : 20,
+      search,
+    );
+  }
+
+  // ========================================
   // User Management
   // ========================================
 
