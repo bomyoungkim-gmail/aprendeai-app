@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x", "debian-openssl-3.0.x"]
 }
 
@@ -9,20 +9,146 @@ datasource db {
 }
 
 model Institution {
-  id          String          @id @default(uuid())
-  name        String
-  type        InstitutionType
-  city        String?
-  state       String?
-  country     String?
-  createdAt   DateTime        @default(now()) @map("created_at")
-  updatedAt   DateTime        @updatedAt @map("updated_at")
+  id      String          @id @default(uuid())
+  name    String
+  type    InstitutionType
+  slug    String?         @unique
+  city    String?
+  state   String?
+  country String?
+
+  // Institution Settings
+  maxMembers       Int? // null = unlimited
+  requiresApproval Boolean @default(false) @map("requires_approval")
+  ssoEnabled       Boolean @default(false) @map("sso_enabled")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Existing relations
   assessments Assessment[]
   classes     Class[]
   contents    Content[]
   users       User[]
 
+  // Institutional registration relations
+  members      InstitutionMember[]
+  invites      InstitutionInvite[]
+  domains      InstitutionDomain[]
+  pendingUsers PendingUserApproval[]
+  ssoConfig    SSOConfiguration?
+
+  @@index([slug])
   @@map("institutions")
+}
+
+// Institution Members (own system, not Family)
+model InstitutionMember {
+  id            String       @id @default(uuid())
+  institutionId String       @map("institution_id")
+  userId        String       @map("user_id")
+  role          UserRole     @default(COMMON_USER)
+  status        MemberStatus @default(ACTIVE)
+  joinedAt      DateTime     @default(now()) @map("joined_at")
+  leftAt        DateTime?    @map("left_at")
+
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  user        User        @relation("InstitutionMemberships", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([institutionId, userId])
+  @@index([institutionId, status])
+  @@map("institution_members")
+}
+
+// Institution Invites
+model InstitutionInvite {
+  id            String    @id @default(uuid())
+  institutionId String    @map("institution_id")
+  email         String
+  role          UserRole  @default(COMMON_USER)
+  token         String    @unique
+  expiresAt     DateTime  @map("expires_at")
+  usedAt        DateTime? @map("used_at")
+  invitedBy     String    @map("invited_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  inviter     User        @relation("InvitesCreated", fields: [invitedBy], references: [id])
+
+  @@index([token])
+  @@index([email])
+  @@index([institutionId, email])
+  @@map("institution_invites")
+}
+
+// Institution Domains
+model InstitutionDomain {
+  id            String   @id @default(uuid())
+  institutionId String   @map("institution_id")
+  domain        String   @unique
+  autoApprove   Boolean  @default(false) @map("auto_approve")
+  defaultRole   UserRole @default(COMMON_USER) @map("default_role")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+
+  @@index([domain])
+  @@map("institution_domains")
+}
+
+// Pending User Approvals
+model PendingUserApproval {
+  id               String         @id @default(uuid())
+  institutionId    String         @map("institution_id")
+  email            String
+  name             String
+  tempPasswordHash String         @map("temp_password_hash")
+  requestedRole    UserRole       @default(COMMON_USER) @map("requested_role")
+  status           ApprovalStatus @default(PENDING)
+  reviewedBy       String?        @map("reviewed_by")
+  reviewedAt       DateTime?      @map("reviewed_at")
+  rejectionReason  String?        @map("rejection_reason") @db.Text
+  createdAt        DateTime       @default(now()) @map("created_at")
+
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  reviewer    User?       @relation("ApprovalsReviewed", fields: [reviewedBy], references: [id])
+
+  @@index([institutionId, status])
+  @@index([email])
+  @@map("pending_user_approvals")
+}
+
+// SSO Configuration
+model SSOConfiguration {
+  id            String      @id @default(uuid())
+  institutionId String      @unique @map("institution_id")
+  provider      SSOProvider
+  enabled       Boolean     @default(false)
+
+  // SAML Config
+  entityId    String? @map("entity_id")
+  ssoUrl      String? @map("sso_url")
+  certificate String? @db.Text
+
+  // OAuth2/OIDC Config  
+  clientId     String? @map("client_id")
+  clientSecret String? @map("client_secret")
+  authUrl      String? @map("auth_url")
+  tokenUrl     String? @map("token_url")
+  userInfoUrl  String? @map("user_info_url")
+
+  // Attribute Mappings
+  emailAttribute String? @default("email") @map("email_attribute")
+  nameAttribute  String? @default("name") @map("name_attribute")
+  roleAttribute  String? @map("role_attribute")
+  roleMapping    Json?   @map("role_mapping")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+
+  @@map("sso_configurations")
 }
 
 model User {
@@ -97,9 +223,16 @@ model User {
   // Extension Auth
   extensionDeviceAuths ExtensionDeviceAuth[]
   extensionGrants      ExtensionGrant[]
-  
+
   // AI Games progress tracking
   gameProgress GameProgress[]
+
+  // Institutional registration relations
+  institutionMemberships InstitutionMember[]   @relation("InstitutionMemberships")
+  invitesCreated         InstitutionInvite[]   @relation("InvitesCreated")
+  approvalsReviewed      PendingUserApproval[] @relation("ApprovalsReviewed")
+  ssoSubject             String?               @unique @map("sso_subject")
+  ssoProvider            String?               @map("sso_provider")
 
   @@unique([oauthProvider, oauthId])
   @@map("users")
@@ -107,30 +240,29 @@ model User {
 
 // AI Games Progress Tracking
 model GameProgress {
-  id         String    @id @default(uuid())
-  userId     String    @map("user_id")
-  gameId     String    @map("game_id") // e.g. "CONCEPT_LINKING", "BOSS_FIGHT_VOCAB"
-  
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  gameId String @map("game_id") // e.g. "CONCEPT_LINKING", "BOSS_FIGHT_VOCAB"
+
   // Progress metrics
-  stars      Int       @default(0) // 0-3 stars earned for this game
-  bestScore  Float     @default(0) // Highest score achieved
-  totalPlays Int       @default(0) @map("total_plays") // Number of times played
-  streak     Int       @default(0) // Current win streak
-  
+  stars      Int   @default(0) // 0-3 stars earned for this game
+  bestScore  Float @default(0) // Highest score achieved
+  totalPlays Int   @default(0) @map("total_plays") // Number of times played
+  streak     Int   @default(0) // Current win streak
+
   // Timestamps
   lastPlayed DateTime? @map("last_played")
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
-  
+
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@unique([userId, gameId])
   @@index([userId])
   @@index([gameId])
   @@map("game_progress")
 }
-
 
 model Class {
   id            String         @id @default(uuid())
@@ -986,6 +1118,26 @@ enum InstitutionType {
   UNIVERSITY
   COURSE
   OTHER
+}
+
+enum MemberStatus {
+  ACTIVE
+  SUSPENDED
+  LEFT
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SSOProvider {
+  SAML
+  GOOGLE_WORKSPACE
+  MICROSOFT_ENTRA
+  OKTA
+  CUSTOM_OIDC
 }
 
 enum ContentType {
