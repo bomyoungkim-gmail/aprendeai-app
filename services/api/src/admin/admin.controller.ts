@@ -336,6 +336,51 @@ export class AdminController {
   }
 
   // ========================================
+  // Audit Logs
+  // ========================================
+
+  @Get('audit-logs')
+  @Roles(UserRole.ADMIN, UserRole.SUPPORT)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get audit logs with filters' })
+  async getAuditLogs(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('action') action?: string,
+    @Query('userId') userId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    const pageNum = page ? parseInt(page) : 1;
+    const limitNum = limit ? parseInt(limit) : 50;
+    const skip = (pageNum - 1) * limitNum;
+
+    const where: any = {};
+    if (action) where.action = action;
+    if (userId) where.actorUserId = userId;
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = new Date(startDate);
+      if (endDate) where.createdAt.lte = new Date(endDate);
+    }
+
+    const logs = await this.adminService.getAuditLogs({
+      skip,
+      take: limitNum,
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return {
+      data: logs,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+      },
+    };
+  }
+
+  // ========================================
   // AI Service Metrics
   // ========================================
 
