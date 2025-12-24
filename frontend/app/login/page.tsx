@@ -41,7 +41,20 @@ export default function LoginPage() {
     try {
       const res = await api.post(API_ENDPOINTS.AUTH.LOGIN, data);
       setAuth(res.data.access_token, res.data.user);
-      router.push(ROUTES.DASHBOARD.HOME);
+      
+      // Role-based redirect
+      const userRole = res.data.user.role;
+      let redirectPath = ROUTES.DASHBOARD.HOME; // Default
+      
+      if (userRole === 'ADMIN') {
+        redirectPath = '/admin';
+      } else if (userRole === 'INSTITUTION_ADMIN') {
+        redirectPath = '/institution/dashboard';
+      } else if (userRole === 'FAMILY_OWNER') {
+        redirectPath = '/parent';
+      }
+      
+      router.push(redirectPath);
     } catch (err: any) {
       console.error(err);
       
