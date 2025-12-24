@@ -3,7 +3,6 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { AppModule } from '../../src/app.module';
-import * as bcrypt from 'bcrypt';
 
 describe('Institution Admin Dashboard (Integration)', () => {
   let app: INestApplication;
@@ -84,12 +83,12 @@ describe('Institution Admin Dashboard (Integration)', () => {
       // Add some test data
       await prisma.institutionInvite.create({
         data: {
-          institutionId,
+          institution: { connect: { id: institutionId } },
           email: 'invited@test.com',
           role: 'TEACHER',
           token: 'test-token-123',
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          inviterId: institutionAdminId,
+          inviter: { connect: { id: institutionAdminId } },
         },
       });
 
