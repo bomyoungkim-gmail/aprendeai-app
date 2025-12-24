@@ -75,6 +75,13 @@ export const API_ENDPOINTS = {
     // Approvals
     PENDING: (id: string) => `/institutions/${id}/pending`,
     APPROVE: (id: string, approvalId: string) => `/institutions/${id}/pending/${approvalId}`,
+    
+    // SSO
+    SSO_GET: (id: string) => `/institutions/${id}/sso`,
+    SSO_CREATE: (id: string) => `/institutions/${id}/sso`,
+    SSO_UPDATE: (id: string) => `/institutions/${id}/sso`,
+    SSO_DELETE: (id: string) => `/institutions/${id}/sso`,
+    SSO_TEST: (id: string) => `/institutions/${id}/sso/test`,
   },
   
   // Reading Sessions (NEW - Phase 3)
