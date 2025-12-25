@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { CornellLayout } from '@/components/cornell';
+import React, { useState, useCallback, useEffect } from 'react';
+import { ModernCornellLayout } from '@/components/cornell/ModernCornellLayout';
 import { PDFViewer, ImageViewer, DocxViewer } from '@/components/cornell/viewers';
 import { ReviewMode } from '@/components/cornell/review/ReviewMode';
 import { Toast, useToast } from '@/components/ui/Toast';
@@ -9,19 +9,16 @@ import { VideoPlayer } from '@/components/media/VideoPlayer';
 import { AudioPlayer } from '@/components/media/AudioPlayer';
 import {
   useContent,
-  useCornellNotes,
+  useUnifiedStream,
   useUpdateCornellNotes,
-  useHighlights,
   useCreateHighlight,
+  useUpdateHighlight,
+  useDeleteHighlight,
   useCornellAutosave,
   useSaveStatusWithOnline,
 } from '@/hooks';
-import { AnnotationToolbar } from '@/components/annotations/AnnotationToolbar';
-import { AnnotationsSidebar } from '@/components/annotations/AnnotationsSidebar';
-import { useTextSelection } from '@/hooks/use-text-selection';
-import { useCreateAnnotation } from '@/hooks/use-annotations';
-import { useStudySession } from '@/hooks/use-study-session';
-import type { ViewMode, CueItem, NoteItem, UpdateCornellDto } from '@/lib/types/cornell';
+import type { ViewMode, UpdateCornellDto, CueItem } from '@/lib/types/cornell';
+import type { UnifiedStreamItem } from '@/lib/types/unified-stream';
 
 interface ReaderPageProps {
   params: {
@@ -31,25 +28,20 @@ interface ReaderPageProps {
 
 export default function ReaderPage({ params }: ReaderPageProps) {
   const [mode, setMode] = useState<ViewMode>('study');
-  const [showAnnotations, setShowAnnotations] = useState(true);
-  const [contentRef, setContentRef] = useState<HTMLElement | null>(null);
   const { toast, show: showToast, hide: hideToast } = useToast();
 
-  // Get study session context (will be null for solo study)
-  const { groupId, isInSession } = useStudySession();
-
-  // Fetch data
+  // Fetch data with unified stream
   const { data: content, isLoading: contentLoading } = useContent(params.contentId);
-  const { data: cornell, isLoading: cornellLoading } = useCornellNotes(params.contentId);
-  const { data: highlights } = useHighlights(params.contentId);
+  const { streamItems, isLoading: streamLoading, notes, cues, highlights } = useUnifiedStream(params.contentId);
 
   // Mutations
   const updateMutation = useUpdateCornellNotes(params.contentId);
   const { mutateAsync: createHighlight } = useCreateHighlight(params.contentId);
-  const { mutateAsync: createAnnotation } = useCreateAnnotation(params.contentId);
+  const deleteHighlightMutation = useDeleteHighlight();
+  const updateHighlightMutation = useUpdateHighlight();
 
-  // Text selection for annotations
-  const { selection, clearSelection } = useTextSelection(contentRef);
+  // Summary state from Cornell notes (sync with fetch)
+  const [summaryText, setSummaryText] = useState('');
 
   // Autosave
   const { save, status: baseStatus, lastSaved } = useCornellAutosave({
@@ -61,7 +53,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
       // Optionally show success toast
     },
     onError: (error) => {
-      showToast('error', 'Failed to save changes');
+      showToast('error', 'Falha ao salvar alterações');
       console.error('Autosave error:', error);
     },
   });
@@ -73,50 +65,26 @@ export default function ReaderPage({ params }: ReaderPageProps) {
     async (highlightData: any) => {
       try {
         await createHighlight(highlightData);
-        showToast('success', 'Highlight created!');
+        showToast('success', 'Destaque criado!');
       } catch (error) {
-        showToast('error', 'Failed to create highlight');
+        showToast('error', 'Falha ao criar destaque');
         throw error;
       }
     },
     [createHighlight, showToast]
   );
 
-  // Annotation creation with feedback
-  const handleCreateAnnotation = useCallback(
-    async (annotationData: any) => {
-      try {
-        await createAnnotation({
-          contentId: params.contentId,
-          ...annotationData,
-        });
-        showToast('success', 'Annotation created!');
-        clearSelection();
-      } catch (error) {
-        showToast('error', 'Failed to create annotation');
-        throw error;
-      }
-    },
-    [createAnnotation, params.contentId, showToast, selection]
-  );
-
   // Handlers
   const handleCuesChange = useCallback(
-    (cues: CueItem[]) => {
-      save({ cuesJson: cues });
-    },
-    [save]
-  );
-
-  const handleNotesChange = useCallback(
-    (notes: NoteItem[]) => {
-      save({ notesJson: notes });
+    (newCues: CueItem[]) => {
+      save({ cuesJson: newCues });
     },
     [save]
   );
 
   const handleSummaryChange = useCallback(
     (summary: string) => {
+      setSummaryText(summary);
       save({ summaryText: summary });
     },
     [save]
@@ -130,14 +98,75 @@ export default function ReaderPage({ params }: ReaderPageProps) {
     });
   }, []);
 
+  const handleStreamItemClick = useCallback((item: UnifiedStreamItem) => {
+    // Navigate to the item location in the viewer
+    if (item.type === 'annotation' && item.pageNumber) {
+      // TODO: Implement scroll to page
+      console.log('Navigate to page:', item.pageNumber);
+    }
+  }, []);
+
+  const handleStreamItemEdit = useCallback(async (item: UnifiedStreamItem) => {
+    // TODO: Open edit modal/inline editor
+    if (item.type === 'annotation') {
+      // For now, just allow color change
+      console.log('Edit annotation:', item);
+    }
+  }, []);
+
+  const handleStreamItemDelete = useCallback(
+    async (item: UnifiedStreamItem) => {
+      if (item.type === 'annotation') {
+        // Delete highlight
+        try {
+          await deleteHighlightMutation.mutateAsync(item.highlight.id);
+          showToast('success', 'Anotação excluída');
+        } catch (error) {
+          showToast('error', 'Falha ao excluir anotação');
+        }
+      } else if (item.type === 'note') {
+        // Remove note from Cornell notes
+        const updatedNotes = notes.filter((n) => n.id !== item.note.id);
+        save({ notesJson: updatedNotes });
+        showToast('success', 'Nota excluída');
+      }
+    },
+    [notes, save, showToast, deleteHighlightMutation]
+  );
+
+  const handleStreamItemSaveEdit = useCallback(
+    async (item: UnifiedStreamItem, updates: any) => {
+      if (item.type === 'annotation') {
+        // Update highlight
+        try {
+          await updateHighlightMutation.mutateAsync({
+            id: item.highlight.id,
+            updates: updates,
+          });
+          showToast('success', 'Anotação atualizada');
+        } catch (error) {
+          showToast('error', 'Falha ao atualizar anotação');
+        }
+      } else if (item.type === 'note') {
+        // Update note in Cornell notes
+        const updatedNotes = notes.map((n) =>
+          n.id === item.note.id ? { ...n, ...updates } : n
+        );
+        save({ notesJson: updatedNotes });
+        showToast('success', 'Nota atualizada');
+      }
+    },
+    [notes, save, showToast, updateHighlightMutation]
+  );
+
   // Render viewer based on content type
   const renderViewer = () => {
     if (!content) {
       return (
-        <div className="flex items-center justify-center h-full bg-gray-100">
+        <div className="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-950">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading content...</p>
+            <p className="text-gray-600 dark:text-gray-400">Carregando conteúdo...</p>
           </div>
         </div>
       );
@@ -183,7 +212,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
           <PDFViewer
             content={content}
             mode={mode}
-            highlights={highlights}
+            highlights={highlights || []}
             onCreateHighlight={handleCreateHighlight}
           />
         );
@@ -192,166 +221,85 @@ export default function ReaderPage({ params }: ReaderPageProps) {
           <ImageViewer
             content={content}
             mode={mode}
-            highlights={highlights}
+            highlights={highlights || []}
             onCreateHighlight={handleCreateHighlight}
           />
         );
       case 'DOCX':
         return <DocxViewer content={content} mode={mode} />;
-      case 'ARTICLE':
-        // For now, treat articles as simple text view
-        return (
-          <div className="h-full overflow-auto bg-white p-8">
-            <article className="max-w-3xl mx-auto prose prose-lg">
-              <h1>{content.title}</h1>
-              {content.sourceUrl && (
-                <p className="text-sm text-gray-500">
-                  Source: <a href={content.sourceUrl} target="_blank" rel="noopener noreferrer">
-                    {content.sourceUrl}
-                  </a>
-                </p>
-              )}
-              <div className="mt-8 whitespace-pre-wrap">
-                {/* Placeholder - would need to fetch full article text */}
-                <p className="text-gray-500 italic">
-                  Article content would be displayed here...
-                </p>
-              </div>
-            </article>
-          </div>
-        );
       default:
         return (
-          <div className="flex items-center justify-center h-full bg-gray-100">
-            <p className="text-gray-500">Unsupported content type: {content.contentType}</p>
+          <div className="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-950">
+            <p className="text-gray-600 dark:text-gray-400">
+              Tipo de conteúdo não suportado: {content.contentType}
+            </p>
           </div>
         );
     }
   };
 
   // Loading state
-  if (contentLoading || cornellLoading) {
+  if (contentLoading || streamLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-950">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">Loading Cornell Reader...</h2>
-          <p className="text-gray-500">Preparing your study environment</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Carregando Cornell Notes...</p>
         </div>
       </div>
     );
   }
 
-  // Error state
+  // No content
   if (!content) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-950">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-red-600 mb-2">Content Not Found</h2>
-          <p className="text-gray-500">The requested content could not be loaded.</p>
-          <button
-            onClick={() => window.history.back()}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Go Back
-          </button>
+          <p className="text-gray-600 dark:text-gray-400 text-lg">Conteúdo não encontrado</p>
         </div>
       </div>
     );
   }
 
-  // Review mode renders separately
+  // Review mode (TODO: Pass unified data to ReviewMode)
   if (mode === 'review') {
     return (
-      <>
-        <ReviewMode />
-        {toast && (
-          <Toast type={toast.type} message={toast.message} onClose={hideToast} />
-        )}
-      </>
+      <div className="h-screen flex flex-col">
+        <div className="p-4">
+          <button
+            onClick={() => setMode('study')}
+            className="text-blue-600 hover:text-blue-700"
+          >
+            ← Voltar ao Estudo
+          </button>
+          <p className="mt-4 text-gray-600">Modo de revisão em desenvolvimento...</p>
+        </div>
+        {toast && <Toast type={toast.type} message={toast.message} onClose={hideToast} />}
+      </div>
     );
   }
 
   return (
     <>
-      <div className="relative h-screen flex">
-        {/* Main Content */}
-        <div className={`flex-1 transition-all duration-300 ${showAnnotations ? 'mr-80' : 'mr-0'}`}>
-          <CornellLayout
-            title={content.title}
-            mode={mode}
-            onModeToggle={handleModeToggle}
-            saveStatus={status}
-            lastSaved={lastSaved}
-            cues={cornell?.cuesJson || []}
-            onCuesChange={handleCuesChange}
-            notes={cornell?.notesJson || []}
-            onNotesChange={handleNotesChange}
-            summary={cornell?.summaryText || ''}
-            onSummaryChange={handleSummaryChange}
-            viewer={
-              <div ref={(el) => setContentRef(el)}>
-                {renderViewer()}
-              </div>
-            }
-          />
-        </div>
-
-        {/* Annotation Toolbar - appears on text selection */}
-        {selection && (
-          <AnnotationToolbar
-            selection={selection}
-            onCreateAnnotation={(type, color, text) => {
-              handleCreateAnnotation({
-                type,
-                startOffset: selection.startOffset,
-                endOffset: selection.endOffset,
-                selectedText: selection.text,
-                color,
-                text,
-                visibility: 'PRIVATE',
-              });
-            }}
-            onClose={() => clearSelection()}
-          />
-        )}
-
-        {/* Annotations Sidebar */}
-        {showAnnotations && (
-          <div className="fixed right-0 top-0 h-full w-80 border-l border-gray-200 bg-white shadow-lg z-10">
-            <AnnotationsSidebar
-              contentId={params.contentId}
-              groupId={groupId} // ✅ Dynamic - null for solo, real ID for group
-            />
-          </div>
-        )}
-
-        {/* Toggle Annotations Button */}
-        <button
-          onClick={() => setShowAnnotations(!showAnnotations)}
-          className="fixed right-4 bottom-4 z-20 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
-          title={showAnnotations ? 'Hide annotations' : 'Show annotations'}
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-            />
-          </svg>
-        </button>
-      </div>
-
-      {/* Toast Notifications */}
-      {toast && (
-        <Toast type={toast.type} message={toast.message} onClose={hideToast} />
-      )}
+      <ModernCornellLayout
+        title={content.title}
+        mode={mode}
+        onModeToggle={handleModeToggle}
+        saveStatus={status}
+        lastSaved={lastSaved}
+        viewer={renderViewer()}
+        streamItems={streamItems}
+        onStreamItemClick={handleStreamItemClick}
+        onStreamItemEdit={handleStreamItemEdit}
+        onStreamItemDelete={handleStreamItemDelete}
+        onStreamItemSaveEdit={handleStreamItemSaveEdit}
+        cues={cues}
+        onCuesChange={handleCuesChange}
+        onCueClick={(cue) => console.log('Cue clicked:', cue)}
+        summary={summaryText}
+        onSummaryChange={handleSummaryChange}
+      />
+      {toast && <Toast type={toast.type} message={toast.message} onClose={hideToast} />}
     </>
   );
 }

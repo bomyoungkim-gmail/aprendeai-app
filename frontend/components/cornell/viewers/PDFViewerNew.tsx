@@ -19,6 +19,8 @@ import {
   getColorForKey,
   type ReactPDFHighlight,
 } from '@/lib/adapters/highlight-adapter';
+import { PDFToolbar } from './PDFToolbar';
+import { AIAssistMenu } from './AIAssistMenu';
 
 interface PDFViewerProps {
   content: Content;
@@ -32,6 +34,11 @@ export function PDFViewer({ content, mode, highlights = [], onCreateHighlight }:
   const [pdfUrl, setPdfUrl] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [zoom, setZoom] = useState(1.0);
+  const [showAIMenu, setShowAIMenu] = useState(false);
+  const [selectedText, setSelectedText] = useState<string>('');
   const fileUrl = content.file?.viewUrl;
 
   // Fetch PDF with authentication and create blob URL
@@ -148,9 +155,6 @@ export function PDFViewer({ content, mode, highlights = [], onCreateHighlight }:
       defaultTabs[0], // Thumbnails
       defaultTabs[1], // Bookmarks
     ],
-    toolbarPlugin: {
-      searchPlugin: searchPluginInstance,
-    },
   });
 
   // Handle text selection for creating highlights

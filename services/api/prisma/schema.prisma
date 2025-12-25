@@ -40,6 +40,7 @@ model Institution {
   
   // Billing
   subscriptions Subscription[]
+  providerUsage ProviderUsage[]
   policy        OrgSubscriptionPolicy?
 
   @@index([slug])
@@ -321,6 +322,7 @@ model User {
   // Billing
   entitlementSnapshot    EntitlementSnapshot?
   subscriptions          Subscription[]
+  providerUsage          ProviderUsage[]
 
   @@unique([oauthProvider, oauthId])
   @@map("users")
@@ -877,19 +879,41 @@ model ErrorLog {
 }
 
 model ProviderUsage {
-  id         String   @id @default(uuid())
-  provider   String
-  operation  String
-  tokens     Int?
-  cost       Float?
-  latency    Int?
-  statusCode Int?     @map("status_code")
-  userId     String?  @map("user_id")
-  metadata   Json?
-  timestamp  DateTime @default(now())
+  id        String   @id @default(uuid())
+  provider  String
+  model     String?
+  operation String
+  
+  // Consumption Breakdown
+  tokens           Int?    
+  promptTokens     Int?    @map("prompt_tokens")
+  completionTokens Int?    @map("completion_tokens")
+  totalTokens      Int?    @map("total_tokens")
+  costUsd          Float?  @map("cost_usd")
+  
+  latency          Int?
+  statusCode       Int?    @map("status_code")
+  
+  // Context Granularity
+  userId        String?  @map("user_id")
+  familyId      String?  @map("family_id")
+  groupId       String?  @map("group_id")
+  institutionId String?  @map("institution_id")
+  
+  feature       String   @default("unknown")
+  metadata      Json?
+  timestamp     DateTime @default(now())
 
-  @@index([provider, timestamp])
-  @@index([userId])
+  // Relations
+  user          User?        @relation(fields: [userId], references: [id])
+  family        Family?      @relation(fields: [familyId], references: [id])
+  institution   Institution? @relation(fields: [institutionId], references: [id])
+  group         StudyGroup?  @relation(fields: [groupId], references: [id])
+
+  @@index([timestamp])
+  @@index([userId, timestamp])
+  @@index([familyId, timestamp])
+  @@index([institutionId, timestamp])
   @@map("provider_usage")
 }
 
@@ -1516,6 +1540,7 @@ model StudyGroup {
   contents    GroupContent[]
   sessions    GroupSession[]
   annotations Annotation[]
+  providerUsage ProviderUsage[]
 
   @@index([ownerUserId])
   @@index([scopeType, scopeId])
@@ -1925,6 +1950,7 @@ model Family {
   
   // Billing
   subscriptions     Subscription[]
+  providerUsage     ProviderUsage[]
 
   @@map("families")
 }

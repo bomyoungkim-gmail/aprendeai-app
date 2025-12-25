@@ -6,6 +6,7 @@ Centralized configuration, no hardcoded routes.
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
+from utils.token_tracker import TokenUsageTracker
 from .models import TurnRequest, TurnResponse, HealthResponse
 from educator.agent import educator_graph
 from utils.context_builder import context_builder
@@ -18,28 +19,14 @@ import os
 logger = logging.getLogger(__name__)
 
 # Create router with configured prefix
-# Prefix comes from environment or default
 API_PREFIX = os.getenv("API_PREFIX", "/educator")
 educator_router = APIRouter(prefix=API_PREFIX, tags=["educator"])
-
 
 @educator_router.post("/turn", response_model=TurnResponse)
 async def process_turn(turn_request: TurnRequest, request: Request):
     """
     Main Educator Agent endpoint.
-    
-    POST /educator/turn
-    
-    Processes one turn of conversation:
-    1. Build context from NestJS
-    2. Invoke LangGraph
-    3. Return response
-    
-    Headers:
-        - X-Request-ID: Optional request tracking ID
-        
-    Returns:
-        TurnResponse with nextPrompt and quickReplies
+    ...
     """
     request_id = request.headers.get("X-Request-ID", "unknown")
     pm = turn_request.promptMessage
@@ -67,7 +54,7 @@ async def process_turn(turn_request: TurnRequest, request: Request):
             "hil_request": None
         }
         
-        # 3. Invoke LangGraph
+        # 3. Invoke LangGraph with Token Tracking
         logger.debug(f"[{request_id}] Invoking educator graph")
         
         if not educator_graph:
@@ -76,10 +63,14 @@ async def process_turn(turn_request: TurnRequest, request: Request):
                 detail="Educator graph not initialized. Check logs."
             )
         
+        # Initialize Tracker
+        token_tracker = TokenUsageTracker()
+        
         config = {
             "configurable": {
                 "thread_id": pm.threadId
-            }
+            },
+            "callbacks": [token_tracker] # Inject callback here
         }
         
         result = await educator_graph.ainvoke(initial_state, config=config)
@@ -91,12 +82,13 @@ async def process_turn(turn_request: TurnRequest, request: Request):
             nextPrompt=result['next_prompt'],
             quickReplies=result.get('quick_replies', []),
             eventsToWrite=result.get('events_to_write', []),
-            hilRequest=result.get('hil_request')
+            hilRequest=result.get('hil_request'),
+            usage=token_tracker.get_stats() # Attach usage stats
         )
         
         logger.info(
             f"[{request_id}] Turn processed successfully: "
-            f"{len(response.nextPrompt)} chars, {len(response.quickReplies)} quick replies"
+            f"{len(response.nextPrompt)} chars, {token_tracker.total_tokens} tokens"
         )
         
         return response

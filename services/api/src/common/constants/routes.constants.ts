@@ -195,6 +195,28 @@ export const ROUTES = {
     VIEW_URL: (id: string) => `files/${id}/view-url`,
   },
 
+  // Cornell Notes routes
+  CORNELL: {
+    BASE: "contents",
+    MY_CONTENTS: "contents/my-contents",
+    BY_ID: (id: string) => `contents/${id}`,
+    CREATE_MANUAL: "contents/create_manual",
+    UPDATE: (id: string) => `contents/${id}/update`,
+    UPLOAD: "contents/upload",
+    BULK_DELETE: "contents/bulk-delete",
+    
+    // Cornell Notes operations
+    CORNELL_NOTES: (contentId: string) => `contents/${contentId}/cornell`,
+    
+    // Highlights (Annotations)
+    HIGHLIGHTS: (contentId: string) => `contents/${contentId}/highlights`,
+    HIGHLIGHT_BY_ID: (id: string) => `highlights/${id}`,
+    
+    // AI operations
+    SIMPLIFY: (contentId: string) => `contents/${contentId}/simplify`,
+    ASSESSMENT: (contentId: string) => `contents/${contentId}/assessment`,
+  },
+
   // WebClip routes (Browser Extension)
   WEBCLIP: {
     BASE: "webclips",

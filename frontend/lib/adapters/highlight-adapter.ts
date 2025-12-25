@@ -155,8 +155,8 @@ export function reactPDFToBackend(
       endOffset: highlight.content?.text?.length || 0,
       boundingRect: boundingRect
         ? {
-            x: boundingRect.left ?? boundingRect.x1 ?? 0,
-            y: boundingRect.top ?? boundingRect.y1 ?? 0,
+            x: ('left' in boundingRect ? boundingRect.left : 'x1' in boundingRect ? boundingRect.x1 : 0),
+            y: ('top' in boundingRect ? boundingRect.top : 'y1' in boundingRect ? boundingRect.y1 : 0),
             width: boundingRect.width || 0,
             height: boundingRect.height || 0,
           }
@@ -202,11 +202,24 @@ export function getColorForKey(colorKey: string): string {
 
 /**
  * Batch convert backend highlights to ReactPDF format
+ * Accepts both BackendHighlight and Cornell Highlight types
  */
 export function convertHighlightsToReactPDF(
-  highlights: BackendHighlight[]
+  highlights: Array<BackendHighlight | any>
 ): ReactPDFHighlight[] {
   return highlights
-    .map(backendToReactPDF)
+    .map((h) => {
+      // Convert to BackendHighlight if needed
+      const backendHighlight: BackendHighlight = h.kind === 'TEXT' || h.kind === 'AREA' 
+        ? {
+            ...h,
+            kind: 'HIGHLIGHT' as const,
+            targetType: h.targetType === 'PDF' ? 'PDF_TEXT' as const : 'PDF_RECT' as const,
+            pageNumber: h.pageNumber ?? null,
+            commentText: h.commentText ?? null,
+          }
+        : h;
+      return backendToReactPDF(backendHighlight);
+    })
     .filter((h): h is ReactPDFHighlight => h !== null);
 }

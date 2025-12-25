@@ -23,6 +23,7 @@ import { EventEmitter2 } from "@nestjs/event-emitter";
 import { v4 as uuid } from "uuid";
 import { SessionsQueryDto } from "./dto/sessions-query.dto";
 import { Prisma } from "@prisma/client";
+import { ProviderUsageService } from "../observability/provider-usage.service";
 
 @Injectable()
 export class ReadingSessionsService {
@@ -37,6 +38,7 @@ export class ReadingSessionsService {
     private gatingService: GatingService,
     private quickCommandParser: QuickCommandParser,
     private aiServiceClient: AiServiceClient,
+    private providerUsageService: ProviderUsageService,
     private activityService: ActivityService,
     @Inject(EventEmitter2) private eventEmitter: EventEmitter2,
   ) {}
@@ -589,6 +591,40 @@ export class ReadingSessionsService {
 
     // Call AI Service with enriched context
     const aiResponse = await this.aiServiceClient.sendPrompt(enrichedDto);
+
+    // Track Usage (Granular)
+    if (aiResponse.usage) {
+      // Fetch user context for attribution
+      const [user, familyMember] = await Promise.all([
+        this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { institutionId: true },
+        }),
+        this.prisma.familyMember.findFirst({
+          where: { userId },
+          select: { familyId: true },
+        }),
+      ]);
+
+      // Fire & Forget Tracking
+      this.providerUsageService.trackUsage({
+        provider: "educator_agent", // Abstraction
+        operation: "turn",
+        tokens: aiResponse.usage.total_tokens,
+        promptTokens: aiResponse.usage.prompt_tokens,
+        completionTokens: aiResponse.usage.completion_tokens,
+        costUsd: aiResponse.usage.cost_est_usd,
+        userId: userId,
+        familyId: familyMember?.familyId,
+        institutionId: user?.institutionId,
+        feature: "educator_chat",
+        metadata: {
+          sessionId,
+          readingSessionId: sessionId,
+          model: "multi-agent-mix", // Python side handles specific model logging details internally if needed in `details`
+        },
+      });
+    }
 
     // 5. Persist AI-suggested events (if any)
     if (aiResponse.eventsToWrite && aiResponse.eventsToWrite.length > 0) {

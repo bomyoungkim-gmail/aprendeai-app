@@ -12,22 +12,37 @@ export class ProviderUsageService {
     provider: string;
     operation: string;
     tokens?: number;
+    promptTokens?: number;
+    completionTokens?: number;
     cost?: number;
+    costUsd?: number;
     latency?: number;
     statusCode?: number;
     userId?: string;
+    familyId?: string;
+    groupId?: string;
+    institutionId?: string;
+    feature?: string;
     metadata?: any;
   }) {
     try {
       return await this.prisma.providerUsage.create({
         data: {
           provider: data.provider,
+          model: data.metadata?.model || null,
           operation: data.operation,
-          tokens: data.tokens,
-          cost: data.cost,
+          tokens: data.tokens, // Legacy/Total
+          promptTokens: data.promptTokens,
+          completionTokens: data.completionTokens,
+          totalTokens: data.tokens,
+          costUsd: data.costUsd,
           latency: data.latency,
           statusCode: data.statusCode,
           userId: data.userId,
+          familyId: data.familyId,
+          groupId: data.groupId,
+          institutionId: data.institutionId,
+          feature: data.feature || "unknown",
           metadata: data.metadata,
           timestamp: new Date(),
         },
@@ -51,17 +66,17 @@ export class ProviderUsageService {
 
     const stats = await this.prisma.providerUsage.aggregate({
       where,
-      _sum: { tokens: true, cost: true },
+      _sum: { tokens: true, costUsd: true },
       _count: true,
-      _avg: { latency: true, cost: true },
+      _avg: { latency: true, costUsd: true },
     });
 
     return {
       totalCalls: stats._count,
       totalTokens: stats._sum.tokens || 0,
-      totalCost: stats._sum.cost || 0,
+      totalCost: stats._sum.costUsd || 0,
       avgLatency: stats._avg.latency || 0,
-      avgCost: stats._avg.cost || 0,
+      avgCost: stats._avg.costUsd || 0,
     };
   }
 
@@ -77,7 +92,7 @@ export class ProviderUsageService {
         provider: true,
         operation: true,
         tokens: true,
-        cost: true,
+        costUsd: true,
         latency: true,
       },
     });
@@ -96,7 +111,7 @@ export class ProviderUsageService {
         }
         acc[u.provider].calls++;
         acc[u.provider].tokens += u.tokens || 0;
-        acc[u.provider].cost += u.cost || 0;
+        acc[u.provider].cost += u.costUsd || 0;
         if (u.latency) acc[u.provider].latency.push(u.latency);
         return acc;
       },

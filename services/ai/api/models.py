@@ -61,6 +61,14 @@ class TurnRequest(BaseModel):
     promptMessage: PromptMessage
 
 
+class TokenUsage(BaseModel):
+    """Standardized token usage metrics"""
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
+    requests: int = 1
+    cost_est_usd: float = 0.0
+
 class TurnResponse(BaseModel):
     """
     Response from Educator Agent.
@@ -73,7 +81,8 @@ class TurnResponse(BaseModel):
         "nextPrompt": "Ótimo! Continue lendo...",
         "quickReplies": ["Continuar", "Pular"],
         "eventsToWrite": [...],
-        "hilRequest": null
+        "hilRequest": null,
+        "usage": { "prompt_tokens": 100, ... }
     }
     """
     threadId: str
@@ -82,6 +91,7 @@ class TurnResponse(BaseModel):
     quickReplies: List[str] = Field(default_factory=list, description="Quick reply options")
     eventsToWrite: List[Dict[str, Any]] = Field(default_factory=list, description="Events to persist")
     hilRequest: Optional[HilRequest] = None
+    usage: Optional[TokenUsage] = None
 
 
 class HealthResponse(BaseModel):

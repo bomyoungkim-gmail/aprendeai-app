@@ -10,18 +10,21 @@ import { SecretService } from "./services/secret.service";
 import { ConfigService } from "./services/config.service";
 import { LLMModule } from "../llm/llm.module";
 import { ObservabilityModule } from "../observability/observability.module";
+import { AnalyticsModule } from "../analytics/analytics.module";
+import { AiAnalyticsController } from "./ai-analytics.controller";
 
 @Module({
   imports: [
     PrismaModule,
     LLMModule,
     ObservabilityModule,
+    AnalyticsModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || "your-secret-key",
       signOptions: { expiresIn: "60m" },
     }),
   ],
-  controllers: [AdminController, DashboardController, ConfigController],
+  controllers: [AdminController, DashboardController, ConfigController, AiAnalyticsController],
   providers: [AdminService, EncryptionService, SecretService, ConfigService],
   exports: [AdminService, EncryptionService, SecretService, ConfigService],
 })

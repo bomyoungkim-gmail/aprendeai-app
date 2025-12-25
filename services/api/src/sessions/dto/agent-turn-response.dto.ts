@@ -5,6 +5,7 @@ import {
   IsArray,
   IsOptional,
   ValidateNested,
+  IsNumber,
 } from "class-validator";
 import { Type } from "class-transformer";
 import { ActorRole } from "../../common/enums";
@@ -47,4 +48,24 @@ export class AgentTurnResponseDto {
 
   @IsOptional()
   eventsToWrite?: any[]; // Detailed validation later
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => TokenUsageDto)
+  usage?: TokenUsageDto;
+}
+
+export class TokenUsageDto {
+  @IsNumber()
+  prompt_tokens: number;
+
+  @IsNumber()
+  completion_tokens: number;
+
+  @IsNumber()
+  total_tokens: number;
+
+  @IsOptional()
+  @IsNumber()
+  cost_est_usd?: number;
 }
