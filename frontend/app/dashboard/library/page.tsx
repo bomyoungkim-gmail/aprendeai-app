@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
+import { API_ENDPOINTS } from '@/lib/config/api';
 import { Loader2, Book, FileText } from 'lucide-react';
 import Link from 'next/link';
 
@@ -14,7 +15,7 @@ type Content = {
 };
 
 async function fetchContents() {
-  const res = await api.get<Content[]>('/content');
+  const res = await api.get<Content[]>(API_ENDPOINTS.MY_CONTENTS);
   return res.data;
 }
 
@@ -43,7 +44,7 @@ export default function LibraryPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Biblioteca</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Biblioteca</h1>
         {/* <Button>Adicionar Conteúdo</Button> */}
       </div>
 
@@ -54,7 +55,7 @@ export default function LibraryPage() {
             href={`/dashboard/library/${content.id}`}
             className="block group"
           >
-            <div className="h-full overflow-hidden rounded-lg bg-white shadow transition-shadow hover:shadow-md border border-gray-100">
+            <div className="h-full overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow transition-shadow hover:shadow-md border border-gray-100 dark:border-gray-700">
               <div className="p-5">
                 <div className="flex items-center space-x-3 mb-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
@@ -67,7 +68,7 @@ export default function LibraryPage() {
                   </div>
                 </div>
                 
-                <h3 className="text-lg font-semibold leading-6 text-gray-900 group-hover:text-blue-600 line-clamp-2">
+                <h3 className="text-lg font-semibold leading-6 text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 line-clamp-2">
                   {content.title}
                 </h3>
                 

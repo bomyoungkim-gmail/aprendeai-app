@@ -5,6 +5,9 @@ import api from '@/lib/api';
 import { Loader2, ArrowLeft, Wand2, GraduationCap, Layers, CheckCircle, ChevronLeft, FileText, Clock, User } from 'lucide-react';
 import Link from 'next/link';
 import { ROUTES } from '@/lib/config/routes';
+import { Toast, useToast } from '@/components/ui/Toast';
+import { useSocket } from '@/hooks/use-socket';
+import { API_ENDPOINTS } from '@/lib/config/api';
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
@@ -26,7 +29,7 @@ type Content = {
 };
 
 async function fetchContent(id: string) {
-  const res = await api.get<Content>(`/content/${id}`);
+  const res = await api.get<Content>(API_ENDPOINTS.CONTENT(id));
   return res.data;
 }
 
@@ -37,6 +40,8 @@ export default function ContentReaderPage() {
   const [activeTab, setActiveTab] = useState<'original' | string>('original');
   const [minutesSpent, setMinutesSpent] = useState(0);
   const lastUpdateRef = useRef(Date.now());
+  const { toast, success, error: toastError, info, hide } = useToast();
+  const { subscribeToContent, unsubscribeFromContent, on, off } = useSocket();
 
   // Heartbeat to track time
   useEffect(() => {
@@ -72,35 +77,70 @@ export default function ContentReaderPage() {
         });
     },
     onSuccess: () => {
-        alert('Leitura concluída! Progresso registrado.');
+        success('Leitura concluída! Progresso registrado.');
         router.push(ROUTES.DASHBOARD.HOME);
     }
   });
 
-  const { data: content, isLoading, isError } = useQuery({
+  const { data: content, isLoading, isError, refetch } = useQuery({
     queryKey: ['content', id],
     queryFn: () => fetchContent(id),
   });
 
+  // Subscribe to WebSocket updates
+  useEffect(() => {
+    if (!id) return;
+    
+    subscribeToContent(id);
+    
+    const handleContentUpdate = (data: { contentId: string; type: string }) => {
+      if ( data.contentId === id) {
+        refetch();
+        const msg = data.type === 'simplification' ? 'Simplificação concluída!' : 'Avaliação concluída!';
+        success(msg);
+      }
+    };
+
+    const handleContentError = (data: { contentId: string; type: string; error: string; message: string }) => {
+      if (data.contentId === id) {
+        const errorMessages: Record<string, string> = {
+          'QUOTA_EXCEEDED': '⚠️ Limite de IA excedido. Tente novamente mais tarde.',
+          'AI_FALLBACK': '⚠️ Simplificação gerada no modo offline (sem IA).',
+          'AI_ERROR': '❌ Erro ao processar com IA. Tente novamente.',
+        };
+        toastError(errorMessages[data.error] || data.message || 'Erro desconhecido');
+      }
+    };
+    
+    on('contentUpdated', handleContentUpdate);
+    on('contentError', handleContentError);
+    
+    return () => {
+      unsubscribeFromContent(id);
+      off('contentUpdated', handleContentUpdate);
+      off('contentError', handleContentError);
+    };
+  }, [id, subscribeToContent, unsubscribeFromContent, on, off, refetch, success, toastError]);
+
   const simplifyMutation = useMutation({
     mutationFn: async () => {
-      return api.post(`/content/${id}/simplify`, {
+      return api.post(`${API_ENDPOINTS.CONTENT(id)}/simplify`, {
         text: content?.rawText,
         level: '5_EF', // Default for demo
         lang: 'PT_BR'
       });
     },
     onSuccess: () => {
-      alert('Tarefa de simplificação iniciada! Aguarde o processamento.');
+      info('Tarefa de simplificação iniciada! Aguarde o processamento.');
     },
     onError: () => {
-      alert('Erro ao iniciar simplificação.');
+      toastError('Erro ao iniciar simplificação.');
     }
   });
 
   const assessmentMutation = useMutation({
     mutationFn: async () => {
-      return api.post(`/content/${id}/assessment`, {
+      return api.post(`${API_ENDPOINTS.CONTENT(id)}/assessment`, {
         text: activeTab === 'original' 
           ? content?.rawText 
           : content?.versions.find(v => v.id === activeTab)?.simplifiedText,
@@ -108,10 +148,10 @@ export default function ContentReaderPage() {
       });
     },
     onSuccess: () => {
-      alert('Tarefa de avaliação iniciada! Verifique a aba Avaliações em breve.');
+      success('Tarefa de avaliação iniciada! Verifique a aba Avaliações em breve.');
     },
     onError: () => {
-      alert('Erro ao gerar avaliação.');
+      toastError('Erro ao gerar avaliação.');
     }
   });
 
@@ -124,6 +164,7 @@ export default function ContentReaderPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {toast && <Toast type={toast.type} message={toast.message} onClose={hide} />}
       <div className="flex items-center space-x-4 mb-6">
         <Link href={ROUTES.DASHBOARD.LIBRARY.HOME} className="p-2 hover:bg-gray-100 rounded-full">
           <ArrowLeft size={20} />
@@ -143,7 +184,7 @@ export default function ContentReaderPage() {
         >
           Original
         </button>
-        {content.versions.map((version) => (
+        {(content.versions || []).map((version) => (
           <button
             key={version.id}
             onClick={() => setActiveTab(version.id)}

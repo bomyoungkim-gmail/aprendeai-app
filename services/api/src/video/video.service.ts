@@ -1,18 +1,18 @@
-import { Injectable, Logger } from '@nestjs/common';
-import * as ffmpeg from 'fluent-ffmpeg';
-import { promisify } from 'util';
-import * as fs from 'fs';
-import * as path from 'path';
+import { Injectable, Logger } from "@nestjs/common";
+import * as ffmpeg from "fluent-ffmpeg";
+import { promisify } from "util";
+import * as fs from "fs";
+import * as path from "path";
 
 // Set ffmpeg path
-const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 ffmpeg.setFfmpegPath(ffmpegPath);
 
 const ffprobe = promisify(ffmpeg.ffprobe);
 const unlink = promisify(fs.unlink);
 
 export interface VideoMetadata {
-  duration: number;        // In seconds
+  duration: number; // In seconds
   width?: number;
   height?: number;
   codec?: string;
@@ -22,7 +22,7 @@ export interface VideoMetadata {
 }
 
 export interface AudioMetadata {
-  duration: number;        // In seconds
+  duration: number; // In seconds
   codec?: string;
   bitrate?: number;
   sampleRate?: number;
@@ -40,17 +40,25 @@ export class VideoService {
     try {
       const metadata: any = await ffprobe(filePath);
 
-      const videoStream = metadata.streams.find((s: any) => s.codec_type === 'video');
-      const audioStream = metadata.streams.find((s: any) => s.codec_type === 'audio');
+      const videoStream = metadata.streams.find(
+        (s: any) => s.codec_type === "video",
+      );
+      const audioStream = metadata.streams.find(
+        (s: any) => s.codec_type === "audio",
+      );
 
       return {
         duration: metadata.format.duration || 0,
         width: videoStream?.width,
         height: videoStream?.height,
         codec: videoStream?.codec_name,
-        bitrate: metadata.format.bit_rate ? parseInt(metadata.format.bit_rate.toString()) : undefined,
+        bitrate: metadata.format.bit_rate
+          ? parseInt(metadata.format.bit_rate.toString())
+          : undefined,
         hasAudio: !!audioStream,
-        fps: videoStream?.r_frame_rate ? this.parseFps(videoStream.r_frame_rate) : undefined,
+        fps: videoStream?.r_frame_rate
+          ? this.parseFps(videoStream.r_frame_rate)
+          : undefined,
       };
     } catch (error) {
       this.logger.error(`Failed to extract video metadata: ${error.message}`);
@@ -65,13 +73,19 @@ export class VideoService {
     try {
       const metadata: any = await ffprobe(filePath);
 
-      const audioStream = metadata.streams.find((s: any) => s.codec_type === 'audio');
+      const audioStream = metadata.streams.find(
+        (s: any) => s.codec_type === "audio",
+      );
 
       return {
         duration: metadata.format.duration || 0,
         codec: audioStream?.codec_name,
-        bitrate: audioStream?.bit_rate ? parseInt(audioStream.bit_rate.toString()) : undefined,
-        sampleRate: audioStream?.sample_rate ? parseInt(audioStream.sample_rate.toString()) : undefined,
+        bitrate: audioStream?.bit_rate
+          ? parseInt(audioStream.bit_rate.toString())
+          : undefined,
+        sampleRate: audioStream?.sample_rate
+          ? parseInt(audioStream.sample_rate.toString())
+          : undefined,
         channels: audioStream?.channels,
       };
     } catch (error) {
@@ -83,7 +97,10 @@ export class VideoService {
   /**
    * Extract audio track from video file for transcription
    */
-  async extractAudioFromVideo(videoPath: string, outputDir: string = './uploads/temp'): Promise<string> {
+  async extractAudioFromVideo(
+    videoPath: string,
+    outputDir: string = "./uploads/temp",
+  ): Promise<string> {
     try {
       // Ensure output directory exists
       if (!fs.existsSync(outputDir)) {
@@ -96,11 +113,11 @@ export class VideoService {
       await new Promise<void>((resolve, reject) => {
         ffmpeg(videoPath)
           .output(outputPath)
-          .audioCodec('libmp3lame')
-          .audioBitrate('128k')
+          .audioCodec("libmp3lame")
+          .audioBitrate("128k")
           .noVideo()
-          .on('end', () => resolve())
-          .on('error', (err) => reject(err))
+          .on("end", () => resolve())
+          .on("error", (err) => reject(err))
           .run();
       });
 
@@ -115,9 +132,9 @@ export class VideoService {
    * Generate thumbnail from video
    */
   async generateThumbnail(
-    videoPath: string, 
+    videoPath: string,
     timestamp: number = 1, // 1 second into video
-    outputDir: string = './uploads/thumbnails'
+    outputDir: string = "./uploads/thumbnails",
   ): Promise<string> {
     try {
       // Ensure output directory exists
@@ -134,10 +151,10 @@ export class VideoService {
             timestamps: [timestamp],
             filename: path.basename(outputPath),
             folder: outputDir,
-            size: '640x360'
+            size: "640x360",
           })
-          .on('end', () => resolve())
-          .on('error', (err) => reject(err));
+          .on("end", () => resolve())
+          .on("error", (err) => reject(err));
       });
 
       return outputPath;
@@ -151,9 +168,9 @@ export class VideoService {
    * Parse FPS from ffprobe format (e.g., "30000/1001" -> 29.97)
    */
   private parseFps(fpsString: string | number): number {
-    if (typeof fpsString === 'number') return fpsString;
-    
-    const [num, den] = fpsString.split('/').map(Number);
+    if (typeof fpsString === "number") return fpsString;
+
+    const [num, den] = fpsString.split("/").map(Number);
     return den ? num / den : num;
   }
 
@@ -161,13 +178,13 @@ export class VideoService {
    * Check if file is video
    */
   isVideoFile(mimetype: string): boolean {
-    return mimetype.startsWith('video/');
+    return mimetype.startsWith("video/");
   }
 
   /**
    * Check if file is audio
    */
   isAudioFile(mimetype: string): boolean {
-    return mimetype.startsWith('audio/');
+    return mimetype.startsWith("audio/");
   }
 }

@@ -1,44 +1,71 @@
 'use client';
 
-import { Target, CheckCircle2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Target } from 'lucide-react';
+import api from '@/lib/api';
 
-type DailyGoalProps = {
-  goalType: 'MINUTES' | 'LESSONS';
-  goalValue: number;
-  progress: number; // minutes or lessons count
-  goalMet: boolean;
-};
+interface DailyGoalCardProps {
+  minutesSpent?: number;
+  goalValue?: number;
+}
 
-export function DailyGoalCard({ goalType, goalValue, progress, goalMet }: DailyGoalProps) {
-  const percent = Math.min(100, Math.round((progress / goalValue) * 100));
+export function DailyGoalCard({ minutesSpent = 0, goalValue = 90 }: DailyGoalCardProps) {
+  // Fetch goal achievement statistics
+  const { data: achievementStats } = useQuery({
+    queryKey: ['goal-achievements'],
+    queryFn: async () => {
+      const response = await api.get('/gamification/goal-achievements');
+      return response.data as { totalAchievements: number };
+    },
+  });
+
+  const progress = Math.min((minutesSpent / goalValue) * 100, 100);
+  const remaining = Math.max(goalValue - minutesSpent, 0);
+  const isGoalMet = minutesSpent >= goalValue;
 
   return (
-    <div className="overflow-hidden rounded-lg bg-white shadow border border-blue-100">
-      <div className="p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className={`p-2 rounded-lg ${goalMet ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
-              {goalMet ? <CheckCircle2 size={20} /> : <Target size={20} />}
-            </div>
-            <span className="font-semibold text-gray-700">Meta Diária</span>
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
+            <Target className={`h-6 w-6 ${isGoalMet ? 'text-green-600 dark:text-green-400' : 'text-indigo-600 dark:text-indigo-400'}`} />
           </div>
-          <span className="text-sm font-medium text-gray-500">
-            {progress} / {goalValue} {goalType === 'MINUTES' ? 'min' : 'lições'}
-          </span>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Meta Diária</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {minutesSpent} / {goalValue} min
+            </p>
+          </div>
         </div>
-
-        {/* Linear Progress Bar */}
-        <div className="w-full bg-gray-200 rounded-full h-2.5">
-          <div 
-            className={`h-2.5 rounded-full transition-all duration-500 ${goalMet ? 'bg-green-500' : 'bg-blue-600'}`} 
-            style={{ width: `${percent}%` }}
-          ></div>
-        </div>
-        
-        <p className="mt-3 text-xs text-center text-gray-500">
-          {goalMet ? 'Parabéns! Meta batida!' : `Faltam ${goalValue - progress} para completar.`}
-        </p>
+        {achievementStats && (
+          <div className="text-right">
+            <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{achievementStats.totalAchievements}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">vezes atingiu</p>
+          </div>
+        )}
       </div>
+
+      {/* Progress Bar */}
+      <div className="relative">
+        <div className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div 
+            className={`h-full rounded-full transition-all duration-500 ${
+              isGoalMet 
+                ? 'bg-green-500 dark:bg-green-400' 
+                : 'bg-indigo-500 dark:bg-indigo-400'
+            }`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Status Message */}
+      <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+        {isGoalMet 
+          ? '🎉 Meta atingida hoje!' 
+          : `Faltam ${remaining} minutos para completar.`
+        }
+      </p>
     </div>
   );
 }

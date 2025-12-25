@@ -1,13 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { AppModule } from '../../src/app.module';
-import { PrismaService } from '../../src/prisma/prisma.service';
-import * as request from 'supertest';
-import { TestAuthHelper, createTestUser } from '../helpers/auth.helper';
-import { apiUrl } from '../helpers/routes';
+import { Test, TestingModule } from "@nestjs/testing";
+import { INestApplication, ValidationPipe } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { AppModule } from "../../src/app.module";
+import { PrismaService } from "../../src/prisma/prisma.service";
+import * as request from "supertest";
+import { TestAuthHelper } from "../helpers/auth.helper";
+import { apiUrl } from "../helpers/routes";
 
-describe('Classroom Mode Integration Tests (e2e)', () => {
+describe("Classroom Mode Integration Tests (e2e)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let authHelper: TestAuthHelper;
@@ -25,15 +25,17 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api/v1'); // Match production
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-    
+    app.setGlobalPrefix("api/v1"); // Match production
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
+
     await app.init();
     prisma = app.get<PrismaService>(PrismaService);
     const configService = app.get<ConfigService>(ConfigService);
 
     // Setup auth with TestAuthHelper
-    const secret = configService.get<string>('JWT_SECRET') || 'test-secret-key';
+    const secret = configService.get<string>("JWT_SECRET") || "test-secret-key";
     authHelper = new TestAuthHelper(secret);
 
     // Create unique teacher user
@@ -42,15 +44,15 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
       where: { email: teacherEmail },
       create: {
         email: teacherEmail,
-        name: 'Teacher Test',
-        passwordHash: 'hash',
-        role: 'TEACHER',
-        schoolingLevel: 'HIGHER_EDUCATION',
-        status: 'ACTIVE',
+        name: "Teacher Test",
+        passwordHash: "hash",
+        role: "TEACHER",
+        schoolingLevel: "HIGHER_EDUCATION",
+        status: "ACTIVE",
       },
       update: {},
     });
-    
+
     userId = teacherUser.id;
     teacherId = teacherUser.id;
     authToken = authHelper.generateAuthHeader({
@@ -65,11 +67,11 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
       where: { email: studentEmail },
       create: {
         email: studentEmail,
-        name: 'Student Maria',
-        passwordHash: 'hash',
-        role: 'COMMON_USER',
-        schoolingLevel: 'ELEMENTARY',
-        status: 'ACTIVE',
+        name: "Student Maria",
+        passwordHash: "hash",
+        role: "COMMON_USER",
+        schoolingLevel: "ELEMENTARY",
+        status: "ACTIVE",
       },
       update: {},
     });
@@ -79,7 +81,9 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
   afterAll(async () => {
     // Cleanup
     if (classroomId) {
-      await prisma.classroom.delete({ where: { id: classroomId } }).catch(() => {});
+      await prisma.classroom
+        .delete({ where: { id: classroomId } })
+        .catch(() => {});
     }
     if (teacherId) {
       await prisma.user.delete({ where: { id: teacherId } }).catch(() => {});
@@ -90,66 +94,66 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
     await app.close();
   });
 
-  describe('Classroom CRUD Flow', () => {
-    it('should create a classroom', async () => {
+  describe("Classroom CRUD Flow", () => {
+    it("should create a classroom", async () => {
       const response = await request(app.getHttpServer())
-        .post(apiUrl('classrooms'))
-        .set('Authorization', authToken)
+        .post(apiUrl("classrooms"))
+        .set("Authorization", authToken)
         .send({
           ownerEducatorUserId: teacherId,
-          name: 'Turma 5A - Teste',
-          gradeLevel: '5º Ano',
+          name: "Turma 5A - Teste",
+          gradeLevel: "5º Ano",
         });
 
       expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty('id');
-      expect(response.body.name).toBe('Turma 5A - Teste');
-      
+      expect(response.body).toHaveProperty("id");
+      expect(response.body.name).toBe("Turma 5A - Teste");
+
       classroomId = response.body.id;
     });
 
-    it('should get classroom by ID', async () => {
+    it("should get classroom by ID", async () => {
       const response = await request(app.getHttpServer())
         .get(apiUrl(`classrooms/${classroomId}`))
-        .set('Authorization', authToken);
+        .set("Authorization", authToken);
 
       expect(response.status).toBe(200);
       expect(response.body.id).toBe(classroomId);
-      expect(response.body).toHaveProperty('enrollments');
+      expect(response.body).toHaveProperty("enrollments");
     });
 
-    it('should update classroom', async () => {
+    it("should update classroom", async () => {
       const response = await request(app.getHttpServer())
         .put(apiUrl(`classrooms/${classroomId}`))
-        .set('Authorization', authToken)
+        .set("Authorization", authToken)
         .send({
-          name: 'Turma 5A - Atualizada',
+          name: "Turma 5A - Atualizada",
         });
 
       expect(response.status).toBe(200);
-      expect(response.body.name).toBe('Turma 5A - Atualizada');
+      expect(response.body.name).toBe("Turma 5A - Atualizada");
     });
   });
 
-  describe('Enrollment Flow', () => {
-    it('should enroll student in classroom', async () => {
+  describe("Enrollment Flow", () => {
+    it("should enroll student in classroom", async () => {
       const response = await request(app.getHttpServer())
         .post(apiUrl(`classrooms/${classroomId}/enroll`))
-        .set('Authorization', authToken)
+        .set("Authorization", authToken)
         .send({
           learnerUserId: studentId,
-          nickname: 'Maria',
+          nickname: "Maria",
         });
 
       expect(response.status).toBe(201);
       expect(response.body.learnerUserId).toBe(studentId);
-      expect(response.body.status).toBe('ACTIVE');
+      expect(response.body.status).toBe("ACTIVE");
     });
 
-    it('should get enrollments for classroom', async () => {
+    it("should get enrollments for classroom", async () => {
       const response = await request(app.getHttpServer())
         .get(apiUrl(`classrooms/${classroomId}/enrollments`))
-        .set('Authorization', authToken);
+        .set("Authorization", authToken);
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
@@ -158,115 +162,115 @@ describe('Classroom Mode Integration Tests (e2e)', () => {
     });
   });
 
-  describe('Classroom Policy Flow', () => {
-    it('should create classroom policy', async () => {
+  describe("Classroom Policy Flow", () => {
+    it("should create classroom policy", async () => {
       const response = await request(app.getHttpServer())
         .post(apiUrl(`classrooms/${classroomId}/policy`))
-        .set('Authorization', authToken)
+        .set("Authorization", authToken)
         .send({
           weeklyUnitsTarget: 3,
           timeboxDefaultMin: 20,
-          privacyMode: 'AGGREGATED_PLUS_HELP_REQUESTS',
-          interventionMode: 'PROMPT_COACH_PLUS_1ON1',
+          privacyMode: "AGGREGATED_PLUS_HELP_REQUESTS",
+          interventionMode: "PROMPT_COACH_PLUS_1ON1",
         });
 
       expect(response.status).toBe(201);
       expect(response.body.weeklyUnitsTarget).toBe(3);
-      expect(response.body.privacyMode).toBe('AGGREGATED_PLUS_HELP_REQUESTS');
+      expect(response.body.privacyMode).toBe("AGGREGATED_PLUS_HELP_REQUESTS");
     });
 
-    it('should get policy prompt', async () => {
+    it("should get policy prompt", async () => {
       const response = await request(app.getHttpServer())
         .post(apiUrl(`classrooms/${classroomId}/policy/prompt`))
-        .set('Authorization', authToken)
+        .set("Authorization", authToken)
         .send({
           units: 3,
           minutes: 20,
         });
 
       expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty('nextPrompt');
-      expect(response.body.nextPrompt).toContain('3');
+      expect(response.body).toHaveProperty("nextPrompt");
+      expect(response.body.nextPrompt).toContain("3");
     });
   });
 
-  describe('Weekly Planning Flow', () => {
-    it('should create weekly plan', async () => {
+  describe("Weekly Planning Flow", () => {
+    it("should create weekly plan", async () => {
       const weekStart = new Date();
       weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Sunday
 
       const response = await request(app.getHttpServer())
         .post(apiUrl(`classrooms/${classroomId}/plans/weekly`))
-        .set('Authorization', authToken)
+        .set("Authorization", authToken)
         .send({
           weekStart,
-          items: ['content_1', 'content_2', 'content_3'],
-          toolWords: ['palavra1', 'palavra2'],
+          items: ["content_1", "content_2", "content_3"],
+          toolWords: ["palavra1", "palavra2"],
         });
 
       expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty('itemsJson');
+      expect(response.body).toHaveProperty("itemsJson");
       expect(response.body.itemsJson).toHaveLength(3);
     });
 
-    it('should get current week plan', async () => {
+    it("should get current week plan", async () => {
       const response = await request(app.getHttpServer())
         .get(apiUrl(`classrooms/${classroomId}/plans/weekly`))
-        .set('Authorization', authToken);
+        .set("Authorization", authToken);
 
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('itemsJson');
+      expect(response.body).toHaveProperty("itemsJson");
     });
   });
 
-  describe('Dashboard with Privacy Filtering', () => {
-    it('should get teacher dashboard with privacy filtering', async () => {
+  describe("Dashboard with Privacy Filtering", () => {
+    it("should get teacher dashboard with privacy filtering", async () => {
       const response = await request(app.getHttpServer())
         .get(apiUrl(`classrooms/${classroomId}/dashboard`))
-        .set('Authorization', authToken);
+        .set("Authorization", authToken);
 
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('activeStudents');
-      expect(response.body).toHaveProperty('students');
-      expect(response.body.privacyMode).toBe('AGGREGATED_PLUS_HELP_REQUESTS');
-      
+      expect(response.body).toHaveProperty("activeStudents");
+      expect(response.body).toHaveProperty("students");
+      expect(response.body.privacyMode).toBe("AGGREGATED_PLUS_HELP_REQUESTS");
+
       // With AGGREGATED_PLUS_HELP_REQUESTS: should have helpRequests but not comprehensionScore
       const student = response.body.students[0];
       if (student) {
-        expect(student).toHaveProperty('progressPercent');
-        expect(student).toHaveProperty('helpRequests'); // Visible
+        expect(student).toHaveProperty("progressPercent");
+        expect(student).toHaveProperty("helpRequests"); // Visible
         expect(student.comprehensionScore).toBeUndefined(); // Hidden
       }
     });
   });
 
-  describe('Intervention Flow', () => {
-    it('should log student help request', async () => {
+  describe("Intervention Flow", () => {
+    it("should log student help request", async () => {
       const response = await request(app.getHttpServer())
         .post(apiUrl(`classrooms/${classroomId}/interventions`))
-        .set('Authorization', authToken)
+        .set("Authorization", authToken)
         .send({
           learnerUserId: studentId,
-          topic: 'vocabulário',
+          topic: "vocabulário",
         });
 
       expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty('timestamp');
-      expect(response.body.status).toBe('PENDING');
+      expect(response.body).toHaveProperty("timestamp");
+      expect(response.body.status).toBe("PENDING");
     });
 
-    it('should get intervention prompt', async () => {
+    it("should get intervention prompt", async () => {
       const response = await request(app.getHttpServer())
         .post(apiUrl(`classrooms/${classroomId}/interventions/prompt`))
-        .set('Authorization', authToken)
+        .set("Authorization", authToken)
         .send({
-          studentName: 'Maria',
-          topic: 'vocabulário',
+          studentName: "Maria",
+          topic: "vocabulário",
         });
 
       expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty('nextPrompt');
-      expect(response.body.nextPrompt).toContain('Maria');
+      expect(response.body).toHaveProperty("nextPrompt");
+      expect(response.body.nextPrompt).toContain("Maria");
     });
   });
 });

@@ -1,4 +1,13 @@
-import { IsString, IsNumber, IsArray, IsBoolean, IsEnum, IsOptional, ArrayMinSize, ArrayMaxSize } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsOptional,
+  ArrayMinSize,
+  ArrayMaxSize,
+} from "class-validator";
 
 export class CreateFamilyPolicyDto {
   @IsString()
@@ -33,9 +42,10 @@ export class CreateFamilyPolicyDto {
   @IsOptional()
   toolWordsGateEnabled?: boolean = true;
 
-  @IsEnum(['AGGREGATED_ONLY', 'AGGREGATED_PLUS_TRIGGERS'])
+  @IsEnum(["AGGREGATED_ONLY", "AGGREGATED_PLUS_TRIGGERS"])
   @IsOptional()
-  privacyMode?: 'AGGREGATED_ONLY' | 'AGGREGATED_PLUS_TRIGGERS' = 'AGGREGATED_ONLY';
+  privacyMode?: "AGGREGATED_ONLY" | "AGGREGATED_PLUS_TRIGGERS" =
+    "AGGREGATED_ONLY";
 }
 
 export class UpdateFamilyPolicyDto {
@@ -65,7 +75,7 @@ export class UpdateFamilyPolicyDto {
   @IsOptional()
   toolWordsGateEnabled?: boolean;
 
-  @IsEnum(['AGGREGATED_ONLY', 'AGGREGATED_PLUS_TRIGGERS'])
+  @IsEnum(["AGGREGATED_ONLY", "AGGREGATED_PLUS_TRIGGERS"])
   @IsOptional()
-  privacyMode?: 'AGGREGATED_ONLY' | 'AGGREGATED_PLUS_TRIGGERS';
+  privacyMode?: "AGGREGATED_ONLY" | "AGGREGATED_PLUS_TRIGGERS";
 }

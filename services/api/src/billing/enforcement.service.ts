@@ -1,7 +1,7 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { ScopeType, Environment } from '@prisma/client';
-import { EntitlementsService } from './entitlements.service';
+import { Injectable, HttpException, HttpStatus } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { ScopeType, Environment } from "@prisma/client";
+import { EntitlementsService } from "./entitlements.service";
 
 export class LimitExceededException extends HttpException {
   constructor(data: {
@@ -13,9 +13,9 @@ export class LimitExceededException extends HttpException {
     super(
       {
         statusCode: 429,
-        error: 'Too Many Requests',
+        error: "Too Many Requests",
         message: `Limit exceeded for ${data.metric}`,
-        code: 'LIMIT_EXCEEDED',
+        code: "LIMIT_EXCEEDED",
         ...data,
       },
       HttpStatus.TOO_MANY_REQUESTS,
@@ -28,9 +28,9 @@ export class FeatureDisabledException extends HttpException {
     super(
       {
         statusCode: 403,
-        error: 'Forbidden',
+        error: "Forbidden",
         message: `Feature '${feature}' is not enabled in your plan`,
-        code: 'FEATURE_DISABLED',
+        code: "FEATURE_DISABLED",
         feature,
         upgradeHint: true,
       },
@@ -46,8 +46,8 @@ export class EnforcementService {
     private entitlementsService: EntitlementsService,
   ) {}
 
-  /** 
-  * Require feature (throws if disabled)
+  /**
+   * Require feature (throws if disabled)
    */
   async requireFeature(
     scopeType: ScopeType,
@@ -55,7 +55,11 @@ export class EnforcementService {
     featureKey: string,
     environment: Environment,
   ) {
-    const entitlements = await this.entitlementsService.resolve(scopeType, scopeId, environment);
+    const entitlements = await this.entitlementsService.resolve(
+      scopeType,
+      scopeId,
+      environment,
+    );
 
     const enabled = entitlements.features[featureKey];
 
@@ -76,7 +80,11 @@ export class EnforcementService {
     quantity: number,
     environment: Environment,
   ) {
-    const entitlements = await this.entitlementsService.resolve(scopeType, scopeId, environment);
+    const entitlements = await this.entitlementsService.resolve(
+      scopeType,
+      scopeId,
+      environment,
+    );
 
     const limit = entitlements.limits[metric];
 
@@ -91,7 +99,12 @@ export class EnforcementService {
     }
 
     // Get current usage (today for daily metrics, month for monthly)
-    const current = await this.getCurrentUsage(scopeType, scopeId, metric, environment);
+    const current = await this.getCurrentUsage(
+      scopeType,
+      scopeId,
+      metric,
+      environment,
+    );
 
     if (current + quantity > limit) {
       throw new LimitExceededException({
@@ -117,11 +130,11 @@ export class EnforcementService {
     // Determine time range based on metric suffix
     let startDate: Date;
 
-    if (metric.endsWith('_per_day')) {
+    if (metric.endsWith("_per_day")) {
       // Today
       startDate = new Date();
       startDate.setHours(0, 0, 0, 0);
-    } else if (metric.endsWith('_per_month')) {
+    } else if (metric.endsWith("_per_month")) {
       // This month
       startDate = new Date();
       startDate.setDate(1);
@@ -135,7 +148,7 @@ export class EnforcementService {
       where: {
         scopeType,
         scopeId,
-        metric: metric.replace('_per_day', '').replace('_per_month', ''),
+        metric: metric.replace("_per_day", "").replace("_per_month", ""),
         environment,
         occurredAt: {
           gte: startDate,
@@ -160,9 +173,24 @@ export class EnforcementService {
     environment: Environment,
   ): Promise<{ exceeded: boolean; current: number; limit: number }> {
     try {
-      await this.enforceLimit(scopeType, scopeId, metric, quantity, environment);
-      const current = await this.getCurrentUsage(scopeType, scopeId, metric, environment);
-      const entitlements = await this.entitlementsService.resolve(scopeType, scopeId, environment);
+      await this.enforceLimit(
+        scopeType,
+        scopeId,
+        metric,
+        quantity,
+        environment,
+      );
+      const current = await this.getCurrentUsage(
+        scopeType,
+        scopeId,
+        metric,
+        environment,
+      );
+      const entitlements = await this.entitlementsService.resolve(
+        scopeType,
+        scopeId,
+        environment,
+      );
       return {
         exceeded: false,
         current,
@@ -180,7 +208,6 @@ export class EnforcementService {
     }
   }
 
-
   /**
    * Enforce limit across hierarchy (returns effective scope)
    * Tries scopes in order. Returns the first one that has quota/permission.
@@ -195,7 +222,13 @@ export class EnforcementService {
 
     for (const scope of hierarchy) {
       try {
-        await this.enforceLimit(scope.scopeType, scope.scopeId, metric, quantity, environment);
+        await this.enforceLimit(
+          scope.scopeType,
+          scope.scopeId,
+          metric,
+          quantity,
+          environment,
+        );
         return scope; // Success
       } catch (error) {
         // If limit exceeded or feature missing or subscription missing, try next
@@ -204,7 +237,9 @@ export class EnforcementService {
     }
 
     // If we get here, all failed. Throw the last error (likely limit exceeded of the final fallback)
-    throw lastError || new LimitExceededException({ metric, limit: 0, current: 0 });
+    throw (
+      lastError || new LimitExceededException({ metric, limit: 0, current: 0 })
+    );
   }
 
   /**
@@ -219,7 +254,12 @@ export class EnforcementService {
 
     for (const scope of hierarchy) {
       try {
-        await this.requireFeature(scope.scopeType, scope.scopeId, featureKey, environment);
+        await this.requireFeature(
+          scope.scopeType,
+          scope.scopeId,
+          featureKey,
+          environment,
+        );
         return scope; // Found enabled
       } catch (error) {
         lastError = error;

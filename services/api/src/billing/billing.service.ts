@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class BillingService {
@@ -11,7 +11,7 @@ export class BillingService {
   async getPlans() {
     return this.prisma.plan.findMany({
       where: { isActive: true },
-      orderBy: { monthlyPrice: 'asc' }, // FREE first
+      orderBy: { monthlyPrice: "asc" }, // FREE first
     });
   }
 
@@ -39,7 +39,7 @@ export class BillingService {
     });
 
     if (!plan) {
-      throw new NotFoundException('Plan not found');
+      throw new NotFoundException("Plan not found");
     }
 
     return plan;

@@ -51,6 +51,7 @@ export const API_ENDPOINTS = {
   
   // Content
   CONTENTS: '/contents',
+  MY_CONTENTS: '/contents/my-contents',
   CONTENT: (id: string) => `/contents/${id}`,
   
   // Cornell Notes
@@ -95,6 +96,12 @@ export const API_ENDPOINTS = {
     MY_INSTITUTION: '/institutions/my-institution',
   },
   
+  // Assessments
+  ASSESSMENTS: {
+    LIST: '/assessment',
+    CREATE: '/assessment',
+  },
+  
   // Reading Sessions (NEW - Phase 3)
   SESSIONS: {
     START: '/sessions/start',
@@ -102,6 +109,15 @@ export const API_ENDPOINTS = {
     PROMPT: (id: string) => `/sessions/${id}/prompt`,
     FINISH: (id: string) => `/sessions/${id}/finish`,
     EVENTS: (id: string) => `/sessions/${id}/events`,
+  },
+  
+  // Games
+  GAMES: {
+    CATALOG: '/games',
+    PROGRESS: '/games/progress',
+    GAME_PROGRESS: (gameId: string) => `/games/progress/${gameId}`,
+    LEADERBOARD: '/games/leaderboard',
+    MY_RANK: '/games/leaderboard/me',
   },
 } as const;
 

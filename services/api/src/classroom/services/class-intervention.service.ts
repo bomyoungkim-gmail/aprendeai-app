@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { ClassroomEventService } from '../../events/classroom-event.service';
-import { PromptLibraryService } from '../../prompts/prompt-library.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { ClassroomEventService } from "../../events/classroom-event.service";
+import { PromptLibraryService } from "../../prompts/prompt-library.service";
 
 @Injectable()
 export class ClassInterventionService {
@@ -24,13 +24,13 @@ export class ClassInterventionService {
       `help_${Date.now()}`,
       learnerUserId,
       {
-        domain: 'CLASS',
-        type: 'CLASS_ALERT_RAISED',
+        domain: "CLASS",
+        type: "CLASS_ALERT_RAISED",
         data: {
           classroomId,
           learnerUserId,
-          alertType: 'HELP_REQUEST',
-          severity: 'MED',
+          alertType: "HELP_REQUEST",
+          severity: "MED",
         },
       },
     );
@@ -38,7 +38,7 @@ export class ClassInterventionService {
     return {
       timestamp: new Date(),
       topic,
-      status: 'PENDING',
+      status: "PENDING",
     };
   }
 
@@ -46,7 +46,7 @@ export class ClassInterventionService {
    * Get intervention prompt for teacher
    */
   getInterventionPrompt(studentName: string, topic: string) {
-    return this.promptLibrary.getPrompt('CLASS_INTERVENTION_PROMPT', {
+    return this.promptLibrary.getPrompt("CLASS_INTERVENTION_PROMPT", {
       NAME: studentName,
       TOPIC: topic,
     });
@@ -60,7 +60,7 @@ export class ClassInterventionService {
       where: { classroomId },
     });
 
-    return policy?.interventionMode === 'PROMPT_COACH_PLUS_1ON1';
+    return policy?.interventionMode === "PROMPT_COACH_PLUS_1ON1";
   }
 
   /**

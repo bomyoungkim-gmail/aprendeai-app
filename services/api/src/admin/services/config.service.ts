@@ -1,36 +1,39 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { SecretService } from './secret.service';
-import { ConfigType, Environment } from '@prisma/client';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { SecretService } from "./secret.service";
+import { ConfigType, Environment } from "@prisma/client";
+import { LLMConfigService } from "../../llm/llm-config.service";
 
 @Injectable()
 export class ConfigService {
   constructor(
     private prisma: PrismaService,
     private secretService: SecretService,
+    private llmConfigService: LLMConfigService,
   ) {}
 
   /**
    * Get all configs with optional filters
    */
-  async getConfigs(filters: {
-    category?: string;
-    environment?: Environment;
-  }) {
+  async getConfigs(filters: { category?: string; environment?: Environment }) {
     const where: any = {};
-    
+
     if (filters.category) where.category = filters.category;
     if (filters.environment) where.environment = filters.environment;
 
     const configs = await this.prisma.appConfig.findMany({
       where,
-      orderBy: [{ category: 'asc' }, { key: 'asc' }],
+      orderBy: [{ category: "asc" }, { key: "asc" }],
     });
 
     // Mask secret refs for security
-    return configs.map(c => ({
+    return configs.map((c) => ({
       ...c,
-      value: c.type === 'SECRET_REF' ? '***MASKED***' : c.value,
+      value: c.type === "SECRET_REF" ? "***MASKED***" : c.value,
     }));
   }
 
@@ -43,11 +46,11 @@ export class ConfigService {
     });
 
     if (!config) {
-      throw new NotFoundException('Configuration not found');
+      throw new NotFoundException("Configuration not found");
     }
 
     // Resolve secret if requested (ADMIN only)
-    if (resolveSecrets && config.type === 'SECRET_REF') {
+    if (resolveSecrets && config.type === "SECRET_REF") {
       try {
         const secret = await this.secretService.getSecret(config.value);
         return {
@@ -59,7 +62,7 @@ export class ConfigService {
         return {
           ...config,
           resolvedValue: null,
-          error: 'Secret not found or inaccessible',
+          error: "Secret not found or inaccessible",
         };
       }
     }
@@ -72,18 +75,19 @@ export class ConfigService {
    */
   async getConfigByKey(key: string, environment?: Environment) {
     const where: any = { key };
-    
+
     // If environment specified, find exact match or fallback to null (global)
     if (environment) {
       const configs = await this.prisma.appConfig.findMany({
         where: { key },
-        orderBy: { environment: 'desc' }, // Prefer env-specific over global
+        orderBy: { environment: "desc" }, // Prefer env-specific over global
       });
 
       // Find env-specific first, then global
-      const config = configs.find(c => c.environment === environment) || 
-                     configs.find(c => c.environment === null);
-      
+      const config =
+        configs.find((c) => c.environment === environment) ||
+        configs.find((c) => c.environment === null);
+
       return config || null;
     }
 
@@ -93,15 +97,18 @@ export class ConfigService {
   /**
    * Create new config
    */
-  async createConfig(data: {
-    key: string;
-    value: string;
-    type: ConfigType;
-    category: string;
-    environment?: Environment;
-    description?: string;
-    metadata?: any;
-  }, userId: string) {
+  async createConfig(
+    data: {
+      key: string;
+      value: string;
+      type: ConfigType;
+      category: string;
+      environment?: Environment;
+      description?: string;
+      metadata?: any;
+    },
+    userId: string,
+  ) {
     // Check for duplicate key + environment combo
     const existing = await this.prisma.appConfig.findFirst({
       where: {
@@ -112,7 +119,7 @@ export class ConfigService {
 
     if (existing) {
       throw new BadRequestException(
-        `Config with key "${data.key}" already exists for this environment`
+        `Config with key "${data.key}" already exists for this environment`,
       );
     }
 
@@ -138,9 +145,9 @@ export class ConfigService {
     userId: string,
   ) {
     const config = await this.prisma.appConfig.findUnique({ where: { id } });
-    
+
     if (!config) {
-      throw new NotFoundException('Configuration not found');
+      throw new NotFoundException("Configuration not found");
     }
 
     return this.prisma.appConfig.update({
@@ -158,9 +165,9 @@ export class ConfigService {
    */
   async deleteConfig(id: string) {
     const config = await this.prisma.appConfig.findUnique({ where: { id } });
-    
+
     if (!config) {
-      throw new NotFoundException('Configuration not found');
+      throw new NotFoundException("Configuration not found");
     }
 
     return this.prisma.appConfig.delete({ where: { id } });
@@ -171,11 +178,11 @@ export class ConfigService {
    */
   async validateProvider(provider: string, config: any) {
     switch (provider.toLowerCase()) {
-      case 'openai':
+      case "openai":
         return this.validateOpenAI(config);
-      case 'kci':
+      case "kci":
         return this.validateKCI(config);
-      case 'aws':
+      case "aws":
         return this.validateAWS(config);
       default:
         throw new BadRequestException(`Unknown provider: ${provider}`);
@@ -187,17 +194,17 @@ export class ConfigService {
    */
   private async validateOpenAI(config: { apiKey: string; model?: string }) {
     if (!config.apiKey) {
-      throw new BadRequestException('API key is required');
+      throw new BadRequestException("API key is required");
     }
 
     // Basic format validation
-    if (!config.apiKey.startsWith('sk-')) {
-      throw new BadRequestException('Invalid OpenAI API key format');
+    if (!config.apiKey.startsWith("sk-")) {
+      throw new BadRequestException("Invalid OpenAI API key format");
     }
 
     // Optional: Validate model if provided
     if (config.model) {
-      const validModels = ['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo'];
+      const validModels = ["gpt-4", "gpt-4-turbo", "gpt-3.5-turbo"];
       if (!validModels.includes(config.model)) {
         return {
           valid: true,
@@ -208,7 +215,7 @@ export class ConfigService {
 
     return {
       valid: true,
-      message: 'OpenAI configuration is valid',
+      message: "OpenAI configuration is valid",
     };
   }
 
@@ -217,19 +224,19 @@ export class ConfigService {
    */
   private async validateKCI(config: { apiKey: string; endpoint: string }) {
     if (!config.apiKey || !config.endpoint) {
-      throw new BadRequestException('API key and endpoint are required');
+      throw new BadRequestException("API key and endpoint are required");
     }
 
     // Validate endpoint format
     try {
       new URL(config.endpoint);
     } catch (error) {
-      throw new BadRequestException('Invalid endpoint URL format');
+      throw new BadRequestException("Invalid endpoint URL format");
     }
 
     return {
       valid: true,
-      message: 'KCI configuration is valid',
+      message: "KCI configuration is valid",
     };
   }
 
@@ -242,20 +249,22 @@ export class ConfigService {
     region?: string;
   }) {
     if (!config.accessKeyId || !config.secretAccessKey) {
-      throw new BadRequestException('Access key ID and secret access key are required');
+      throw new BadRequestException(
+        "Access key ID and secret access key are required",
+      );
     }
 
     // Basic format validation
-    if (!config.accessKeyId.startsWith('AKIA')) {
+    if (!config.accessKeyId.startsWith("AKIA")) {
       return {
         valid: true,
-        warning: 'Access key ID format may be invalid',
+        warning: "Access key ID format may be invalid",
       };
     }
 
     return {
       valid: true,
-      message: 'AWS configuration is valid',
+      message: "AWS configuration is valid",
     };
   }
 
@@ -268,7 +277,14 @@ export class ConfigService {
 
     return this.prisma.appConfig.findMany({
       where,
-      orderBy: { key: 'asc' },
+      orderBy: { key: "asc" },
     });
+  }
+
+  /**
+   * Clear LLM config cache
+   */
+  async clearLLMCache(provider?: string): Promise<void> {
+    this.llmConfigService.clearCache(provider);
   }
 }

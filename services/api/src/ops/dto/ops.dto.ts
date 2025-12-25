@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString, IsArray } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from "class-validator";
 
 export class DailySnapshotDto {
   userId: string;
@@ -20,7 +20,7 @@ export class ProgressDto {
 
   @IsNumber()
   streakDays: number;
-  
+
   goalMet: boolean;
 }
 
@@ -33,7 +33,7 @@ export class GoalsDto {
   dailyLessons?: number;
 
   @IsString()
-  goalType: 'MINUTES' | 'LESSONS';
+  goalType: "MINUTES" | "LESSONS";
 }
 
 export class TaskDto {
@@ -50,14 +50,14 @@ export class TaskDto {
   estimatedMin: number;
 
   @IsString()
-  type: 'REVIEW' | 'CO_READING' | 'LESSON' | 'ASSESSMENT';
+  type: "REVIEW" | "CO_READING" | "LESSON" | "ASSESSMENT";
 
   @IsString()
   @IsOptional()
   ctaUrl?: string;
 
   @IsString()
-  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+  priority: "HIGH" | "MEDIUM" | "LOW";
 }
 
 export class ContextCardDto {
@@ -65,7 +65,7 @@ export class ContextCardDto {
   id: string;
 
   @IsString()
-  type: 'CO_READING' | 'REVIEW_DUE' | 'WEEKLY_PLAN' | 'STREAK_ALERT';
+  type: "CO_READING" | "REVIEW_DUE" | "WEEKLY_PLAN" | "STREAK_ALERT";
 
   @IsString()
   title: string;

@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { ProgressStatsDto } from './dto/analytics.dto';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { ProgressStatsDto } from "./dto/analytics.dto";
 
 @Injectable()
 export class AnalyticsService {
@@ -65,7 +65,7 @@ export class AnalyticsService {
   async getVocabularyList(userId: string) {
     return this.prisma.userVocabulary.findMany({
       where: { userId },
-      orderBy: { masteryScore: 'desc' },
+      orderBy: { masteryScore: "desc" },
       take: 50,
     });
   }

@@ -1,30 +1,35 @@
-import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { ValidationPipe, Logger } from '@nestjs/common';
-import { AppModule } from './app.module';
-import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import * as Sentry from '@sentry/node';
-import { join, normalize } from 'path';
-import { existsSync, mkdirSync } from 'fs';
-import { URL_CONFIG } from './config/urls.config';
+import { NestFactory } from "@nestjs/core";
+import { NestExpressApplication } from "@nestjs/platform-express";
+import { ValidationPipe, Logger } from "@nestjs/common";
+import { AppModule } from "./app.module";
+import { GlobalExceptionFilter } from "./common/filters/global-exception.filter";
+import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
+import * as Sentry from "@sentry/node";
+import { join, normalize } from "path";
+import { existsSync, mkdirSync } from "fs";
+import { URL_CONFIG } from "./config/urls.config";
+import { json, urlencoded } from "express";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  const logger = new Logger('Bootstrap');
+  const logger = new Logger("Bootstrap");
 
   // Set global prefix for all routes (versioning)
-  app.setGlobalPrefix('api/v1');
-  logger.log('🌐 Global prefix set to /api/v1');
+  app.setGlobalPrefix("api/v1");
+  logger.log("🌐 Global prefix set to /api/v1");
+
+  // Increase payload limit
+  app.use(json({ limit: "50mb" }));
+  app.use(urlencoded({ extended: true, limit: "50mb" }));
 
   // Static file serving for uploaded media
-  const uploadsDir = process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads');
-  if (process.env.NODE_ENV !== 'production' && !existsSync(uploadsDir)) {
+  const uploadsDir = process.env.UPLOADS_DIR ?? join(process.cwd(), "uploads");
+  if (process.env.NODE_ENV !== "production" && !existsSync(uploadsDir)) {
     mkdirSync(uploadsDir, { recursive: true });
     logger.log(`📁 Created uploads directory: ${uploadsDir}`);
   }
   app.useStaticAssets(normalize(uploadsDir), {
-    prefix: '/api/uploads/',
+    prefix: "/api/uploads/",
   });
   logger.log(`📦 Static assets serving at /api/uploads/ → ${uploadsDir}`);
 
@@ -32,26 +37,29 @@ async function bootstrap() {
   if (process.env.SENTRY_DSN) {
     Sentry.init({
       dsn: process.env.SENTRY_DSN,
-      environment: process.env.NODE_ENV || 'development',
+      environment: process.env.NODE_ENV || "development",
       tracesSampleRate: 1.0,
     });
-    logger.log('Sentry initialized');
+    logger.log("Sentry initialized");
   }
-  
+
   // Enable validation globally
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
-  
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
   // Enable global exception filter
   app.useGlobalFilters(new GlobalExceptionFilter());
-  
+
   // Setup Swagger API Documentation
   const config = new DocumentBuilder()
-    .setTitle('AprendeAI Admin Console API')
-    .setDescription(`
+    .setTitle("AprendeAI Admin Console API")
+    .setDescription(
+      `
       **Enterprise-grade Admin Console API**
       
       Features:
@@ -65,49 +73,54 @@ async function bootstrap() {
       - 📝 Complete Audit Trail
       
       Authentication: Bearer JWT token required for all admin endpoints.
-    `)
-    .setVersion('2.0.0')
-    .setContact('AprendeAI Team', 'https://aprendeai.com', 'support@aprendeai.com')
-    .setLicense('MIT', 'https://opensource.org/licenses/MIT')
-    .addTag('auth', 'Authentication & Authorization')
-    .addTag('admin', 'Admin Core (RBAC & Audit)')
-    .addTag('admin-users', 'User Management & Impersonation')
-    .addTag('admin-secrets', 'Encrypted Secrets Management')
-    .addTag('admin-feature-flags', 'Feature Flags & Toggles')
-    .addTag('admin-audit', 'Audit Logs & Compliance')
-    .addTag('admin-dashboard', 'Observability & Metrics')
-    .addTag('admin-config', 'Configuration & Integrations')
-    .addTag('gamification', 'Gamification & Achievements')
+    `,
+    )
+    .setVersion("2.0.0")
+    .setContact(
+      "AprendeAI Team",
+      "https://aprendeai.com",
+      "support@aprendeai.com",
+    )
+    .setLicense("MIT", "https://opensource.org/licenses/MIT")
+    .addTag("auth", "Authentication & Authorization")
+    .addTag("admin", "Admin Core (RBAC & Audit)")
+    .addTag("admin-users", "User Management & Impersonation")
+    .addTag("admin-secrets", "Encrypted Secrets Management")
+    .addTag("admin-feature-flags", "Feature Flags & Toggles")
+    .addTag("admin-audit", "Audit Logs & Compliance")
+    .addTag("admin-dashboard", "Observability & Metrics")
+    .addTag("admin-config", "Configuration & Integrations")
+    .addTag("gamification", "Gamification & Achievements")
     .addBearerAuth(
       {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        description: 'Enter JWT token from /admin/login',
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT",
+        description: "Enter JWT token from /admin/login",
       },
-      'JWT-auth',
+      "JWT-auth",
     )
     .build();
-  
+
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document, {
-    customSiteTitle: 'AprendeAI API Docs',
-    customCss: '.swagger-ui .topbar { display: none }',
+  SwaggerModule.setup("api/docs", app, document, {
+    customSiteTitle: "AprendeAI API Docs",
+    customCss: ".swagger-ui .topbar { display: none }",
     swaggerOptions: {
       persistAuthorization: true,
-      docExpansion: 'none',
+      docExpansion: "none",
       filter: true,
-      tagsSorter: 'alpha',
+      tagsSorter: "alpha",
     },
   });
-  logger.log('📚 Swagger documentation available at /api/docs');
-  
+  logger.log("📚 Swagger documentation available at /api/docs");
+
   // Enable CORS for frontend - Phase 1: Centralized URLs
   app.enableCors({
     origin: URL_CONFIG.corsOrigins,
     credentials: true,
   });
-  
+
   const port = process.env.PORT || 4000;
   await app.listen(port);
   logger.log(`🚀 API running on http://localhost:${port}`);

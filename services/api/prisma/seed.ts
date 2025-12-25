@@ -7,13 +7,44 @@ async function main() {
   console.log('🌱 Starting database seed...');
 
   // Clean existing data (in order due to foreign keys)
-  console.log('🧹 Cleaning existing data...');
-  await prisma.highlight.deleteMany();
-  await prisma.cornellNotes.deleteMany();
-  await prisma.contentExtraction.deleteMany();
-  await prisma.content.deleteMany();
-  await prisma.file.deleteMany();
-  await prisma.user.deleteMany();
+  // Clean existing data (commented out to avoid FK issues during hot-fix)
+  // console.log('🧹 Cleaning existing data...');
+  // await prisma.highlight.deleteMany();
+  // await prisma.cornellNotes.deleteMany();
+  // await prisma.contentExtraction.deleteMany();
+  // await prisma.content.deleteMany();
+  // await prisma.file.deleteMany();
+  // await prisma.user.deleteMany();
+  // await prisma.plan.deleteMany(); 
+
+  // 0. Create Plans (Upsert)
+  console.log('💳 Creating plans...');
+  await prisma.plan.upsert({
+    where: { code: 'FREE' },
+    update: {},
+    create: {
+      code: 'FREE',
+      name: 'Free Plan',
+      description: 'Basic access for students',
+      monthlyPrice: 0,
+      yearlyPrice: 0,
+      entitlements: {},
+    }
+  });
+
+  await prisma.plan.upsert({
+    where: { code: 'PREMIUM' },
+    update: {},
+    create: {
+      code: 'PREMIUM',
+      name: 'Premium Plan',
+      description: 'Full access including advanced AI features',
+      monthlyPrice: 29.90,
+      yearlyPrice: 299.90,
+      entitlements: { "ai_access": true },
+    }
+  });
+  console.log('✅ Created plans');
 
   // 1. Create demo users
   console.log('👤 Creating users...');

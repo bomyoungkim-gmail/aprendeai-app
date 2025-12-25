@@ -38,6 +38,7 @@ jest.mock('@/components/ui/Toast', () => ({
 // Mock Viewers to avoid canvas/complex rendering
 jest.mock('@/components/cornell/viewers', () => ({
   PDFViewer: () => <div data-testid="pdf-viewer">PDF Viewer</div>,
+  PDFViewerNew: () => <div data-testid="pdf-viewer">PDF Viewer</div>,
   ImageViewer: () => <div data-testid="image-viewer">Image Viewer</div>,
   DocxViewer: () => <div data-testid="docx-viewer">Docx Viewer</div>,
 }));

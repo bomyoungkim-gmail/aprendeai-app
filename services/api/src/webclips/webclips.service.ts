@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateWebClipDto, StartWebClipSessionDto } from './dto/webclip.dto';
+import { Injectable, BadRequestException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { CreateWebClipDto, StartWebClipSessionDto } from "./dto/webclip.dto";
 
 @Injectable()
 export class WebClipsService {
@@ -11,31 +11,33 @@ export class WebClipsService {
    * Reuses existing Content model with type WEB_CLIP
    */
   async createWebClip(userId: string, dto: CreateWebClipDto) {
-    const rawText = dto.contentText || dto.selectionText || '';
-    
+    const rawText = dto.contentText || dto.selectionText || "";
+
     if (!rawText.trim()) {
-      throw new BadRequestException('Either contentText or selectionText must be provided');
+      throw new BadRequestException(
+        "Either contentText or selectionText must be provided",
+      );
     }
-    
+
     // Limit text size (50k chars)
     const limitedText = rawText.slice(0, 50000);
-    
+
     const content = await this.prisma.content.create({
       data: {
-        type: 'WEB_CLIP',
+        type: "WEB_CLIP",
         title: dto.title,
         rawText: limitedText,
-        originalLanguage: dto.languageHint || 'PT_BR', // Fixed: Use PT_BR not PT
+        originalLanguage: dto.languageHint || "PT_BR", // Fixed: Use PT_BR not PT
         metadata: {
           sourceUrl: dto.sourceUrl,
           siteDomain: dto.siteDomain,
           captureMode: dto.captureMode,
           selectionTextPreview: dto.selectionText?.slice(0, 200),
-          tags: dto.tags || ['webclip'],
+          tags: dto.tags || ["webclip"],
           capturedAt: new Date().toISOString(),
         },
         creator: { connect: { id: userId } }, // Fixed: Use relation instead of createdBy
-        scopeType: 'USER',
+        scopeType: "USER",
         // status: 'ACTIVE', // Removed: doesn't exist in Content model
       },
     });
@@ -60,12 +62,12 @@ export class WebClipsService {
       where: {
         id: contentId,
         createdBy: userId,
-        type: 'WEB_CLIP',
+        type: "WEB_CLIP",
       },
     });
 
     if (!content) {
-      throw new BadRequestException('WebClip not found or access denied');
+      throw new BadRequestException("WebClip not found or access denied");
     }
 
     // Create ContentVersion for this WebClip (ReadingSession requires it)
@@ -73,7 +75,7 @@ export class WebClipsService {
       data: {
         contentId,
         targetLanguage: content.originalLanguage,
-        schoolingLevelTarget: 'HIGHER_EDUCATION',
+        schoolingLevelTarget: "HIGHER_EDUCATION",
         simplifiedText: content.rawText, // Use rawText as simplified version
         summary: content.title,
       },
@@ -85,11 +87,11 @@ export class WebClipsService {
         userId,
         contentId,
         contentVersionId: version.id, // Use ContentVersion ID
-        phase: 'PRE',
-        modality: 'READING',
-        assetLayer: dto.assetLayer || 'L1',
+        phase: "PRE",
+        modality: "READING",
+        assetLayer: dto.assetLayer || "L1",
         goalStatement: `Read in ${dto.timeboxMin || 15} min`,
-        predictionText: '',
+        predictionText: "",
         targetWordsJson: [],
       },
     });
@@ -101,7 +103,7 @@ export class WebClipsService {
       readingSessionId: session.id,
       sessionId: session.id,
       threadId,
-      nextPrompt: 'Meta do dia em 1 linha + porquê em 1 linha.',
+      nextPrompt: "Meta do dia em 1 linha + porquê em 1 linha.",
     };
   }
 
@@ -113,12 +115,12 @@ export class WebClipsService {
       where: {
         id: contentId,
         createdBy: userId,
-        type: 'WEB_CLIP',
+        type: "WEB_CLIP",
       },
     });
 
     if (!content) {
-      throw new BadRequestException('WebClip not found');
+      throw new BadRequestException("WebClip not found");
     }
 
     return content;

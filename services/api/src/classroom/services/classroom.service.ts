@@ -1,7 +1,7 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { ClassroomEventService } from '../../events/classroom-event.service';
-import { CreateClassroomDto, UpdateClassroomDto } from '../dto/classroom.dto';
+import { Injectable, BadRequestException } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { ClassroomEventService } from "../../events/classroom-event.service";
+import { CreateClassroomDto, UpdateClassroomDto } from "../dto/classroom.dto";
 
 @Injectable()
 export class ClassroomService {
@@ -65,10 +65,10 @@ export class ClassroomService {
     });
 
     return {
-      classrooms: classrooms.map(c => ({
+      classrooms: classrooms.map((c) => ({
         classroomId: c.id,
         name: c.name,
-        gradeLevel: c.gradeLevel || 'N/A',
+        gradeLevel: c.gradeLevel || "N/A",
         enrollmentCount: c._count.enrollments,
       })),
     };
@@ -95,13 +95,13 @@ export class ClassroomService {
       });
     } catch (error) {
       // Prisma error code P2003: Foreign key constraint failed
-      if (error.code === 'P2003') {
+      if (error.code === "P2003") {
         throw new BadRequestException(
-          'Cannot delete classroom with active enrollments. Remove all students first.',
+          "Cannot delete classroom with active enrollments. Remove all students first.",
         );
       }
       // Prisma error code P2025: Record not found
-      if (error.code === 'P2025') {
+      if (error.code === "P2025") {
         throw new BadRequestException(`Classroom ${classroomId} not found`);
       }
       throw error;

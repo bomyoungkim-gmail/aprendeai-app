@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
-import { WinstonModule } from 'nest-winston';
-import * as winston from 'winston';
+import { Module } from "@nestjs/common";
+import { WinstonModule } from "nest-winston";
+import * as winston from "winston";
 
 @Module({
   imports: [
@@ -11,22 +11,24 @@ import * as winston from 'winston';
           format: winston.format.combine(
             winston.format.timestamp(),
             winston.format.colorize(),
-            winston.format.printf(({ timestamp, level, message, context, trace }) => {
-              return `${timestamp} [${context}] ${level}: ${message}${trace ? `\n${trace}` : ''}`;
-            }),
+            winston.format.printf(
+              ({ timestamp, level, message, context, trace }) => {
+                return `${timestamp} [${context}] ${level}: ${message}${trace ? `\n${trace}` : ""}`;
+              },
+            ),
           ),
         }),
         // File transport for production
         new winston.transports.File({
-          filename: 'logs/error.log',
-          level: 'error',
+          filename: "logs/error.log",
+          level: "error",
           format: winston.format.combine(
             winston.format.timestamp(),
             winston.format.json(),
           ),
         }),
         new winston.transports.File({
-          filename: 'logs/combined.log',
+          filename: "logs/combined.log",
           format: winston.format.combine(
             winston.format.timestamp(),
             winston.format.json(),

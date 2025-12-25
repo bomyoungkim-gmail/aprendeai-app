@@ -5,9 +5,9 @@ import {
   IsArray,
   IsOptional,
   ValidateNested,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-import { ActorRole } from '../../common/enums';
+} from "class-validator";
+import { Type } from "class-transformer";
+import { ActorRole } from "../../common/enums";
 
 export class HilRequestDto {
   @IsBoolean()

@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
-import { CoReadingStateMachine } from './co-reading-state-machine.service';
-import { EventsModule } from '../events/events.module';
+import { Module } from "@nestjs/common";
+import { CoReadingStateMachine } from "./co-reading-state-machine.service";
+import { EventsModule } from "../events/events.module";
 
 @Module({
   imports: [EventsModule],

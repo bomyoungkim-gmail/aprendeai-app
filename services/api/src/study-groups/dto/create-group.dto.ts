@@ -1,5 +1,5 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum } from 'class-validator';
-import { ScopeType } from '@prisma/client';
+import { IsString, IsNotEmpty, IsOptional, IsEnum } from "class-validator";
+import { ScopeType } from "@prisma/client";
 
 export class CreateGroupDto {
   @IsString()

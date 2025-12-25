@@ -23,6 +23,7 @@ export const ROUTES = {
   // Dashboard
   DASHBOARD: {
     HOME: '/dashboard',
+    ASSESSMENTS: '/dashboard/assessments',
     LIBRARY: {
       HOME: '/dashboard/library',
       DETAIL: (id: string) => `/dashboard/library/${id}`,

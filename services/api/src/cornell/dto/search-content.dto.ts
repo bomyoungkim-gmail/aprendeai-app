@@ -1,6 +1,6 @@
-import { IsString, IsOptional, IsEnum, IsInt, Min, Max } from 'class-validator';
-import { Type } from 'class-transformer';
-import { ContentType, Language } from '@prisma/client';
+import { IsString, IsOptional, IsEnum, IsInt, Min, Max } from "class-validator";
+import { Type } from "class-transformer";
+import { ContentType, Language } from "@prisma/client";
 
 export class SearchContentDto {
   @IsString()

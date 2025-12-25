@@ -5,9 +5,14 @@ import {
   MaxLength,
   ValidateNested,
   IsOptional,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-import { ActorRole, UiMode, AssetLayer, ReadingIntent } from '../../common/enums';
+} from "class-validator";
+import { Type } from "class-transformer";
+import {
+  ActorRole,
+  UiMode,
+  AssetLayer,
+  ReadingIntent,
+} from "../../common/enums";
 
 export class PromptMetadataDto {
   @IsEnum(UiMode)
@@ -52,7 +57,7 @@ export class PromptMessageDto {
 
   @IsString()
   @IsNotEmpty()
-  @MaxLength(2000, { message: 'Prompt text must not exceed 2000 characters' })
+  @MaxLength(2000, { message: "Prompt text must not exceed 2000 characters" })
   text: string;
 
   @IsString()

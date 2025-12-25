@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class ErrorTrackingService {
@@ -35,8 +35,8 @@ export class ErrorTrackingService {
       });
     } catch (error) {
       // Fallback to console if DB fails
-      console.error('Failed to log error to DB:', error);
-      console.error('Original error:', data);
+      console.error("Failed to log error to DB:", error);
+      console.error("Original error:", data);
     }
   }
 
@@ -68,7 +68,7 @@ export class ErrorTrackingService {
 
     return this.prisma.errorLog.findMany({
       where,
-      orderBy: { timestamp: 'desc' },
+      orderBy: { timestamp: "desc" },
       take: filters.limit || 100,
     });
   }
@@ -88,16 +88,19 @@ export class ErrorTrackingService {
     });
 
     // Group by endpoint
-    const grouped = errors.reduce((acc, err) => {
-      const endpoint = err.endpoint || 'unknown';
-      if (!acc[endpoint]) {
-        acc[endpoint] = { endpoint, count: 0, codes: {} };
-      }
-      acc[endpoint].count++;
-      const code = err.statusCode || 500;
-      acc[endpoint].codes[code] = (acc[endpoint].codes[code] || 0) + 1;
-      return acc;
-    }, {} as Record<string, any>);
+    const grouped = errors.reduce(
+      (acc, err) => {
+        const endpoint = err.endpoint || "unknown";
+        if (!acc[endpoint]) {
+          acc[endpoint] = { endpoint, count: 0, codes: {} };
+        }
+        acc[endpoint].count++;
+        const code = err.statusCode || 500;
+        acc[endpoint].codes[code] = (acc[endpoint].codes[code] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, any>,
+    );
 
     return Object.values(grouped);
   }

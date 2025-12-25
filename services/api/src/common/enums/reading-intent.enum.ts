@@ -1,5 +1,5 @@
 export enum ReadingIntent {
-  INSPECTIONAL = 'inspectional',
-  ANALYTICAL = 'analytical',
-  SYNTOPICAL = 'syntopical',
+  INSPECTIONAL = "inspectional",
+  ANALYTICAL = "analytical",
+  SYNTOPICAL = "syntopical",
 }

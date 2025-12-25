@@ -6,19 +6,19 @@ import {
   OnGatewayDisconnect,
   ConnectedSocket,
   MessageBody,
-} from '@nestjs/websockets';
-import { JwtService } from '@nestjs/jwt';
-import { Server, Socket } from 'socket.io';
-import { Logger, UseGuards } from '@nestjs/common';
-import { WsJwtGuard } from './guards/ws-jwt.guard';
-import { URL_CONFIG } from '../config/urls.config';
+} from "@nestjs/websockets";
+import { JwtService } from "@nestjs/jwt";
+import { Server, Socket } from "socket.io";
+import { Logger, UseGuards } from "@nestjs/common";
+import { WsJwtGuard } from "./guards/ws-jwt.guard";
+import { URL_CONFIG } from "../config/urls.config";
 
 @WebSocketGateway({
   cors: {
     origin: URL_CONFIG.corsOrigins,
     credentials: true,
   },
-  namespace: '/study-groups',
+  namespace: "/study-groups",
 })
 @UseGuards(WsJwtGuard)
 export class StudyGroupsWebSocketGateway
@@ -29,7 +29,7 @@ export class StudyGroupsWebSocketGateway
 
   constructor(private jwtService: JwtService) {}
 
-  private logger = new Logger('StudyGroupsWebSocketGateway');
+  private logger = new Logger("StudyGroupsWebSocketGateway");
 
   handleConnection(client: Socket) {
     try {
@@ -56,14 +56,14 @@ export class StudyGroupsWebSocketGateway
     }
     const user = client.data.user;
     if (user) {
-       this.logger.log(`Client connected: ${client.id}, User: ${user.userId}`);
+      this.logger.log(`Client connected: ${client.id}, User: ${user.userId}`);
     }
   }
 
   private extractToken(client: Socket): string | undefined {
     const token = client.handshake.auth?.token || client.handshake.query?.token;
-    if (typeof token === 'string') {
-      return token.startsWith('Bearer ') ? token.substring(7) : token;
+    if (typeof token === "string") {
+      return token.startsWith("Bearer ") ? token.substring(7) : token;
     }
     return undefined;
   }
@@ -73,7 +73,7 @@ export class StudyGroupsWebSocketGateway
     this.logger.log(`Client disconnected: ${client.id}, User: ${user?.userId}`);
   }
 
-  @SubscribeMessage('joinSession')
+  @SubscribeMessage("joinSession")
   handleJoinSession(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { sessionId: string },
@@ -83,11 +83,11 @@ export class StudyGroupsWebSocketGateway
 
     // Join the session-specific room
     client.join(`session:${sessionId}`);
-    
+
     this.logger.log(`User ${user.userId} joined session ${sessionId}`);
 
     // Notify other participants
-    client.to(`session:${sessionId}`).emit('userJoined', {
+    client.to(`session:${sessionId}`).emit("userJoined", {
       userId: user.userId,
       userName: user.name,
       timestamp: new Date().toISOString(),
@@ -96,7 +96,7 @@ export class StudyGroupsWebSocketGateway
     return { success: true, message: `Joined session ${sessionId}` };
   }
 
-  @SubscribeMessage('leaveSession')
+  @SubscribeMessage("leaveSession")
   handleLeaveSession(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { sessionId: string },
@@ -106,11 +106,11 @@ export class StudyGroupsWebSocketGateway
 
     // Leave the session room
     client.leave(`session:${sessionId}`);
-    
+
     this.logger.log(`User ${user.userId} left session ${sessionId}`);
 
     // Notify other participants
-    client.to(`session:${sessionId}`).emit('userLeft', {
+    client.to(`session:${sessionId}`).emit("userLeft", {
       userId: user.userId,
       userName: user.name,
       timestamp: new Date().toISOString(),

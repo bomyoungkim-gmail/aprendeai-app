@@ -25,7 +25,7 @@ export function PromptInput({
     // Enter to send (without Shift)
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (!isLoading && value.trim()) {
+      if (!isLoading && value?.trim()) {
         onSend();
       }
     }
@@ -40,29 +40,28 @@ export function PromptInput({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={isLoading}
-          className="prompt-input"
-          rows={1}
+          className="w-full min-h-[150px] p-4 border border-gray-300 rounded-lg resize-y text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
           aria-label="Campo de mensagem"
           data-testid="prompt-input"
         />
+      </div>
+      
+      <div className="flex items-center justify-between mt-3">
+        <div className="text-xs text-gray-500">
+          <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Enter</kbd> para enviar
+          {' • '}
+          <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs">Shift + Enter</kbd> quebra de linha
+        </div>
         
         <button
           onClick={onSend}
-          disabled={isLoading || !value.trim()}
-          className="prompt-send-button"
+          disabled={isLoading || !value?.trim()}
+          className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors text-sm"
           aria-label="Enviar mensagem"
           data-testid="send-prompt"
         >
-          {isLoading ? (
-            <span className="loading-spinner">⏳</span>
-          ) : (
-            <span className="send-icon">➤</span>
-          )}
+          {isLoading ? 'Enviando...' : 'Enviar'}
         </button>
-      </div>
-      
-      <div className="prompt-input-hint">
-        <kbd>Enter</kbd> para enviar • <kbd>Shift + Enter</kbd> para quebra de linha
       </div>
     </div>
   );

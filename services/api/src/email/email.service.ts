@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import * as nodemailer from 'nodemailer';
-import * as Handlebars from 'handlebars';
-import * as fs from 'fs';
-import * as path from 'path';
-import { URL_CONFIG } from '../config/urls.config';
+import { Injectable, Logger } from "@nestjs/common";
+import * as nodemailer from "nodemailer";
+import * as Handlebars from "handlebars";
+import * as fs from "fs";
+import * as path from "path";
+import { URL_CONFIG } from "../config/urls.config";
 
 export interface EmailOptions {
   to: string;
@@ -27,12 +27,14 @@ export class EmailService {
    */
   private initializeTransporter() {
     const host = process.env.SMTP_HOST;
-    const port = parseInt(process.env.SMTP_PORT || '587', 10);
+    const port = parseInt(process.env.SMTP_PORT || "587", 10);
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
 
     if (!host || !user || !pass) {
-      this.logger.warn('SMTP configuration not found. Email sending will be disabled.');
+      this.logger.warn(
+        "SMTP configuration not found. Email sending will be disabled.",
+      );
       return;
     }
 
@@ -43,7 +45,7 @@ export class EmailService {
       auth: { user, pass },
     });
 
-    this.logger.log('Email transporter initialized');
+    this.logger.log("Email transporter initialized");
   }
 
   /**
@@ -51,14 +53,15 @@ export class EmailService {
    */
   async sendEmail(options: EmailOptions): Promise<void> {
     if (!this.transporter) {
-      this.logger.warn('Email transporter not configured. Skipping email.');
+      this.logger.warn("Email transporter not configured. Skipping email.");
       return;
     }
 
     try {
       const html = await this.renderTemplate(options.template, options.context);
 
-      const from = process.env.EMAIL_FROM || 'AprendeAI <noreply@aprendeai.com>';
+      const from =
+        process.env.EMAIL_FROM || "AprendeAI <noreply@aprendeai.com>";
 
       const info = await this.transporter.sendMail({
         from,
@@ -88,7 +91,7 @@ export class EmailService {
       // Load template from file
       const templatePath = path.join(
         __dirname,
-        'templates',
+        "templates",
         `${templateName}.hbs`,
       );
 
@@ -96,9 +99,9 @@ export class EmailService {
         throw new Error(`Template not found: ${templateName}`);
       }
 
-      const templateContent = fs.readFileSync(templatePath, 'utf-8');
+      const templateContent = fs.readFileSync(templatePath, "utf-8");
       template = Handlebars.compile(templateContent);
-      
+
       // Cache template
       this.templatesCache.set(templateName, template);
     }
@@ -119,8 +122,8 @@ export class EmailService {
   async sendWelcomeEmail(user: { email: string; name: string }) {
     await this.sendEmail({
       to: user.email,
-      subject: 'Bem-vindo ao AprendeAI! 🎉',
-      template: 'welcome',
+      subject: "Bem-vindo ao AprendeAI! 🎉",
+      template: "welcome",
       context: {
         userName: user.name,
         dashboardUrl: `${URL_CONFIG.frontend.base}/dashboard`,
@@ -141,11 +144,12 @@ export class EmailService {
     await this.sendEmail({
       to: invitation.email,
       subject: `Convite para ${invitation.groupName} 👥`,
-      template: 'group-invitation',
+      template: "group-invitation",
       context: {
         inviterName: invitation.inviterName,
         groupName: invitation.groupName,
-        groupDescription: invitation.groupDescription || 'Participe deste grupo de estudo!',
+        groupDescription:
+          invitation.groupDescription || "Participe deste grupo de estudo!",
         acceptUrl: `${URL_CONFIG.frontend.base}/groups/invitations/${invitation.invitationId}`,
       },
     });
@@ -165,7 +169,7 @@ export class EmailService {
     await this.sendEmail({
       to: notification.ownerEmail,
       subject: `Nova anotação em "${notification.contentTitle}" ✏️`,
-      template: 'annotation-notification',
+      template: "annotation-notification",
       context: {
         ownerName: notification.ownerName,
         annotatorName: notification.annotatorName,
@@ -186,8 +190,8 @@ export class EmailService {
   }) {
     await this.sendEmail({
       to: user.email,
-      subject: 'Hora de estudar! 📚',
-      template: 'study-reminder',
+      subject: "Hora de estudar! 📚",
+      template: "study-reminder",
       context: {
         userName: user.name,
         streak: user.streak || 0,

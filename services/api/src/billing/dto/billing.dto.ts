@@ -1,6 +1,14 @@
-import { IsString, IsOptional, IsNumber, IsBoolean, IsEnum, IsObject, Min } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ScopeType, SubscriptionStatus } from '@prisma/client';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsBoolean,
+  IsEnum,
+  IsObject,
+  Min,
+} from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { ScopeType, SubscriptionStatus } from "@prisma/client";
 
 // ========== Plans ==========
 
@@ -126,8 +134,6 @@ export class SubscriptionFilterDto {
 
 // ========== Entitlements ==========
 
-
-
 export class PreviewEntitlementsDto {
   @ApiProperty({ enum: ScopeType })
   @IsEnum(ScopeType)
@@ -159,8 +165,8 @@ export class SetOverridesDto {
 // ========== Usage ==========
 
 export class UsageRangeDto {
-  @ApiPropertyOptional({ enum: ['today', '7d', '30d'], default: 'today' })
+  @ApiPropertyOptional({ enum: ["today", "7d", "30d"], default: "today" })
   @IsOptional()
-  @IsEnum(['today', '7d', '30d'])
-  range?: 'today' | '7d' | '30d';
+  @IsEnum(["today", "7d", "30d"])
+  range?: "today" | "7d" | "30d";
 }

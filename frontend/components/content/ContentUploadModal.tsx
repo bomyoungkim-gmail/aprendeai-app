@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, X, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import { useUploadContent } from '@/hooks/use-content-upload';
@@ -14,6 +14,15 @@ export function ContentUploadModal({ isOpen, onClose }: ContentUploadModalProps)
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
   const upload = useUploadContent();
+
+  // Reset state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      upload.reset();
+      setFile(null);
+      setTitle('');
+    }
+  }, [isOpen]);
 
   const { getRootProps, getInputProps, isDragActive, fileRejections } = useDropzone({
     accept: {

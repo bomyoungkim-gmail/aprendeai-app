@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class MetricsService {
@@ -19,14 +19,14 @@ export class MetricsService {
       // Record request count
       await this.prisma.systemMetric.create({
         data: {
-          metric: 'api_request',
+          metric: "api_request",
           value: 1,
           tags: {
             endpoint: data.endpoint,
             method: data.method,
             status: data.statusCode,
           },
-          bucket: '1m',
+          bucket: "1m",
           timestamp: new Date(),
         },
       });
@@ -34,16 +34,16 @@ export class MetricsService {
       // Record latency
       await this.prisma.systemMetric.create({
         data: {
-          metric: 'api_latency',
+          metric: "api_latency",
           value: data.latency,
           tags: { endpoint: data.endpoint },
-          bucket: '1m',
+          bucket: "1m",
           timestamp: new Date(),
         },
       });
     } catch (error) {
       // Silent fail - don't break app if metrics fail
-      console.error('Failed to record metrics:', error.message);
+      console.error("Failed to record metrics:", error.message);
     }
   }
 
@@ -65,7 +65,7 @@ export class MetricsService {
           lte: params.to,
         },
       },
-      orderBy: { timestamp: 'asc' },
+      orderBy: { timestamp: "asc" },
     });
   }
 
@@ -98,28 +98,31 @@ export class MetricsService {
     // Get all 1-minute metrics from last hour
     const minuteMetrics = await this.prisma.systemMetric.findMany({
       where: {
-        bucket: '1m',
+        bucket: "1m",
         timestamp: { gte: oneHourAgo, lte: now },
       },
     });
 
     // Group by metric and hour
-    const grouped = minuteMetrics.reduce((acc, m) => {
-      const hour = new Date(m.timestamp);
-      hour.setMinutes(0, 0, 0);
-      const key = `${m.metric}-${hour.toISOString()}`;
+    const grouped = minuteMetrics.reduce(
+      (acc, m) => {
+        const hour = new Date(m.timestamp);
+        hour.setMinutes(0, 0, 0);
+        const key = `${m.metric}-${hour.toISOString()}`;
 
-      if (!acc[key]) {
-        acc[key] = {
-          metric: m.metric,
-          values: [],
-          timestamp: hour,
-          tags: m.tags,
-        };
-      }
-      acc[key].values.push(m.value);
-      return acc;
-    }, {} as Record<string, any>);
+        if (!acc[key]) {
+          acc[key] = {
+            metric: m.metric,
+            values: [],
+            timestamp: hour,
+            tags: m.tags,
+          };
+        }
+        acc[key].values.push(m.value);
+        return acc;
+      },
+      {} as Record<string, any>,
+    );
 
     // Create hourly aggregates
     for (const group of Object.values(grouped)) {
@@ -131,7 +134,7 @@ export class MetricsService {
           metric: group.metric,
           value: avg,
           tags: group.tags,
-          bucket: '1h',
+          bucket: "1h",
           timestamp: group.timestamp,
         },
       });
@@ -147,28 +150,31 @@ export class MetricsService {
 
     const hourlyMetrics = await this.prisma.systemMetric.findMany({
       where: {
-        bucket: '1h',
+        bucket: "1h",
         timestamp: { gte: oneDayAgo, lte: now },
       },
     });
 
     // Group by metric and day
-    const grouped = hourlyMetrics.reduce((acc, m) => {
-      const day = new Date(m.timestamp);
-      day.setHours(0, 0, 0, 0);
-      const key = `${m.metric}-${day.toISOString()}`;
+    const grouped = hourlyMetrics.reduce(
+      (acc, m) => {
+        const day = new Date(m.timestamp);
+        day.setHours(0, 0, 0, 0);
+        const key = `${m.metric}-${day.toISOString()}`;
 
-      if (!acc[key]) {
-        acc[key] = {
-          metric: m.metric,
-          values: [],
-          timestamp: day,
-          tags: m.tags,
-        };
-      }
-      acc[key].values.push(m.value);
-      return acc;
-    }, {} as Record<string, any>);
+        if (!acc[key]) {
+          acc[key] = {
+            metric: m.metric,
+            values: [],
+            timestamp: day,
+            tags: m.tags,
+          };
+        }
+        acc[key].values.push(m.value);
+        return acc;
+      },
+      {} as Record<string, any>,
+    );
 
     // Create daily aggregates
     for (const group of Object.values(grouped)) {
@@ -180,7 +186,7 @@ export class MetricsService {
           metric: group.metric,
           value: avg,
           tags: group.tags,
-          bucket: '1d',
+          bucket: "1d",
           timestamp: group.timestamp,
         },
       });
@@ -192,7 +198,7 @@ export class MetricsService {
    */
   async cleanupOldMetrics() {
     const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-    
+
     const result = await this.prisma.systemMetric.deleteMany({
       where: { timestamp: { lt: cutoff } },
     });

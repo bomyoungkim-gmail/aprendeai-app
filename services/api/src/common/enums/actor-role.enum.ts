@@ -1,4 +1,4 @@
 export enum ActorRole {
-  LEARNER = 'LEARNER',
-  EDUCATOR = 'EDUCATOR',
+  LEARNER = "LEARNER",
+  EDUCATOR = "EDUCATOR",
 }

@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 
 export interface LeaderboardEntry {
   rank: number;
@@ -18,23 +18,25 @@ export class GameLeaderboardService {
   /**
    * Get global leaderboard (top players by total stars)
    */
-  async getGlobalLeaderboard(limit: number = 10): Promise<{ leaders: LeaderboardEntry[] }> {
+  async getGlobalLeaderboard(
+    limit: number = 10,
+  ): Promise<{ leaders: LeaderboardEntry[] }> {
     // Aggregate total stars per user
     const results = await this.prisma.gameProgress.groupBy({
-      by: ['userId'],
+      by: ["userId"],
       _sum: {
         stars: true,
       },
       orderBy: {
         _sum: {
-          stars: 'desc',
+          stars: "desc",
         },
       },
       take: limit,
     });
 
     // Fetch user details
-    const userIds = results.map(r => r.userId);
+    const userIds = results.map((r) => r.userId);
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },
       select: {
@@ -44,7 +46,7 @@ export class GameLeaderboardService {
       },
     });
 
-    const userMap = new Map(users.map(u => [u.id, u]));
+    const userMap = new Map(users.map((u) => [u.id, u]));
 
     // Combine and add ranks
     const leaders: LeaderboardEntry[] = results
@@ -85,25 +87,25 @@ export class GameLeaderboardService {
 
     // Get all users with their total stars (for ranking)
     const allResults = await this.prisma.gameProgress.groupBy({
-      by: ['userId'],
+      by: ["userId"],
       _sum: { stars: true },
-      orderBy: { _sum: { stars: 'desc' } },
+      orderBy: { _sum: { stars: "desc" } },
     });
 
     // Find user's rank
-    const userRank = allResults.findIndex(r => r.userId === userId) + 1;
+    const userRank = allResults.findIndex((r) => r.userId === userId) + 1;
 
     // Get nearby players (2 above, 2 below)
     const startIndex = Math.max(0, userRank - 3);
     const nearbyResults = allResults.slice(startIndex, startIndex + 5);
 
-    const userIds = nearbyResults.map(r => r.userId);
+    const userIds = nearbyResults.map((r) => r.userId);
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },
       select: { id: true, name: true, avatarUrl: true },
     });
 
-    const userMap = new Map(users.map(u => [u.id, u]));
+    const userMap = new Map(users.map((u) => [u.id, u]));
 
     const nearby: LeaderboardEntry[] = nearbyResults
       .map((result, index) => {

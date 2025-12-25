@@ -43,7 +43,7 @@ export function unregisterServiceWorker() {
         registration.unregister();
       })
       .catch((error) => {
-        console..error('[SW] Unregister failed:', error);
+        console.error('[SW] Unregister failed:', error);
       });
   }
 }

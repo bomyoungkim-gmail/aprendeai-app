@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { FamilyPrivacyGuard } from '../../privacy/family-privacy-guard.service';
-import { PrivacyMode, EducatorDashboardData } from '../../privacy/types';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { FamilyPrivacyGuard } from "../../privacy/family-privacy-guard.service";
+import { PrivacyMode, EducatorDashboardData } from "../../privacy/types";
 
 @Injectable()
 export class FamilyDashboardService {
@@ -27,7 +27,8 @@ export class FamilyDashboardService {
       },
     });
 
-    const privacyMode = (policy?.privacyMode as PrivacyMode) || PrivacyMode.AGGREGATED_ONLY; // Use enum
+    const privacyMode =
+      (policy?.privacyMode as PrivacyMode) || PrivacyMode.AGGREGATED_ONLY; // Use enum
 
     // Calculate aggregated stats
     const rawData = await this.calculateStats(learnerUserId);
@@ -39,11 +40,13 @@ export class FamilyDashboardService {
   /**
    * Calculate raw stats (before privacy filtering)
    */
-  private async calculateStats(learnerUserId: string): Promise<EducatorDashboardData> {
+  private async calculateStats(
+    learnerUserId: string,
+  ): Promise<EducatorDashboardData> {
     // Get all reading sessions for learner
     const sessions = await this.prisma.readingSession.findMany({
       where: { userId: learnerUserId },
-      orderBy: { startedAt: 'desc' }, // Fixed: createdAt doesn't exist
+      orderBy: { startedAt: "desc" }, // Fixed: createdAt doesn't exist
       take: 30, // Last 30 sessions
     });
 
@@ -112,9 +115,9 @@ export class FamilyDashboardService {
   /**
    * Calculate comprehension trend
    */
-  private calculateTrend(sessions: any[]): 'UP' | 'DOWN' | 'FLAT' {
+  private calculateTrend(sessions: any[]): "UP" | "DOWN" | "FLAT" {
     // TODO (Issue #4): Implement based on assessment scores
-    return 'FLAT';
+    return "FLAT";
   }
 
   /**
@@ -122,7 +125,7 @@ export class FamilyDashboardService {
    */
   private async getTopBlockers(learnerUserId: string): Promise<string[]> {
     // TODO (Issue #5): Analyze session events to find common struggles
-    return ['vocabulary', 'complex sentences'];
+    return ["vocabulary", "complex sentences"];
   }
 
   /**
@@ -159,9 +162,9 @@ export class FamilyDashboardService {
       comprehensionAvg: 75, // TODO: Calculate
       topBlockers: await this.getTopBlockers(learnerUserId),
       actions: [
-        'Continuar prática diária',
-        'Focar em vocabulário',
-        'Tentar textos mais curtos',
+        "Continuar prática diária",
+        "Focar em vocabulário",
+        "Tentar textos mais curtos",
       ],
     };
   }

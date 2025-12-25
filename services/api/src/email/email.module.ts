@@ -1,11 +1,12 @@
-import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bullmq';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { EmailService } from './email.service';
-import { EmailProcessor } from './email.processor';
-import { EmailController } from './email.controller';
-import { PrismaModule } from '../prisma/prisma.module';
+import { Module } from "@nestjs/common";
+import { JwtModule } from "@nestjs/jwt";
+import { ConfigModule, ConfigService } from "@nestjs/config";
+import { EmailService } from "./email.service";
+import { EmailProcessor } from "./email.processor";
+import { EmailController } from "./email.controller";
+import { PrismaModule } from "../prisma/prisma.module";
+
+import { EmailWorker } from "../workers/email.worker";
 
 @Module({
   imports: [
@@ -21,14 +22,14 @@ import { PrismaModule } from '../prisma/prisma.module';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get('JWT_SECRET'),
-        signOptions: { expiresIn: '30d' }, // Long expiry for unsubscribe links
+        secret: configService.get("JWT_SECRET"),
+        signOptions: { expiresIn: "30d" }, // Long expiry for unsubscribe links
       }),
       inject: [ConfigService],
     }),
   ],
   controllers: [EmailController],
-  providers: [EmailService, EmailProcessor],
+  providers: [EmailService, EmailProcessor, EmailWorker],
   exports: [EmailService],
 })
 export class EmailModule {}

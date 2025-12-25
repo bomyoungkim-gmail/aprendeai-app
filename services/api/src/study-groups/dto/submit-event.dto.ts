@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsInt, IsObject } from 'class-validator';
+import { IsString, IsNotEmpty, IsInt, IsObject } from "class-validator";
 
 export class SubmitEventDto {
   @IsInt()

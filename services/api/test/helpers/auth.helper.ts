@@ -1,4 +1,4 @@
-import { JwtService } from '@nestjs/jwt';
+import { JwtService } from "@nestjs/jwt";
 
 export interface TestUser {
   id: string;
@@ -16,7 +16,7 @@ export class TestAuthHelper {
   constructor(jwtSecret: string) {
     this.jwtService = new JwtService({
       secret: jwtSecret,
-      signOptions: { expiresIn: '1h' },
+      signOptions: { expiresIn: "1h" },
     });
   }
 
@@ -47,8 +47,8 @@ export class TestAuthHelper {
    */
   generateExpiredToken(user: TestUser): string {
     const jwtServiceExpired = new JwtService({
-      secret: this.jwtService['options'].secret,
-      signOptions: { expiresIn: '0s' }, // Already expired
+      secret: this.jwtService["options"].secret,
+      signOptions: { expiresIn: "0s" }, // Already expired
     });
 
     const payload = {
@@ -74,8 +74,8 @@ export class TestAuthHelper {
  */
 export function createTestUser(overrides?: Partial<TestUser>): TestUser {
   return {
-    id: overrides?.id || 'test-user-id-123',
-    email: overrides?.email || 'test@example.com',
-    name: overrides?.name || 'Test User',
+    id: overrides?.id || "test-user-id-123",
+    email: overrides?.email || "test@example.com",
+    name: overrides?.name || "Test User",
   };
 }

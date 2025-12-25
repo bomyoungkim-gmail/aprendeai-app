@@ -1,17 +1,25 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { PlanLimitsService } from '../../billing/plan-limits.service';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { PlanLimitsService } from "../../billing/plan-limits.service";
 
 @Injectable()
 export class QuotaGuard implements CanActivate {
   constructor(
     private planLimits: PlanLimitsService,
-    private reflector: Reflector
+    private reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const metric = this.reflector.get<string>('quota_metric', context.getHandler());
-    
+    const metric = this.reflector.get<string>(
+      "quota_metric",
+      context.getHandler(),
+    );
+
     // No quota check configured
     if (!metric) return true;
 
@@ -30,11 +38,11 @@ export class QuotaGuard implements CanActivate {
       throw new ForbiddenException({
         statusCode: 403,
         message: `Monthly quota exceeded for ${metric}`,
-        error: 'QUOTA_EXCEEDED',
+        error: "QUOTA_EXCEEDED",
         metric,
         remaining,
         limit: limits[`${metric}PerMonth`],
-        upgradeUrl: '/pricing',
+        upgradeUrl: "/pricing",
       });
     }
 

@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class ProviderUsageService {
@@ -33,18 +33,14 @@ export class ProviderUsageService {
         },
       });
     } catch (error) {
-      console.error('Failed to track provider usage:', error);
+      console.error("Failed to track provider usage:", error);
     }
   }
 
   /**
    * Get usage statistics by provider
    */
-  async getUsageStats(params: {
-    provider?: string;
-    from: Date;
-    to: Date;
-  }) {
+  async getUsageStats(params: { provider?: string; from: Date; to: Date }) {
     const where: any = {
       timestamp: { gte: params.from, lte: params.to },
     };
@@ -87,22 +83,25 @@ export class ProviderUsageService {
     });
 
     // Group by provider
-    const grouped = usage.reduce((acc, u) => {
-      if (!acc[u.provider]) {
-        acc[u.provider] = {
-          provider: u.provider,
-          calls: 0,
-          tokens: 0,
-          cost: 0,
-          latency: [],
-        };
-      }
-      acc[u.provider].calls++;
-      acc[u.provider].tokens += u.tokens || 0;
-      acc[u.provider].cost += u.cost || 0;
-      if (u.latency) acc[u.provider].latency.push(u.latency);
-      return acc;
-    }, {} as Record<string, any>);
+    const grouped = usage.reduce(
+      (acc, u) => {
+        if (!acc[u.provider]) {
+          acc[u.provider] = {
+            provider: u.provider,
+            calls: 0,
+            tokens: 0,
+            cost: 0,
+            latency: [],
+          };
+        }
+        acc[u.provider].calls++;
+        acc[u.provider].tokens += u.tokens || 0;
+        acc[u.provider].cost += u.cost || 0;
+        if (u.latency) acc[u.provider].latency.push(u.latency);
+        return acc;
+      },
+      {} as Record<string, any>,
+    );
 
     return Object.values(grouped).map((g: any) => ({
       provider: g.provider,
@@ -111,7 +110,10 @@ export class ProviderUsageService {
       cost: Number(g.cost.toFixed(4)),
       avgLatency:
         g.latency.length > 0
-          ? Math.round(g.latency.reduce((a: number, b: number) => a + b, 0) / g.latency.length)
+          ? Math.round(
+              g.latency.reduce((a: number, b: number) => a + b, 0) /
+                g.latency.length,
+            )
           : 0,
     }));
   }
@@ -122,7 +124,7 @@ export class ProviderUsageService {
   async getRecentCalls(provider?: string, limit = 50) {
     return this.prisma.providerUsage.findMany({
       where: provider ? { provider } : undefined,
-      orderBy: { timestamp: 'desc' },
+      orderBy: { timestamp: "desc" },
       take: limit,
     });
   }

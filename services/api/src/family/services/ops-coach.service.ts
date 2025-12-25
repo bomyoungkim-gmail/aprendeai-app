@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PromptLibraryService } from '../../prompts/prompt-library.service';
+import { Injectable } from "@nestjs/common";
+import { PromptLibraryService } from "../../prompts/prompt-library.service";
 
 @Injectable()
 export class OpsCoachService {
@@ -9,7 +9,7 @@ export class OpsCoachService {
    * Get daily boot prompt for learner
    */
   getDailyBootLearner() {
-    return this.promptLibrary.getPrompt('OPS_DAILY_BOOT_LEARNER');
+    return this.promptLibrary.getPrompt("OPS_DAILY_BOOT_LEARNER");
   }
 
   /**
@@ -20,8 +20,8 @@ export class OpsCoachService {
     const isCoReadingDay = coReadingDays.includes(today);
 
     if (isCoReadingDay) {
-      return this.promptLibrary.getPrompt('OPS_DAILY_BOOT_EDUCATOR', {
-        DAYS: 'hoje',
+      return this.promptLibrary.getPrompt("OPS_DAILY_BOOT_EDUCATOR", {
+        DAYS: "hoje",
       });
     }
 
@@ -32,7 +32,7 @@ export class OpsCoachService {
    * Get queue next item prompt
    */
   getQueueNext(title: string, estMin: number) {
-    return this.promptLibrary.getPrompt('OPS_QUEUE_NEXT', {
+    return this.promptLibrary.getPrompt("OPS_QUEUE_NEXT", {
       TITLE: title,
       MIN: estMin,
     });
@@ -42,21 +42,21 @@ export class OpsCoachService {
    * Get time log prompt
    */
   getTimeLogPrompt() {
-    return this.promptLibrary.getPrompt('OPS_TIME_LOG');
+    return this.promptLibrary.getPrompt("OPS_TIME_LOG");
   }
 
   /**
    * Get daily close prompt for learner
    */
   getDailyCloseLearner() {
-    return this.promptLibrary.getPrompt('OPS_DAILY_CLOSE_LEARNER');
+    return this.promptLibrary.getPrompt("OPS_DAILY_CLOSE_LEARNER");
   }
 
   /**
    * Get weekly report prompt for educator
    */
   getWeeklyReportEducator(streak: number, compAvg: number) {
-    return this.promptLibrary.getPrompt('OPS_WEEKLY_REPORT_EDUCATOR', {
+    return this.promptLibrary.getPrompt("OPS_WEEKLY_REPORT_EDUCATOR", {
       STREAK: streak,
       COMP: compAvg,
     });

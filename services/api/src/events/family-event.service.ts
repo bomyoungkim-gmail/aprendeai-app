@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 import {
   FamilyPolicySetEvent,
   CoSessionStartedEvent,
@@ -8,7 +8,7 @@ import {
   FamilyAlertRaisedEvent,
   CoSessionFinishedEvent,
   EventSchemas,
-} from './schemas/event-schemas';
+} from "./schemas/event-schemas";
 
 @Injectable()
 export class FamilyEventService {
@@ -25,7 +25,7 @@ export class FamilyEventService {
     // Validate event schema
     const eventType = eventPayload.type;
     const schema = EventSchemas[eventType];
-    
+
     if (!schema) {
       throw new Error(`Unknown event type: ${eventType}`);
     }
@@ -33,12 +33,15 @@ export class FamilyEventService {
     const validatedPayload = schema.parse(eventPayload);
 
     // FIX: If sessionId is a "fake" ID (e.g. policy_...), do not link to ReadingSession table
-    const isRealSessionId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId);
+    const isRealSessionId =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        sessionId,
+      );
 
     return this.prisma.sessionEvent.create({
       data: {
         readingSessionId: isRealSessionId ? sessionId : undefined,
-        eventType: eventType as any, 
+        eventType: eventType as any,
         payloadJson: validatedPayload as any,
       },
     });
@@ -118,11 +121,11 @@ export class FamilyEventService {
       where: {
         readingSessionId: sessionId, // Correct field name
         payloadJson: {
-          path: ['domain'],
-          equals: 'FAMILY',
+          path: ["domain"],
+          equals: "FAMILY",
         },
       },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: "asc" },
     });
   }
 
@@ -133,11 +136,11 @@ export class FamilyEventService {
     return this.prisma.sessionEvent.findMany({
       where: {
         payloadJson: {
-          path: ['data', 'householdId'],
+          path: ["data", "householdId"],
           equals: householdId,
         },
       },
-      orderBy: { createdAt: 'desc' }, // Fixed: timestamp doesn't exist
+      orderBy: { createdAt: "desc" }, // Fixed: timestamp doesn't exist
       take: limit,
     });
   }

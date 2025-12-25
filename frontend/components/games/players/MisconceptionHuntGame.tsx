@@ -31,45 +31,45 @@ export function MisconceptionHuntGame({ onComplete }: MisconceptionHuntGameProps
 
   return (
     <div className="space-y-4">
-      <div className="bg-pink-50 p-4 rounded-lg">
-        <h3 className="font-bold mb-2">🕵️ Qual afirmação está ERRADA?</h3>
+      <div className="bg-pink-50 border border-pink-200 p-6 rounded-lg">
+        <h3 className="font-bold mb-2 text-pink-900">🕵️ Qual afirmação está ERRADA?</h3>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {statements.map(stmt => (
           <button
             key={stmt.id}
             onClick={() => setSelectedId(stmt.id)}
-            className={`w-full p-4 text-left rounded-lg border-2 ${
+            className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
               selectedId === stmt.id
                 ? 'border-pink-600 bg-pink-50'
-                : 'border-gray-200 hover:border-pink-300'
+                : 'border-gray-300 hover:border-pink-300 bg-white'
             }`}
           >
-            {stmt.text}
+            <span className="text-gray-900">{stmt.text}</span>
           </button>
         ))}
       </div>
 
       {selectedId && (
         <div>
-          <label className="block text-sm font-medium mb-1">
+          <label className="block text-sm font-medium mb-2 text-gray-700">
             Explique por que está errada:
           </label>
           <textarea
             value={explanation}
             onChange={(e) => setExplanation(e.target.value)}
             placeholder="Justifique sua escolha com evidências..."
-            className="w-full border rounded-lg p-3 h-24"
+            className="w-full border border-gray-300 rounded-lg p-4 h-32 text-gray-900 bg-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 resize-none"
           />
-          <p className="text-xs text-gray-500 mt-1">{explanation.length} / 30 caracteres mín.</p>
+          <p className="text-xs text-gray-500 mt-2">{explanation.length} / 30 caracteres mín.</p>
         </div>
       )}
 
       <button
         onClick={handleSubmit}
         disabled={!selectedId || explanation.length < 30}
-        className="w-full bg-pink-600 text-white py-2 rounded-lg hover:bg-pink-700 disabled:opacity-50"
+        className="w-full bg-pink-600 text-white py-3 rounded-lg hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
       >
         Enviar Resposta
       </button>

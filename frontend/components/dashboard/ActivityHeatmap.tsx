@@ -80,11 +80,11 @@ export function ActivityHeatmap({ data, className = '' }: ActivityHeatmapProps) 
       <div className="flex items-center gap-2 mt-4 text-xs text-gray-600">
         <span>Less</span>
         <div className="flex gap-1">
-          <div className="w-3 h-3 rounded-sm color-empty border border-gray-200" />
-          <div className="w-3 h-3 rounded-sm color-scale-1" />
-          <div className="w-3 h-3 rounded-sm color-scale-2" />
-          <div className="w-3 h-3 rounded-sm color-scale-3" />
-          <div className="w-3 h-3 rounded-sm color-scale-4" />
+          <div className="w-3 h-3 rounded-sm border border-gray-200" style={{ backgroundColor: '#ebedf0' }} />
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#9be9a8' }} />
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#40c463' }} />
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#30a14e' }} />
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#216e39' }} />
         </div>
         <span>More</span>
       </div>

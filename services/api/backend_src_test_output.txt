@@ -1,0 +1,416 @@
+PASS src/privacy/classroom-privacy-guard.service.spec.ts (14.905 s)
+PASS src/privacy/family-privacy-guard.service.spec.ts (14.941 s)
+PASS src/state-machine/co-reading-state-machine.service.spec.ts (15.142 s)
+PASS src/prompts/prompt-library.service.spec.ts (15.165 s)
+FAIL src/content-classification/content-classification.service.spec.ts (15.194 s)
+  ● ContentClassificationService › should be defined
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [
+      10 |         ContentClassificationService,
+      11 |         {
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › classifyContent › should return existing classification if provided
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [
+      10 |         ContentClassificationService,
+      11 |         {
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › classifyContent › should classify basic content for young ages
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [
+      10 |         ContentClassificationService,
+      11 |         {
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › classifyContent › should classify intermediate content
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [
+      10 |         ContentClassificationService,
+      11 |         {
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › classifyContent › should classify advanced content for teens
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [
+      10 |         ContentClassificationService,
+      11 |         {
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › classifyContent › should provide confidence score
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [
+      10 |         ContentClassificationService,
+      11 |         {
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › filterContentByAge › should filter content within age range
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [
+      10 |         ContentClassificationService,
+      11 |         {
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › filterContentByAge › should include unclassified content
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [
+      10 |         ContentClassificationService,
+      11 |         {
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › suggestClassification › should suggest classification with confidence
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [
+      10 |         ContentClassificationService,
+      11 |         {
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › suggestClassification › should flag low confidence for review
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [
+      10 |         ContentClassificationService,
+      11 |         {
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+PASS src/family/services/family-policy.service.spec.ts (15.342 s)
+PASS src/bulk/bulk.service.spec.ts (15.322 s)
+PASS src/events/family-event.service.spec.ts (15.46 s)
+PASS src/auth/extension-auth.service.spec.ts (15.732 s)
+PASS src/sessions/reading-sessions.service.spec.ts (15.874 s)
+
+Test Suites: 1 failed, 9 passed, 10 total
+Tests:       10 failed, 74 passed, 84 total
+Snapshots:   0 total
+Time:        16.972 s, estimated 24 s
+Ran all test suites matching /src/i.

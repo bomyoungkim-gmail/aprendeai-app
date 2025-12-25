@@ -1,9 +1,9 @@
 export enum CoReadingPhase {
-  BOOT = 'BOOT',
-  PRE = 'PRE',
-  DURING = 'DURING',
-  POST = 'POST',
-  CLOSE = 'CLOSE',
+  BOOT = "BOOT",
+  PRE = "PRE",
+  DURING = "DURING",
+  POST = "POST",
+  CLOSE = "CLOSE",
 }
 
 export interface CoReadingContext {

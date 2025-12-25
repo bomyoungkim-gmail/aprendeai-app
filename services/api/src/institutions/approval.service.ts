@@ -1,11 +1,14 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { EmailService } from '../email/email.service';
-import { AdminService } from '../admin/admin.service';
-import { SubscriptionService } from '../billing/subscription.service';
-import { ProcessApprovalDto } from './dto/institution.dto';
-import * as bcrypt from 'bcrypt';
-import { UserRole } from '@prisma/client';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { EmailService } from "../email/email.service";
+import { AdminService } from "../admin/admin.service";
+import { SubscriptionService } from "../billing/subscription.service";
+import * as bcrypt from "bcrypt";
+import { UserRole } from "@prisma/client";
 
 @Injectable()
 export class ApprovalService {
@@ -27,7 +30,7 @@ export class ApprovalService {
     requestedRole: UserRole,
   ) {
     const tempPasswordHash = await bcrypt.hash(password, 10);
-    
+
     const pending = await this.prisma.pendingUserApproval.create({
       data: {
         institutionId,
@@ -35,7 +38,7 @@ export class ApprovalService {
         name,
         tempPasswordHash,
         requestedRole,
-        status: 'PENDING',
+        status: "PENDING",
       },
       include: {
         institution: {
@@ -43,24 +46,24 @@ export class ApprovalService {
         },
       },
     });
-    
+
     // Email to user
     await this.emailService.sendEmail({
       to: email,
-      subject: 'Cadastro em Análise - AprendeAI',
-      template: 'pending-approval',
+      subject: "Cadastro em Análise - AprendeAI",
+      template: "pending-approval",
       context: {
         name,
         institutionName: pending.institution.name,
       },
     });
-    
+
     // Notify institution admins
     await this.notifyInstitutionAdmins(institutionId, pending.id, name, email);
-    
+
     return {
-      status: 'pending_approval',
-      message: 'Your registration is under review',
+      status: "pending_approval",
+      message: "Your registration is under review",
       approvalId: pending.id,
     };
   }
@@ -78,15 +81,15 @@ export class ApprovalService {
           },
         },
       });
-      
+
       if (!approval) {
-        throw new NotFoundException('Approval not found');
+        throw new NotFoundException("Approval not found");
       }
-      
-      if (approval.status !== 'PENDING') {
-        throw new BadRequestException('Approval already processed');
+
+      if (approval.status !== "PENDING") {
+        throw new BadRequestException("Approval already processed");
       }
-      
+
       // Create User
       const user = await tx.user.create({
         data: {
@@ -95,37 +98,41 @@ export class ApprovalService {
           passwordHash: approval.tempPasswordHash,
           role: approval.requestedRole,
           institutionId: approval.institutionId,
-          schoolingLevel: 'ADULT',
-          status: 'ACTIVE',
+          schoolingLevel: "ADULT",
+          status: "ACTIVE",
         },
       });
-      
+
       // Create InstitutionMember
       await tx.institutionMember.create({
         data: {
           institutionId: approval.institutionId,
           userId: user.id,
           role: approval.requestedRole,
-          status: 'ACTIVE',
+          status: "ACTIVE",
         },
       });
-      
+
       // Create subscription
-      await this.subscriptionService.createInitialSubscription('USER', user.id, tx);
-      
+      await this.subscriptionService.createInitialSubscription(
+        "USER",
+        user.id,
+        tx,
+      );
+
       // Update approval status
       await tx.pendingUserApproval.update({
         where: { id: approvalId },
         data: {
-          status: 'APPROVED',
+          status: "APPROVED",
           reviewedBy,
           reviewedAt: new Date(),
         },
       });
-      
+
       return user;
     });
-    
+
     // Send approval email (outside transaction)
     const approval = await this.prisma.pendingUserApproval.findUnique({
       where: { id: approvalId },
@@ -133,23 +140,23 @@ export class ApprovalService {
         institution: true,
       },
     });
-    
+
     await this.emailService.sendEmail({
       to: approval.email,
-      subject: 'Cadastro Aprovado! 🎉',
-      template: 'approval-success',
+      subject: "Cadastro Aprovado! 🎉",
+      template: "approval-success",
       context: {
         name: approval.name,
         institutionName: approval.institution.name,
         loginUrl: `${process.env.FRONTEND_URL}/login`,
       },
     });
-    
+
     // Audit log
     await this.adminService.createAuditLog({
       actorUserId: reviewedBy,
-      action: 'APPROVE_USER',
-      resourceType: 'PendingUserApproval',
+      action: "APPROVE_USER",
+      resourceType: "PendingUserApproval",
       resourceId: approvalId,
     });
   }
@@ -157,15 +164,11 @@ export class ApprovalService {
   /**
    * Reject a pending user
    */
-  async reject(
-    approvalId: string,
-    reviewedBy: string,
-    reason: string,
-  ) {
+  async reject(approvalId: string, reviewedBy: string, reason: string) {
     const approval = await this.prisma.pendingUserApproval.update({
       where: { id: approvalId },
       data: {
-        status: 'REJECTED',
+        status: "REJECTED",
         reviewedBy,
         reviewedAt: new Date(),
         rejectionReason: reason,
@@ -174,29 +177,29 @@ export class ApprovalService {
         institution: true,
       },
     });
-    
+
     // Send rejection email
     await this.emailService.sendEmail({
       to: approval.email,
-      subject: 'Atualização sobre seu Cadastro',
-      template: 'approval-rejected',
+      subject: "Atualização sobre seu Cadastro",
+      template: "approval-rejected",
       context: {
         name: approval.name,
         institutionName: approval.institution.name,
         reason,
       },
     });
-    
+
     // Audit log
     await this.adminService.createAuditLog({
       actorUserId: reviewedBy,
-      action: 'REJECT_USER',
-      resourceType: 'PendingUserApproval',
+      action: "REJECT_USER",
+      resourceType: "PendingUserApproval",
       resourceId: approvalId,
       afterJson: { reason },
     });
-    
-    return { message: 'User registration rejected' };
+
+    return { message: "User registration rejected" };
   }
 
   /**
@@ -206,10 +209,10 @@ export class ApprovalService {
     return this.prisma.pendingUserApproval.findMany({
       where: {
         institutionId,
-        status: 'PENDING',
+        status: "PENDING",
       },
       orderBy: {
-        createdAt: 'asc',
+        createdAt: "asc",
       },
     });
   }
@@ -228,18 +231,18 @@ export class ApprovalService {
       where: {
         institutionId,
         role: {
-          in: ['ADMIN', 'INSTITUTION_ADMIN', 'SCHOOL_ADMIN'],
+          in: ["ADMIN", "INSTITUTION_ADMIN", "SCHOOL_ADMIN"],
         },
       },
       select: { email: true, name: true },
     });
-    
+
     // Send email to each admin
     for (const admin of admins) {
       await this.emailService.sendEmail({
         to: admin.email,
-        subject: 'Nova Solicitação de Cadastro',
-        template: 'admin-approval-notification',
+        subject: "Nova Solicitação de Cadastro",
+        template: "admin-approval-notification",
         context: {
           adminName: admin.name,
           userName,

@@ -1,15 +1,23 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-import { getCurrentUser } from '../common/context/request-context';
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  Logger,
+} from "@nestjs/common";
+import { PrismaClient } from "@prisma/client";
+import { getCurrentUser } from "../common/context/request-context";
 
 /**
  * Prisma Service with Multi-Tenancy Middleware
- * 
+ *
  * Phase 0: MVP-Hardening - Multi-Tenancy
  * Automatically filters queries by institution_id for tenant isolation
  */
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   private readonly logger = new Logger(PrismaService.name);
 
   /**
@@ -17,20 +25,20 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    * Add model names as they get institution_id column
    */
   private readonly TENANT_MODELS = [
-    'ReadingSession',
-    'SessionEvent',
-    'UserVocabulary',
-    'CornellNote',
-    'Highlight',
-    'DailyGoal',
-    'Streak',
-    'UserBadge',
+    "ReadingSession",
+    "SessionEvent",
+    "UserVocabulary",
+    "CornellNote",
+    "Highlight",
+    "DailyGoal",
+    "Streak",
+    "UserBadge",
   ];
 
   async onModuleInit() {
     await this.$connect();
     this.registerMiddleware();
-    this.logger.log('Prisma connected with tenant isolation middleware');
+    this.logger.log("Prisma connected with tenant isolation middleware");
   }
 
   async onModuleDestroy() {
@@ -43,14 +51,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private registerMiddleware() {
     this.$use(async (params, next) => {
       const user = getCurrentUser();
-      
+
       // Skip if no user context (system operations, migrations)
       if (!user) {
         return next(params);
       }
 
       // Skip if model doesn't require tenant isolation
-      if (!this.TENANT_MODELS.includes(params.model || '')) {
+      if (!this.TENANT_MODELS.includes(params.model || "")) {
         return next(params);
       }
 
@@ -63,7 +71,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       }
 
       // Auto-inject institution_id on creates
-      if (params.action === 'create') {
+      if (params.action === "create") {
         params.args.data = {
           ...params.args.data,
           institutionId: user.institutionId,
@@ -71,9 +79,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       }
 
       // Auto-inject institution_id on createMany
-      if (params.action === 'createMany') {
+      if (params.action === "createMany") {
         if (Array.isArray(params.args.data)) {
-          params.args.data = params.args.data.map(item => ({
+          params.args.data = params.args.data.map((item) => ({
             ...item,
             institutionId: user.institutionId,
           }));
@@ -97,12 +105,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    */
   private isReadOperation(action: string): boolean {
     return [
-      'findUnique',
-      'findFirst',
-      'findMany',
-      'count',
-      'aggregate',
-      'groupBy',
+      "findUnique",
+      "findFirst",
+      "findMany",
+      "count",
+      "aggregate",
+      "groupBy",
     ].includes(action);
   }
 
@@ -110,13 +118,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    * Check if operation writes/modifies data
    */
   private isWriteOperation(action: string): boolean {
-    return [
-      'update',
-      'updateMany',
-      'upsert',
-      'delete',
-      'deleteMany',
-    ].includes(action);
+    return ["update", "updateMany", "upsert", "delete", "deleteMany"].includes(
+      action,
+    );
   }
 }
-

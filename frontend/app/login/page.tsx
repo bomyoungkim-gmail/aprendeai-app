@@ -3,22 +3,16 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { useAuthStore } from '@/stores/auth-store';
 import api from '@/lib/api';
 import { API_ENDPOINTS } from '@/lib/config/api';
 import { ROUTES } from '@/lib/config/routes';
 import { useRouter } from 'next/navigation';
-import { Loader2, Lock, Mail } from 'lucide-react';
+import { Mail, Lock, Loader2 } from 'lucide-react';
 import OAuthButton from '@/components/auth/OAuthButton';
 import { useOAuth } from '@/hooks/use-oauth';
-
-const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+import { loginSchema, LoginFormData } from '@/lib/validation/auth-schemas';
+import { AuthInput } from '@/components/auth/AuthInput';
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -123,49 +117,25 @@ export default function LoginPage() {
           </div>
 
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <div className="relative mt-1">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="email"
-                  data-testid="email"
-                  type="email"
-                  className="block w-full rounded-md border border-gray-300 py-2 pl-10 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  placeholder="seu@email.com"
-                  {...register('email')}
-                />
-              </div>
-              {errors.email && (
-                <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
-              )}
-            </div>
+            <AuthInput
+              id="email"
+              label="Email"
+              type="email"
+              placeholder="seu@email.com"
+              icon={Mail}
+              error={errors.email?.message}
+              register={register}
+            />
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Senha
-              </label>
-              <div className="relative mt-1">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="password"
-                  data-testid="password"
-                  type="password"
-                  className="block w-full rounded-md border border-gray-300 py-2 pl-10 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  placeholder="******"
-                  {...register('password')}
-                />
-              </div>
-              {errors.password && (
-                <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>
-              )}
-            </div>
+            <AuthInput
+              id="password"
+              label="Senha"
+              type="password"
+              placeholder="••••••••"
+              icon={Lock}
+              error={errors.password?.message}
+              register={register}
+            />
 
             <div className="flex items-center justify-end">
               <div className="text-sm">

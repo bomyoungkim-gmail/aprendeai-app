@@ -1,4 +1,11 @@
-import { IsArray, IsEnum, IsInt, IsObject, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+} from "class-validator";
 
 export class UpdateCornellDto {
   @IsArray()
@@ -15,11 +22,11 @@ export class UpdateCornellDto {
 }
 
 export class CreateHighlightDto {
-  @IsEnum(['TEXT', 'AREA'])
-  kind: 'TEXT' | 'AREA';
+  @IsEnum(["TEXT", "AREA"])
+  kind: "TEXT" | "AREA";
 
-  @IsEnum(['PDF', 'IMAGE', 'DOCX'])
-  target_type: 'PDF' | 'IMAGE' | 'DOCX';
+  @IsEnum(["PDF", "IMAGE", "DOCX"])
+  target_type: "PDF" | "IMAGE" | "DOCX";
 
   @IsOptional()
   @IsInt()

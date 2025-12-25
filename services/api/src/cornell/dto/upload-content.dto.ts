@@ -1,5 +1,5 @@
-import { IsString, IsEnum, IsOptional } from 'class-validator';
-import { Language, ScopeType } from '@prisma/client';
+import { IsString, IsEnum, IsOptional } from "class-validator";
+import { Language, ScopeType } from "@prisma/client";
 
 export class UploadContentDto {
   @IsString()

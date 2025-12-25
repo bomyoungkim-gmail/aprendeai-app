@@ -6,8 +6,8 @@ import {
   Min,
   Max,
   ValidateNested,
-} from 'class-validator';
-import { AssetLayer, ReadingIntent } from '../../common/enums';
+} from "class-validator";
+import { AssetLayer, ReadingIntent } from "../../common/enums";
 
 export class LongTextConfigDto {
   @IsOptional()
@@ -47,6 +47,6 @@ export class StartSessionDto {
 }
 
 export class FinishSessionDto {
-  @IsEnum(['USER_FINISHED', 'TIMEOUT', 'ERROR'])
-  reason: 'USER_FINISHED' | 'TIMEOUT' | 'ERROR';
+  @IsEnum(["USER_FINISHED", "TIMEOUT", "ERROR"])
+  reason: "USER_FINISHED" | "TIMEOUT" | "ERROR";
 }

@@ -1,7 +1,7 @@
-import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { GroupSessionsService } from './group-sessions.service';
-import { SendChatMessageDto } from './dto/send-chat-message.dto';
+import { Injectable, BadRequestException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { GroupSessionsService } from "./group-sessions.service";
+import { SendChatMessageDto } from "./dto/send-chat-message.dto";
 
 @Injectable()
 export class GroupChatService {
@@ -10,24 +10,33 @@ export class GroupChatService {
     private readonly groupSessionsService: GroupSessionsService,
   ) {}
 
-  async sendMessage(sessionId: string, userId: string, dto: SendChatMessageDto) {
+  async sendMessage(
+    sessionId: string,
+    userId: string,
+    dto: SendChatMessageDto,
+  ) {
     // Verify user is session member
-    const session = await this.groupSessionsService.getSession(sessionId, userId);
-    
+    const session = await this.groupSessionsService.getSession(
+      sessionId,
+      userId,
+    );
+
     // Get the round
-    const round = session.rounds?.find(r => r.roundIndex === dto.roundIndex);
+    const round = session.rounds?.find((r) => r.roundIndex === dto.roundIndex);
     if (!round) {
-      throw new BadRequestException('Round not found');
+      throw new BadRequestException("Round not found");
     }
 
     // Sanitize message (basic XSS prevention)
     const sanitizedMessage = dto.message
       .trim()
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      .replace(/<[^>]*>/g, ''); // Strip HTML tags
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+      .replace(/<[^>]*>/g, ""); // Strip HTML tags
 
     if (!sanitizedMessage) {
-      throw new BadRequestException('Message cannot be empty after sanitization');
+      throw new BadRequestException(
+        "Message cannot be empty after sanitization",
+      );
     }
 
     // Create chat message
@@ -49,8 +58,8 @@ export class GroupChatService {
     });
 
     // Get user's role in session
-    const sessionMember = session.members?.find(m => m.userId === userId);
-    
+    const sessionMember = session.members?.find((m) => m.userId === userId);
+
     return {
       ...chatMessage,
       userRole: sessionMember?.assignedRole || null,
@@ -59,12 +68,15 @@ export class GroupChatService {
 
   async getMessages(sessionId: string, roundIndex: number, userId: string) {
     // Verify user is session member
-    const session = await this.groupSessionsService.getSession(sessionId, userId);
-    
+    const session = await this.groupSessionsService.getSession(
+      sessionId,
+      userId,
+    );
+
     // Get the round
-    const round = session.rounds?.find(r => r.roundIndex === roundIndex);
+    const round = session.rounds?.find((r) => r.roundIndex === roundIndex);
     if (!round) {
-      throw new BadRequestException('Round not found');
+      throw new BadRequestException("Round not found");
     }
 
     // Fetch messages for this round
@@ -82,13 +94,15 @@ export class GroupChatService {
         },
       },
       orderBy: {
-        createdAt: 'asc',
+        createdAt: "asc",
       },
     });
 
     // Add role information
-    const messagesWithRoles = messages.map(msg => {
-      const sessionMember = session.members?.find(m => m.userId === msg.userId);
+    const messagesWithRoles = messages.map((msg) => {
+      const sessionMember = session.members?.find(
+        (m) => m.userId === msg.userId,
+      );
       return {
         ...msg,
         userRole: sessionMember?.assignedRole || null,

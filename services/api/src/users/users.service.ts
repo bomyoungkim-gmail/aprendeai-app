@@ -1,8 +1,12 @@
-import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, User } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
-import { UpdateProfileDto, UpdateSettingsDto } from './dto/user.dto';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { Prisma, User } from "@prisma/client";
+import * as bcrypt from "bcrypt";
+import { UpdateProfileDto, UpdateSettingsDto } from "./dto/user.dto";
 
 @Injectable()
 export class UsersService {
@@ -17,7 +21,7 @@ export class UsersService {
   }
 
   async getUserContext(userId: string) {
-    const user = await this.prisma.user.findUnique({
+    const user = (await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -27,7 +31,7 @@ export class UsersService {
             institutionId: true,
             role: true,
           },
-          where: { status: 'ACTIVE' },
+          where: { status: "ACTIVE" },
         },
         memberships: {
           select: {
@@ -35,17 +39,15 @@ export class UsersService {
             role: true,
             family: {
               select: {
-                settings: true,
+                members: true,
               },
             },
           },
         },
       },
-    });
+    })) as any;
 
-    if (!user) throw new NotFoundException('User not found');
-
-    const familySettings = user.memberships[0]?.family?.settings as any;
+    if (!user) throw new NotFoundException("User not found");
 
     return {
       userId: user.id,
@@ -54,15 +56,18 @@ export class UsersService {
       institutionRole: user.institutionMemberships[0]?.role,
       familyId: user.memberships[0]?.familyId,
       familyRole: user.memberships[0]?.role,
-      contentFilters: familySettings?.contentFilters || { minAge: 3, maxAge: 18 },
-      screenTimeLimit: familySettings?.screenTimeLimit,
+      contentFilters: {
+        minAge: 3,
+        maxAge: 18,
+      },
+      screenTimeLimit: null,
     };
   }
 
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
     const salt = await bcrypt.genSalt();
     const passwordHash = await bcrypt.hash(data.passwordHash, salt);
-    
+
     return this.prisma.user.create({
       data: {
         ...data,
@@ -71,10 +76,13 @@ export class UsersService {
     });
   }
 
-  async updateProfile(userId: string, updateDto: UpdateProfileDto): Promise<User> {
+  async updateProfile(
+    userId: string,
+    updateDto: UpdateProfileDto,
+  ): Promise<User> {
     const user = await this.findById(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     return this.prisma.user.update({
@@ -107,16 +115,16 @@ export class UsersService {
           include: {
             group: {
               include: {
-                sessions: true
-              }
-            }
-          }
-        }
-      }
+                sessions: true,
+              },
+            },
+          },
+        },
+      },
     });
-    
-    const sessionsCount = user?.groupMemberships
-      .flatMap(m => m.group.sessions).length || 0;
+
+    const sessionsCount =
+      user?.groupMemberships.flatMap((m) => m.group.sessions).length || 0;
 
     return {
       contentsRead: contentsCount,
@@ -131,41 +139,42 @@ export class UsersService {
     // Get recent annotations
     const recentAnnotations = await this.prisma.annotation.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       take: limit,
       include: {
         content: {
-          select: { title: true }
-        }
-      }
+          select: { title: true },
+        },
+      },
     });
 
     // Get recent group joins
     const recentGroups = await this.prisma.studyGroupMember.findMany({
       where: { userId },
-      orderBy: { joinedAt: 'desc' },
+      orderBy: { joinedAt: "desc" },
       take: limit,
       include: {
         group: {
-          select: { name: true }
-        }
-      }
+          select: { name: true },
+        },
+      },
     });
 
     // Combine and sort by date
     const activities = [
-      ...recentAnnotations.map(a => ({
-        type: 'annotation' as const,
+      ...recentAnnotations.map((a) => ({
+        type: "annotation" as const,
         description: `Annotated "${a.content.title}"`,
         timestamp: a.createdAt,
       })),
-      ...recentGroups.map(g => ({
-        type: 'group_join' as const,
+      ...recentGroups.map((g) => ({
+        type: "group_join" as const,
         description: `Joined "${g.group.name}"`,
         timestamp: g.joinedAt,
       })),
-    ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-     .slice(0, limit);
+    ]
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .slice(0, limit);
 
     return activities;
   }
@@ -173,29 +182,31 @@ export class UsersService {
   async getSettings(userId: string) {
     const user = await this.findById(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     // Settings are stored as JSON in user.settings field
-    return user.settings || {
-      notifications: {
-        email: true,
-        groupInvites: true,
-        annotations: true,
-        sessionReminders: true,
-        weeklyDigest: false,
-      },
-      privacy: {
-        profileVisible: true,
-        showStats: true,
-        allowEmailDiscovery: true,
-      },
-    };
+    return (
+      user.settings || {
+        notifications: {
+          email: true,
+          groupInvites: true,
+          annotations: true,
+          sessionReminders: true,
+          weeklyDigest: false,
+        },
+        privacy: {
+          profileVisible: true,
+          showStats: true,
+          allowEmailDiscovery: true,
+        },
+      }
+    );
   }
 
   async updateSettings(userId: string, settingsDto: UpdateSettingsDto) {
-    const currentSettings = await this.getSettings(userId) as any;
-    
+    const currentSettings = (await this.getSettings(userId)) as any;
+
     const updatedSettings = {
       ...currentSettings,
       notifications: {
@@ -214,16 +225,23 @@ export class UsersService {
     });
   }
 
-  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ) {
     const user = await this.findById(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     // Verify current password
-    const isPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.passwordHash,
+    );
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Current password is incorrect');
+      throw new UnauthorizedException("Current password is incorrect");
     }
 
     // Hash new password
@@ -236,19 +254,19 @@ export class UsersService {
       data: { passwordHash: newPasswordHash },
     });
 
-    return { message: 'Password changed successfully' };
+    return { message: "Password changed successfully" };
   }
 
   async deleteAccount(userId: string, password: string) {
     const user = await this.findById(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     // Verify password before deletion
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Password is incorrect');
+      throw new UnauthorizedException("Password is incorrect");
     }
 
     // Delete user (cascade will handle related records)
@@ -256,6 +274,6 @@ export class UsersService {
       where: { id: userId },
     });
 
-    return { message: 'Account deleted successfully' };
+    return { message: "Account deleted successfully" };
   }
 }

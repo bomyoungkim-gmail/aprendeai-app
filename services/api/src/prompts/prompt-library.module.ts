@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common';
-import { PromptLibraryService } from './prompt-library.service';
+import { Module } from "@nestjs/common";
+import { PromptLibraryService } from "./prompt-library.service";
 
 @Module({
   providers: [PromptLibraryService],

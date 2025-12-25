@@ -64,19 +64,36 @@ export function SrsArenaGame({ onComplete }: SrsArenaGameProps) {
       </div>
 
       {showAnswer && (
-        <div className="flex gap-2">
-          <button
-            onClick={() => handleRating(false)}
-            className="flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600"
-          >
-            ❌ Não Lembrei
-          </button>
-          <button
-            onClick={() => handleRating(true)}
-            className="flex-1 bg-green-500 text-white py-3 rounded-lg hover:bg-green-600"
-          >
-            ✓ Lembrei!
-          </button>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h4 className="font-bold text-blue-900 mb-3 text-center text-sm">
+            Quão fácil foi lembrar?
+          </h4>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={() => handleRating(false)}
+              className="bg-red-100 hover:bg-red-200 text-red-900 py-2 px-3 rounded-lg font-medium transition-colors border border-red-300 text-sm"
+            >
+              😰 Difícil
+              <p className="text-xs mt-0.5 opacity-75">~1 dia</p>
+            </button>
+            <button
+              onClick={() => handleRating(true)}
+              className="bg-yellow-100 hover:bg-yellow-200 text-yellow-900 py-2 px-3 rounded-lg font-medium transition-colors border border-yellow-300 text-sm"
+            >
+              🤔 Bom
+              <p className="text-xs mt-0.5 opacity-75">~3 dias</p>
+            </button>
+            <button
+              onClick={() => handleRating(true)}
+              className="bg-green-100 hover:bg-green-200 text-green-900 py-2 px-3 rounded-lg font-medium transition-colors border border-green-300 text-sm"
+            >
+              😄 Fácil
+              <p className="text-xs mt-0.5 opacity-75">~7 dias</p>
+            </button>
+          </div>
+          <p className="text-xs text-gray-600 text-center mt-2">
+            ℹ️ Sua avaliação agenda a próxima revisão
+          </p>
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PromptMetadataDto } from '../dto/prompt-message.dto';
+import { Injectable } from "@nestjs/common";
+import { PromptMetadataDto } from "../dto/prompt-message.dto";
 
 export interface ParsedEvent {
   eventType: string;
@@ -17,17 +17,20 @@ export class QuickCommandParser {
     const events: ParsedEvent[] = [];
 
     // /mark unknown: word1, word2, word3
-    if (trimmed.startsWith('/mark unknown:')) {
-      const wordsText = trimmed.substring('/mark unknown:'.length).trim();
-      const words = wordsText.split(',').map((w) => w.trim()).filter((w) => w);
+    if (trimmed.startsWith("/mark unknown:")) {
+      const wordsText = trimmed.substring("/mark unknown:".length).trim();
+      const words = wordsText
+        .split(",")
+        .map((w) => w.trim())
+        .filter((w) => w);
 
       for (const word of words) {
         events.push({
-          eventType: 'MARK_UNKNOWN_WORD',
+          eventType: "MARK_UNKNOWN_WORD",
           payloadJson: {
             word,
             language: this.inferLanguage(word), // Simple heuristic for now
-            origin: 'READ',
+            origin: "READ",
             blockId: metadata.blockId,
             chunkId: metadata.chunkId,
           },
@@ -37,12 +40,12 @@ export class QuickCommandParser {
     }
 
     // /keyidea: text
-    if (trimmed.startsWith('/keyidea:')) {
-      const excerpt = trimmed.substring('/keyidea:'.length).trim();
+    if (trimmed.startsWith("/keyidea:")) {
+      const excerpt = trimmed.substring("/keyidea:".length).trim();
       events.push({
-        eventType: 'MARK_KEY_IDEA',
+        eventType: "MARK_KEY_IDEA",
         payloadJson: {
-          blockId: metadata.blockId || 'unknown',
+          blockId: metadata.blockId || "unknown",
           excerpt,
         },
       });
@@ -50,13 +53,13 @@ export class QuickCommandParser {
     }
 
     // /checkpoint: answer text
-    if (trimmed.startsWith('/checkpoint:')) {
-      const answer = trimmed.substring('/checkpoint:'.length).trim();
+    if (trimmed.startsWith("/checkpoint:")) {
+      const answer = trimmed.substring("/checkpoint:".length).trim();
       events.push({
-        eventType: 'CHECKPOINT_RESPONSE',
+        eventType: "CHECKPOINT_RESPONSE",
         payloadJson: {
-          blockId: metadata.blockId || 'unknown',
-          questionId: 'generated', // Will be enriched by context
+          blockId: metadata.blockId || "unknown",
+          questionId: "generated", // Will be enriched by context
           answerText: answer,
         },
       });
@@ -70,9 +73,9 @@ export class QuickCommandParser {
     if (productionMatch) {
       const [, type, text] = productionMatch;
       events.push({
-        eventType: 'PRODUCTION_SUBMIT',
+        eventType: "PRODUCTION_SUBMIT",
         payloadJson: {
-          type: type as 'FREE_RECALL' | 'SENTENCES' | 'ORAL' | 'OPEN_DIALOGUE',
+          type: type as "FREE_RECALL" | "SENTENCES" | "ORAL" | "OPEN_DIALOGUE",
           text: text.trim(),
         },
       });
@@ -87,34 +90,34 @@ export class QuickCommandParser {
    * Simple language inference heuristic
    * Returns 'PT' by default, can be enhanced later
    */
-  private inferLanguage(word: string): 'PT' | 'EN' | 'KO' {
+  private inferLanguage(word: string): "PT" | "EN" | "KO" {
     // Korean detection (Hangul range)
     if (/[\uac00-\ud7af]/.test(word)) {
-      return 'KO';
+      return "KO";
     }
 
     // English detection (simple heuristic: common English words or mostly ASCII)
     const commonEnglish = [
-      'the',
-      'is',
-      'are',
-      'was',
-      'were',
-      'have',
-      'has',
-      'had',
-      'do',
-      'does',
-      'did',
+      "the",
+      "is",
+      "are",
+      "was",
+      "were",
+      "have",
+      "has",
+      "had",
+      "do",
+      "does",
+      "did",
     ];
     if (
       commonEnglish.includes(word.toLowerCase()) ||
       /^[a-z]+$/.test(word.toLowerCase())
     ) {
-      return 'EN';
+      return "EN";
     }
 
     // Default to Portuguese
-    return 'PT';
+    return "PT";
   }
 }

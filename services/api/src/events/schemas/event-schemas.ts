@@ -1,16 +1,16 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Base event schema
 export const BaseEventSchema = z.object({
-  domain: z.enum(['FAMILY', 'CLASS']),
+  domain: z.enum(["FAMILY", "CLASS"]),
   type: z.string(),
   data: z.record(z.string(), z.any()), // Fixed: record requires key and value types
 });
 
 // FAMILY Event Types
 export const FamilyPolicySetSchema = z.object({
-  domain: z.literal('FAMILY'),
-  type: z.literal('FAMILY_POLICY_SET'),
+  domain: z.literal("FAMILY"),
+  type: z.literal("FAMILY_POLICY_SET"),
   data: z.object({
     householdId: z.string(),
     learnerUserId: z.string(),
@@ -21,14 +21,14 @@ export const FamilyPolicySetSchema = z.object({
       toolWordsGateEnabled: z.boolean(),
       dailyMinMinutes: z.number(),
       dailyReviewCap: z.number(),
-      privacyMode: z.enum(['AGGREGATED_ONLY', 'AGGREGATED_PLUS_TRIGGERS']),
+      privacyMode: z.enum(["AGGREGATED_ONLY", "AGGREGATED_PLUS_TRIGGERS"]),
     }),
   }),
 });
 
 export const CoSessionStartedSchema = z.object({
-  domain: z.literal('FAMILY'),
-  type: z.literal('CO_SESSION_STARTED'),
+  domain: z.literal("FAMILY"),
+  type: z.literal("CO_SESSION_STARTED"),
   data: z.object({
     householdId: z.string(),
     coSessionId: z.string(),
@@ -41,42 +41,38 @@ export const CoSessionStartedSchema = z.object({
 });
 
 export const CoSessionPhaseChangedSchema = z.object({
-  domain: z.literal('FAMILY'),
-  type: z.literal('CO_SESSION_PHASE_CHANGED'),
+  domain: z.literal("FAMILY"),
+  type: z.literal("CO_SESSION_PHASE_CHANGED"),
   data: z.object({
     coSessionId: z.string(),
-    phase: z.enum(['BOOT', 'PRE', 'DURING', 'POST', 'CLOSE']),
+    phase: z.enum(["BOOT", "PRE", "DURING", "POST", "CLOSE"]),
   }),
 });
 
 export const EducatorInterventionChosenSchema = z.object({
-  domain: z.literal('FAMILY'),
-  type: z.literal('EDUCATOR_INTERVENTION_CHOSEN'),
+  domain: z.literal("FAMILY"),
+  type: z.literal("EDUCATOR_INTERVENTION_CHOSEN"),
   data: z.object({
     coSessionId: z.string(),
-    choice: z.enum(['A', 'B', 'C']),
-    reason: z.enum([
-      'CHECKPOINT_FAIL_2X',
-      'FRUSTRATION_HIGH',
-      'TIMEBOX_SHORT',
-    ]),
+    choice: z.enum(["A", "B", "C"]),
+    reason: z.enum(["CHECKPOINT_FAIL_2X", "FRUSTRATION_HIGH", "TIMEBOX_SHORT"]),
     note: z.string().optional(),
   }),
 });
 
 export const FamilyAlertRaisedSchema = z.object({
-  domain: z.literal('FAMILY'),
-  type: z.literal('FAMILY_ALERT_RAISED'),
+  domain: z.literal("FAMILY"),
+  type: z.literal("FAMILY_ALERT_RAISED"),
   data: z.object({
     householdId: z.string(),
     learnerUserId: z.string(),
     alertType: z.enum([
-      'SLUMP',
-      'LOW_COMPREHENSION',
-      'HIGH_UNKNOWN_DENSITY',
-      'STREAK_BROKEN',
+      "SLUMP",
+      "LOW_COMPREHENSION",
+      "HIGH_UNKNOWN_DENSITY",
+      "STREAK_BROKEN",
     ]),
-    severity: z.enum(['LOW', 'MED', 'HIGH']),
+    severity: z.enum(["LOW", "MED", "HIGH"]),
     windowDays: z.number(),
     metrics: z.object({
       compAvg: z.number(),
@@ -87,11 +83,11 @@ export const FamilyAlertRaisedSchema = z.object({
 });
 
 export const CoSessionFinishedSchema = z.object({
-  domain: z.literal('FAMILY'),
-  type: z.literal('CO_SESSION_FINISHED'),
+  domain: z.literal("FAMILY"),
+  type: z.literal("CO_SESSION_FINISHED"),
   data: z.object({
     coSessionId: z.string(),
-    result: z.enum(['COMPLETED', 'ABORTED', 'TIMEOUT']),
+    result: z.enum(["COMPLETED", "ABORTED", "TIMEOUT"]),
     durationMin: z.number(),
     summary: z.object({
       targetWordsCount: z.number(),
@@ -104,8 +100,8 @@ export const CoSessionFinishedSchema = z.object({
 
 // CLASS Event Types
 export const ClassPolicySetSchema = z.object({
-  domain: z.literal('CLASS'),
-  type: z.literal('CLASS_POLICY_SET'),
+  domain: z.literal("CLASS"),
+  type: z.literal("CLASS_POLICY_SET"),
   data: z.object({
     classroomId: z.string(),
     policy: z.object({
@@ -114,18 +110,18 @@ export const ClassPolicySetSchema = z.object({
       toolWordsGateEnabled: z.boolean(),
       dailyReviewCap: z.number(),
       privacyMode: z.enum([
-        'AGGREGATED_ONLY',
-        'AGGREGATED_PLUS_HELP_REQUESTS',
-        'AGGREGATED_PLUS_FLAGS',
+        "AGGREGATED_ONLY",
+        "AGGREGATED_PLUS_HELP_REQUESTS",
+        "AGGREGATED_PLUS_FLAGS",
       ]),
-      interventionMode: z.enum(['PROMPT_COACH', 'PROMPT_COACH_PLUS_1ON1']),
+      interventionMode: z.enum(["PROMPT_COACH", "PROMPT_COACH_PLUS_1ON1"]),
     }),
   }),
 });
 
 export const ClassWeeklyPlanCreatedSchema = z.object({
-  domain: z.literal('CLASS'),
-  type: z.literal('CLASS_WEEKLY_PLAN_CREATED'),
+  domain: z.literal("CLASS"),
+  type: z.literal("CLASS_WEEKLY_PLAN_CREATED"),
   data: z.object({
     classroomId: z.string(),
     weekStart: z.string(),
@@ -135,13 +131,13 @@ export const ClassWeeklyPlanCreatedSchema = z.object({
 });
 
 export const ClassAlertRaisedSchema = z.object({
-  domain: z.literal('CLASS'),
-  type: z.literal('CLASS_ALERT_RAISED'),
+  domain: z.literal("CLASS"),
+  type: z.literal("CLASS_ALERT_RAISED"),
   data: z.object({
     classroomId: z.string(),
     learnerUserId: z.string(),
-    alertType: z.enum(['HELP_REQUEST', 'SLUMP', 'LOW_ENGAGEMENT']),
-    severity: z.enum(['LOW', 'MED', 'HIGH']),
+    alertType: z.enum(["HELP_REQUEST", "SLUMP", "LOW_ENGAGEMENT"]),
+    severity: z.enum(["LOW", "MED", "HIGH"]),
   }),
 });
 

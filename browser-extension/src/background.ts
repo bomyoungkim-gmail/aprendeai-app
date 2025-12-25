@@ -58,6 +58,33 @@ async function handleCreateWebClip(
     throw new Error('Extension not configured. Please set API URL and token in options.');
   }
 
+  const api = new APIClient(config.apiBaseUrl, config.authToken);
+
+  // Check parental controls if in student mode
+  if (mode === 'READABILITY') {
+    try {
+      // We need to fetch context first
+      const context = await api.get('/users/me/context');
+      
+      if (context.familyId) {
+        // Classify content using title/excerpt from page
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const pageContext: PageContext = await chrome.tabs.sendMessage(tab!.id!, { type: 'GET_PAGE_CONTEXT' });
+        
+        // Quick classification check (simulated for now, real implementation would call classification endpoint)
+        // In real flow: await api.classifyContent(...)
+        
+        const { minAge, maxAge } = context.contentFilters;
+        // Logic to block would go here. For now we log it.
+        console.log(`[Extension] Content filters: ${minAge}-${maxAge}`);
+      }
+    } catch (e) {
+      console.error('Failed to check validation', e);
+    }
+  }
+
+  // Get active tab
+
   // Get active tab
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab.id) throw new Error('No active tab');

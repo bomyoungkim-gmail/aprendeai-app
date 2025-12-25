@@ -1,6 +1,15 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsEmail, IsInt, Min, IsBoolean } from 'class-validator';
-import { InstitutionType, UserRole } from '@prisma/client';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsEmail,
+  IsInt,
+  Min,
+  IsBoolean,
+} from "class-validator";
+import { InstitutionType, UserRole } from "@prisma/client";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class CreateInstitutionDto {
   @ApiProperty()
@@ -126,7 +135,7 @@ export class RegisterWithInviteDto {
 
 // Domain DTOs
 export class AddDomainDto {
-  @ApiProperty({ example: '@escola.edu.br' })
+  @ApiProperty({ example: "@escola.edu.br" })
   @IsString()
   domain!: string;
 

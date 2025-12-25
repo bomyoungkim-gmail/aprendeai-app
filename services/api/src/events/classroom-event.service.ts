@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 import {
   ClassPolicySetEvent,
   ClassWeeklyPlanCreatedEvent,
   ClassAlertRaisedEvent,
   EventSchemas,
-} from './schemas/event-schemas';
+} from "./schemas/event-schemas";
 
 @Injectable()
 export class ClassroomEventService {
@@ -22,7 +22,7 @@ export class ClassroomEventService {
     // Validate event schema
     const eventType = eventPayload.type;
     const schema = EventSchemas[eventType];
-    
+
     if (!schema) {
       throw new Error(`Unknown event type: ${eventType}`);
     }
@@ -30,9 +30,10 @@ export class ClassroomEventService {
     const validatedPayload = schema.parse(eventPayload);
 
     // For classroom events using fake IDs (policy_, plan_, help_), do not set readingSessionId
-    const isFakeSessionId = sessionId.startsWith('policy_') || 
-                           sessionId.startsWith('plan_') || 
-                           sessionId.startsWith('help_');
+    const isFakeSessionId =
+      sessionId.startsWith("policy_") ||
+      sessionId.startsWith("plan_") ||
+      sessionId.startsWith("help_");
 
     return this.prisma.sessionEvent.create({
       data: {
@@ -84,11 +85,11 @@ export class ClassroomEventService {
     return this.prisma.sessionEvent.findMany({
       where: {
         payloadJson: {
-          path: ['data', 'classroomId'],
+          path: ["data", "classroomId"],
           equals: classroomId,
         },
       },
-      orderBy: { createdAt: 'desc' }, // Fixed: timestamp doesn't exist
+      orderBy: { createdAt: "desc" }, // Fixed: timestamp doesn't exist
       take: limit,
     });
   }
@@ -100,11 +101,11 @@ export class ClassroomEventService {
     return this.prisma.sessionEvent.findMany({
       where: {
         payloadJson: {
-          path: ['data', 'learnerUserId'],
+          path: ["data", "learnerUserId"],
           equals: learnerUserId,
         },
       },
-      orderBy: { createdAt: 'desc' }, // Fixed: timestamp doesn't exist
+      orderBy: { createdAt: "desc" }, // Fixed: timestamp doesn't exist
       take: limit,
     });
   }

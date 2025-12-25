@@ -11,7 +11,15 @@ Refactored for Phase 2:
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from middleware import HMACAuthMiddleware  # Phase 0: HMAC Auth
+from middleware.hmac_auth import HMACAuthMiddleware
+from api import (
+    games_router, 
+    analytics_router,
+    generator_router,
+    grading_router,
+    recommendation_router,
+    classification_router
+)
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import os
@@ -385,6 +393,10 @@ async def value_error_handler(request: Request, exc: ValueError):
 # Include Recommender Router
 from api.recommender_router import router as recommender_router
 app.include_router(recommender_router, prefix="/api")
+
+# Include Classification Router
+from api.classification_router import router as classification_router
+app.include_router(classification_router, prefix="/api")
 
 # Include Gamification Router
 from api.gamification_router import router as gamification_router

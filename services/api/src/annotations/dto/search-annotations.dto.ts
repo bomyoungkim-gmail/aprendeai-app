@@ -1,5 +1,11 @@
-import { IsOptional, IsString, IsEnum, IsDateString, IsBoolean } from 'class-validator';
-import { AnnotationType } from '@prisma/client';
+import {
+  IsOptional,
+  IsString,
+  IsEnum,
+  IsDateString,
+  IsBoolean,
+} from "class-validator";
+import { AnnotationType } from "@prisma/client";
 
 export class SearchAnnotationsDto {
   @IsOptional()

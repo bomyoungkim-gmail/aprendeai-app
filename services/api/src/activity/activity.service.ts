@@ -1,9 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { differenceInDays, startOfDay, subDays } from 'date-fns';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { differenceInDays, startOfDay, subDays } from "date-fns";
 
 export interface ActivityStats {
   totalDays: number;
+  activeTopics: number; // New: count of distinct topics studied recently
   currentStreak: number;
   longestStreak: number;
   avgMinutesPerDay: number;
@@ -30,7 +31,7 @@ export class ActivityService {
    */
   async trackActivity(
     userId: string,
-    type: 'study' | 'annotation' | 'read' | 'session',
+    type: "study" | "annotation" | "read" | "session",
     minutes: number = 1,
   ) {
     const today = startOfDay(new Date());
@@ -46,28 +47,17 @@ export class ActivityService {
         create: {
           userId,
           date: today,
-          minutesStudied: type === 'study' ? minutes : 0,
-          sessionsCount: type === 'session' ? 1 : 0,
-          contentsRead: type === 'read' ? 1 : 0,
-          annotationsCreated: type === 'annotation' ? 1 : 0,
+          minutesStudied: type === "study" ? minutes : 0,
+          sessionsCount: type === "session" ? 1 : 0,
+          contentsRead: type === "read" ? 1 : 0,
+          annotationsCreated: type === "annotation" ? 1 : 0,
         },
         update: {
-          minutesStudied:
-            type === 'study'
-              ? { increment: minutes }
-              : undefined,
-          sessionsCount:
-            type === 'session'
-              ? { increment: 1 }
-              : undefined,
-          contentsRead:
-            type === 'read'
-              ? { increment: 1 }
-              : undefined,
+          minutesStudied: type === "study" ? { increment: minutes } : undefined,
+          sessionsCount: type === "session" ? { increment: 1 } : undefined,
+          contentsRead: type === "read" ? { increment: 1 } : undefined,
           annotationsCreated:
-            type === 'annotation'
-              ? { increment: 1 }
-              : undefined,
+            type === "annotation" ? { increment: 1 } : undefined,
         },
       });
 
@@ -95,12 +85,12 @@ export class ActivityService {
         },
       },
       orderBy: {
-        date: 'asc',
+        date: "asc",
       },
     });
 
     return activities.map((activity) => ({
-      date: activity.date.toISOString().split('T')[0],
+      date: activity.date.toISOString().split("T")[0],
       minutesStudied: activity.minutesStudied,
       sessionsCount: activity.sessionsCount,
       contentsRead: activity.contentsRead,
@@ -124,7 +114,7 @@ export class ActivityService {
         },
       },
       orderBy: {
-        date: 'desc',
+        date: "desc",
       },
     });
 
@@ -155,14 +145,38 @@ export class ActivityService {
       .filter((a) => new Date(a.date) >= thirtyDaysAgo)
       .reduce((sum, a) => sum + a.minutesStudied, 0);
 
+    // Calculate active topics (distinct topics studied in last 7 days)
+    const activeTopics = await this.getActiveTopicsCount(userId, sevenDaysAgo);
+
     return {
       totalDays,
+      activeTopics,
       currentStreak,
       longestStreak,
       avgMinutesPerDay,
       thisWeekMinutes,
       thisMonthMinutes,
     };
+  }
+
+  /**
+   * Get count of distinct topics studied in the last N days
+   */
+  private async getActiveTopicsCount(userId: string, since: Date): Promise<number> {
+    const topics = await this.prisma.userTopicMastery.findMany({
+      where: {
+        userId,
+        lastActivityAt: {
+          gte: since,
+        },
+      },
+      select: {
+        topic: true,
+      },
+      distinct: ['topic'],
+    });
+
+    return topics.length;
   }
 
   /**

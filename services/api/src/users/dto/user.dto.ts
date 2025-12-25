@@ -1,16 +1,37 @@
-import { IsOptional, IsString, IsEnum, IsArray, MaxLength, MinLength } from 'class-validator';
-import { Language } from '@prisma/client';
+import {
+  IsOptional,
+  IsString,
+  IsEnum,
+  IsArray,
+  IsDateString,
+  IsInt,
+  Min,
+  Max,
+  MaxLength,
+  MinLength,
+} from "class-validator";
+import { Language } from "@prisma/client";
+import { Transform } from "class-transformer";
+
+export enum Gender {
+  MALE = "MALE",
+  FEMALE = "FEMALE",
+  OTHER = "OTHER",
+  PREFER_NOT_TO_SAY = "PREFER_NOT_TO_SAY",
+}
 
 export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   @MinLength(2)
   @MaxLength(100)
+  @Transform(({ value }) => value?.trim())
   name?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(500)
+  @Transform(({ value }) => value?.trim())
   bio?: string;
 
   @IsOptional()
@@ -24,7 +45,27 @@ export class UpdateProfileDto {
 
   @IsOptional()
   @IsString()
-  schoolingLevel?: string; // String: 'ELEMENTARY', 'MIDDLE', 'HIGH', 'COLLEGE', 'ADULT'
+  schoolingLevel?: string; // String: 'FUNDAMENTAL', 'MEDIO', 'SUPERIOR', 'POS_GRADUACAO'
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  @Transform(({ value }) => value?.trim())
+  address?: string;
+
+  @IsOptional()
+  @IsEnum(Gender)
+  sex?: Gender;
+
+  @IsOptional()
+  @IsDateString()
+  birthday?: string; // ISO date string
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(120)
+  age?: number;
 }
 
 export class UpdateSettingsDto {

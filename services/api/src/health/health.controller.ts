@@ -1,15 +1,15 @@
-import { Controller, Get } from '@nestjs/common';
-import { Public } from '../auth/decorators/public.decorator';
+import { Controller, Get } from "@nestjs/common";
+import { Public } from "../auth/decorators/public.decorator";
 
-@Controller('health')
+@Controller("health")
 export class HealthController {
   @Public()
   @Get()
   check() {
     return {
-      status: 'ok',
+      status: "ok",
       timestamp: new Date().toISOString(),
-      service: 'aprendeai-api',
+      service: "aprendeai-api",
     };
   }
 }

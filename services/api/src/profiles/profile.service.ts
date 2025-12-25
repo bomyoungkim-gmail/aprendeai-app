@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { UpdateProfileDto } from './dto/profile.dto';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { UpdateProfileDto } from "./dto/profile.dto";
 
 @Injectable()
 export class ProfileService {
@@ -15,7 +15,7 @@ export class ProfileService {
       profile = await this.prisma.learnerProfile.create({
         data: {
           userId,
-          educationLevel: 'ADULTO_LEIGO',
+          educationLevel: "ADULTO_LEIGO",
           dailyTimeBudgetMin: 30,
         },
       });
@@ -35,7 +35,9 @@ export class ProfileService {
       where: { userId },
       data: {
         ...data,
-        ...(data.educationLevel && { educationLevel: data.educationLevel as any }),
+        ...(data.educationLevel && {
+          educationLevel: data.educationLevel as any,
+        }),
       },
     });
   }

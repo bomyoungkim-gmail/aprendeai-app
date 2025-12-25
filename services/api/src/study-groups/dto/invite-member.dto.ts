@@ -1,5 +1,5 @@
-import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
-import { GroupRole } from '@prisma/client';
+import { IsString, IsNotEmpty, IsEnum } from "class-validator";
+import { GroupRole } from "@prisma/client";
 
 export class InviteGroupMemberDto {
   @IsString()

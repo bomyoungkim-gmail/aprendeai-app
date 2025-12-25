@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
-import { StudyGroupsWebSocketGateway } from './study-groups-ws.gateway';
-import { AuthModule } from '../auth/auth.module';
+import { Module } from "@nestjs/common";
+import { StudyGroupsWebSocketGateway } from "./study-groups-ws.gateway";
+import { AuthModule } from "../auth/auth.module";
 
-import { WsJwtGuard } from './guards/ws-jwt.guard';
+import { WsJwtGuard } from "./guards/ws-jwt.guard";
 
 @Module({
   imports: [AuthModule],

@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { AdminService } from '../admin/admin.service';
-import { SSOProvider } from '@prisma/client';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { AdminService } from "../admin/admin.service";
+import { SSOProvider } from "@prisma/client";
 
 interface CreateSSOConfigDto {
   institutionId: string;
@@ -41,7 +45,7 @@ export class SSOService {
     });
 
     if (!institution) {
-      throw new NotFoundException('Institution not found');
+      throw new NotFoundException("Institution not found");
     }
 
     // Check if SSO already configured
@@ -50,7 +54,9 @@ export class SSOService {
     });
 
     if (existing) {
-      throw new BadRequestException('SSO already configured for this institution');
+      throw new BadRequestException(
+        "SSO already configured for this institution",
+      );
     }
 
     // Validate provider-specific fields
@@ -79,8 +85,8 @@ export class SSOService {
     // Audit log
     await this.adminService.createAuditLog({
       actorUserId: createdBy,
-      action: 'CREATE_SSO_CONFIG',
-      resourceType: 'SSOConfiguration',
+      action: "CREATE_SSO_CONFIG",
+      resourceType: "SSOConfiguration",
       resourceId: config.id,
       afterJson: config,
     });
@@ -102,27 +108,31 @@ export class SSOService {
     });
 
     if (!config) {
-      throw new NotFoundException('SSO not configured for this institution');
+      throw new NotFoundException("SSO not configured for this institution");
     }
 
     // Mask sensitive data
     return {
       ...config,
-      clientSecret: config.clientSecret ? '••••••••' : null,
-      certificate: config.certificate ? '••••••••' : null,
+      clientSecret: config.clientSecret ? "••••••••" : null,
+      certificate: config.certificate ? "••••••••" : null,
     };
   }
 
   /**
    * Update SSO configuration
    */
-  async updateConfig(institutionId: string, dto: UpdateSSOConfigDto, updatedBy: string) {
+  async updateConfig(
+    institutionId: string,
+    dto: UpdateSSOConfigDto,
+    updatedBy: string,
+  ) {
     const config = await this.prisma.sSOConfiguration.findFirst({
       where: { institutionId },
     });
 
     if (!config) {
-      throw new NotFoundException('SSO not configured');
+      throw new NotFoundException("SSO not configured");
     }
 
     const before = { ...config };
@@ -143,8 +153,8 @@ export class SSOService {
     // Audit log
     await this.adminService.createAuditLog({
       actorUserId: updatedBy,
-      action: 'UPDATE_SSO_CONFIG',
-      resourceType: 'SSOConfiguration',
+      action: "UPDATE_SSO_CONFIG",
+      resourceType: "SSOConfiguration",
       resourceId: config.id,
       beforeJson: before,
       afterJson: updated,
@@ -162,7 +172,7 @@ export class SSOService {
     });
 
     if (!config) {
-      throw new NotFoundException('SSO not configured');
+      throw new NotFoundException("SSO not configured");
     }
 
     await this.prisma.sSOConfiguration.delete({
@@ -178,13 +188,13 @@ export class SSOService {
     // Audit log
     await this.adminService.createAuditLog({
       actorUserId: deletedBy,
-      action: 'DELETE_SSO_CONFIG',
-      resourceType: 'SSOConfiguration',
+      action: "DELETE_SSO_CONFIG",
+      resourceType: "SSOConfiguration",
       resourceId: config.id,
       beforeJson: config,
     });
 
-    return { message: 'SSO configuration deleted successfully' };
+    return { message: "SSO configuration deleted successfully" };
   }
 
   /**
@@ -196,7 +206,7 @@ export class SSOService {
     });
 
     if (!config) {
-      throw new NotFoundException('SSO not configured');
+      throw new NotFoundException("SSO not configured");
     }
 
     // TODO: Implement actual SAML/OAuth validation
@@ -206,9 +216,9 @@ export class SSOService {
 
     return {
       valid: isValid,
-      message: isValid 
-        ? 'Configuration appears valid (full test not implemented)' 
-        : 'Missing required fields',
+      message: isValid
+        ? "Configuration appears valid (full test not implemented)"
+        : "Missing required fields",
       provider: config.provider,
     };
   }
@@ -218,17 +228,17 @@ export class SSOService {
    */
   private validateProviderConfig(provider: SSOProvider, config: any): boolean {
     switch (provider) {
-      case 'SAML':
+      case "SAML":
         return !!(config.entityId && config.ssoUrl && config.certificate);
-      
-      case 'GOOGLE_WORKSPACE':
-      case 'MICROSOFT_ENTRA':
-      case 'OKTA':
-      case 'CUSTOM_OIDC':
+
+      case "GOOGLE_WORKSPACE":
+      case "MICROSOFT_ENTRA":
+      case "OKTA":
+      case "CUSTOM_OIDC":
         return !!(config.clientId && config.clientSecret);
-      
+
       default:
-        throw new BadRequestException('Unsupported SSO provider');
+        throw new BadRequestException("Unsupported SSO provider");
     }
   }
 }

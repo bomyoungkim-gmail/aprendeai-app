@@ -1,6 +1,6 @@
 /**
  * Tenant Guard
- * 
+ *
  * Phase 0: Multi-Tenancy - RBAC
  * Prevents cross-tenant data access
  */
@@ -11,8 +11,8 @@ import {
   ExecutionContext,
   ForbiddenException,
   Logger,
-} from '@nestjs/common';
-import { getCurrentUser } from '../context/request-context';
+} from "@nestjs/common";
+import { getCurrentUser } from "../context/request-context";
 
 @Injectable()
 export class TenantGuard implements CanActivate {
@@ -45,7 +45,7 @@ export class TenantGuard implements CanActivate {
           `attempted to access resource in institution ${resourceTenantId}`,
       );
       throw new ForbiddenException(
-        'Access denied: cross-tenant access not allowed',
+        "Access denied: cross-tenant access not allowed",
       );
     }
 

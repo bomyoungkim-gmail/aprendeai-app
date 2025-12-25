@@ -1,9 +1,9 @@
-import { Controller, Get, Param, Res } from '@nestjs/common';
-import { Response } from 'express';
-import { PrismaService } from '../prisma/prisma.service';
-import { JwtService } from '@nestjs/jwt';
+import { Controller, Get, Param, Res } from "@nestjs/common";
+import { Response } from "express";
+import { PrismaService } from "../prisma/prisma.service";
+import { JwtService } from "@nestjs/jwt";
 
-@Controller('email')
+@Controller("email")
 export class EmailController {
   constructor(
     private readonly prisma: PrismaService,
@@ -13,11 +13,8 @@ export class EmailController {
   /**
    * Unsubscribe from all emails
    */
-  @Get('unsubscribe/:token')
-  async unsubscribe(
-    @Param('token') token: string,
-    @Res() res: Response,
-  ) {
+  @Get("unsubscribe/:token")
+  async unsubscribe(@Param("token") token: string, @Res() res: Response) {
     try {
       // Decode token to get user ID
       const payload = this.jwtService.verify(token);

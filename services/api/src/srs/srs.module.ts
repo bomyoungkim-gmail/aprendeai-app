@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common';
-import { SrsService } from './srs.service';
+import { Module } from "@nestjs/common";
+import { SrsService } from "./srs.service";
 
 @Module({
   providers: [SrsService],

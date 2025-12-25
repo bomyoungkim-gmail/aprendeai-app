@@ -1,8 +1,8 @@
-import { IsString, IsEnum, IsOptional, IsArray } from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsArray } from "class-validator";
 
 export enum CaptureMode {
-  SELECTION = 'SELECTION',
-  READABILITY = 'READABILITY',
+  SELECTION = "SELECTION",
+  READABILITY = "READABILITY",
 }
 
 export class CreateWebClipDto {
@@ -28,7 +28,7 @@ export class CreateWebClipDto {
 
   @IsString()
   @IsOptional()
-  languageHint?: 'PT_BR' | 'EN' | 'KO'; // Fixed: PT_BR matches Prisma enum
+  languageHint?: "PT_BR" | "EN" | "KO"; // Fixed: PT_BR matches Prisma enum
 
   @IsArray()
   @IsString({ each: true })
@@ -39,11 +39,11 @@ export class CreateWebClipDto {
 export class StartWebClipSessionDto {
   @IsString()
   @IsOptional()
-  assetLayer?: string = 'L1';
+  assetLayer?: string = "L1";
 
-  @IsEnum(['inspectional', 'analytical'])
+  @IsEnum(["inspectional", "analytical"])
   @IsOptional()
-  readingIntent?: 'inspectional' | 'analytical' = 'inspectional';
+  readingIntent?: "inspectional" | "analytical" = "inspectional";
 
   @IsOptional()
   timeboxMin?: number = 15;

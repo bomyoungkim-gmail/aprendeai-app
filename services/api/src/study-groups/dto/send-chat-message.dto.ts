@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, MaxLength, IsInt, Min } from 'class-validator';
+import { IsString, IsNotEmpty, MaxLength, IsInt, Min } from "class-validator";
 
 export class SendChatMessageDto {
   @IsInt()
@@ -7,6 +7,6 @@ export class SendChatMessageDto {
 
   @IsString()
   @IsNotEmpty()
-  @MaxLength(500, { message: 'Message cannot exceed 500 characters' })
+  @MaxLength(500, { message: "Message cannot exceed 500 characters" })
   message: string;
 }

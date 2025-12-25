@@ -2,11 +2,11 @@
  * Redis Helper for Context Enrichment
  * Loads compact pedagogical state and manages memory compaction jobs
  */
-import Redis from 'ioredis';
-import { Logger } from '@nestjs/common';
-import * as amqp from 'amqplib';
+import Redis from "ioredis";
+import { Logger } from "@nestjs/common";
+import * as amqp from "amqplib";
 
-const logger = new Logger('RedisContextHelper');
+const logger = new Logger("RedisContextHelper");
 
 // Singleton Redis client (lazy init)
 let redisClient: Redis | null = null;
@@ -19,7 +19,7 @@ let rabbitChannel: any = null;
  */
 function getRedisClient(): Redis {
   if (!redisClient) {
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379/0';
+    const redisUrl = process.env.REDIS_URL || "redis://localhost:6379/0";
     redisClient = new Redis(redisUrl, {
       retryStrategy: (times) => {
         const delay = Math.min(times * 50, 2000);
@@ -27,16 +27,16 @@ function getRedisClient(): Redis {
       },
       maxRetriesPerRequest: 3,
     });
-    
-    redisClient.on('error', (err) => {
+
+    redisClient.on("error", (err) => {
       logger.error(`Redis error: ${err.message}`);
     });
-    
-    redisClient.on('connect', () => {
-      logger.log('Redis connected successfully');
+
+    redisClient.on("connect", () => {
+      logger.log("Redis connected successfully");
     });
   }
-  
+
   return redisClient;
 }
 
@@ -47,20 +47,22 @@ async function getRabbitChannel(): Promise<any> {
   if (rabbitChannel && rabbitConnection) {
     return rabbitChannel;
   }
-  
-  const rabbitmqUrl = process.env.RABBITMQ_URL || 'amqp://localhost:5672';
-  
+
+  const rabbitmqUrl = process.env.RABBITMQ_URL || "amqp://localhost:5672";
+
   try {
     rabbitConnection = await amqp.connect(rabbitmqUrl);
     rabbitChannel = await rabbitConnection.createChannel();
-    
+
     // Declare memory.compact queue (idempotent)
-    await rabbitChannel.assertQueue('memory.compact', { durable: true });
-    
-    logger.log('RabbitMQ channel ready for memory jobs');
+    await rabbitChannel.assertQueue("memory.compact", { durable: true });
+
+    logger.log("RabbitMQ channel ready for memory jobs");
     return rabbitChannel;
   } catch (err) {
-    logger.warn(`RabbitMQ not available: ${err.message}. Memory jobs will be skipped.`);
+    logger.warn(
+      `RabbitMQ not available: ${err.message}. Memory jobs will be skipped.`,
+    );
     return null;
   }
 }
@@ -77,12 +79,12 @@ export async function loadCompactState(
     const redis = getRedisClient();
     const key = `edu:state:${tenantId}:${contentId}`;
     const data = await redis.get(key);
-    
+
     if (!data) {
       logger.debug(`No compact state found for ${key}`);
       return null;
     }
-    
+
     return JSON.parse(data);
   } catch (err) {
     logger.warn(`Failed to load compact state: ${err.message}`);
@@ -102,24 +104,24 @@ export async function enqueueMemoryJob(job: {
 }): Promise<boolean> {
   try {
     const channel = await getRabbitChannel();
-    
+
     if (!channel) {
-      logger.warn('RabbitMQ unavailable, skipping memory job');
+      logger.warn("RabbitMQ unavailable, skipping memory job");
       return false;
     }
-    
+
     const success = channel.sendToQueue(
-      'memory.compact',
+      "memory.compact",
       Buffer.from(JSON.stringify(job)),
-      { persistent: true }
+      { persistent: true },
     );
-    
+
     if (success) {
       logger.log(`Enqueued memory job for ${job.tenantId}/${job.contentId}`);
     } else {
-      logger.warn('Failed to enqueue memory job (queue full?)');
+      logger.warn("Failed to enqueue memory job (queue full?)");
     }
-    
+
     return success;
   } catch (err) {
     logger.error(`Failed to enqueue memory job: ${err.message}`);
@@ -135,16 +137,16 @@ export async function cleanup() {
     await redisClient.quit();
     redisClient = null;
   }
-  
+
   if (rabbitChannel) {
     await rabbitChannel.close();
     rabbitChannel = null;
   }
-  
+
   if (rabbitConnection) {
     await rabbitConnection.close();
     rabbitConnection = null;
   }
-  
-  logger.log('Redis and RabbitMQ connections closed');
+
+  logger.log("Redis and RabbitMQ connections closed");
 }

@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { ClassroomPrivacyGuard } from '../../privacy/classroom-privacy-guard.service';
-import { PromptLibraryService } from '../../prompts/prompt-library.service';
-import { ClassPrivacyMode, StudentData } from '../../privacy/types';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { ClassroomPrivacyGuard } from "../../privacy/classroom-privacy-guard.service";
+import { PromptLibraryService } from "../../prompts/prompt-library.service";
+import { ClassPrivacyMode, StudentData } from "../../privacy/types";
 
 @Injectable()
 export class ClassDashboardService {
@@ -21,7 +21,7 @@ export class ClassDashboardService {
       where: { id: classroomId },
       include: {
         enrollments: {
-          where: { status: 'ACTIVE' },
+          where: { status: "ACTIVE" },
           include: {
             learner: true,
           },
@@ -38,7 +38,9 @@ export class ClassDashboardService {
       where: { classroomId },
     });
 
-    const privacyMode = (policy?.privacyMode as unknown as ClassPrivacyMode) || ClassPrivacyMode.AGGREGATED_ONLY;
+    const privacyMode =
+      (policy?.privacyMode as unknown as ClassPrivacyMode) ||
+      ClassPrivacyMode.AGGREGATED_ONLY;
 
     // Calculate stats for each student
     const studentsData: StudentData[] = await Promise.all(
@@ -72,11 +74,13 @@ export class ClassDashboardService {
   /**
    * Calculate stats for individual student
    */
-  private async calculateStudentStats(learnerUserId: string): Promise<StudentData> {
+  private async calculateStudentStats(
+    learnerUserId: string,
+  ): Promise<StudentData> {
     // Get recent sessions
     const sessions = await this.prisma.readingSession.findMany({
       where: { userId: learnerUserId },
-      orderBy: { startedAt: 'desc' },
+      orderBy: { startedAt: "desc" },
       take: 10,
     });
 
@@ -98,7 +102,7 @@ export class ClassDashboardService {
    * Get dashboard prompt
    */
   getDashboardPrompt(activeCount: number, avgComprehension: number) {
-    return this.promptLibrary.getPrompt('CLASS_DASHBOARD', {
+    return this.promptLibrary.getPrompt("CLASS_DASHBOARD", {
       ACTIVE: activeCount,
       AVG: avgComprehension,
     });

@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
-import { VocabService } from '../../vocab/vocab.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { OnEvent } from "@nestjs/event-emitter";
+import { VocabService } from "../../vocab/vocab.service";
 
 /**
  * Listens to session events and triggers vocabulary capture
@@ -12,13 +12,13 @@ export class VocabCaptureListener {
 
   constructor(private vocabService: VocabService) {}
 
-  @OnEvent('session.events.created')
+  @OnEvent("session.events.created")
   async handleSessionEvents(payload: {
     sessionId: string;
     eventTypes: string[];
   }) {
     // Check if any MARK_UNKNOWN_WORD events were created
-    if (payload.eventTypes.includes('MARK_UNKNOWN_WORD')) {
+    if (payload.eventTypes.includes("MARK_UNKNOWN_WORD")) {
       this.logger.log(
         `Triggering vocab capture for session ${payload.sessionId}`,
       );

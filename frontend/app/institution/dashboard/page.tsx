@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { API_BASE_URL, API_ENDPOINTS } from '@/lib/config/api';
 import toast from 'react-hot-toast';
 import { SkeletonCard } from '@/components/ui/skeleton';
+import { StatsCard } from '@/components/dashboard/StatsCard';
 
 interface InstitutionData {
   id: string;
@@ -93,21 +94,13 @@ export default function InstitutionDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
         {stats.map((stat) => (
-          <div key={stat.name} className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className={`flex-shrink-0 rounded-md p-3 ${stat.color}`}>
-                  <span className="text-2xl">{stat.icon}</span>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">{stat.name}</dt>
-                    <dd className="text-3xl font-semibold text-gray-900">{stat.value}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
+          <StatsCard
+            key={stat.name}
+            name={stat.name}
+            value={stat.value}
+            icon={stat.icon}
+            color={stat.color}
+          />
         ))}
       </div>
 

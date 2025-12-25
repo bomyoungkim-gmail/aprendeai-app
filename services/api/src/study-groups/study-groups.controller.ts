@@ -1,17 +1,27 @@
-import { Controller, Post, Get, Delete, Param, Body, Request, UseGuards, Query } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { StudyGroupsService } from './study-groups.service';
-import { GroupSessionsService } from './group-sessions.service';
-import { GroupChatService } from './group-chat.service';
-import { StudyGroupsWebSocketGateway } from '../websocket/study-groups-ws.gateway';
-import { StudyGroupEvent } from '../websocket/events';
-import { CreateGroupDto } from './dto/create-group.dto';
-import { InviteGroupMemberDto } from './dto/invite-member.dto';
-import { AddContentDto } from './dto/add-content.dto';
-import { SendChatMessageDto } from './dto/send-chat-message.dto';
+import {
+  Controller,
+  Post,
+  Get,
+  Delete,
+  Param,
+  Body,
+  Request,
+  UseGuards,
+  Query,
+} from "@nestjs/common";
+import { AuthGuard } from "@nestjs/passport";
+import { StudyGroupsService } from "./study-groups.service";
+import { GroupSessionsService } from "./group-sessions.service";
+import { GroupChatService } from "./group-chat.service";
+import { StudyGroupsWebSocketGateway } from "../websocket/study-groups-ws.gateway";
+import { StudyGroupEvent } from "../websocket/events";
+import { CreateGroupDto } from "./dto/create-group.dto";
+import { InviteGroupMemberDto } from "./dto/invite-member.dto";
+import { AddContentDto } from "./dto/add-content.dto";
+import { SendChatMessageDto } from "./dto/send-chat-message.dto";
 
-@Controller('groups')
-@UseGuards(AuthGuard('jwt'))
+@Controller("groups")
+@UseGuards(AuthGuard("jwt"))
 export class StudyGroupsController {
   constructor(
     private readonly studyGroupsService: StudyGroupsService,
@@ -30,85 +40,94 @@ export class StudyGroupsController {
     return this.studyGroupsService.getGroupsByUser(req.user.id);
   }
 
-  @Get(':groupId')
-  async getGroup(@Param('groupId') groupId: string, @Request() req) {
+  @Get(":groupId")
+  async getGroup(@Param("groupId") groupId: string, @Request() req) {
     return this.studyGroupsService.getGroup(groupId, req.user.id);
   }
 
-  @Post(':groupId/members/invite')
+  @Post(":groupId/members/invite")
   async inviteMember(
-    @Param('groupId') groupId: string,
+    @Param("groupId") groupId: string,
     @Body() dto: InviteGroupMemberDto,
     @Request() req,
   ) {
     await this.studyGroupsService.inviteMember(groupId, req.user.id, dto);
-    return { message: 'Member invited successfully' };
+    return { message: "Member invited successfully" };
   }
 
-  @Delete(':groupId/members/:userId')
+  @Delete(":groupId/members/:userId")
   async removeMember(
-    @Param('groupId') groupId: string,
-    @Param('userId') userId: string,
+    @Param("groupId") groupId: string,
+    @Param("userId") userId: string,
     @Request() req,
   ) {
     await this.studyGroupsService.removeMember(groupId, req.user.id, userId);
-    return { message: 'Member removed successfully' };
+    return { message: "Member removed successfully" };
   }
 
-  @Post(':groupId/contents')
+  @Post(":groupId/contents")
   async addContent(
-    @Param('groupId') groupId: string,
+    @Param("groupId") groupId: string,
     @Body() dto: AddContentDto,
     @Request() req,
   ) {
-    await this.studyGroupsService.addContent(groupId, req.user.id, dto.contentId);
-    return { message: 'Content added to playlist' };
+    await this.studyGroupsService.addContent(
+      groupId,
+      req.user.id,
+      dto.contentId,
+    );
+    return { message: "Content added to playlist" };
   }
 
-  @Delete(':groupId/contents/:contentId')
+  @Delete(":groupId/contents/:contentId")
   async removeContent(
-    @Param('groupId') groupId: string,
-    @Param('contentId') contentId: string,
+    @Param("groupId") groupId: string,
+    @Param("contentId") contentId: string,
     @Request() req,
   ) {
-    await this.studyGroupsService.removeContent(groupId, req.user.id, contentId);
-    return { message: 'Content removed from playlist' };
+    await this.studyGroupsService.removeContent(
+      groupId,
+      req.user.id,
+      contentId,
+    );
+    return { message: "Content removed from playlist" };
   }
 
-  @Get(':groupId/sessions')
-  async getGroupSessions(
-    @Param('groupId') groupId: string,
-    @Request() req,
-  ) {
+  @Get(":groupId/sessions")
+  async getGroupSessions(@Param("groupId") groupId: string, @Request() req) {
     // Verify membership
     await this.studyGroupsService.getGroup(groupId, req.user.id);
-    
+
     // Return sessions using injected GroupSessionsService
     return this.groupSessionsService.getGroupSessions(groupId);
   }
 
   // Chat endpoints
-  @Post('sessions/:sessionId/chat')
+  @Post("sessions/:sessionId/chat")
   async sendChatMessage(
-    @Param('sessionId') sessionId: string,
+    @Param("sessionId") sessionId: string,
     @Body() dto: SendChatMessageDto,
     @Request() req,
   ) {
-    const chatMessage = await this.groupChatService.sendMessage(sessionId, req.user.id, dto);
-    
+    const chatMessage = await this.groupChatService.sendMessage(
+      sessionId,
+      req.user.id,
+      dto,
+    );
+
     // Emit WebSocket event
     this.wsGateway.emitToSession(sessionId, StudyGroupEvent.CHAT_MESSAGE, {
       ...chatMessage,
       timestamp: new Date().toISOString(),
     });
-    
+
     return chatMessage;
   }
 
-  @Get('sessions/:sessionId/chat')
+  @Get("sessions/:sessionId/chat")
   async getChatMessages(
-    @Param('sessionId') sessionId: string,
-    @Query('roundIndex') roundIndex: string,
+    @Param("sessionId") sessionId: string,
+    @Query("roundIndex") roundIndex: string,
     @Request() req,
   ) {
     const roundIdx = parseInt(roundIndex, 10);

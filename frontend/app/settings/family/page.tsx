@@ -8,6 +8,7 @@ import { Plus, Users, UserPlus, Trash2, Shield, User as UserIcon, Check, X } fro
 import { useAuthStore } from '@/stores/auth-store';
 import { Family, FamilyMember } from '@/lib/types/family';
 import Link from 'next/link';
+import { SettingsPageHeader } from '@/components/ui/SettingsPageHeader';
 
 export default function FamilySettingsPage() {
   const { data: families, isLoading } = useFamilies();
@@ -28,50 +29,69 @@ export default function FamilySettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900">Family Management</h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Create families, invite members, and manage access.
-          </p>
-        </div>
-        <button
-          data-testid="create-family-btn"
-          onClick={() => setIsCreateOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          Create Family
-        </button>
-      </div>
+      <SettingsPageHeader
+        title="Family Management"
+        description="Create families, invite members, and manage access."
+        icon={Users}
+      />
+      
 
-      {!families || families.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300">
-          <div className="mx-auto flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 mb-4">
-            <Users className="w-6 h-6 text-blue-600" />
+      {!families || !Array.isArray(families) || families.length === 0 ? (
+        <div className="bg-white dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
+          <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">No families yet</h3>
+            </div>
+            <button
+              data-testid="create-family-btn"
+              onClick={() => setIsCreateOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              Create Family
+            </button>
           </div>
-          <h3 className="text-lg font-medium text-gray-900">No families yet</h3>
-          <p className="mt-1 text-gray-500 max-w-sm mx-auto">
-            Create a family to share your plan and collaborate with others.
-          </p>
-          <button
-            onClick={() => setIsCreateOpen(true)}
-            className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
-          >
-            Create your first family
-          </button>
+          <div className="text-center py-12">
+            <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+              Create a family to share your plan and collaborate with others.
+            </p>
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              className="mt-4 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+            >
+              Create your first family
+            </button>
+          </div>
         </div>
       ) : (
-        <div className="grid gap-6">
-          {families.map((family) => (
-            <FamilyCard
-              key={family.id}
-              family={family}
-              currentUserId={user?.id}
-              onInvite={() => setInviteModal({ isOpen: true, familyId: family.id })}
-            />
-          ))}
-        </div>
+        <>
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Your Families</h3>
+            </div>
+            <button
+              data-testid="create-family-btn"
+              onClick={() => setIsCreateOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              Create Family
+            </button>
+          </div>
+          
+          <div className="grid gap-6">
+            {(Array.isArray(families) ? families : []).map((family) => (
+              <FamilyCard
+                key={family.id}
+                family={family}
+                currentUserId={user?.id}
+                onInvite={() => setInviteModal({ isOpen: true, familyId: family.id })}
+              />
+            ))}
+          </div>
+        </>
       )}
 
       {/* Modals */}
@@ -124,11 +144,11 @@ function FamilyCard({
 
   if (isInvited) {
      return (
-        <div className="bg-blue-50 rounded-xl border border-blue-200 shadow-sm p-6">
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 shadow-sm p-6">
            <div className="flex justify-between items-center">
              <div>
-               <h3 className="font-semibold text-gray-900 text-lg">{family.name}</h3>
-               <p className="text-blue-700 mt-1 flex items-center gap-2">
+               <h3 className="font-semibold text-gray-900 dark:text-white text-lg">{family.name}</h3>
+               <p className="text-blue-700 dark:text-blue-300 mt-1 flex items-center gap-2">
                  <Shield className="w-4 h-4" />
                  You have been invited to join this family as a <strong>{myMembership?.role}</strong>.
                </p>
@@ -136,7 +156,7 @@ function FamilyCard({
              <div className="flex gap-3">
                <button
                  onClick={() => handleRemove(currentUserId!)} // Decline = Remove self
-                 className="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2"
+                 className="px-4 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
                >
                  <X className="w-4 h-4" />
                  Decline
@@ -155,34 +175,34 @@ function FamilyCard({
   }
 
   return (
-    <div data-testid="family-card" className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+    <div data-testid="family-card" className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
         <div>
           <div className="flex items-center gap-2">
             <Link href={`/settings/family/${family.id}`} className="hover:underline cursor-pointer">
-               <h3 className="font-semibold text-gray-900">{family.name}</h3>
+               <h3 className="font-semibold text-gray-900 dark:text-white">{family.name}</h3>
             </Link>
             {isPrimary && (
-              <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-medium">
+              <span className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-0.5 rounded-full text-xs font-medium">
                 Primary
               </span>
             )}
           </div>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
             Created on {new Date(family.createdAt).toLocaleDateString()}
           </p>
         </div>
         <div className="flex gap-2">
             <Link 
                 href={`/settings/family/${family.id}`}
-                className="text-sm text-gray-600 hover:text-gray-900 font-medium px-3 py-1 bg-white border border-gray-200 rounded-lg flex items-center"
+                className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium px-3 py-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg flex items-center"
             >
                 View Dashboard
             </Link>
             {canManage && (
             <button
                 onClick={onInvite}
-                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium px-3 py-1 bg-blue-50 rounded-lg"
+                className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium px-3 py-1 bg-blue-50 dark:bg-blue-900/30 rounded-lg"
             >
                 <UserPlus className="w-4 h-4" />
                 Invite
@@ -191,11 +211,11 @@ function FamilyCard({
         </div>
       </div>
 
-      <div className="divide-y divide-gray-100">
+      <div className="divide-y divide-gray-100 dark:divide-gray-700">
         {family.members.map((member) => (
-          <div key={member.id} className="px-6 py-3 flex items-center justify-between hover:bg-gray-50">
+          <div key={member.id} className="px-6 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+              <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400">
                 {member.user?.avatarUrl ? (
                   <img src={member.user.avatarUrl} alt="" className="w-8 h-8 rounded-full" />
                 ) : (
@@ -203,19 +223,19 @@ function FamilyCard({
                 )}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
                   {member.user?.name || member.user?.email || 'Unknown User'} 
                   {member.userId === currentUserId && <span className="text-gray-400 ml-2">(You)</span>}
                 </p>
-                <div className="flex items-center gap-2 text-xs text-gray-500">
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                   <span className="flex items-center gap-1">
                     {member.role === 'OWNER' && <Shield className="w-3 h-3 text-orange-500" />}
                     {member.role}
                   </span>
                   <span>•</span>
                   <span className={
-                    member.status === 'ACTIVE' ? 'text-green-600' : 
-                    member.status === 'INVITED' ? 'text-yellow-600' : 'text-gray-600'
+                    member.status === 'ACTIVE' ? 'text-green-600 dark:text-green-400' : 
+                    member.status === 'INVITED' ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400'
                   }>
                     {member.status}
                   </span>
@@ -226,7 +246,7 @@ function FamilyCard({
             {(canManage && member.userId !== currentUserId) || (member.userId === currentUserId && member.role !== 'OWNER') ? (
               <button
                 onClick={() => handleRemove(member.userId)}
-                className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                 title={member.userId === currentUserId ? "Leave Family" : "Remove Member"}
               >
                 <Trash2 className="w-4 h-4" />

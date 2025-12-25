@@ -1,8 +1,12 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { QueueService } from '../queue/queue.service';
-import { EntitlementsService } from '../billing/entitlements.service';
-import { UsageTrackingService } from '../billing/usage-tracking.service';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { QueueService } from "../queue/queue.service";
+import { EntitlementsService } from "../billing/entitlements.service";
+import { UsageTrackingService } from "../billing/usage-tracking.service";
 
 @Injectable()
 export class ExtractionService {
@@ -20,29 +24,31 @@ export class ExtractionService {
     });
 
     if (!content) {
-      throw new NotFoundException('Content not found');
+      throw new NotFoundException("Content not found");
     }
 
     // Simple ownership check (can be expanded later)
     if (content.ownerUserId !== userId && content.createdBy !== userId) {
-      throw new ForbiddenException('No access to this content');
+      throw new ForbiddenException("No access to this content");
     }
 
     // 2. Check entitlements (AI extraction feature)
     try {
       const entitlements = await this.entitlements.resolve(
-        'USER',
+        "USER",
         userId,
-        process.env.NODE_ENV as any || 'DEVELOPMENT'
+        (process.env.NODE_ENV as any) || "DEVELOPMENT",
       );
       const hasAccess = entitlements.features?.ai_extract_enabled === true;
-      
+
       if (!hasAccess) {
-        throw new ForbiddenException('AI extraction not available in your plan');
+        throw new ForbiddenException(
+          "AI extraction not available in your plan",
+        );
       }
     } catch (error) {
       // If no subscription found, deny access
-      throw new ForbiddenException('AI extraction not available in your plan');
+      throw new ForbiddenException("AI extraction not available in your plan");
     }
 
     // 3. Get or create extraction record
@@ -54,30 +60,30 @@ export class ExtractionService {
       extraction = await this.prisma.contentExtraction.create({
         data: {
           contentId,
-          status: 'PENDING',
+          status: "PENDING",
         },
       });
-    } else if (extraction.status === 'DONE') {
+    } else if (extraction.status === "DONE") {
       // Already extracted, return existing
       return extraction;
-    } else if (extraction.status === 'RUNNING') {
+    } else if (extraction.status === "RUNNING") {
       // Already in progress
       return extraction;
     }
 
     // 4. Update status to PENDING (if was FAILED before)
-    if (extraction.status === 'FAILED') {
+    if (extraction.status === "FAILED") {
       extraction = await this.prisma.contentExtraction.update({
         where: { id: extraction.id },
-        data: { status: 'PENDING', updatedAt: new Date() },
+        data: { status: "PENDING", updatedAt: new Date() },
       });
     }
 
     // 5. Track usage (pages extracted will be tracked by worker)
     await this.usageTracking.trackUsage({
-      scopeType: 'USER',
+      scopeType: "USER",
       scopeId: userId,
-      metric: 'extraction_requested',
+      metric: "extraction_requested",
       quantity: 1,
       environment: process.env.NODE_ENV as any,
     });
@@ -102,17 +108,13 @@ export class ExtractionService {
     });
 
     if (!extraction) {
-      throw new NotFoundException('Extraction not found');
+      throw new NotFoundException("Extraction not found");
     }
 
     return extraction;
   }
 
-  async getChunks(
-    contentId: string,
-    page?: number,
-    range?: string,
-  ) {
+  async getChunks(contentId: string, page?: number, range?: string) {
     const where: any = { contentId };
 
     if (page !== undefined) {
@@ -120,7 +122,7 @@ export class ExtractionService {
     }
 
     if (range) {
-      const [start, end] = range.split('-').map(Number);
+      const [start, end] = range.split("-").map(Number);
       where.chunkIndex = {
         gte: start,
         lte: end,
@@ -129,7 +131,7 @@ export class ExtractionService {
 
     const chunks = await this.prisma.contentChunk.findMany({
       where,
-      orderBy: { chunkIndex: 'asc' },
+      orderBy: { chunkIndex: "asc" },
       take: 50, // Max 50 chunks per request
     });
 

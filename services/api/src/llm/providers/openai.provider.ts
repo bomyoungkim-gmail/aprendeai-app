@@ -1,27 +1,33 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import OpenAI from 'openai';
-import { LLMProvider, LLMOptions, LLMResponse } from './llm-provider.interface';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import OpenAI from "openai";
+import { LLMProvider, LLMOptions, LLMResponse } from "./llm-provider.interface";
+import { LLMConfigService } from "../llm-config.service";
 
 /**
  * OpenAI Provider Implementation
- * 
+ *
  * Handles interactions with OpenAI API
  */
 @Injectable()
 export class OpenAIProvider implements LLMProvider {
-  name = 'openai';
+  name = "openai";
   private readonly logger = new Logger(OpenAIProvider.name);
   private client: OpenAI | null = null;
 
-  constructor(private config: ConfigService) {
-    const apiKey = this.config.get<string>('OPENAI_API_KEY');
-    
+  constructor(
+    private config: ConfigService,
+    private llmConfig: LLMConfigService,
+  ) {
+    const apiKey = this.config.get<string>("OPENAI_API_KEY");
+
     if (apiKey) {
       this.client = new OpenAI({ apiKey });
-      this.logger.log('OpenAI client initialized');
+      this.logger.log("OpenAI client initialized");
     } else {
-      this.logger.warn('OPENAI_API_KEY not found, provider will be unavailable');
+      this.logger.warn(
+        "OPENAI_API_KEY not found, provider will be unavailable",
+      );
     }
   }
 
@@ -35,17 +41,25 @@ export class OpenAIProvider implements LLMProvider {
       await this.client.models.list();
       return true;
     } catch (error) {
-      this.logger.error('OpenAI availability check failed:', error.message);
+      this.logger.error("OpenAI availability check failed:", error.message);
       return false;
     }
   }
 
-  async generateText(prompt: string, options?: LLMOptions): Promise<LLMResponse> {
+  async generateText(
+    prompt: string,
+    options?: LLMOptions,
+  ): Promise<LLMResponse> {
     if (!this.client) {
-      throw new Error('OpenAI client not initialized');
+      throw new Error("OpenAI client not initialized");
     }
 
-    const model = options?.model || this.config.get('OPENAI_MODEL', 'gpt-3.5-turbo');
+    // Get model from DB config, fallback to options, then env, then default
+    const modelConfig = await this.llmConfig.getModelConfig(
+      'openai',
+      'gpt-3.5-turbo'
+    );
+    const model = options?.model || modelConfig.model;
     const temperature = options?.temperature ?? 0.7;
     const maxTokens = options?.maxTokens ?? 500;
     const timeout = options?.timeout || 10000;
@@ -56,14 +70,14 @@ export class OpenAIProvider implements LLMProvider {
       const response = await this.client.chat.completions.create(
         {
           model,
-          messages: [{ role: 'user', content: prompt }],
+          messages: [{ role: "user", content: prompt }],
           temperature,
           max_tokens: maxTokens,
         },
-        { timeout }
+        { timeout },
       );
 
-      const text = response.choices[0]?.message?.content || '';
+      const text = response.choices[0]?.message?.content || "";
 
       return {
         text,
@@ -83,12 +97,12 @@ export class OpenAIProvider implements LLMProvider {
 
   async generateEmbedding(text: string): Promise<number[]> {
     if (!this.client) {
-      throw new Error('OpenAI client not initialized');
+      throw new Error("OpenAI client not initialized");
     }
 
     try {
       const response = await this.client.embeddings.create({
-        model: 'text-embedding-ada-002',
+        model: "text-embedding-ada-002",
         input: text,
       });
 

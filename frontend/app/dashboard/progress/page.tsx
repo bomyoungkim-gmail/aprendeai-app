@@ -47,13 +47,13 @@ export default function ProgressPage() {
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Meu Progresso</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Meu Progresso</h1>
         <p className="text-gray-500">Analise seus pontos fortes, fracos e domínio de vocabulário.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* WEAK POINTS CARD */}
-        <div className="bg-white p-6 rounded-lg shadow border border-red-50">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-red-50 dark:border-red-900/30">
            <div className="flex items-center space-x-2 mb-4 text-red-600">
              <AlertTriangle size={20} />
              <h2 className="font-semibold text-lg">Pontos a Melhorar</h2>
@@ -82,7 +82,7 @@ export default function ProgressPage() {
         </div>
 
         {/* STRONG POINTS CARD */}
-        <div className="bg-white p-6 rounded-lg shadow border border-green-50">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-green-50 dark:border-green-900/30">
            <div className="flex items-center space-x-2 mb-4 text-green-600">
              <TrendingUp size={20} />
              <h2 className="font-semibold text-lg">Pontos Fortes</h2>
@@ -112,7 +112,7 @@ export default function ProgressPage() {
       </div>
 
       {/* VOCABULARY MASTERY */}
-      <div className="bg-white p-6 rounded-lg shadow border border-blue-50">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-blue-50 dark:border-blue-900/30">
         <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2 text-blue-600">
                 <BookOpen size={20} />

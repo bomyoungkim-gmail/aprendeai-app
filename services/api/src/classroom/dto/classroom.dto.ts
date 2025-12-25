@@ -1,5 +1,12 @@
-import { IsString, IsNumber, IsOptional, IsEnum, IsDate, IsArray } from 'class-validator';
-import { Type } from 'class-transformer';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+  IsDate,
+  IsArray,
+} from "class-validator";
+import { Type } from "class-transformer";
 
 export class CreateClassroomDto {
   @IsString()
@@ -57,13 +64,20 @@ export class CreateClassPolicyDto {
   @IsOptional()
   dailyReviewCap?: number = 30;
 
-  @IsEnum(['AGGREGATED_ONLY', 'AGGREGATED_PLUS_HELP_REQUESTS', 'AGGREGATED_PLUS_FLAGS'])
+  @IsEnum([
+    "AGGREGATED_ONLY",
+    "AGGREGATED_PLUS_HELP_REQUESTS",
+    "AGGREGATED_PLUS_FLAGS",
+  ])
   @IsOptional()
-  privacyMode?: 'AGGREGATED_ONLY' | 'AGGREGATED_PLUS_HELP_REQUESTS' | 'AGGREGATED_PLUS_FLAGS' = 'AGGREGATED_ONLY';
+  privacyMode?:
+    | "AGGREGATED_ONLY"
+    | "AGGREGATED_PLUS_HELP_REQUESTS"
+    | "AGGREGATED_PLUS_FLAGS" = "AGGREGATED_ONLY";
 
-  @IsEnum(['PROMPT_COACH', 'PROMPT_COACH_PLUS_1ON1'])
+  @IsEnum(["PROMPT_COACH", "PROMPT_COACH_PLUS_1ON1"])
   @IsOptional()
-  interventionMode?: 'PROMPT_COACH' | 'PROMPT_COACH_PLUS_1ON1' = 'PROMPT_COACH';
+  interventionMode?: "PROMPT_COACH" | "PROMPT_COACH_PLUS_1ON1" = "PROMPT_COACH";
 }
 
 export class CreateWeeklyPlanDto {

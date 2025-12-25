@@ -1,8 +1,14 @@
-import { IsEnum, IsInt, Min, Max, IsOptional } from 'class-validator';
+import { IsEnum, IsInt, Min, Max, IsOptional } from "class-validator";
 
 export class UpdateProfileDto {
   @IsOptional()
-  @IsEnum(['FUNDAMENTAL_1', 'FUNDAMENTAL_2', 'MEDIO', 'SUPERIOR', 'ADULTO_LEIGO'])
+  @IsEnum([
+    "FUNDAMENTAL_1",
+    "FUNDAMENTAL_2",
+    "MEDIO",
+    "SUPERIOR",
+    "ADULTO_LEIGO",
+  ])
   educationLevel?: string;
 
   @IsOptional()

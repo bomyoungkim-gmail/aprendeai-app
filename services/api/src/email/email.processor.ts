@@ -1,14 +1,18 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Logger } from '@nestjs/common';
-import { Job } from 'bullmq';
-import { EmailService } from './email.service';
+import { Processor, WorkerHost } from "@nestjs/bullmq";
+import { Logger } from "@nestjs/common";
+import { Job } from "bullmq";
+import { EmailService } from "./email.service";
 
 export interface EmailJob {
-  type: 'welcome' | 'group-invitation' | 'annotation-notification' | 'study-reminder';
+  type:
+    | "welcome"
+    | "group-invitation"
+    | "annotation-notification"
+    | "study-reminder";
   data: any;
 }
 
-@Processor('email')
+@Processor("email")
 export class EmailProcessor extends WorkerHost {
   private readonly logger = new Logger(EmailProcessor.name);
 
@@ -21,19 +25,19 @@ export class EmailProcessor extends WorkerHost {
 
     try {
       switch (job.data.type) {
-        case 'welcome':
+        case "welcome":
           await this.emailService.sendWelcomeEmail(job.data.data);
           break;
 
-        case 'group-invitation':
+        case "group-invitation":
           await this.emailService.sendGroupInvitationEmail(job.data.data);
           break;
 
-        case 'annotation-notification':
+        case "annotation-notification":
           await this.emailService.sendAnnotationNotification(job.data.data);
           break;
 
-        case 'study-reminder':
+        case "study-reminder":
           await this.emailService.sendStudyReminder(job.data.data);
           break;
 

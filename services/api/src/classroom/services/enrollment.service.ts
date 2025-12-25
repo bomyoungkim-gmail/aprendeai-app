@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { EnrollStudentDto } from '../dto/classroom.dto';
+import { Injectable, BadRequestException } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { EnrollStudentDto } from "../dto/classroom.dto";
 
 @Injectable()
 export class EnrollmentService {
@@ -18,15 +18,17 @@ export class EnrollmentService {
       },
     });
 
-    if (existing && existing.status === 'ACTIVE') {
-      throw new BadRequestException('Student already enrolled in this classroom');
+    if (existing && existing.status === "ACTIVE") {
+      throw new BadRequestException(
+        "Student already enrolled in this classroom",
+      );
     }
 
-    if (existing && existing.status === 'REMOVED') {
+    if (existing && existing.status === "REMOVED") {
       // Re-activate enrollment
       return this.prisma.enrollment.update({
         where: { id: existing.id },
-        data: { status: 'ACTIVE' },
+        data: { status: "ACTIVE" },
       });
     }
 
@@ -36,7 +38,7 @@ export class EnrollmentService {
         classroomId: dto.classroomId,
         learnerUserId: dto.learnerUserId,
         nickname: dto.nickname,
-        status: 'ACTIVE',
+        status: "ACTIVE",
       },
       include: {
         classroom: true,
@@ -51,7 +53,7 @@ export class EnrollmentService {
   async remove(enrollmentId: string) {
     return this.prisma.enrollment.update({
       where: { id: enrollmentId },
-      data: { status: 'REMOVED' },
+      data: { status: "REMOVED" },
     });
   }
 
@@ -60,9 +62,9 @@ export class EnrollmentService {
    */
   async getByClassroom(classroomId: string) {
     return this.prisma.enrollment.findMany({
-      where: { 
+      where: {
         classroomId,
-        status: 'ACTIVE',
+        status: "ACTIVE",
       },
       include: {
         learner: true,
@@ -77,7 +79,7 @@ export class EnrollmentService {
     return this.prisma.enrollment.findMany({
       where: {
         learnerUserId,
-        status: 'ACTIVE',
+        status: "ACTIVE",
       },
       include: {
         classroom: {

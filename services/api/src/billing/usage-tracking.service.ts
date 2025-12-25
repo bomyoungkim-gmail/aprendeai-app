@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { ScopeType, Environment } from '@prisma/client';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { ScopeType, Environment } from "@prisma/client";
 
 @Injectable()
 export class UsageTrackingService {
@@ -47,21 +47,21 @@ export class UsageTrackingService {
     scopeType: ScopeType,
     scopeId: string,
     metric: string,
-    range: 'today' | '7d' | '30d' = 'today',
+    range: "today" | "7d" | "30d" = "today",
   ) {
     const now = new Date();
     let startDate: Date;
 
     switch (range) {
-      case 'today':
+      case "today":
         startDate = new Date(now);
         startDate.setHours(0, 0, 0, 0);
         break;
-      case '7d':
+      case "7d":
         startDate = new Date(now);
         startDate.setDate(now.getDate() - 7);
         break;
-      case '30d':
+      case "30d":
         startDate = new Date(now);
         startDate.setDate(now.getDate() - 30);
         break;
@@ -98,21 +98,21 @@ export class UsageTrackingService {
   async getUsageStats(
     scopeType: ScopeType,
     scopeId: string,
-    range: 'today' | '7d' | '30d' = 'today',
+    range: "today" | "7d" | "30d" = "today",
   ) {
     const now = new Date();
     let startDate: Date;
 
     switch (range) {
-      case 'today':
+      case "today":
         startDate = new Date(now);
         startDate.setHours(0, 0, 0, 0);
         break;
-      case '7d':
+      case "7d":
         startDate = new Date(now);
         startDate.setDate(now.getDate() - 7);
         break;
-      case '30d':
+      case "30d":
         startDate = new Date(now);
         startDate.setDate(now.getDate() - 30);
         break;
@@ -127,19 +127,22 @@ export class UsageTrackingService {
         },
       },
       orderBy: {
-        occurredAt: 'desc',
+        occurredAt: "desc",
       },
       take: 100, // Latest 100 events
     });
 
     // Group by metric
-    const byMetric: Record<string, {
-      quantity: number;
-      cost: number;
-      count: number;
-    }> = {};
+    const byMetric: Record<
+      string,
+      {
+        quantity: number;
+        cost: number;
+        count: number;
+      }
+    > = {};
 
-    events.forEach(event => {
+    events.forEach((event) => {
       if (!byMetric[event.metric]) {
         byMetric[event.metric] = { quantity: 0, cost: 0, count: 0 };
       }
@@ -162,28 +165,28 @@ export class UsageTrackingService {
   async getUsageByProvider(
     scopeType: ScopeType,
     scopeId: string,
-    range: 'today' | '7d' | '30d' = '30d',
+    range: "today" | "7d" | "30d" = "30d",
   ) {
     const now = new Date();
     let startDate: Date;
 
     switch (range) {
-      case 'today':
+      case "today":
         startDate = new Date(now);
         startDate.setHours(0, 0, 0, 0);
         break;
-      case '7d':
+      case "7d":
         startDate = new Date(now);
         startDate.setDate(now.getDate() - 7);
         break;
-      case '30d':
+      case "30d":
         startDate = new Date(now);
         startDate.setDate(now.getDate() - 30);
         break;
     }
 
     const events = await this.prisma.usageEvent.groupBy({
-      by: ['providerCode'],
+      by: ["providerCode"],
       where: {
         scopeType,
         scopeId,
@@ -201,7 +204,7 @@ export class UsageTrackingService {
       _count: true,
     });
 
-    return events.map(e => ({
+    return events.map((e) => ({
       provider: e.providerCode,
       totalQuantity: e._sum.quantity || 0,
       totalCost: e._sum.approxCostUsd || 0,

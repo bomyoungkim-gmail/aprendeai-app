@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { ClassroomEventService } from '../../events/classroom-event.service';
-import { PromptLibraryService } from '../../prompts/prompt-library.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { ClassroomEventService } from "../../events/classroom-event.service";
+import { PromptLibraryService } from "../../prompts/prompt-library.service";
 
 @Injectable()
 export class ClassPlanService {
@@ -23,7 +23,9 @@ export class ClassPlanService {
   ) {
     // Normalize to start of week (Sunday 00:00:00)
     const normalizedWeekStart = new Date(weekStart);
-    normalizedWeekStart.setDate(normalizedWeekStart.getDate() - normalizedWeekStart.getDay());
+    normalizedWeekStart.setDate(
+      normalizedWeekStart.getDate() - normalizedWeekStart.getDay(),
+    );
     normalizedWeekStart.setHours(0, 0, 0, 0);
 
     const plan = await this.prisma.classPlanWeek.create({
@@ -41,8 +43,8 @@ export class ClassPlanService {
       `plan_${plan.id}`,
       classroomId,
       {
-        domain: 'CLASS',
-        type: 'CLASS_WEEKLY_PLAN_CREATED',
+        domain: "CLASS",
+        type: "CLASS_WEEKLY_PLAN_CREATED",
         data: {
           classroomId,
           weekStart: weekStart.toISOString(),
@@ -78,7 +80,7 @@ export class ClassPlanService {
    * Get weekly plan prompt
    */
   getWeeklyPlanPrompt(unitsTarget: number) {
-    return this.promptLibrary.getPrompt('CLASS_WEEKLY_PLAN', {
+    return this.promptLibrary.getPrompt("CLASS_WEEKLY_PLAN", {
       UNITS: unitsTarget,
     });
   }

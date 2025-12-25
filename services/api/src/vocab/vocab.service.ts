@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { addDays } from 'date-fns';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { addDays } from "date-fns";
 
 @Injectable()
 export class VocabService {
@@ -13,8 +13,8 @@ export class VocabService {
   normalizeWord(word: string): string {
     return word
       .toLowerCase()
-      .normalize('NFD') // Decompose accents
-      .replace(/[\u0300-\u036f]/g, ''); // Remove diacritics
+      .normalize("NFD") // Decompose accents
+      .replace(/[\u0300-\u036f]/g, ""); // Remove diacritics
     // "Café" → "cafe"
     // "naïve" → "naive"
   }
@@ -61,7 +61,7 @@ export class VocabService {
           word: normalized,
           language: language,
           contentId: session.contentId,
-          srsStage: 'NEW',
+          srsStage: "NEW",
           dueAt: addDays(new Date(), 1), // Due tomorrow
           exampleNote: word, // Store original with accents
         },
@@ -98,7 +98,7 @@ export class VocabService {
     const events = await this.prisma.sessionEvent.findMany({
       where: {
         readingSessionId: sessionId,
-        eventType: 'MARK_UNKNOWN_WORD',
+        eventType: "MARK_UNKNOWN_WORD",
       },
       select: {
         payloadJson: true,
@@ -139,7 +139,7 @@ export class VocabService {
           word: normalized,
           language: session.content.originalLanguage,
           contentId: session.contentId,
-          srsStage: 'NEW',
+          srsStage: "NEW",
           dueAt: addDays(new Date(), 1),
           exampleNote: payload.context || term,
         },
@@ -181,7 +181,7 @@ export class VocabService {
           select: { id: true, title: true },
         },
       },
-      orderBy: [{ dueAt: 'asc' }, { lapsesCount: 'desc' }],
+      orderBy: [{ dueAt: "asc" }, { lapsesCount: "desc" }],
     });
   }
 }

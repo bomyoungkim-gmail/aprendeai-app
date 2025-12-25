@@ -1,0 +1,1788 @@
+
+> api@0.0.1 test
+> jest
+
+PASS test/integration/ai-cache-hits.spec.ts (20.891 s)
+  ● Console
+
+    console.log
+      ✅ Found 0 cache entries
+
+      at Object.<anonymous> (test/integration/ai-cache-hits.spec.ts:31:13)
+
+    console.log
+      ✅ Cache workflow validated (TTL: 86400 seconds)
+
+      at Object.<anonymous> (test/integration/ai-cache-hits.spec.ts:61:13)
+
+    console.log
+      📊 Cache Metrics:
+
+      at Object.<anonymous> (test/integration/ai-cache-hits.spec.ts:74:13)
+
+    console.log
+        - Cache entries: 0
+
+      at Object.<anonymous> (test/integration/ai-cache-hits.spec.ts:75:13)
+
+    console.log
+        - Est. tokens saved: 0
+
+      at Object.<anonymous> (test/integration/ai-cache-hits.spec.ts:76:13)
+
+    console.log
+        - Est. cost saved: $0.0000
+
+      at Object.<anonymous> (test/integration/ai-cache-hits.spec.ts:77:13)
+
+    console.warn
+      ⚠️  AI service not reachable - skipping endpoint test
+
+      93 |       expect(response.status).toBe(200);
+      94 |     } catch (error) {
+    > 95 |       console.warn("⚠️  AI service not reachable - skipping endpoint test");
+         |               ^
+      96 |       console.warn("   Run: cd services/ai && python main.py");
+      97 |     }
+      98 |   });
+
+      at Object.<anonymous> (test/integration/ai-cache-hits.spec.ts:95:15)
+
+    console.warn
+         Run: cd services/ai && python main.py
+
+      94 |     } catch (error) {
+      95 |       console.warn("⚠️  AI service not reachable - skipping endpoint test");
+    > 96 |       console.warn("   Run: cd services/ai && python main.py");
+         |               ^
+      97 |     }
+      98 |   });
+      99 |
+
+      at Object.<anonymous> (test/integration/ai-cache-hits.spec.ts:96:15)
+
+    console.log
+      ✅ Cache key format validated
+
+      at Object.<anonymous> (test/integration/ai-cache-hits.spec.ts:121:13)
+
+PASS test/integration/ai-redis-persistence.spec.ts (21.2 s)
+  ● Console
+
+    console.log
+      ✅ Found 0 checkpoint keys in Redis
+
+      at Object.<anonymous> (test/integration/ai-redis-persistence.spec.ts:31:13)
+
+    console.log
+      ✅ State persistence workflow validated
+
+      at Object.<anonymous> (test/integration/ai-redis-persistence.spec.ts:58:13)
+
+    console.log
+      ✅ TTL verified: 3600 seconds
+
+      at Object.<anonymous> (test/integration/ai-redis-persistence.spec.ts:72:13)
+
+    console.log
+      ✅ Concurrent updates handled correctly
+
+      at Object.<anonymous> (test/integration/ai-redis-persistence.spec.ts:93:13)
+
+PASS content/content.service.spec.ts (23.058 s)
+PASS assessment/assessment.service.spec.ts (23.046 s)
+PASS institutions/institutions.controller.spec.ts (23.044 s)
+PASS auth/auth.controller.spec.ts (23.164 s)
+PASS src/privacy/classroom-privacy-guard.service.spec.ts (23.122 s)
+PASS assessment/assessment.controller.spec.ts (23.224 s)
+PASS institutions/institutions.service.spec.ts (23.261 s)
+PASS auth/auth.service.spec.ts (23.212 s)
+PASS src/bulk/bulk.service.spec.ts (23.373 s)
+PASS test/unit/family-service.spec.ts (23.442 s)
+PASS users/users.service.spec.ts
+PASS src/state-machine/co-reading-state-machine.service.spec.ts (24.031 s)
+PASS src/prompts/prompt-library.service.spec.ts
+FAIL src/events/family-event.service.spec.ts (24.164 s)
+  ● FamilyEventService › logPolicySet › should persist FAMILY_POLICY_SET event
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    - Expected
+    + Received
+
+    @@ -20,8 +20,8 @@
+              },
+            },
+            "domain": "FAMILY",
+            "type": "FAMILY_POLICY_SET",
+          },
+    -     "readingSessionId": "session_1",
+    +     "readingSessionId": undefined,
+        },
+      },
+
+    Number of calls: 1
+
+      71 |
+      72 |       expect(result).toBeDefined();
+    > 73 |       expect(mockPrismaService.sessionEvent.create).toHaveBeenCalledWith({
+         |                                                     ^
+      74 |         data: {
+      75 |           readingSessionId: "session_1",
+      76 |           eventType: "FAMILY_POLICY_SET",
+
+      at Object.<anonymous> (src/events/family-event.service.spec.ts:73:53)
+
+PASS test/unit/institutions-service.spec.ts
+PASS test/unit/family.service.spec.ts (24.537 s)
+  ● Console
+
+    console.log
+      [FamilyService.create] BEFORE UPDATE: { userId: 'user-123', currentSettings: {} }
+
+      at src/family/family.service.ts:60:15
+
+    console.log
+      [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: family-id
+
+      at src/family/family.service.ts:75:15
+
+    console.log
+      [FamilyService.create] BEFORE UPDATE: {
+        userId: 'user-123',
+        currentSettings: { primaryFamilyId: 'old-family-id' }
+      }
+
+      at src/family/family.service.ts:60:15
+
+    console.log
+      [FamilyService.create] AFTER UPDATE - Set primaryFamilyId: family-id
+
+      at src/family/family.service.ts:75:15
+
+    console.log
+      Inviting new user: newuser@test.com
+
+      at FamilyService.inviteMember (src/family/family.service.ts:185:15)
+
+    console.log
+      Inviting new user: newuser@test.com
+
+      at FamilyService.inviteMember (src/family/family.service.ts:185:15)
+
+    console.log
+      [transferOwnership] Validation: {
+        familyOwnerId: 'current-owner-id',
+        currentOwnerId: 'current-owner-id',
+        match: true,
+        willThrow: false
+      }
+
+      at FamilyService.transferOwnership (src/family/family.service.ts:450:15)
+
+    console.log
+      [transferOwnership] Validation: {
+        familyOwnerId: 'current-owner-id',
+        currentOwnerId: 'current-owner-id',
+        match: true,
+        willThrow: false
+      }
+
+      at FamilyService.transferOwnership (src/family/family.service.ts:450:15)
+
+    console.log
+      [transferOwnership] Validation: {
+        familyOwnerId: 'current-owner-id',
+        currentOwnerId: 'current-owner-id',
+        match: true,
+        willThrow: false
+      }
+
+      at FamilyService.transferOwnership (src/family/family.service.ts:450:15)
+
+    console.log
+      [transferOwnership] Validation: {
+        familyOwnerId: 'current-owner-id',
+        currentOwnerId: 'current-owner-id',
+        match: true,
+        willThrow: false
+      }
+
+      at FamilyService.transferOwnership (src/family/family.service.ts:450:15)
+
+    console.log
+      [transferOwnership] Validation: {
+        familyOwnerId: 'current-owner-id',
+        currentOwnerId: 'current-owner-id',
+        match: true,
+        willThrow: false
+      }
+
+      at FamilyService.transferOwnership (src/family/family.service.ts:450:15)
+
+FAIL src/content-classification/content-classification.service.spec.ts (24.659 s)
+  ● ContentClassificationService › should be defined
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › classifyContent › should return existing classification if provided
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › classifyContent › should classify basic content for young ages
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › classifyContent › should classify intermediate content
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › classifyContent › should classify advanced content for teens
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › classifyContent › should provide confidence score
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › filterContentByAge › should filter content within age range
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › filterContentByAge › should include unclassified content
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › suggestClassification › should suggest classification with confidence
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › suggestClassification › should flag low confidence for review
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+PASS src/family/services/family-policy.service.spec.ts
+FAIL test/integration/ai-memory-compaction.spec.ts (24.84 s)
+  ● Console
+
+    console.warn
+      ⚠️  RabbitMQ not available - some tests will be skipped
+
+      27 |       console.log("✅ RabbitMQ connected");
+      28 |     } catch (err) {
+    > 29 |       console.warn("⚠️  RabbitMQ not available - some tests will be skipped");
+         |               ^
+      30 |     }
+      31 |   });
+      32 |
+
+      at Object.<anonymous> (test/integration/ai-memory-compaction.spec.ts:29:15)
+
+  ● Memory Compaction › should verify memory.compact queue exists
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      14 |   const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379/0";
+      15 |
+    > 16 |   beforeAll(async () => {
+         |   ^
+      17 |     // Setup Redis
+      18 |     redis = new Redis(REDIS_URL);
+      19 |     const ping = await redis.ping();
+
+      at test/integration/ai-memory-compaction.spec.ts:16:3
+      at Object.<anonymous> (test/integration/ai-memory-compaction.spec.ts:8:1)
+
+  ● Memory Compaction › should simulate memory job enqueueing
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      14 |   const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379/0";
+      15 |
+    > 16 |   beforeAll(async () => {
+         |   ^
+      17 |     // Setup Redis
+      18 |     redis = new Redis(REDIS_URL);
+      19 |     const ping = await redis.ping();
+
+      at test/integration/ai-memory-compaction.spec.ts:16:3
+      at Object.<anonymous> (test/integration/ai-memory-compaction.spec.ts:8:1)
+
+  ● Memory Compaction › should verify compact state storage format
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      14 |   const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379/0";
+      15 |
+    > 16 |   beforeAll(async () => {
+         |   ^
+      17 |     // Setup Redis
+      18 |     redis = new Redis(REDIS_URL);
+      19 |     const ping = await redis.ping();
+
+      at test/integration/ai-memory-compaction.spec.ts:16:3
+      at Object.<anonymous> (test/integration/ai-memory-compaction.spec.ts:8:1)
+
+  ● Memory Compaction › should verify memory vector store keys exist
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      14 |   const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379/0";
+      15 |
+    > 16 |   beforeAll(async () => {
+         |   ^
+      17 |     // Setup Redis
+      18 |     redis = new Redis(REDIS_URL);
+      19 |     const ping = await redis.ping();
+
+      at test/integration/ai-memory-compaction.spec.ts:16:3
+      at Object.<anonymous> (test/integration/ai-memory-compaction.spec.ts:8:1)
+
+  ● Memory Compaction › should test memory deduplication logic
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      14 |   const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379/0";
+      15 |
+    > 16 |   beforeAll(async () => {
+         |   ^
+      17 |     // Setup Redis
+      18 |     redis = new Redis(REDIS_URL);
+      19 |     const ping = await redis.ping();
+
+      at test/integration/ai-memory-compaction.spec.ts:16:3
+      at Object.<anonymous> (test/integration/ai-memory-compaction.spec.ts:8:1)
+
+PASS test/integration/ai-context-enrichment.spec.ts (24.919 s)
+  ● Console
+
+    console.log
+      ✅ Compact state loaded successfully
+
+      at Object.<anonymous> (test/integration/ai-context-enrichment.spec.ts:56:13)
+
+    console.log
+      ✅ Last turns window simulated (6 events)
+
+      at Object.<anonymous> (test/integration/ai-context-enrichment.spec.ts:100:13)
+
+    console.log
+      ✅ Content sliced: 50000 → 12000 chars
+
+      at Object.<anonymous> (test/integration/ai-context-enrichment.spec.ts:120:13)
+
+    console.log
+         Token reduction: 12500 → 3000 (~76.0% savings)
+
+      at Object.<anonymous> (test/integration/ai-context-enrichment.spec.ts:123:13)
+
+    console.log
+      ✅ Enriched metadata structure validated
+
+      at Object.<anonymous> (test/integration/ai-context-enrichment.spec.ts:163:13)
+
+    console.log
+      📊 Context Optimization Metrics:
+
+      at Object.<anonymous> (test/integration/ai-context-enrichment.spec.ts:200:13)
+
+    console.log
+        - Before: ~14,000 tokens
+
+      at Object.<anonymous> (test/integration/ai-context-enrichment.spec.ts:201:13)
+
+    console.log
+        - After:  ~3,550 tokens
+
+      at Object.<anonymous> (test/integration/ai-context-enrichment.spec.ts:202:13)
+
+    console.log
+        - Reduction: 74.6%
+
+      at Object.<anonymous> (test/integration/ai-context-enrichment.spec.ts:203:13)
+
+    console.log
+        - Cost savings per call: $0.001567
+
+      at Object.<anonymous> (test/integration/ai-context-enrichment.spec.ts:204:13)
+
+PASS test/unit/annotation-service.spec.ts (25.289 s)
+PASS test/unit/institution-invite.service.spec.ts
+PASS src/privacy/family-privacy-guard.service.spec.ts
+PASS content/content.controller.spec.ts
+PASS src/auth/extension-auth.service.spec.ts (26.673 s)
+FAIL test/e2e/content/cornell-reader.spec.ts
+  ● Test suite failed to run
+
+    Playwright Test needs to be invoked via 'npx playwright test' and excluded from Jest test runs.
+    Creating one directory for Playwright tests and one for Jest is the recommended way of doing it.
+    See https://playwright.dev/docs/intro for more information about Playwright Test.
+
+       9 |  */
+      10 |
+    > 11 | test.describe("Cornell Reader", () => {
+         |      ^
+      12 |   let contentId: string;
+      13 |
+      14 |   test.beforeEach(async ({ page }) => {
+
+      at throwIfRunningInsideJest (node_modules/playwright/lib/common/testType.js:273:11)
+      at TestTypeImpl._describe (node_modules/playwright/lib/common/testType.js:114:5)
+      at Function.describe (node_modules/playwright/lib/transform/transform.js:275:12)
+      at Object.<anonymous> (test/e2e/content/cornell-reader.spec.ts:11:6)
+
+FAIL test/e2e/study-groups/group-management.spec.ts
+  ● Test suite failed to run
+
+    Playwright Test needs to be invoked via 'npx playwright test' and excluded from Jest test runs.
+    Creating one directory for Playwright tests and one for Jest is the recommended way of doing it.
+    See https://playwright.dev/docs/intro for more information about Playwright Test.
+
+       9 |  */
+      10 |
+    > 11 | test.describe("Study Groups - Management", () => {
+         |      ^
+      12 |   let groupId: string;
+      13 |
+      14 |   test.beforeEach(async ({ page }) => {
+
+      at throwIfRunningInsideJest (node_modules/playwright/lib/common/testType.js:273:11)
+      at TestTypeImpl._describe (node_modules/playwright/lib/common/testType.js:114:5)
+      at Function.describe (node_modules/playwright/lib/transform/transform.js:275:12)
+      at Object.<anonymous> (test/e2e/study-groups/group-management.spec.ts:11:6)
+
+FAIL test/e2e/study-groups/session-flow.spec.ts
+  ● Test suite failed to run
+
+    Playwright Test needs to be invoked via 'npx playwright test' and excluded from Jest test runs.
+    Creating one directory for Playwright tests and one for Jest is the recommended way of doing it.
+    See https://playwright.dev/docs/intro for more information about Playwright Test.
+
+       9 |  */
+      10 |
+    > 11 | test.describe("Study Groups - Session Flow", () => {
+         |      ^
+      12 |   let groupId: string;
+      13 |   let sessionId: string;
+      14 |
+
+      at throwIfRunningInsideJest (node_modules/playwright/lib/common/testType.js:273:11)
+      at TestTypeImpl._describe (node_modules/playwright/lib/common/testType.js:114:5)
+      at Function.describe (node_modules/playwright/lib/transform/transform.js:275:12)
+      at Object.<anonymous> (test/e2e/study-groups/session-flow.spec.ts:11:6)
+
+FAIL test/e2e/study-groups/realtime-collab.spec.ts
+  ● Test suite failed to run
+
+    Playwright Test needs to be invoked via 'npx playwright test' and excluded from Jest test runs.
+    Creating one directory for Playwright tests and one for Jest is the recommended way of doing it.
+    See https://playwright.dev/docs/intro for more information about Playwright Test.
+
+       9 |  */
+      10 |
+    > 11 | test.describe("Real-Time Collaboration - WebSocket", () => {
+         |      ^
+      12 |   let sessionId: string;
+      13 |   let groupId: string;
+      14 |
+
+      at throwIfRunningInsideJest (node_modules/playwright/lib/common/testType.js:273:11)
+      at TestTypeImpl._describe (node_modules/playwright/lib/common/testType.js:114:5)
+      at Function.describe (node_modules/playwright/lib/transform/transform.js:275:12)
+      at Object.<anonymous> (test/e2e/study-groups/realtime-collab.spec.ts:11:6)
+
+FAIL test/e2e/content/upload.spec.ts
+  ● Test suite failed to run
+
+    Playwright Test needs to be invoked via 'npx playwright test' and excluded from Jest test runs.
+    Creating one directory for Playwright tests and one for Jest is the recommended way of doing it.
+    See https://playwright.dev/docs/intro for more information about Playwright Test.
+
+      10 |  */
+      11 |
+    > 12 | test.describe("Content Upload", () => {
+         |      ^
+      13 |   test.beforeEach(async ({ page }) => {
+      14 |     // Login before each test
+      15 |     await loginAs(page, TEST_USERS.facilitator.email);
+
+      at throwIfRunningInsideJest (node_modules/playwright/lib/common/testType.js:273:11)
+      at TestTypeImpl._describe (node_modules/playwright/lib/common/testType.js:114:5)
+      at Function.describe (node_modules/playwright/lib/transform/transform.js:275:12)
+      at Object.<anonymous> (test/e2e/content/upload.spec.ts:12:6)
+
+PASS src/sessions/reading-sessions.service.spec.ts (27.638 s)
+FAIL test/integration/family-owner.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/sessions.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/webclip-creation.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/websocket.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/family-mode.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/media-content.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/family.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/cornell.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/annotation-audit.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/study-groups.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/institution-admin.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/extension-auth.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/family-primary.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/institutions.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/classroom-mode.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/annotations.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/solo-sessions.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/review-srs.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+Summary of all failing tests
+FAIL src/events/family-event.service.spec.ts (24.164 s)
+  ● FamilyEventService › logPolicySet › should persist FAMILY_POLICY_SET event
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    - Expected
+    + Received
+
+    @@ -20,8 +20,8 @@
+              },
+            },
+            "domain": "FAMILY",
+            "type": "FAMILY_POLICY_SET",
+          },
+    -     "readingSessionId": "session_1",
+    +     "readingSessionId": undefined,
+        },
+      },
+
+    Number of calls: 1
+
+      71 |
+      72 |       expect(result).toBeDefined();
+    > 73 |       expect(mockPrismaService.sessionEvent.create).toHaveBeenCalledWith({
+         |                                                     ^
+      74 |         data: {
+      75 |           readingSessionId: "session_1",
+      76 |           eventType: "FAMILY_POLICY_SET",
+
+      at Object.<anonymous> (src/events/family-event.service.spec.ts:73:53)
+
+FAIL src/content-classification/content-classification.service.spec.ts (24.659 s)
+  ● ContentClassificationService › should be defined
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › classifyContent › should return existing classification if provided
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › classifyContent › should classify basic content for young ages
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › classifyContent › should classify intermediate content
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › classifyContent › should classify advanced content for teens
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › classifyContent › should provide confidence score
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › filterContentByAge › should filter content within age range
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › filterContentByAge › should include unclassified content
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › suggestClassification › should suggest classification with confidence
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+  ● ContentClassificationService › suggestClassification › should flag low confidence for review
+
+    Nest can't resolve dependencies of the ContentClassificationService (?, ConfigService). Please make sure that the argument HttpService at index [0] is available in the RootTestModule context.
+
+    Potential solutions:
+    - Is RootTestModule a valid NestJS module?
+    - If HttpService is a provider, is it part of the current RootTestModule?
+    - If HttpService is exported from a separate @Module, is that module imported within RootTestModule?
+      @Module({
+        imports: [ /* the Module containing HttpService */ ]
+      })
+
+    For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+
+       6 |
+       7 |   beforeEach(async () => {
+    >  8 |     const module: TestingModule = await Test.createTestingModule({
+         |                                   ^
+       9 |       providers: [ContentClassificationService],
+      10 |     }).compile();
+      11 |
+
+      at TestingInjector.lookupComponentInParentModules (node_modules/@nestjs/core/injector/injector.js:286:19)
+      at resolveParam (node_modules/@nestjs/core/injector/injector.js:140:38)
+          at async Promise.all (index 0)
+      at TestingInjector.resolveConstructorParams (node_modules/@nestjs/core/injector/injector.js:169:27)
+      at TestingInjector.loadInstance (node_modules/@nestjs/core/injector/injector.js:75:13)
+      at TestingInjector.loadProvider (node_modules/@nestjs/core/injector/injector.js:103:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:56:13
+          at async Promise.all (index 3)
+      at TestingInstanceLoader.createInstancesOfProviders (node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+      at node_modules/@nestjs/core/injector/instance-loader.js:40:13
+          at async Promise.all (index 1)
+      at TestingInstanceLoader.createInstances (node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+      at TestingInstanceLoader.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-instance-loader.js:9:9)
+      at TestingModuleBuilder.createInstancesOfDependencies (node_modules/@nestjs/testing/testing-module.builder.js:118:9)
+      at TestingModuleBuilder.compile (node_modules/@nestjs/testing/testing-module.builder.js:74:9)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:8:35)
+
+FAIL test/integration/ai-memory-compaction.spec.ts (24.84 s)
+  ● Memory Compaction › should verify memory.compact queue exists
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      14 |   const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379/0";
+      15 |
+    > 16 |   beforeAll(async () => {
+         |   ^
+      17 |     // Setup Redis
+      18 |     redis = new Redis(REDIS_URL);
+      19 |     const ping = await redis.ping();
+
+      at test/integration/ai-memory-compaction.spec.ts:16:3
+      at Object.<anonymous> (test/integration/ai-memory-compaction.spec.ts:8:1)
+
+  ● Memory Compaction › should simulate memory job enqueueing
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      14 |   const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379/0";
+      15 |
+    > 16 |   beforeAll(async () => {
+         |   ^
+      17 |     // Setup Redis
+      18 |     redis = new Redis(REDIS_URL);
+      19 |     const ping = await redis.ping();
+
+      at test/integration/ai-memory-compaction.spec.ts:16:3
+      at Object.<anonymous> (test/integration/ai-memory-compaction.spec.ts:8:1)
+
+  ● Memory Compaction › should verify compact state storage format
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      14 |   const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379/0";
+      15 |
+    > 16 |   beforeAll(async () => {
+         |   ^
+      17 |     // Setup Redis
+      18 |     redis = new Redis(REDIS_URL);
+      19 |     const ping = await redis.ping();
+
+      at test/integration/ai-memory-compaction.spec.ts:16:3
+      at Object.<anonymous> (test/integration/ai-memory-compaction.spec.ts:8:1)
+
+  ● Memory Compaction › should verify memory vector store keys exist
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      14 |   const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379/0";
+      15 |
+    > 16 |   beforeAll(async () => {
+         |   ^
+      17 |     // Setup Redis
+      18 |     redis = new Redis(REDIS_URL);
+      19 |     const ping = await redis.ping();
+
+      at test/integration/ai-memory-compaction.spec.ts:16:3
+      at Object.<anonymous> (test/integration/ai-memory-compaction.spec.ts:8:1)
+
+  ● Memory Compaction › should test memory deduplication logic
+
+    thrown: "Exceeded timeout of 5000 ms for a hook.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+      14 |   const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379/0";
+      15 |
+    > 16 |   beforeAll(async () => {
+         |   ^
+      17 |     // Setup Redis
+      18 |     redis = new Redis(REDIS_URL);
+      19 |     const ping = await redis.ping();
+
+      at test/integration/ai-memory-compaction.spec.ts:16:3
+      at Object.<anonymous> (test/integration/ai-memory-compaction.spec.ts:8:1)
+
+FAIL test/e2e/content/cornell-reader.spec.ts
+  ● Test suite failed to run
+
+    Playwright Test needs to be invoked via 'npx playwright test' and excluded from Jest test runs.
+    Creating one directory for Playwright tests and one for Jest is the recommended way of doing it.
+    See https://playwright.dev/docs/intro for more information about Playwright Test.
+
+       9 |  */
+      10 |
+    > 11 | test.describe("Cornell Reader", () => {
+         |      ^
+      12 |   let contentId: string;
+      13 |
+      14 |   test.beforeEach(async ({ page }) => {
+
+      at throwIfRunningInsideJest (node_modules/playwright/lib/common/testType.js:273:11)
+      at TestTypeImpl._describe (node_modules/playwright/lib/common/testType.js:114:5)
+      at Function.describe (node_modules/playwright/lib/transform/transform.js:275:12)
+      at Object.<anonymous> (test/e2e/content/cornell-reader.spec.ts:11:6)
+
+FAIL test/e2e/study-groups/group-management.spec.ts
+  ● Test suite failed to run
+
+    Playwright Test needs to be invoked via 'npx playwright test' and excluded from Jest test runs.
+    Creating one directory for Playwright tests and one for Jest is the recommended way of doing it.
+    See https://playwright.dev/docs/intro for more information about Playwright Test.
+
+       9 |  */
+      10 |
+    > 11 | test.describe("Study Groups - Management", () => {
+         |      ^
+      12 |   let groupId: string;
+      13 |
+      14 |   test.beforeEach(async ({ page }) => {
+
+      at throwIfRunningInsideJest (node_modules/playwright/lib/common/testType.js:273:11)
+      at TestTypeImpl._describe (node_modules/playwright/lib/common/testType.js:114:5)
+      at Function.describe (node_modules/playwright/lib/transform/transform.js:275:12)
+      at Object.<anonymous> (test/e2e/study-groups/group-management.spec.ts:11:6)
+
+FAIL test/e2e/study-groups/session-flow.spec.ts
+  ● Test suite failed to run
+
+    Playwright Test needs to be invoked via 'npx playwright test' and excluded from Jest test runs.
+    Creating one directory for Playwright tests and one for Jest is the recommended way of doing it.
+    See https://playwright.dev/docs/intro for more information about Playwright Test.
+
+       9 |  */
+      10 |
+    > 11 | test.describe("Study Groups - Session Flow", () => {
+         |      ^
+      12 |   let groupId: string;
+      13 |   let sessionId: string;
+      14 |
+
+      at throwIfRunningInsideJest (node_modules/playwright/lib/common/testType.js:273:11)
+      at TestTypeImpl._describe (node_modules/playwright/lib/common/testType.js:114:5)
+      at Function.describe (node_modules/playwright/lib/transform/transform.js:275:12)
+      at Object.<anonymous> (test/e2e/study-groups/session-flow.spec.ts:11:6)
+
+FAIL test/e2e/study-groups/realtime-collab.spec.ts
+  ● Test suite failed to run
+
+    Playwright Test needs to be invoked via 'npx playwright test' and excluded from Jest test runs.
+    Creating one directory for Playwright tests and one for Jest is the recommended way of doing it.
+    See https://playwright.dev/docs/intro for more information about Playwright Test.
+
+       9 |  */
+      10 |
+    > 11 | test.describe("Real-Time Collaboration - WebSocket", () => {
+         |      ^
+      12 |   let sessionId: string;
+      13 |   let groupId: string;
+      14 |
+
+      at throwIfRunningInsideJest (node_modules/playwright/lib/common/testType.js:273:11)
+      at TestTypeImpl._describe (node_modules/playwright/lib/common/testType.js:114:5)
+      at Function.describe (node_modules/playwright/lib/transform/transform.js:275:12)
+      at Object.<anonymous> (test/e2e/study-groups/realtime-collab.spec.ts:11:6)
+
+FAIL test/e2e/content/upload.spec.ts
+  ● Test suite failed to run
+
+    Playwright Test needs to be invoked via 'npx playwright test' and excluded from Jest test runs.
+    Creating one directory for Playwright tests and one for Jest is the recommended way of doing it.
+    See https://playwright.dev/docs/intro for more information about Playwright Test.
+
+      10 |  */
+      11 |
+    > 12 | test.describe("Content Upload", () => {
+         |      ^
+      13 |   test.beforeEach(async ({ page }) => {
+      14 |     // Login before each test
+      15 |     await loginAs(page, TEST_USERS.facilitator.email);
+
+      at throwIfRunningInsideJest (node_modules/playwright/lib/common/testType.js:273:11)
+      at TestTypeImpl._describe (node_modules/playwright/lib/common/testType.js:114:5)
+      at Function.describe (node_modules/playwright/lib/transform/transform.js:275:12)
+      at Object.<anonymous> (test/e2e/content/upload.spec.ts:12:6)
+
+FAIL test/integration/family-owner.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/sessions.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/webclip-creation.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/websocket.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/family-mode.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/media-content.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/family.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/cornell.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/annotation-audit.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/study-groups.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/institution-admin.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/extension-auth.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/family-primary.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/institutions.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/classroom-mode.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/annotations.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/solo-sessions.integration.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+FAIL test/integration/review-srs.spec.ts
+  ● Test suite failed to run
+
+    src/workers/email.worker.ts:31:52 - error TS2367: This comparison appears to be unintentional because the types 'FamilyRole' and '"PARENT"' have no overlap.
+
+    31       const parents = family.members.filter((m) => m.role === "PARENT");
+                                                          ~~~~~~~~~~~~~~~~~~~
+
+
+Test Suites: 26 failed, 25 passed, 51 total
+Tests:       16 failed, 145 passed, 161 total
+Snapshots:   0 total
+Time:        77.368 s
+Ran all test suites.

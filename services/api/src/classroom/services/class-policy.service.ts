@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { ClassroomEventService } from '../../events/classroom-event.service';
-import { PromptLibraryService } from '../../prompts/prompt-library.service';
-import { CreateClassPolicyDto } from '../dto/classroom.dto';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { ClassroomEventService } from "../../events/classroom-event.service";
+import { PromptLibraryService } from "../../prompts/prompt-library.service";
+import { CreateClassPolicyDto } from "../dto/classroom.dto";
 
 @Injectable()
 export class ClassPolicyService {
@@ -24,8 +24,8 @@ export class ClassPolicyService {
         timeboxDefaultMin: dto.timeboxDefaultMin ?? 20,
         dailyReviewCap: dto.dailyReviewCap ?? 30,
         toolWordsGateEnabled: true,
-        privacyMode: dto.privacyMode ?? 'AGGREGATED_ONLY',
-        interventionMode: dto.interventionMode ?? 'PROMPT_COACH',
+        privacyMode: dto.privacyMode ?? "AGGREGATED_ONLY",
+        interventionMode: dto.interventionMode ?? "PROMPT_COACH",
       },
       update: {
         weeklyUnitsTarget: dto.weeklyUnitsTarget,
@@ -41,8 +41,8 @@ export class ClassPolicyService {
       `policy_${policy.classroomId}`,
       dto.classroomId, // Using classroomId as userId for now
       {
-        domain: 'CLASS',
-        type: 'CLASS_POLICY_SET',
+        domain: "CLASS",
+        type: "CLASS_POLICY_SET",
         data: {
           classroomId: dto.classroomId,
           policy: {
@@ -73,7 +73,7 @@ export class ClassPolicyService {
    * Get policy setup prompt
    */
   getPolicyPrompt(units: number, minutes: number) {
-    return this.promptLibrary.getPrompt('CLASS_POLICY_SET', {
+    return this.promptLibrary.getPrompt("CLASS_POLICY_SET", {
       UNITS: units,
       MIN: minutes,
     });

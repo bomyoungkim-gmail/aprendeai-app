@@ -1,12 +1,17 @@
-import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { StudyGroupsWebSocketGateway } from '../websocket/study-groups-ws.gateway';
-import { EmailService } from '../email/email.service';
-import { CreateGroupDto } from './dto/create-group.dto';
-import { UpdateGroupDto } from './dto/update-group.dto'; // Wait, I didn't see update-group.dto in list?
-import { InviteGroupMemberDto } from './dto/invite-member.dto';
-import { UpdateMemberRoleDto } from './dto/update-member-role.dto'; // Didn't see this one either
-import { GroupRole, StudyGroup, StudyGroupMember } from '@prisma/client';
+import {
+  Injectable,
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { StudyGroupsWebSocketGateway } from "../websocket/study-groups-ws.gateway";
+import { EmailService } from "../email/email.service";
+import { CreateGroupDto } from "./dto/create-group.dto";
+// Wait, I didn't see update-group.dto in list?
+import { InviteGroupMemberDto } from "./dto/invite-member.dto";
+// Didn't see this one either
+import { GroupRole, StudyGroup, StudyGroupMember } from "@prisma/client";
 
 @Injectable()
 export class StudyGroupsService {
@@ -33,8 +38,8 @@ export class StudyGroupsService {
         data: {
           groupId: group.id,
           userId,
-          role: 'OWNER',
-          status: 'ACTIVE',
+          role: "OWNER",
+          status: "ACTIVE",
         },
       });
 
@@ -44,7 +49,7 @@ export class StudyGroupsService {
 
   async getGroupsByUser(userId: string): Promise<StudyGroup[]> {
     const memberships = await this.prisma.studyGroupMember.findMany({
-      where: { userId, status: 'ACTIVE' },
+      where: { userId, status: "ACTIVE" },
       include: {
         group: {
           include: {
@@ -100,9 +105,13 @@ export class StudyGroupsService {
     });
   }
 
-  async inviteMember(groupId: string, inviterId: string, dto: InviteGroupMemberDto): Promise<void> {
+  async inviteMember(
+    groupId: string,
+    inviterId: string,
+    dto: InviteGroupMemberDto,
+  ): Promise<void> {
     // Verify inviter has permission (OWNER or MOD)
-    await this.assertPermission(groupId, inviterId, ['OWNER', 'MOD']);
+    await this.assertPermission(groupId, inviterId, ["OWNER", "MOD"]);
 
     // Check if user already member
     const existing = await this.prisma.studyGroupMember.findUnique({
@@ -112,13 +121,13 @@ export class StudyGroupsService {
     });
 
     if (existing) {
-      if (existing.status === 'ACTIVE') {
-        throw new BadRequestException('User is already an active member');
+      if (existing.status === "ACTIVE") {
+        throw new BadRequestException("User is already an active member");
       }
       // Reactivate removed member
       await this.prisma.studyGroupMember.update({
         where: { groupId_userId: { groupId, userId: dto.userId } },
-        data: { status: 'INVITED', role: dto.role },
+        data: { status: "INVITED", role: dto.role },
       });
       return;
     }
@@ -128,31 +137,39 @@ export class StudyGroupsService {
         groupId,
         userId: dto.userId,
         role: dto.role,
-        status: 'INVITED',
+        status: "INVITED",
       },
     });
   }
 
-  async removeMember(groupId: string, removerId: string, targetUserId: string): Promise<void> {
+  async removeMember(
+    groupId: string,
+    removerId: string,
+    targetUserId: string,
+  ): Promise<void> {
     // Verify remover has permission
-    await this.assertPermission(groupId, removerId, ['OWNER', 'MOD']);
+    await this.assertPermission(groupId, removerId, ["OWNER", "MOD"]);
 
     // Cannot remove owner
     const target = await this.prisma.studyGroupMember.findUnique({
       where: { groupId_userId: { groupId, userId: targetUserId } },
     });
 
-    if (target?.role === 'OWNER') {
-      throw new ForbiddenException('Cannot remove group owner');
+    if (target?.role === "OWNER") {
+      throw new ForbiddenException("Cannot remove group owner");
     }
 
     await this.prisma.studyGroupMember.update({
       where: { groupId_userId: { groupId, userId: targetUserId } },
-      data: { status: 'REMOVED' },
+      data: { status: "REMOVED" },
     });
   }
 
-  async addContent(groupId: string, userId: string, contentId: string): Promise<void> {
+  async addContent(
+    groupId: string,
+    userId: string,
+    contentId: string,
+  ): Promise<void> {
     // Verify user is active member
     await this.assertMembership(groupId, userId);
 
@@ -162,7 +179,7 @@ export class StudyGroupsService {
     });
 
     if (!content) {
-      throw new NotFoundException('Content not found');
+      throw new NotFoundException("Content not found");
     }
 
     // Check if already added
@@ -171,7 +188,7 @@ export class StudyGroupsService {
     });
 
     if (existing) {
-      throw new BadRequestException('Content already in playlist');
+      throw new BadRequestException("Content already in playlist");
     }
 
     await this.prisma.groupContent.create({
@@ -183,9 +200,13 @@ export class StudyGroupsService {
     });
   }
 
-  async removeContent(groupId: string, userId: string, contentId: string): Promise<void> {
+  async removeContent(
+    groupId: string,
+    userId: string,
+    contentId: string,
+  ): Promise<void> {
     // Only OWNER/MOD can remove
-    await this.assertPermission(groupId, userId, ['OWNER', 'MOD']);
+    await this.assertPermission(groupId, userId, ["OWNER", "MOD"]);
 
     await this.prisma.groupContent.delete({
       where: { groupId_contentId: { groupId, contentId } },
@@ -193,31 +214,40 @@ export class StudyGroupsService {
   }
 
   // Helper: Assert user is active member
-  async assertMembership(groupId: string, userId: string): Promise<StudyGroupMember> {
+  async assertMembership(
+    groupId: string,
+    userId: string,
+  ): Promise<StudyGroupMember> {
     const member = await this.prisma.studyGroupMember.findUnique({
       where: { groupId_userId: { groupId, userId } },
     });
 
-    if (!member || member.status !== 'ACTIVE') {
-      throw new ForbiddenException('Access denied: not an active member');
+    if (!member || member.status !== "ACTIVE") {
+      throw new ForbiddenException("Access denied: not an active member");
     }
 
     return member;
   }
 
   // Helper: Assert user has required role
-  async assertPermission(groupId: string, userId: string, allowedRoles: GroupRole[]): Promise<void> {
+  async assertPermission(
+    groupId: string,
+    userId: string,
+    allowedRoles: GroupRole[],
+  ): Promise<void> {
     const member = await this.assertMembership(groupId, userId);
 
     if (!allowedRoles.includes(member.role)) {
-      throw new ForbiddenException(`Access denied: requires role ${allowedRoles.join(' or ')}`);
+      throw new ForbiddenException(
+        `Access denied: requires role ${allowedRoles.join(" or ")}`,
+      );
     }
   }
 
   // Helper: Get active members
   async getActiveMembers(groupId: string): Promise<StudyGroupMember[]> {
     return this.prisma.studyGroupMember.findMany({
-      where: { groupId, status: 'ACTIVE' },
+      where: { groupId, status: "ACTIVE" },
       include: {
         user: {
           select: {

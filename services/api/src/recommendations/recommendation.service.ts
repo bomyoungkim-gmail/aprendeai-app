@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 
 export interface RecommendationContent {
   id: string;
@@ -41,7 +41,9 @@ export class RecommendationService {
   /**
    * Get unfinished content to continue reading
    */
-  private async getContinueReading(userId: string): Promise<RecommendationContent[]> {
+  private async getContinueReading(
+    userId: string,
+  ): Promise<RecommendationContent[]> {
     const sessions = await this.prisma.readingSession.findMany({
       where: {
         userId,
@@ -56,7 +58,7 @@ export class RecommendationService {
           },
         },
       },
-      orderBy: { startedAt: 'desc' },
+      orderBy: { startedAt: "desc" },
       take: 3,
     });
 
@@ -69,7 +71,9 @@ export class RecommendationService {
   /**
    * Get recently read content
    */
-  private async getRecentReads(userId: string): Promise<RecommendationContent[]> {
+  private async getRecentReads(
+    userId: string,
+  ): Promise<RecommendationContent[]> {
     const sessions = await this.prisma.readingSession.findMany({
       where: {
         userId,
@@ -84,7 +88,7 @@ export class RecommendationService {
           },
         },
       },
-      orderBy: { finishedAt: 'desc' },
+      orderBy: { finishedAt: "desc" },
       take: 10,
     });
 
@@ -102,10 +106,12 @@ export class RecommendationService {
   /**
    * Get popular content in user's groups
    */
-  private async getPopularInGroups(userId: string): Promise<RecommendationContent[]> {
+  private async getPopularInGroups(
+    userId: string,
+  ): Promise<RecommendationContent[]> {
     // Get user's active groups
     const memberships = await this.prisma.studyGroupMember.findMany({
-      where: { userId, status: 'ACTIVE' },
+      where: { userId, status: "ACTIVE" },
       select: { groupId: true },
     });
 
@@ -161,7 +167,9 @@ export class RecommendationService {
   /**
    * Get content similar to what user recently read
    */
-  private async getSimilarContent(userId: string): Promise<RecommendationContent[]> {
+  private async getSimilarContent(
+    userId: string,
+  ): Promise<RecommendationContent[]> {
     // Get user's recent reads to understand preferences
     const recentSessions = await this.prisma.readingSession.findMany({
       where: { userId },
@@ -170,7 +178,7 @@ export class RecommendationService {
           select: { type: true, originalLanguage: true },
         },
       },
-      orderBy: { startedAt: 'desc' },
+      orderBy: { startedAt: "desc" },
       take: 5,
     });
 
@@ -178,13 +186,15 @@ export class RecommendationService {
 
     // Extract unique types and languages
     const types = [...new Set(recentSessions.map((s) => s.content.type))];
-    const languages = [...new Set(recentSessions.map((s) => s.content.originalLanguage))];
+    const languages = [
+      ...new Set(recentSessions.map((s) => s.content.originalLanguage)),
+    ];
 
     // Get content IDs user has already read
     const readContentIds = await this.prisma.readingSession.findMany({
       where: { userId },
       select: { contentId: true },
-      distinct: ['contentId'],
+      distinct: ["contentId"],
     });
 
     const readIds = readContentIds.map((s) => s.contentId);
@@ -201,7 +211,7 @@ export class RecommendationService {
           select: { id: true, name: true },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       take: 5,
     });
 
@@ -218,7 +228,7 @@ export class RecommendationService {
     const readContentIds = await this.prisma.readingSession.findMany({
       where: { userId },
       select: { contentId: true },
-      distinct: ['contentId'],
+      distinct: ["contentId"],
     });
 
     const readIds = readContentIds.map((s) => s.contentId);
@@ -253,10 +263,12 @@ export class RecommendationService {
       .slice(0, 5);
 
     // Remove ReadingSession from response
-    return popularTrending.map(({ ReadingSession, popularity, ...content }) => ({
-      ...content,
-      popularity,
-    }));
+    return popularTrending.map(
+      ({ ReadingSession, popularity, ...content }) => ({
+        ...content,
+        popularity,
+      }),
+    );
   }
 
   /**

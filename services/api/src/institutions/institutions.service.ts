@@ -1,6 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateInstitutionDto, UpdateInstitutionDto } from './dto/institution.dto';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import {
+  CreateInstitutionDto,
+  UpdateInstitutionDto,
+} from "./dto/institution.dto";
 
 @Injectable()
 export class InstitutionsService {
@@ -41,8 +44,8 @@ export class InstitutionsService {
     const institutionMember = await this.prisma.institutionMember.findFirst({
       where: {
         userId,
-        role: 'INSTITUTION_ADMIN',
-        status: 'ACTIVE',
+        role: "INSTITUTION_ADMIN",
+        status: "ACTIVE",
       },
       include: {
         institution: true,
@@ -50,34 +53,35 @@ export class InstitutionsService {
     });
 
     if (!institutionMember) {
-      throw new Error('User is not an institution admin');
+      throw new Error("User is not an institution admin");
     }
 
     const institutionId = institutionMember.institutionId;
 
     // Aggregate stats
-    const [memberCount, activeInvites, pendingApprovals, domains] = await Promise.all([
-      this.prisma.institutionMember.count({
-        where: { institutionId, status: 'ACTIVE' },
-      }),
-      this.prisma.institutionInvite.count({
-        where: { institutionId, usedAt: null, expiresAt: { gt: new Date() } },
-      }),
-      this.prisma.pendingUserApproval.count({
-        where: { institutionId, status: 'PENDING' },
-      }),
-      this.prisma.institutionDomain.findMany({
-        where: { institutionId },
-        select: { domain: true },
-      }),
-    ]);
+    const [memberCount, activeInvites, pendingApprovals, domains] =
+      await Promise.all([
+        this.prisma.institutionMember.count({
+          where: { institutionId, status: "ACTIVE" },
+        }),
+        this.prisma.institutionInvite.count({
+          where: { institutionId, usedAt: null, expiresAt: { gt: new Date() } },
+        }),
+        this.prisma.pendingUserApproval.count({
+          where: { institutionId, status: "PENDING" },
+        }),
+        this.prisma.institutionDomain.findMany({
+          where: { institutionId },
+          select: { domain: true },
+        }),
+      ]);
 
     return {
       ...institutionMember.institution,
       memberCount,
       activeInvites,
       pendingApprovals,
-      domains: domains.map(d => d.domain),
+      domains: domains.map((d) => d.domain),
     };
   }
 }

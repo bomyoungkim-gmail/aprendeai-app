@@ -1,0 +1,142 @@
+
+// ==========================================
+// QUESTION BANK SYSTEM
+// ==========================================
+// Centralized question bank with multilingual support,
+// AI generation, and intelligent selection algorithms
+
+model QuestionBank {
+  id              String   @id @default(cuid())
+  
+  // Multilingual support
+  language        String   // 'pt-BR', 'en-US', 'ko-KR'
+  universalConceptId String? @map("universal_concept_id") // Links translations (null for local concepts)
+  hasTranslations Boolean  @default(false) @map("has_translations")
+  
+  // Game metadata
+  gameType        String   @map("game_type") // 'CONCEPT_LINKING', 'SRS_ARENA', etc.
+  subject         String   // 'Biologia', 'Matemática' (in language)
+  topic           String   // 'Fotossíntese', 'Álgebra' (in language)
+  difficulty      Int      // 1-5
+  educationLevel  String   @map("education_level") // 'fundamental', 'medio', 'superior'
+  
+  // Content
+  question        Json     // Format varies by game type
+  answer          Json     // Answer + evaluation criteria
+  metadata        Json?    // Tags, keywords
+  
+  // Source tracking
+  sourceType      String   @map("source_type") // 'AI_GENERATED', 'CURATED', 'USER_CONTRIBUTED'
+  sourceContentId String?  @map("source_content_id") // Library content ID if based on user material
+  
+  // Analytics
+  timesUsed       Int      @default(0) @map("times_used")
+  avgScore        Float?   @map("avg_score")
+  
+  // Relations
+  results         QuestionResult[]
+  analytics       QuestionAnalytics?
+  translations    QuestionTranslation[]
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  @@index([language, gameType, subject, topic])
+  @@index([universalConceptId])
+  @@index([educationLevel, difficulty])
+  @@map("question_bank")
+}
+
+model QuestionTranslation {
+  id                String   @id @default(cuid())
+  sourceQuestionId  String   @map("source_question_id")
+  targetLanguage    String   @map("target_language") // 'en-US', 'ko-KR', etc.
+  
+  // Translated content
+  question          Json
+  answer            Json
+  subject           String   // Subject name in target language
+  topic             String   // Topic name in target language
+  
+  // Quality tracking
+  isAITranslated    Boolean  @default(true) @map("is_ai_translated")
+  isReviewed        Boolean  @default(false) @map("is_reviewed")
+  reviewedBy        String?  @map("reviewed_by")
+  
+  sourceQuestion    QuestionBank @relation(fields: [sourceQuestionId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  @@unique([sourceQuestionId, targetLanguage])
+  @@index([targetLanguage])
+  @@map("question_translations")
+}
+
+model QuestionResult {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  questionId      String   @map("question_id")
+  gameSessionId   String?  @map("game_session_id")
+  
+  // Performance
+  score           Int      // 0-100
+  timeTaken       Int      @map("time_taken") // seconds
+  isCorrect       Boolean  @map("is_correct")
+  selfRating      Int?     @map("self_rating") // 1-3 (for SRS)
+  
+  // Learning insights
+  userAnswer      Json?    @map("user_answer")
+  mistakes        Json?    // Mistakes made (e.g., forbidden words used)
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question        QuestionBank @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, createdAt])
+  @@index([questionId])
+  @@map("question_results")
+}
+
+model QuestionAnalytics {
+  id              String   @id @default(cuid())
+  questionId      String   @unique @map("question_id")
+  
+  // Aggregate stats
+  totalAttempts   Int      @default(0) @map("total_attempts")
+  successRate     Float    @map("success_rate") // 0-100
+  avgScore        Float    @map("avg_score")
+  avgTime         Int      @map("avg_time")
+  avgSelfRating   Float?   @map("avg_self_rating")
+  
+  // Common mistakes (aggregated)
+  commonMistakes  Json     @map("common_mistakes") // Array of frequent errors
+  
+  // Difficulty markers
+  isDifficult     Boolean  @default(false) @map("is_difficult") // If < 50% success
+  
+  question        QuestionBank @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  @@map("question_analytics")
+}
+
+model ConceptDifficulty {
+  id              String   @id @default(cuid())
+  topic           String
+  subject         String
+  
+  // Aggregate of all users
+  totalAttempts   Int      @default(0) @map("total_attempts")
+  avgScore        Float    @map("avg_score")
+  successRate     Float    @map("success_rate")
+  
+  // Problems identified
+  commonMistakes  String[] @map("common_mistakes") // Words/concepts confused
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  @@unique([topic, subject])
+  @@map("concept_difficulty")
+}

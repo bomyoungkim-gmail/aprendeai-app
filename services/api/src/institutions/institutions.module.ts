@@ -1,13 +1,14 @@
-import { Module } from '@nestjs/common';
-import { InstitutionsController } from './institutions.controller';
-import { InstitutionsService } from './institutions.service';
-import { InstitutionInviteService } from './institution-invite.service';
-import { InstitutionDomainService } from './institution-domain.service';
-import { ApprovalService } from './approval.service';
-import { SSOService } from './sso.service';
-import { PrismaModule } from '../prisma/prisma.module';
-import { EmailModule } from '../email/email.module';
-import { AdminModule } from '../admin/admin.module';
+import { Module } from "@nestjs/common";
+import { InstitutionsController } from "./institutions.controller";
+import { InstitutionsService } from "./institutions.service";
+import { InstitutionInviteService } from "./institution-invite.service";
+import { InstitutionDomainService } from "./institution-domain.service";
+import { ApprovalService } from "./approval.service";
+import { SSOService } from "./sso.service";
+import { BulkService } from "../bulk/bulk.service";
+import { PrismaModule } from "../prisma/prisma.module";
+import { EmailModule } from "../email/email.module";
+import { AdminModule } from "../admin/admin.module";
 
 @Module({
   imports: [PrismaModule, EmailModule, AdminModule],
@@ -18,6 +19,7 @@ import { AdminModule } from '../admin/admin.module';
     InstitutionDomainService,
     ApprovalService,
     SSOService,
+    BulkService,
   ],
   exports: [
     InstitutionsService,

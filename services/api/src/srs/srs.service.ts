@@ -1,8 +1,16 @@
-import { Injectable } from '@nestjs/common';
-import { addDays } from 'date-fns';
+import { Injectable } from "@nestjs/common";
+import { addDays } from "date-fns";
 
-export type SrsStage = 'NEW' | 'D1' | 'D3' | 'D7' | 'D14' | 'D30' | 'D60' | 'MASTERED';
-export type AttemptResult = 'FAIL' | 'HARD' | 'OK' | 'EASY';
+export type SrsStage =
+  | "NEW"
+  | "D1"
+  | "D3"
+  | "D7"
+  | "D14"
+  | "D30"
+  | "D60"
+  | "MASTERED";
+export type AttemptResult = "FAIL" | "HARD" | "OK" | "EASY";
 
 const INTERVALS: Record<SrsStage, number> = {
   NEW: 0,
@@ -15,7 +23,16 @@ const INTERVALS: Record<SrsStage, number> = {
   MASTERED: 180, // DECISION 4: 180 days, not 999
 };
 
-const STAGE_ORDER: SrsStage[] = ['NEW', 'D1', 'D3', 'D7', 'D14', 'D30', 'D60', 'MASTERED'];
+const STAGE_ORDER: SrsStage[] = [
+  "NEW",
+  "D1",
+  "D3",
+  "D7",
+  "D14",
+  "D30",
+  "D60",
+  "MASTERED",
+];
 
 @Injectable()
 export class SrsService {
@@ -33,9 +50,9 @@ export class SrsService {
     lapseIncrement: number;
   } {
     // FAIL: Reset to D1
-    if (result === 'FAIL') {
+    if (result === "FAIL") {
       return {
-        newStage: 'D1',
+        newStage: "D1",
         dueDate: addDays(new Date(), 1),
         daysToAdd: 1,
         lapseIncrement: 1,
@@ -43,7 +60,7 @@ export class SrsService {
     }
 
     // HARD: Regress 1 stage
-    if (result === 'HARD') {
+    if (result === "HARD") {
       const regressed = this.regressStage(currentStage, 1);
       const days = INTERVALS[regressed];
       return {
@@ -55,7 +72,7 @@ export class SrsService {
     }
 
     // OK: Progress 1 stage
-    if (result === 'OK') {
+    if (result === "OK") {
       const next = this.progressStage(currentStage, 1);
       const days = INTERVALS[next];
       return {
@@ -67,7 +84,7 @@ export class SrsService {
     }
 
     // EASY: Progress 2 stages
-    if (result === 'EASY') {
+    if (result === "EASY") {
       const next = this.progressStage(currentStage, 2);
       const days = INTERVALS[next];
       return {
@@ -117,13 +134,13 @@ export class SrsService {
    */
   calculateMasteryDelta(result: AttemptResult): number {
     switch (result) {
-      case 'FAIL':
+      case "FAIL":
         return -20;
-      case 'HARD':
+      case "HARD":
         return -5;
-      case 'OK':
+      case "OK":
         return +10;
-      case 'EASY':
+      case "EASY":
         return +15;
       default:
         return 0;

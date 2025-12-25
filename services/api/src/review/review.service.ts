@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { ProfileService } from '../profiles/profile.service';
-import { SrsService, AttemptResult } from '../srs/srs.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { ProfileService } from "../profiles/profile.service";
+import { SrsService, AttemptResult } from "../srs/srs.service";
 
-export type VocabDimension = 'FORM' | 'MEANING' | 'USE';
+export type VocabDimension = "FORM" | "MEANING" | "USE";
 
 @Injectable()
 export class ReviewService {
@@ -28,8 +28,8 @@ export class ReviewService {
         dueAt: { lte: new Date() },
       },
       orderBy: [
-        { dueAt: 'asc' },         // Oldest first
-        { lapsesCount: 'desc' },  // Struggled items priority
+        { dueAt: "asc" }, // Oldest first
+        { lapsesCount: "desc" }, // Struggled items priority
       ],
       take: cap,
       include: {
@@ -77,13 +77,11 @@ export class ReviewService {
     });
 
     if (!vocab) {
-      throw new Error('Vocabulary item not found');
+      throw new Error("Vocabulary item not found");
     }
 
-    const { newStage, dueDate, lapseIncrement } = this.srsService.calculateNextDue(
-      vocab.srsStage as any,
-      result,
-    );
+    const { newStage, dueDate, lapseIncrement } =
+      this.srsService.calculateNextDue(vocab.srsStage as any, result);
 
     const masteryDelta = this.srsService.calculateMasteryDelta(result);
 
@@ -108,14 +106,23 @@ export class ReviewService {
           lapsesCount: { increment: lapseIncrement },
           lastSeenAt: new Date(),
           // Update dimension-specific mastery
-          ...(dimension === 'FORM' && {
-            masteryForm: Math.max(0, Math.min(100, vocab.masteryForm + masteryDelta)),
+          ...(dimension === "FORM" && {
+            masteryForm: Math.max(
+              0,
+              Math.min(100, vocab.masteryForm + masteryDelta),
+            ),
           }),
-          ...(dimension === 'MEANING' && {
-            masteryMeaning: Math.max(0, Math.min(100, vocab.masteryMeaning + masteryDelta)),
+          ...(dimension === "MEANING" && {
+            masteryMeaning: Math.max(
+              0,
+              Math.min(100, vocab.masteryMeaning + masteryDelta),
+            ),
           }),
-          ...(dimension === 'USE' && {
-            masteryUse: Math.max(0, Math.min(100, vocab.masteryUse + masteryDelta)),
+          ...(dimension === "USE" && {
+            masteryUse: Math.max(
+              0,
+              Math.min(100, vocab.masteryUse + masteryDelta),
+            ),
           }),
         },
       }),

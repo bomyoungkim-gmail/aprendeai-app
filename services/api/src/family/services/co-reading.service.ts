@@ -1,10 +1,10 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { FamilyEventService } from '../../events/family-event.service';
-import { CoReadingStateMachine } from '../../state-machine/co-reading-state-machine.service';
-import { PromptLibraryService } from '../../prompts/prompt-library.service';
-import { CoReadingPhase, CoReadingContext } from '../../state-machine/types';
-import { StartCoSessionDto } from '../dto/co-session.dto';
+import { Injectable, BadRequestException } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { FamilyEventService } from "../../events/family-event.service";
+import { CoReadingStateMachine } from "../../state-machine/co-reading-state-machine.service";
+import { PromptLibraryService } from "../../prompts/prompt-library.service";
+import { CoReadingPhase, CoReadingContext } from "../../state-machine/types";
+import { StartCoSessionDto } from "../dto/co-session.dto";
 
 @Injectable()
 export class CoReadingService {
@@ -17,13 +17,13 @@ export class CoReadingService {
 
   /**
    * Starts a new co-reading session
-   * 
+   *
    * @param dto - Session creation data including family, learner, educator, and content IDs
    * @returns Object containing:
    *   - coSession: Created session record
    *   - context: Initial state machine context (phase: BOOT)
    *   - nextPrompts: Initial prompts for learner and educator
-   * 
+   *
    * Logs CO_SESSION_STARTED event to FamilyEventService
    */
   async start(dto: StartCoSessionDto) {
@@ -37,8 +37,8 @@ export class CoReadingService {
         threadIdLearner: `thread_learner_${Date.now()}`,
         threadIdEducator: `thread_educator_${Date.now()}`,
         timeboxMin: dto.timeboxMin ?? 20,
-        type: 'CO_READING',
-        status: 'ACTIVE',
+        type: "CO_READING",
+        status: "ACTIVE",
       },
     });
 
@@ -47,8 +47,8 @@ export class CoReadingService {
       dto.readingSessionId,
       dto.educatorUserId,
       {
-        domain: 'FAMILY',
-        type: 'CO_SESSION_STARTED',
+        domain: "FAMILY",
+        type: "CO_SESSION_STARTED",
         data: {
           householdId: dto.familyId,
           coSessionId: coSession.id,
@@ -76,10 +76,15 @@ export class CoReadingService {
     };
 
     // Get initial prompts
-    const learnerPrompt = this.promptLibrary.getPrompt('OPS_DAILY_BOOT_LEARNER');
-    const educatorPrompt = this.promptLibrary.getPrompt('OPS_DAILY_BOOT_EDUCATOR', {
-      DAYS: 'hoje',
-    });
+    const learnerPrompt = this.promptLibrary.getPrompt(
+      "OPS_DAILY_BOOT_LEARNER",
+    );
+    const educatorPrompt = this.promptLibrary.getPrompt(
+      "OPS_DAILY_BOOT_EDUCATOR",
+      {
+        DAYS: "hoje",
+      },
+    );
 
     return {
       coSession,
@@ -93,13 +98,13 @@ export class CoReadingService {
 
   /**
    * Transitions co-reading session to next phase
-   * 
+   *
    * @param coSessionId - Session ID
    * @param targetPhase - Target phase (PRE, DURING, POST, CLOSE)
    * @param context - Current session context
    * @returns Success status, new phase, and next prompt
    * @throws {BadRequestException} If transition is invalid
-   * 
+   *
    * Valid transitions: BOOT→PRE→DURING→POST→CLOSE
    * Updates session status to COMPLETED when transitioning to CLOSE
    */
@@ -116,7 +121,7 @@ export class CoReadingService {
         await this.prisma.coReadingSession.update({
           where: { id: coSessionId },
           data: {
-            status: 'COMPLETED',
+            status: "COMPLETED",
             endedAt: new Date(),
           },
         });
@@ -146,7 +151,7 @@ export class CoReadingService {
     if (result.shouldIntervene) {
       // Return intervention menu prompt for educator
       const interventionPrompt = this.promptLibrary.getPrompt(
-        'EDU_INTERVENTION_MENU',
+        "EDU_INTERVENTION_MENU",
       );
       return {
         shouldIntervene: true,
@@ -185,7 +190,7 @@ export class CoReadingService {
     await this.prisma.coReadingSession.update({
       where: { id: coSessionId },
       data: {
-        status: 'COMPLETED',
+        status: "COMPLETED",
         endedAt: new Date(),
       },
     });

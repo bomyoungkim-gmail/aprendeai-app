@@ -1,5 +1,11 @@
-import { IsNotEmpty, IsString, IsOptional, IsArray, IsInt, IsEnum } from 'class-validator';
-import { QuestionType } from '@prisma/client';
+import {
+  IsNotEmpty,
+  IsString,
+  IsOptional,
+  IsArray,
+  IsEnum,
+} from "class-validator";
+import { QuestionType } from "@prisma/client";
 
 export class CreateQuestionDto {
   @IsNotEmpty()
@@ -34,4 +40,22 @@ export class CreateAssessmentDto {
   @IsNotEmpty()
   @IsArray()
   questions!: CreateQuestionDto[];
+}
+
+export class SubmitAssessmentAnswerDto {
+  @IsNotEmpty()
+  @IsString()
+  questionId!: string;
+
+  @IsNotEmpty()
+  userAnswer!: any;
+
+  @IsOptional()
+  timeSpentSeconds?: number;
+}
+
+export class SubmitAssessmentDto {
+  @IsNotEmpty()
+  @IsArray()
+  answers!: SubmitAssessmentAnswerDto[];
 }

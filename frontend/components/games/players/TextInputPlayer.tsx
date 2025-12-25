@@ -38,15 +38,17 @@ export function TextInputPlayer({
   return (
     <div className="space-y-4">
       {/* Prompt */}
-      <div className="bg-blue-50 p-4 rounded-lg">
-        <p className="text-gray-900 whitespace-pre-wrap">{prompt}</p>
+      <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
+        <p className="text-gray-800 whitespace-pre-wrap text-lg">{prompt}</p>
       </div>
 
       {/* Reuses existing PromptInput component */}
       <div>
         <PromptInput
+          value={text || ''}
+          onChange={setText}
           onSend={handleSubmit}
-          disabled={!isValid}
+          isLoading={false}
           placeholder={placeholder}
         />
       </div>

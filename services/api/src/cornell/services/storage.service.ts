@@ -1,29 +1,31 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../../prisma/prisma.service';
-import { Response } from 'express';
-import * as path from 'path';
-import * as fs from 'fs';
-import { URL_CONFIG } from '../../config/urls.config';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { PrismaService } from "../../prisma/prisma.service";
+import { Response } from "express";
+import * as path from "path";
+import * as fs from "fs";
+import { URL_CONFIG } from "../../config/urls.config";
 
 @Injectable()
 export class StorageService {
   constructor(
     private prisma: PrismaService,
-    private config: ConfigService
+    private config: ConfigService,
   ) {}
 
-  async getFileViewUrl(fileId: string): Promise<{ url: string; expiresAt: string }> {
+  async getFileViewUrl(
+    fileId: string,
+  ): Promise<{ url: string; expiresAt: string }> {
     const file = await this.prisma.file.findUnique({ where: { id: fileId } });
-    if (!file) throw new NotFoundException('File not found');
+    if (!file) throw new NotFoundException("File not found");
 
-    const provider = this.config.get('STORAGE_PROVIDER', 'LOCAL');
+    const provider = this.config.get("STORAGE_PROVIDER", "LOCAL");
 
-    if (provider === 'LOCAL') {
+    if (provider === "LOCAL") {
       return this.getLocalFileUrl(file);
     }
 
-    if (provider === 'S3') {
+    if (provider === "S3") {
       return this.getS3SignedUrl(file);
     }
 
@@ -31,35 +33,44 @@ export class StorageService {
   }
 
   private getLocalFileUrl(file: any) {
-    const baseUrl = URL_CONFIG.storage.base;
+    const baseUrl =
+      this.config.get("STORAGE_BASE_URL") || URL_CONFIG.storage.base;
     return {
       url: `${baseUrl}/api/files/${file.id}/proxy`,
-      expiresAt: new Date(Date.now() + 86400000).toISOString() // 24 hours
+      expiresAt: new Date(Date.now() + 86400000).toISOString(), // 24 hours
     };
   }
 
-  private async getS3SignedUrl(file: any): Promise<{ url: string; expiresAt: string }> {
+  private async getS3SignedUrl(
+    file: any,
+  ): Promise<{ url: string; expiresAt: string }> {
     // TODO (Issue #10): Implement S3 signed URL generation when needed
     // For now, return placeholder (will throw in production if S3 is used)
+    // TODO: Implement actual S3 signing logic here
+    const baseUrl =
+      this.config.get("STORAGE_S3_CUSTOM_DOMAIN") ||
+      `https://${this.config.get("STORAGE_S3_BUCKET")}.s3.amazonaws.com`;
     return {
-      url: `http://placeholder-s3-url.com/${file.storageKey}`,
+      url: `${baseUrl}/${file.storageKey}`,
       expiresAt: new Date(Date.now() + 3600000).toISOString(),
     };
   }
 
   async streamFile(fileId: string, res: Response) {
     const file = await this.prisma.file.findUnique({ where: { id: fileId } });
-    if (!file) throw new NotFoundException('File not found');
+    if (!file) throw new NotFoundException("File not found");
 
     // Security: prevent path traversal
-    const safeKey = path.normalize(file.storageKey).replace(/^(\.\.[\/\\])+/, '');
-    
-    const uploadPath = this.config.get('STORAGE_LOCAL_PATH', './uploads');
+    const safeKey = path
+      .normalize(file.storageKey)
+      .replace(/^(\.\.[\/\\])+/, "");
+
+    const uploadPath = this.config.get("STORAGE_LOCAL_PATH", "./uploads");
     const filePath = path.join(uploadPath, safeKey);
 
     // Check if file exists
     if (!fs.existsSync(filePath)) {
-      throw new NotFoundException('File not found on disk');
+      throw new NotFoundException("File not found on disk");
     }
 
     // Security: ensure file is within upload directory
@@ -67,10 +78,10 @@ export class StorageService {
       const realPath = fs.realpathSync(filePath);
       const realUploadPath = fs.realpathSync(uploadPath);
       if (!realPath.startsWith(realUploadPath)) {
-        throw new NotFoundException('Invalid file path');
+        throw new NotFoundException("Invalid file path");
       }
     } catch (error) {
-      throw new NotFoundException('File not found or invalid path');
+      throw new NotFoundException("File not found or invalid path");
     }
 
     // Get file stats for Content-Length
@@ -80,18 +91,21 @@ export class StorageService {
     const sanitizedFilename = this.sanitizeFilename(file.originalFilename);
 
     // Set headers
-    res.setHeader('Content-Type', file.mimeType);
-    res.setHeader('Content-Length', stats.size);
-    res.setHeader('Content-Disposition', `inline; filename="${sanitizedFilename}"`);
-    res.setHeader('Cache-Control', 'public, max-age=86400'); // 24h cache
+    res.setHeader("Content-Type", file.mimeType);
+    res.setHeader("Content-Length", stats.size);
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${sanitizedFilename}"`,
+    );
+    res.setHeader("Cache-Control", "public, max-age=86400"); // 24h cache
 
     // Stream file with error handling
     const stream = fs.createReadStream(filePath);
-    
-    stream.on('error', (error) => {
-      console.error('Stream error for file', fileId, ':', error);
+
+    stream.on("error", (error) => {
+      console.error("Stream error for file", fileId, ":", error);
       if (!res.headersSent) {
-        res.status(500).send('Error streaming file');
+        res.status(500).send("Error streaming file");
       }
     });
 
@@ -99,24 +113,24 @@ export class StorageService {
   }
 
   private sanitizeFilename(filename: string): string {
-    if (!filename) return 'download';
-    
+    if (!filename) return "download";
+
     return filename
-      .replace(/[^\w\s.-]/g, '_')  // Replace special chars with underscore
-      .replace(/\s+/g, '_')         // Replace spaces with underscore
-      .replace(/_{2,}/g, '_')       // Replace multiple underscores with single
-      .slice(0, 255);               // Limit to 255 chars
+      .replace(/[^\w\s.-]/g, "_") // Replace special chars with underscore
+      .replace(/\s+/g, "_") // Replace spaces with underscore
+      .replace(/_{2,}/g, "_") // Replace multiple underscores with single
+      .slice(0, 255); // Limit to 255 chars
   }
 
   /**
    * Save uploaded file to local storage
    * TODO (Issue #10): For production, migrate to S3 for scalability and redundancy
-   * 
+   *
    * @param file - Multer file object
    * @returns storageKey - Unique key to identify the file
    */
   async saveFile(file: Express.Multer.File): Promise<string> {
-    const uploadPath = this.config.get('STORAGE_LOCAL_PATH', './uploads');
+    const uploadPath = this.config.get("STORAGE_LOCAL_PATH", "./uploads");
 
     // Create uploads directory if not exists
     if (!fs.existsSync(uploadPath)) {
@@ -136,18 +150,21 @@ export class StorageService {
     return storageKey;
   }
 
-  async getUploadUrl(key: string, contentType: string): Promise<{ url: string; key: string }> {
+  async getUploadUrl(
+    key: string,
+    contentType: string,
+  ): Promise<{ url: string; key: string }> {
     // Legacy stub - keeping for backwards compatibility
-    const baseUrl = this.config.get('STORAGE_BASE_URL', 'http://localhost:3000');
+    const baseUrl = URL_CONFIG.storage.base;
     return {
       url: `${baseUrl}/api/uploads/${key}`,
-      key: key
+      key: key,
     };
   }
 
   async getViewUrl(key: string): Promise<string> {
     // Legacy method - keeping for backwards compatibility
-    const baseUrl = this.config.get('STORAGE_BASE_URL', 'http://localhost:3000');
+    const baseUrl = URL_CONFIG.storage.base;
     return `${baseUrl}/api/files/view/${key}`;
   }
 }

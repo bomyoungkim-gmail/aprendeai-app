@@ -1,40 +1,27 @@
+FAIL src/billing/billing.verification.spec.ts
+  EntitlementsService (Hierarchy Verification)
+    × should return FREE limits if no subscriptions found (8 ms)
+    √ should return ORG limits if user has active institution subscription (3 ms)
+    √ should return FAMILY limits if no Org but active Family subscription (2 ms)
+    √ should prioritize ORG over FAMILY and INDIVIDUAL (1 ms)
 
-> api@0.0.1 test
-> jest institutions.integration.spec.ts
+  ● EntitlementsService (Hierarchy Verification) › should return FREE limits if no subscriptions found
 
-FAIL test/integration/institutions.integration.spec.ts
-  ● Test suite failed to run
+    TypeError: Cannot read properties of undefined (reading 'findUnique')
 
-    src/auth/auth.service.ts:316:9 - error TS2353: Object literal may only specify known properties, and 'passwordResetToken' does not exist in type '(Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput)'.
+      121 |     // 4. Default Free
+      122 |     // Try to fetch from DB if seeded, else hardcoded
+    > 123 |     const freePlan = await this.prisma.plan.findUnique({ where: { code: "FREE" } });
+          |                                             ^
+      124 |     const freeLimits = freePlan?.entitlements ? (freePlan.entitlements as any)["limits"] : FREE_LIMITS;
+      125 |     const freeFeatures = freePlan?.entitlements ? (freePlan.entitlements as any)["features"] : {};
+      126 |
 
-    316         passwordResetToken: token,
-                ~~~~~~~~~~~~~~~~~~
-
-      node_modules/.prisma/client/index.d.ts:16444:5
-        16444     data: XOR<UserUpdateInput, UserUncheckedUpdateInput>
-                  ~~~~
-        The expected type comes from property 'data' which is declared here on type '{ select?: UserSelect<DefaultArgs>; include?: UserInclude<DefaultArgs>; data: (Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput); where: UserWhereUniqueInput; }'
-    src/auth/auth.service.ts:343:9 - error TS2353: Object literal may only specify known properties, and 'passwordResetToken' does not exist in type 'UserWhereInput'.
-
-    343         passwordResetToken: dto.token,
-                ~~~~~~~~~~~~~~~~~~
-
-      node_modules/.prisma/client/index.d.ts:16257:5
-        16257     where?: UserWhereInput
-                  ~~~~~
-        The expected type comes from property 'where' which is declared here on type '{ select?: UserSelect<DefaultArgs>; include?: UserInclude<DefaultArgs>; where?: UserWhereInput; orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]; cursor?: UserWhereUniqueInput; take?: number; skip?: number; distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]; }'
-    src/auth/auth.service.ts:358:9 - error TS2353: Object literal may only specify known properties, and 'passwordResetToken' does not exist in type '(Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput)'.
-
-    358         passwordResetToken: null,
-                ~~~~~~~~~~~~~~~~~~
-
-      node_modules/.prisma/client/index.d.ts:16444:5
-        16444     data: XOR<UserUpdateInput, UserUncheckedUpdateInput>
-                  ~~~~
-        The expected type comes from property 'data' which is declared here on type '{ select?: UserSelect<DefaultArgs>; include?: UserInclude<DefaultArgs>; data: (Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput); where: UserWhereUniqueInput; }'
+      at EntitlementsService.computeEntitlements (src/billing/entitlements.service.ts:123:45)
+      at Object.<anonymous> (src/billing/billing.verification.spec.ts:45:20)
 
 Test Suites: 1 failed, 1 total
-Tests:       0 total
+Tests:       1 failed, 3 passed, 4 total
 Snapshots:   0 total
-Time:        7.151 s
-Ran all test suites matching /institutions.integration.spec.ts/i.
+Time:        3.761 s, estimated 6 s
+Ran all test suites matching /src\\billing\\billing.verification.spec.ts/i.

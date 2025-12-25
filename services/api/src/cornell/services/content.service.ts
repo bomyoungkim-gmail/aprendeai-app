@@ -1,19 +1,30 @@
-import { Injectable, BadRequestException, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { StorageService } from './storage.service';
-import { UploadContentDto } from '../dto/upload-content.dto';
-import { Content, ContentType, Language, Environment, ScopeType } from '@prisma/client';
-import { VideoService } from '../../video/video.service';
-import { TranscriptionService } from '../../transcription/transcription.service';
-import { EnforcementService } from '../../billing/enforcement.service';
-import { FamilyService } from '../../family/family.service';
-import { UsageTrackingService } from '../../billing/usage-tracking.service';
-import * as mammoth from 'mammoth';
-import * as path from 'path';
-import * as fs from 'fs';
+import {
+  Injectable,
+  BadRequestException,
+  Logger,
+  NotFoundException,
+  ForbiddenException,
+} from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { StorageService } from "./storage.service";
+import { UploadContentDto } from "../dto/upload-content.dto";
+import {
+  Content,
+  ContentType,
+  Language,
+  Environment,
+  ScopeType,
+} from "@prisma/client";
+import { VideoService } from "../../video/video.service";
+import { TranscriptionService } from "../../transcription/transcription.service";
+import { EnforcementService } from "../../billing/enforcement.service";
+import { FamilyService } from "../../family/family.service";
+import { UsageTrackingService } from "../../billing/usage-tracking.service";
+import { ActivityService } from "../../activity/activity.service";
+import * as mammoth from "mammoth";
+import * as path from "path";
 
-// Using require for pdf-parse due to TypeScript module resolution issues  
-const pdfParse = require('pdf-parse');
+import { TopicMasteryService } from "../../analytics/topic-mastery.service";
 
 @Injectable()
 export class ContentService {
@@ -27,6 +38,8 @@ export class ContentService {
     private readonly enforcementService: EnforcementService,
     private readonly familyService: FamilyService,
     private readonly usageTracking: UsageTrackingService,
+    private readonly activityService: ActivityService,
+    private readonly topicMastery: TopicMasteryService
   ) {}
 
   /**
@@ -42,11 +55,14 @@ export class ContentService {
 
     // --- ENFORCEMENT & USAGE POOLING ---
     const envString = process.env.NODE_ENV?.toUpperCase();
-    const env = envString === 'PRODUCTION' ? Environment.PROD : 
-                envString === 'STAGING' ? Environment.STAGING : 
-                Environment.DEV;
+    const env =
+      envString === "PRODUCTION"
+        ? Environment.PROD
+        : envString === "STAGING"
+          ? Environment.STAGING
+          : Environment.DEV;
 
-    const metric = 'content_uploads_per_month';
+    const metric = "content_uploads_per_month";
 
     // Resolve hierarchy (User -> Family)
     const hierarchy = await this.familyService.resolveBillingHierarchy(userId);
@@ -56,7 +72,7 @@ export class ContentService {
       hierarchy,
       metric,
       1,
-      env
+      env,
     );
 
     // Track usage against effective scope
@@ -72,24 +88,27 @@ export class ContentService {
 
     // 1. Save file to storage first
     const storageKey = await this.storageService.saveFile(file);
-    let filePath = path.join('./uploads', storageKey);
+    const filePath = path.join("./uploads", storageKey);
 
-    let rawText = '';
+    let rawText = "";
     let duration: number | undefined;
     let thumbnailUrl: string | undefined;
 
     if (isVideo || isAudio) {
       // Handle video/audio upload
-      this.logger.log(`Processing ${isVideo ? 'video' : 'audio'}: ${file.originalname}`);
+      this.logger.log(
+        `Processing ${isVideo ? "video" : "audio"}: ${file.originalname}`,
+      );
 
       // Extract metadata
       if (isVideo) {
         const metadata = await this.videoService.extractVideoMetadata(filePath);
         duration = metadata.duration;
-        
+
         // Generate thumbnail
         try {
-          const thumbnailPath = await this.videoService.generateThumbnail(filePath);
+          const thumbnailPath =
+            await this.videoService.generateThumbnail(filePath);
           thumbnailUrl = `/uploads/thumbnails/${path.basename(thumbnailPath)}`;
         } catch (error) {
           this.logger.warn(`Failed to generate thumbnail: ${error.message}`);
@@ -97,23 +116,24 @@ export class ContentService {
 
         // Extract audio for transcription
         try {
-          const audioPath = await this.videoService.extractAudioFromVideo(filePath);
+          const audioPath =
+            await this.videoService.extractAudioFromVideo(filePath);
           // Update filePath to audio if we need to transcribe that
           // But actually we transcribe the video file directly often or the extracted audio
           // For now let's assume transcription service handles video files too or we pass audioPath
           // But wait, the previous code didn't use audioPath variable clearly.
           // I will assume transcriptionService.transcribe accepts the logical path.
         } catch (e) {
-             // warning
+          // warning
         }
       }
 
       // Transcribe
       // Trigger background transcription
       this.transcribeInBackground(filePath, file.originalname);
-      
+
       // For now, set rawText to placeholder or pending
-      rawText = '(Transcription Pending)';
+      rawText = "(Transcription Pending)";
     } else {
       // Document upload
       try {
@@ -125,7 +145,7 @@ export class ContentService {
       }
 
       if (!rawText || rawText.trim().length === 0) {
-        throw new BadRequestException('Could not extract text from file');
+        throw new BadRequestException("Could not extract text from file");
       }
     }
 
@@ -136,12 +156,17 @@ export class ContentService {
         mimeType: file.mimetype,
         sizeBytes: file.size,
         storageKey,
-        storageProvider: 'LOCAL', // TODO: Change to 'S3' for production
+        storageProvider: "LOCAL", // TODO: Change to 'S3' for production
       },
     });
 
+    // Track activity: content upload counts as reading new content
+    await this.activityService.trackActivity(userId, 'read').catch(err => 
+      this.logger.warn(`Failed to track upload activity: ${err.message}`)
+    );
+
     // 3. Create Content record
-    return this.prisma.content.create({
+    const content = await this.prisma.content.create({
       data: {
         title: dto.title,
         type: this.getContentType(file.mimetype),
@@ -157,6 +182,12 @@ export class ContentService {
         },
       },
     });
+
+    this.logger.log(
+      `✅ Content uploaded successfully: ${content.id} (${content.title})`,
+    );
+
+    return content;
   }
 
   /**
@@ -164,32 +195,52 @@ export class ContentService {
    */
   private async extractText(file: Express.Multer.File): Promise<string> {
     try {
-      if (file.mimetype === 'application/pdf') {
+      if (file.mimetype === "application/pdf") {
         return await this.extractPdfText(file.buffer);
       }
-      
+
       if (
-        file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        file.mimetype ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       ) {
         return await this.extractDocxText(file.buffer);
       }
-      
-      if (file.mimetype === 'text/plain') {
-        return file.buffer.toString('utf-8');
+
+      if (file.mimetype === "text/plain") {
+        return file.buffer.toString("utf-8");
       }
 
-      throw new BadRequestException('Unsupported file type');
+      throw new BadRequestException("Unsupported file type");
     } catch (error) {
       throw new BadRequestException(`Failed to extract text: ${error.message}`);
     }
   }
 
   /**
-   * Extract text from PDF using pdf-parse
+   * Extract text from PDF using unpdf (modern, zero-dependency library)
    */
   private async extractPdfText(buffer: Buffer): Promise<string> {
-    const pdf = await pdfParse(buffer);
-    return pdf.text;
+    this.logger.log(`Starting PDF extraction with unpdf, buffer size: ${buffer.length} bytes`);
+    
+    try {
+      // unpdf provides a simple extractText function
+      const { extractText } = await import('unpdf');
+      
+      // Convert Buffer to Uint8Array for unpdf
+      const uint8Array = new Uint8Array(buffer);
+      
+      const { text, totalPages } = await extractText(uint8Array, { mergePages: true });
+      
+      this.logger.log(`PDF extracted successfully. Text length: ${text?.length || 0}, pages: ${totalPages || 0}`);
+      
+      // Sanitize text: Remove null bytes (\0) that PostgreSQL UTF8 doesn't accept
+      const sanitized = (text || '').replace(/\0/g, '');
+      
+      return sanitized;
+    } catch (error) {
+      this.logger.error(`unpdf extraction failed: ${error.message}`);
+      throw error;
+    }
   }
 
   /**
@@ -204,79 +255,112 @@ export class ContentService {
    * Map MIME type to ContentType enum
    */
   private getContentType(mimeType: string): ContentType {
-    if (mimeType === 'application/pdf') return 'PDF';
-    if (mimeType.includes('wordprocessing')) return 'DOCX';
-    if (mimeType.startsWith('video/')) return 'VIDEO' as ContentType;
-    if (mimeType.startsWith('audio/')) return 'AUDIO' as ContentType;
+    if (mimeType === "application/pdf") return "PDF";
+    if (mimeType.includes("wordprocessing")) return "DOCX";
+    if (mimeType.startsWith("video/")) return "VIDEO" as ContentType;
+    if (mimeType.startsWith("audio/")) return "AUDIO" as ContentType;
     // For plain text, use PDF as default
-    return 'PDF';
+    return "PDF";
   }
 
   /**
    * Background transcription process
    */
-  private async transcribeInBackground(filePath: string, originalFilename: string): Promise<void> {
+  private async transcribeInBackground(
+    filePath: string,
+    originalFilename: string,
+  ): Promise<void> {
     if (!this.transcriptionService.isAvailable()) {
-      this.logger.warn('Transcription service not available (OpenAI API key not configured)');
+      this.logger.warn(
+        "Transcription service not available (OpenAI API key not configured)",
+      );
       return;
     }
 
     try {
-      this.logger.log(`Starting background transcription for ${originalFilename}`);
-      
-      const transcription = await this.transcriptionService.transcribe(filePath);
-      
+      this.logger.log(
+        `Starting background transcription for ${originalFilename}`,
+      );
+
+      const transcription =
+        await this.transcriptionService.transcribe(filePath);
+
       // TODO: Update Content record with transcription
       // This would require getting the content ID, which we don't have here
       // Better approach: Use a job queue (Bull, BullMQ) to handle this
-      
+
       this.logger.log(`Transcription completed for ${originalFilename}`);
     } catch (error) {
-      this.logger.error(`Transcription failed for ${originalFilename}: ${error.message}`);
+      this.logger.error(
+        `Transcription failed for ${originalFilename}: ${error.message}`,
+      );
     }
   }
 
   /**
    * Search content with PostgreSQL ILIKE
    */
-  async searchContent(query: string, filters: {
-    type?: ContentType;
-    language?: Language;
-    page?: number;
-    limit?: number;
-  }, userId: string) {
-    const { type, language, page = 1, limit = 20 } = filters;
+  async searchContent(
+    query: string,
+    filters: {
+      type?: ContentType;
+      language?: Language;
+      page?: number;
+      limit?: number;
+      recommendForUserId?: string;
+    },
+    userId: string,
+  ) {
+    const { type, language, page = 1, limit = 20, recommendForUserId } = filters;
     const skip = (page - 1) * limit;
 
     // 1. Get user's families to check permissions
     const families = await this.familyService.findAllForUser(userId);
-    const familyIds = families.map(f => f.id);
+    const familyIds = families.map((f) => f.id);
 
     // Build permission filter (Owner OR Member of Family Scope)
     const permissionFilter = {
       OR: [
         { ownerUserId: userId },
-        { 
+        {
           scopeType: ScopeType.FAMILY,
-          scopeId: { in: familyIds }
-        }
-      ]
-    };
-
-    // Build search filter
-    const searchFilter = {
-      OR: [
-        { title: { contains: query, mode: 'insensitive' } },
-        { rawText: { contains: query, mode: 'insensitive' } },
+          scopeId: { in: familyIds },
+        },
       ],
     };
 
+    // Build search filter
+    let searchFilter: any = {
+      OR: [
+        { title: { contains: query, mode: "insensitive" } },
+        { rawText: { contains: query, mode: "insensitive" } },
+      ],
+    };
+
+    // Recommendation Logic
+    if (recommendForUserId) {
+        const weakTopics = await this.topicMastery.getWeakestTopics(recommendForUserId, 8);
+        const topicNames = weakTopics.map(wt => wt.topic);
+
+        if (topicNames.length > 0) {
+            // Boost search by including weak topics in the OR condition
+            // If query is empty, we search explicitly for these topics
+            if (!query || query.trim() === '') {
+                searchFilter = {
+                    OR: topicNames.map(topic => ({
+                        OR: [
+                             { title: { contains: topic, mode: "insensitive" } },
+                             { rawText: { contains: topic, mode: "insensitive" } }
+                        ]
+                    }))
+                };
+            }
+        }
+    }
+
     // Combine filters
     const where: any = {
-      AND: [
-        permissionFilter,
-        searchFilter
-      ]
+      AND: [permissionFilter, searchFilter],
     };
 
     if (type) where.type = type;
@@ -290,7 +374,7 @@ export class ContentService {
       where,
       skip,
       take: limit,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       select: {
         id: true,
         title: true,
@@ -302,7 +386,7 @@ export class ContentService {
     });
 
     // Process results with excerpts
-    const results = contents.map(content => ({
+    const results = contents.map((content) => ({
       id: content.id,
       title: content.title,
       type: content.type,
@@ -327,31 +411,68 @@ export class ContentService {
   /**
    * Get content by ID with permission check
    */
-  async getContent(id: string, userId: string): Promise<Content & { file: any }> {
+  async getContent(contentId: string, userId: string) {
     const content = await this.prisma.content.findUnique({
-      where: { id },
-      include: { file: true }
+      where: { id: contentId },
+      include: {
+        file: true,
+        cornellNotes: {
+          where: { userId },
+          take: 1,
+        },
+        _count: {
+          select: {
+            assessments: true,
+            highlights: true,
+          },
+        },
+      },
     });
 
     if (!content) {
-      throw new NotFoundException('Content not found');
+      throw new NotFoundException(`Content not found`);
     }
 
-    // Permission Check
+    // Check ownership/access
     if (content.ownerUserId !== userId) {
-       // Check Family Access
-       if (content.scopeType === ScopeType.FAMILY && content.scopeId) {
-          const families = await this.familyService.findAllForUser(userId);
-          const isFamilyMember = families.some(f => f.id === content.scopeId);
-          if (isFamilyMember) {
-             return content;
-          }
-       }
-       
-       throw new ForbiddenException('Access denied to this content');
+      // Check Family Access
+      if (content.scopeType === ScopeType.FAMILY && content.scopeId) {
+        const families = await this.familyService.findAllForUser(userId);
+        const isFamilyMember = families.some((f) => f.id === content.scopeId);
+        if (!isFamilyMember) {
+          throw new ForbiddenException("Access denied to this content");
+        }
+      } else {
+        throw new ForbiddenException("Access denied to this content");
+      }
     }
 
-    return content;
+    // Transform BigInt to Number for JSON serialization
+    // Prisma returns BigInt for _count fields which cannot be JSON serialized
+    const transformedContent = {
+      ...content,
+      _count: content._count ? {
+        assessments: Number(content._count.assessments),
+        highlights: Number(content._count.highlights),
+      } : undefined,
+      // Transform file.sizeBytes if file exists
+      file: content.file ? {
+        ...content.file,
+        sizeBytes: Number(content.file.sizeBytes),
+      } : undefined,
+    };
+
+    // Also transform any BigInt in nested cornellNotes if present
+    if (transformedContent.cornellNotes && Array.isArray(transformedContent.cornellNotes)) {
+      transformedContent.cornellNotes = transformedContent.cornellNotes.map((note: any) => ({
+        ...note,
+        _count: note._count ? Object.fromEntries(
+          Object.entries(note._count).map(([key, value]) => [key, Number(value)])
+        ) : undefined,
+      }));
+    }
+
+    return transformedContent;
   }
 
   /**
@@ -363,25 +484,32 @@ export class ContentService {
     const index = lowerText.indexOf(lowerQuery);
 
     if (index === -1) {
-      return text.substring(0, length) + '...';
+      return text.substring(0, length) + "...";
     }
 
     // Extract text around the match
     const start = Math.max(0, index - 50);
     const end = Math.min(text.length, index + query.length + 150);
-    
+
     let excerpt = text.substring(start, end);
-    if (start > 0) excerpt = '...' + excerpt;
-    if (end < text.length) excerpt += '...';
-    
+    if (start > 0) excerpt = "..." + excerpt;
+    if (end < text.length) excerpt += "...";
+
     return excerpt;
   }
 
   /**
    * Find text snippets with highlights
    */
-  private findHighlights(text: string, query: string, maxHighlights = 3): string[] {
-    const regex = new RegExp(`(.{0,50}${this.escapeRegex(query)}.{0,50})`, 'gi');
+  private findHighlights(
+    text: string,
+    query: string,
+    maxHighlights = 3,
+  ): string[] {
+    const regex = new RegExp(
+      `(.{0,50}${this.escapeRegex(query)}.{0,50})`,
+      "gi",
+    );
     const matches = text.match(regex) || [];
     return matches.slice(0, maxHighlights);
   }
@@ -390,6 +518,6 @@ export class ContentService {
    * Escape special regex characters
    */
   private escapeRegex(str: string): string {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 }

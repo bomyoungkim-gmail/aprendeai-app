@@ -1,8 +1,8 @@
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { PassportStrategy } from '@nestjs/passport';
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../prisma/prisma.service';
+import { ExtractJwt, Strategy } from "passport-jwt";
+import { PassportStrategy } from "@nestjs/passport";
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -10,11 +10,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     configService: ConfigService,
     private prisma: PrismaService,
   ) {
-    const jwtSecret = configService.get<string>('JWT_SECRET');
+    const jwtSecret = configService.get<string>("JWT_SECRET");
     if (!jwtSecret) {
-      throw new Error('JWT_SECRET must be configured in environment variables');
+      throw new Error("JWT_SECRET must be configured in environment variables");
     }
-    
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -34,11 +34,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         settings: true,
       },
     });
-    
+
     if (!user) {
       return null; // This causes 401
     }
-    
+
     // ✅ FIX: Include scopes from JWT payload for ExtensionScopeGuard
     // Extension tokens have { sub, scopes, clientId }, web app tokens don't
     const userWithScopes = {
@@ -46,8 +46,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       ...(payload.scopes && { scopes: payload.scopes }),
       ...(payload.clientId && { clientId: payload.clientId }),
     };
-    
+
     return userWithScopes;
   }
 }
-

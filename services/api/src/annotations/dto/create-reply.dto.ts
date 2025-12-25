@@ -1,5 +1,4 @@
-import { IsString, IsOptional, IsEnum } from 'class-validator';
-import { AnnotationType } from '@prisma/client';
+import { IsString, IsOptional } from "class-validator";
 
 export class CreateReplyDto {
   @IsString()

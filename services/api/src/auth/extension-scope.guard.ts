@@ -1,8 +1,13 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, ForbiddenException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { SetMetadata } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
+import { SetMetadata } from "@nestjs/common";
 
-export const EXTENSION_SCOPES_KEY = 'extension_scopes';
+export const EXTENSION_SCOPES_KEY = "extension_scopes";
 
 /**
  * Decorator to require specific extension scopes
@@ -40,17 +45,17 @@ export class ExtensionScopeGuard implements CanActivate {
       // Let's stick to Forbidden for consistency usually? Or Unauthorized if token is "bad"?
       // User said: "forbidden é por que nao tem permissao"
       // If token is missing 'scopes', they definitely don't have permission.
-      throw new ForbiddenException('Extension scopes required');
+      throw new ForbiddenException("Extension scopes required");
     }
 
     // Check if user has at least one of the required scopes
-    const hasScope = requiredScopes.some(scope =>
+    const hasScope = requiredScopes.some((scope) =>
       (user.scopes as string[]).includes(scope),
     );
 
     if (!hasScope) {
       throw new ForbiddenException(
-        `Missing required scope(s): ${requiredScopes.join(', ')}`,
+        `Missing required scope(s): ${requiredScopes.join(", ")}`,
       );
     }
 

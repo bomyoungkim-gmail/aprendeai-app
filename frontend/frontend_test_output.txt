@@ -1,0 +1,216 @@
+
+> aprendeai-frontend@0.1.0 test
+> jest
+
+FAIL tests/unit/components/GameStatsCard.spec.tsx
+  ● Test suite failed to run
+
+    Cannot find module '@testing-library/dom' from 'node_modules/@testing-library/react/dist/pure.js'
+
+    Require stack:
+      node_modules/@testing-library/react/dist/pure.js
+      node_modules/@testing-library/react/dist/index.js
+      tests/setup.ts
+
+      26 |   translate: jest.fn(),
+      27 |   scale: jest.fn(),
+    > 28 |   rotate: jest.fn(),
+         |                ^
+      29 |   arc: jest.fn(),
+      30 |   fill: jest.fn(),
+      31 |   measureText: jest.fn(() => ({ width: 0 })),
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/pure.js:46:12)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/index.js:7:13)
+      at Object.<anonymous> (tests/setup.ts:28:16)
+
+FAIL tests/unit/components/GameDashboard.spec.tsx
+  ● Test suite failed to run
+
+    Cannot find module '@testing-library/dom' from 'node_modules/@testing-library/react/dist/pure.js'
+
+    Require stack:
+      node_modules/@testing-library/react/dist/pure.js
+      node_modules/@testing-library/react/dist/index.js
+      tests/setup.ts
+
+      26 |   translate: jest.fn(),
+      27 |   scale: jest.fn(),
+    > 28 |   rotate: jest.fn(),
+         |                ^
+      29 |   arc: jest.fn(),
+      30 |   fill: jest.fn(),
+      31 |   measureText: jest.fn(() => ({ width: 0 })),
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/pure.js:46:12)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/index.js:7:13)
+      at Object.<anonymous> (tests/setup.ts:28:16)
+
+FAIL tests/unit/hooks/useGameAnimation.spec.ts
+  ● Test suite failed to run
+
+    Cannot find module '@testing-library/dom' from 'node_modules/@testing-library/react/dist/pure.js'
+
+    Require stack:
+      node_modules/@testing-library/react/dist/pure.js
+      node_modules/@testing-library/react/dist/index.js
+      tests/setup.ts
+
+      26 |   translate: jest.fn(),
+      27 |   scale: jest.fn(),
+    > 28 |   rotate: jest.fn(),
+         |                ^
+      29 |   arc: jest.fn(),
+      30 |   fill: jest.fn(),
+      31 |   measureText: jest.fn(() => ({ width: 0 })),
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/pure.js:46:12)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/index.js:7:13)
+      at Object.<anonymous> (tests/setup.ts:28:16)
+
+FAIL tests/integration/CornellReader.integration.spec.tsx
+  ● Test suite failed to run
+
+    Cannot find module '@testing-library/dom' from 'node_modules/@testing-library/react/dist/pure.js'
+
+    Require stack:
+      node_modules/@testing-library/react/dist/pure.js
+      node_modules/@testing-library/react/dist/index.js
+      tests/setup.ts
+
+      26 |   translate: jest.fn(),
+      27 |   scale: jest.fn(),
+    > 28 |   rotate: jest.fn(),
+         |                ^
+      29 |   arc: jest.fn(),
+      30 |   fill: jest.fn(),
+      31 |   measureText: jest.fn(() => ({ width: 0 })),
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/pure.js:46:12)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/index.js:7:13)
+      at Object.<anonymous> (tests/setup.ts:28:16)
+
+FAIL tests/unit/CornellLayout.spec.tsx
+  ● Test suite failed to run
+
+    Cannot find module '@testing-library/dom' from 'node_modules/@testing-library/react/dist/pure.js'
+
+    Require stack:
+      node_modules/@testing-library/react/dist/pure.js
+      node_modules/@testing-library/react/dist/index.js
+      tests/setup.ts
+
+      26 |   translate: jest.fn(),
+      27 |   scale: jest.fn(),
+    > 28 |   rotate: jest.fn(),
+         |                ^
+      29 |   arc: jest.fn(),
+      30 |   fill: jest.fn(),
+      31 |   measureText: jest.fn(() => ({ width: 0 })),
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/pure.js:46:12)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/index.js:7:13)
+      at Object.<anonymous> (tests/setup.ts:28:16)
+
+FAIL tests/unit/components/StarsPerGameChart.spec.tsx
+  ● Test suite failed to run
+
+    Cannot find module '@testing-library/dom' from 'node_modules/@testing-library/react/dist/pure.js'
+
+    Require stack:
+      node_modules/@testing-library/react/dist/pure.js
+      node_modules/@testing-library/react/dist/index.js
+      tests/setup.ts
+
+      26 |   translate: jest.fn(),
+      27 |   scale: jest.fn(),
+    > 28 |   rotate: jest.fn(),
+         |                ^
+      29 |   arc: jest.fn(),
+      30 |   fill: jest.fn(),
+      31 |   measureText: jest.fn(() => ({ width: 0 })),
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/pure.js:46:12)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/index.js:7:13)
+      at Object.<anonymous> (tests/setup.ts:28:16)
+
+FAIL tests/unit/hooks/useGameProgress.spec.ts
+  ● Test suite failed to run
+
+    Cannot find module '@testing-library/dom' from 'node_modules/@testing-library/react/dist/pure.js'
+
+    Require stack:
+      node_modules/@testing-library/react/dist/pure.js
+      node_modules/@testing-library/react/dist/index.js
+      tests/setup.ts
+
+      26 |   translate: jest.fn(),
+      27 |   scale: jest.fn(),
+    > 28 |   rotate: jest.fn(),
+         |                ^
+      29 |   arc: jest.fn(),
+      30 |   fill: jest.fn(),
+      31 |   measureText: jest.fn(() => ({ width: 0 })),
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/pure.js:46:12)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/index.js:7:13)
+      at Object.<anonymous> (tests/setup.ts:28:16)
+
+FAIL tests/unit/components/Leaderboard.spec.tsx
+  ● Test suite failed to run
+
+    Cannot find module '@testing-library/dom' from 'node_modules/@testing-library/react/dist/pure.js'
+
+    Require stack:
+      node_modules/@testing-library/react/dist/pure.js
+      node_modules/@testing-library/react/dist/index.js
+      tests/setup.ts
+
+      26 |   translate: jest.fn(),
+      27 |   scale: jest.fn(),
+    > 28 |   rotate: jest.fn(),
+         |                ^
+      29 |   arc: jest.fn(),
+      30 |   fill: jest.fn(),
+      31 |   measureText: jest.fn(() => ({ width: 0 })),
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/pure.js:46:12)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/index.js:7:13)
+      at Object.<anonymous> (tests/setup.ts:28:16)
+
+FAIL tests/unit/PromptDrawer.spec.tsx
+  ● Test suite failed to run
+
+    Cannot find module '@testing-library/dom' from 'node_modules/@testing-library/react/dist/pure.js'
+
+    Require stack:
+      node_modules/@testing-library/react/dist/pure.js
+      node_modules/@testing-library/react/dist/index.js
+      tests/setup.ts
+
+      26 |   translate: jest.fn(),
+      27 |   scale: jest.fn(),
+    > 28 |   rotate: jest.fn(),
+         |                ^
+      29 |   arc: jest.fn(),
+      30 |   fill: jest.fn(),
+      31 |   measureText: jest.fn(() => ({ width: 0 })),
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/index.js:863:11)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/pure.js:46:12)
+      at Object.<anonymous> (node_modules/@testing-library/react/dist/index.js:7:13)
+      at Object.<anonymous> (tests/setup.ts:28:16)
+
+Test Suites: 9 failed, 9 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        7.383 s
+Ran all test suites.

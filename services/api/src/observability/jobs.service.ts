@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { PrismaService } from '../prisma/prisma.service';
-import { MetricsService } from './metrics.service';
-import { ErrorTrackingService } from './error-tracking.service';
-import { ProviderUsageService } from './provider-usage.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { PrismaService } from "../prisma/prisma.service";
+import { MetricsService } from "./metrics.service";
+import { ErrorTrackingService } from "./error-tracking.service";
+import { ProviderUsageService } from "./provider-usage.service";
 
 @Injectable()
 export class ObservabilityJobsService {
@@ -22,16 +22,16 @@ export class ObservabilityJobsService {
    */
   @Cron(CronExpression.EVERY_HOUR)
   async aggregateHourlyMetrics() {
-    const job = await this.createJob('aggregate_hourly_metrics');
-    this.logger.log('Starting hourly metrics aggregation...');
+    const job = await this.createJob("aggregate_hourly_metrics");
+    this.logger.log("Starting hourly metrics aggregation...");
 
     try {
       await this.metricsService.aggregateHourlyMetrics();
       await this.completeJob(job.id);
-      this.logger.log('Hourly metrics aggregation completed');
+      this.logger.log("Hourly metrics aggregation completed");
     } catch (error) {
       await this.failJob(job.id, error.message);
-      this.logger.error('Hourly metrics aggregation failed:', error);
+      this.logger.error("Hourly metrics aggregation failed:", error);
     }
   }
 
@@ -41,16 +41,16 @@ export class ObservabilityJobsService {
    */
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async aggregateDailyMetrics() {
-    const job = await this.createJob('aggregate_daily_metrics');
-    this.logger.log('Starting daily metrics aggregation...');
+    const job = await this.createJob("aggregate_daily_metrics");
+    this.logger.log("Starting daily metrics aggregation...");
 
     try {
       await this.metricsService.aggregateDailyMetrics();
       await this.completeJob(job.id);
-      this.logger.log('Daily metrics aggregation completed');
+      this.logger.log("Daily metrics aggregation completed");
     } catch (error) {
       await this.failJob(job.id, error.message);
-      this.logger.error('Daily metrics aggregation failed:', error);
+      this.logger.error("Daily metrics aggregation failed:", error);
     }
   }
 
@@ -58,10 +58,10 @@ export class ObservabilityJobsService {
    * Cleanup old metrics (keep 90 days)
    * Runs weekly on Sunday at 2 AM
    */
-  @Cron('0 2 * * 0')
+  @Cron("0 2 * * 0")
   async cleanupOldMetrics() {
-    const job = await this.createJob('cleanup_old_metrics');
-    this.logger.log('Starting metrics cleanup...');
+    const job = await this.createJob("cleanup_old_metrics");
+    this.logger.log("Starting metrics cleanup...");
 
     try {
       const deleted = await this.metricsService.cleanupOldMetrics();
@@ -69,7 +69,7 @@ export class ObservabilityJobsService {
       this.logger.log(`Metrics cleanup completed. Deleted ${deleted} records.`);
     } catch (error) {
       await this.failJob(job.id, error.message);
-      this.logger.error('Metrics cleanup failed:', error);
+      this.logger.error("Metrics cleanup failed:", error);
     }
   }
 
@@ -77,10 +77,10 @@ export class ObservabilityJobsService {
    * Cleanup old resolved errors (keep 30 days)
    * Runs daily at 3 AM
    */
-  @Cron('0 3 * * *')
+  @Cron("0 3 * * *")
   async cleanupOldErrors() {
-    const job = await this.createJob('cleanup_old_errors');
-    this.logger.log('Starting error cleanup...');
+    const job = await this.createJob("cleanup_old_errors");
+    this.logger.log("Starting error cleanup...");
 
     try {
       const deleted = await this.errorService.cleanupOldErrors();
@@ -88,7 +88,7 @@ export class ObservabilityJobsService {
       this.logger.log(`Error cleanup completed. Deleted ${deleted} records.`);
     } catch (error) {
       await this.failJob(job.id, error.message);
-      this.logger.error('Error cleanup failed:', error);
+      this.logger.error("Error cleanup failed:", error);
     }
   }
 
@@ -96,10 +96,10 @@ export class ObservabilityJobsService {
    * Cleanup old provider usage (keep 180 days)
    * Runs weekly on Sunday at 4 AM
    */
-  @Cron('0 4 * * 0')
+  @Cron("0 4 * * 0")
   async cleanupOldUsage() {
-    const job = await this.createJob('cleanup_old_usage');
-    this.logger.log('Starting usage cleanup...');
+    const job = await this.createJob("cleanup_old_usage");
+    this.logger.log("Starting usage cleanup...");
 
     try {
       const deleted = await this.usageService.cleanupOldUsage();
@@ -107,7 +107,7 @@ export class ObservabilityJobsService {
       this.logger.log(`Usage cleanup completed. Deleted ${deleted} records.`);
     } catch (error) {
       await this.failJob(job.id, error.message);
-      this.logger.error('Usage cleanup failed:', error);
+      this.logger.error("Usage cleanup failed:", error);
     }
   }
 
@@ -118,7 +118,7 @@ export class ObservabilityJobsService {
     return this.prisma.backgroundJob.create({
       data: {
         jobName: name,
-        status: 'RUNNING',
+        status: "RUNNING",
         startedAt: new Date(),
       },
     });
@@ -134,7 +134,7 @@ export class ObservabilityJobsService {
     await this.prisma.backgroundJob.update({
       where: { id },
       data: {
-        status: 'COMPLETED',
+        status: "COMPLETED",
         completedAt: new Date(),
         duration: Date.now() - job.startedAt.getTime(),
       },
@@ -148,7 +148,7 @@ export class ObservabilityJobsService {
     await this.prisma.backgroundJob.update({
       where: { id },
       data: {
-        status: 'FAILED',
+        status: "FAILED",
         completedAt: new Date(),
         error: error.substring(0, 1000), // Limit error message length
       },

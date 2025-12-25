@@ -1,26 +1,26 @@
-import { IsString, IsArray, IsBoolean } from 'class-validator';
+import { IsString, IsArray, IsBoolean } from "class-validator";
 
 /**
  * Extension scopes (restricted capabilities)
  */
 export const EXTENSION_SCOPES = [
-  'extension:webclip:create',
-  'extension:session:start',
-  'extension:prompt:send',
+  "extension:webclip:create",
+  "extension:session:start",
+  "extension:prompt:send",
 ] as const;
 
-export type ExtensionScope = typeof EXTENSION_SCOPES[number];
+export type ExtensionScope = (typeof EXTENSION_SCOPES)[number];
 
 /**
  * DTO for starting device code flow
  */
 export class DeviceCodeStartDto {
   @IsString()
-  clientId: string = 'browser-extension';
+  clientId: string = "browser-extension";
 
   @IsArray()
   @IsString({ each: true })
-  scopes: string[] = ['extension:webclip:create', 'extension:session:start'];
+  scopes: string[] = ["extension:webclip:create", "extension:session:start"];
 }
 
 /**

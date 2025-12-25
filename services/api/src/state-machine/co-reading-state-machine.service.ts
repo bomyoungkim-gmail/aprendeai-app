@@ -1,6 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { FamilyEventService } from '../events/family-event.service';
-import { CoReadingPhase, CoReadingContext, PhaseTransitionResult } from './types';
+import { Injectable, Logger } from "@nestjs/common";
+import { FamilyEventService } from "../events/family-event.service";
+import {
+  CoReadingPhase,
+  CoReadingContext,
+  PhaseTransitionResult,
+} from "./types";
 
 @Injectable()
 export class CoReadingStateMachine {
@@ -31,7 +35,8 @@ export class CoReadingStateMachine {
     context: CoReadingContext,
     targetPhase: CoReadingPhase,
   ): Promise<PhaseTransitionResult> {
-    const { currentPhase, coSessionId, readingSessionId, educatorUserId } = context;
+    const { currentPhase, coSessionId, readingSessionId, educatorUserId } =
+      context;
 
     // Validate transition
     if (!this.canTransition(currentPhase, targetPhase)) {
@@ -50,8 +55,8 @@ export class CoReadingStateMachine {
       readingSessionId,
       educatorUserId,
       {
-        domain: 'FAMILY',
-        type: 'CO_SESSION_PHASE_CHANGED',
+        domain: "FAMILY",
+        type: "CO_SESSION_PHASE_CHANGED",
         data: {
           coSessionId,
           phase: targetPhase,
@@ -79,17 +84,17 @@ export class CoReadingStateMachine {
   ): string {
     switch (phase) {
       case CoReadingPhase.BOOT:
-        return 'OPS_DAILY_BOOT_LEARNER';
+        return "OPS_DAILY_BOOT_LEARNER";
       case CoReadingPhase.PRE:
-        return 'READ_PRE_CHOICE_SKIM';
+        return "READ_PRE_CHOICE_SKIM";
       case CoReadingPhase.DURING:
-        return 'READ_DURING_MARK_RULE';
+        return "READ_DURING_MARK_RULE";
       case CoReadingPhase.POST:
-        return 'READ_POST_FREE_RECALL';
+        return "READ_POST_FREE_RECALL";
       case CoReadingPhase.CLOSE:
-        return 'EDU_CLOSE_SCRIPT';
+        return "EDU_CLOSE_SCRIPT";
       default:
-        return 'OPS_QUEUE_NEXT';
+        return "OPS_QUEUE_NEXT";
     }
   }
 
@@ -152,7 +157,9 @@ export class CoReadingStateMachine {
   async pre(context: CoReadingContext): Promise<PhaseTransitionResult> {
     // Check timeout
     if (this.hasPreTimedOut(context)) {
-      this.logger.log(`PRE timeout for session ${context.coSessionId}, offering skip`);
+      this.logger.log(
+        `PRE timeout for session ${context.coSessionId}, offering skip`,
+      );
       // Offer "Ir direto" quickReply
     }
 
@@ -193,11 +200,11 @@ export class CoReadingStateMachine {
       context.readingSessionId,
       context.educatorUserId,
       {
-        domain: 'FAMILY',
-        type: 'CO_SESSION_FINISHED',
+        domain: "FAMILY",
+        type: "CO_SESSION_FINISHED",
         data: {
           coSessionId: context.coSessionId,
-          result: 'COMPLETED',
+          result: "COMPLETED",
           durationMin: Math.round(
             (Date.now() - context.startedAt.getTime()) / 60000,
           ),
@@ -214,7 +221,7 @@ export class CoReadingStateMachine {
     return {
       success: true,
       newPhase: CoReadingPhase.CLOSE,
-      message: 'Session completed',
+      message: "Session completed",
     };
   }
 }

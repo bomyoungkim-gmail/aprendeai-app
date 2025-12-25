@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { CanonicalPrompt, PromptVariables } from './dto/canonical-prompt.dto';
-import * as prompts from './canonical-prompts.json';
+import { Injectable } from "@nestjs/common";
+import { CanonicalPrompt, PromptVariables } from "./dto/canonical-prompt.dto";
+import * as prompts from "./canonical-prompts.json";
 
 @Injectable()
 export class PromptLibraryService {
@@ -37,9 +37,7 @@ export class PromptLibraryService {
   /**
    * Get prompts filtered by audience
    */
-  getPromptsByAudience(
-    audience: 'LEARNER' | 'EDUCATOR',
-  ): CanonicalPrompt[] {
+  getPromptsByAudience(audience: "LEARNER" | "EDUCATOR"): CanonicalPrompt[] {
     return Array.from(this.prompts.values()).filter(
       (p) => p.audience === audience,
     );
@@ -49,7 +47,7 @@ export class PromptLibraryService {
    * Get prompts filtered by phase
    */
   getPromptsByPhase(
-    phase: 'PLAN' | 'PRE' | 'DURING' | 'POST' | 'BOOT',
+    phase: "PLAN" | "PRE" | "DURING" | "POST" | "BOOT",
   ): CanonicalPrompt[] {
     return Array.from(this.prompts.values()).filter((p) => p.phase === phase);
   }

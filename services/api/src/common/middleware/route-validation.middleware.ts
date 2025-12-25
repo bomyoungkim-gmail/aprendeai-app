@@ -1,5 +1,9 @@
-import { Injectable, NestMiddleware, BadRequestException } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
+import {
+  Injectable,
+  NestMiddleware,
+  BadRequestException,
+} from "@nestjs/common";
+import { Request, Response, NextFunction } from "express";
 
 /**
  * Route Validation Middleware
@@ -17,24 +21,40 @@ export class RouteValidationMiddleware implements NestMiddleware {
 
     // Validate UUID format for ID parameters (if applicable)
     if (ids) {
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      
+      const uuidRegex =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
       ids.forEach((id) => {
         const cleanId = id.substring(1); // Remove leading slash
-        
+
         // Skip validation for non-UUID params (like 'policy', 'start', etc.)
-        if (cleanId.includes('_') || cleanId.length < 8) {
+        if (cleanId.includes("_") || cleanId.length < 8) {
           return;
         }
 
         // Skip common route segments
-        const skipWords = ['families', 'classrooms', 'co-sessions', 'teachback', 'policy', 'dashboard', 'reports', 'enrollments', 'interventions', 'plans'];
+        const skipWords = [
+          "families",
+          "classrooms",
+          "co-sessions",
+          "teachback",
+          "policy",
+          "dashboard",
+          "reports",
+          "enrollments",
+          "interventions",
+          "plans",
+        ];
         if (skipWords.includes(cleanId)) {
           return;
         }
 
         // Validate UUID format for actual IDs
-        if (cleanId.startsWith('fam_') || cleanId.startsWith('class_') || cleanId.startsWith('user_')) {
+        if (
+          cleanId.startsWith("fam_") ||
+          cleanId.startsWith("class_") ||
+          cleanId.startsWith("user_")
+        ) {
           // Custom ID format - allow
           return;
         }

@@ -6,18 +6,18 @@ import {
   IsOptional,
   Min,
   Max,
-} from 'class-validator';
+} from "class-validator";
 
 // MARK_UNKNOWN_WORD Payload
 export class MarkUnknownWordPayloadDto {
   @IsString()
   word: string;
 
-  @IsEnum(['PT', 'EN', 'KO'])
-  language: 'PT' | 'EN' | 'KO';
+  @IsEnum(["PT", "EN", "KO"])
+  language: "PT" | "EN" | "KO";
 
-  @IsEnum(['SKIM', 'READ'])
-  origin: 'SKIM' | 'READ';
+  @IsEnum(["SKIM", "READ"])
+  origin: "SKIM" | "READ";
 
   @IsOptional()
   @IsString()
@@ -100,8 +100,8 @@ export class QuizResponsePayloadDto {
 
 // PRODUCTION_SUBMIT Payload
 export class ProductionSubmitPayloadDto {
-  @IsEnum(['FREE_RECALL', 'SENTENCES', 'ORAL', 'OPEN_DIALOGUE'])
-  type: 'FREE_RECALL' | 'SENTENCES' | 'ORAL' | 'OPEN_DIALOGUE';
+  @IsEnum(["FREE_RECALL", "SENTENCES", "ORAL", "OPEN_DIALOGUE"])
+  type: "FREE_RECALL" | "SENTENCES" | "ORAL" | "OPEN_DIALOGUE";
 
   @IsString()
   text: string;

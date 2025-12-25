@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { urls } from '@/lib/config/urls'; // Moved to top level
 
 type ClassInfo = {
   class_id: string;
@@ -8,16 +9,10 @@ type ClassInfo = {
   student_count: number;
   grade_level: string;
 };
+// ... (types omitted for brevity, will be kept by tool)
 
 type Student = {
-  user_id: string;
-  name: string;
-  email: string;
-  xp: number;
-  level: number;
-  streak: number;
-  avg_score: number;
-  last_active: string;
+// ...
 };
 
 export default function TeacherDashboard() {
@@ -29,50 +24,17 @@ export default function TeacherDashboard() {
 
   // Mock teacher ID - in production, get from auth context
   const teacherId = "teacher_123";
-import { urls } from '@/lib/config/urls';
   const API_URL = urls.ai.base + "/api"; // Update as needed
 
   useEffect(() => {
-    // Fetch teacher's classes
-    fetch(`${API_URL}/admin/classes/my-classes/${teacherId}`)
-      .then(res => res.json())
-      .then(data => {
-        setClasses(data.classes || []);
-        if (data.classes?.length > 0) {
-          setSelectedClassId(data.classes[0].class_id);
-        }
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Error fetching classes:", err);
-        setLoading(false);
-      });
+// ...
   }, []);
 
-  useEffect(() => {
-    if (!selectedClassId) return;
-
-    // Fetch class overview and students
-    Promise.all([
-      fetch(`${API_URL}/admin/class/${selectedClassId}/overview`).then(r => r.json()),
-      fetch(`${API_URL}/admin/class/${selectedClassId}/students`).then(r => r.json())
-    ])
-      .then(([overview, studentsData]) => {
-        setClassOverview(overview);
-        setStudents(studentsData.students || []);
-      })
-      .catch(err => console.error("Error fetching class data:", err));
-  }, [selectedClassId]);
-
-  if (loading) {
-    return <div className="p-8 text-center">Carregando dashboard...</div>;
-  }
+// ... (omitting irrelevant parts)
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-indigo-900">Dashboard do Professor</h1>
-
-      {/* Class Selector */}
+      {/* ... */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Selecione uma Turma
@@ -83,12 +45,16 @@ import { urls } from '@/lib/config/urls';
           className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
         >
           {classes.map(cls => (
-            <key={cls.class_id} value={cls.class_id}>
+            <option key={cls.class_id} value={cls.class_id}>
               {cls.name} ({cls.student_count} alunos)
             </option>
           ))}
         </select>
       </div>
+// ...
+    </div>
+  );
+}
 
       {classOverview && (
         <div className="grid gap-6 md:grid-cols-3 mb-8">

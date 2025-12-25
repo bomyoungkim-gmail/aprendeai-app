@@ -3,28 +3,17 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { useAuthStore } from '@/stores/auth-store';
 import api from '@/lib/api';
-import { API_ENDPOINTS } from '@/lib/config/api';
+import { API_BASE_URL, API_ENDPOINTS } from '@/lib/config/api';
 import { ROUTES } from '@/lib/config/routes';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, Lock, Mail, User } from 'lucide-react';
 import OAuthButton from '@/components/auth/OAuthButton';
 import { useOAuth } from '@/hooks/use-oauth';
-
-const registerSchema = z.object({
-  name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "As senhas não coincidem",
-  path: ["confirmPassword"],
-});
-
-type RegisterFormData = z.infer<typeof registerSchema>;
+import { registerSchema, RegisterFormData } from '@/lib/validation/auth-schemas';
+import { AuthInput } from '@/components/auth/AuthInput';
 
 export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -55,9 +44,24 @@ export default function RegisterPage() {
       if (response.data.access_token) {
         setAuth(response.data.access_token, response.data.user);
         router.push(ROUTES.DASHBOARD.HOME);
+      } else if (response.status === 201) {
+        // Auto-login if backend doesn't return token
+        const loginRes = await api.post(API_ENDPOINTS.AUTH.LOGIN, {
+          email: data.email,
+          password: data.password,
+        });
+        
+        if (loginRes.data.access_token) {
+          setAuth(loginRes.data.access_token, loginRes.data.user);
+          router.push(ROUTES.DASHBOARD.HOME);
+        } else {
+             // Fallback: redirect to login
+             router.push(ROUTES.AUTH.LOGIN + '?registered=true');
+        }
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao criar conta');
+      const message = err.response?.data?.message;
+      setError(typeof message === 'string' ? message : 'Erro ao criar conta');
     } finally {
       setIsLoading(false);
     }
@@ -107,95 +111,46 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {/* Register Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Name */}
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Nome Completo
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <User className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                {...register('name')}
-                type="text"
-                id="name"
-                className="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="João Silva"
-              />
-            </div>
-            {errors.name && (
-              <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-            )}
-          </div>
+          <AuthInput
+            id="name"
+            label="Nome Completo"
+            type="text"
+            placeholder="João Silva"
+            icon={User}
+            error={errors.name?.message}
+            register={register}
+          />
 
-          {/* Email */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                {...register('email')}
-                type="email"
-                id="email"
-                className="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="seu@email.com"
-              />
-            </div>
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-            )}
-          </div>
+          <AuthInput
+            id="email"
+            label="Email"
+            type="email"
+            placeholder="seu@email.com"
+            icon={Mail}
+            error={errors.email?.message}
+            register={register}
+          />
 
-          {/* Password */}
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Senha
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                {...register('password')}
-                type="password"
-                id="password"
-                className="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="••••••••"
-              />
-            </div>
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-            )}
-          </div>
+          <AuthInput
+            id="password"
+            label="Senha"
+            type="password"
+            placeholder="••••••••"
+            icon={Lock}
+            error={errors.password?.message}
+            register={register}
+          />
 
-          {/* Confirm Password */}
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-              Confirmar Senha
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                {...register('confirmPassword')}
-                type="password"
-                id="confirmPassword"
-                className="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="••••••••"
-              />
-            </div>
-            {errors.confirmPassword && (
-              <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
-            )}
-          </div>
+          <AuthInput
+            id="confirmPassword"
+            label="Confirmar Senha"
+            type="password"
+            placeholder="••••••••"
+            icon={Lock}
+            error={errors.confirmPassword?.message}
+            register={register}
+          />
 
           {/* Submit Button */}
           <button

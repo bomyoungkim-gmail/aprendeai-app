@@ -1,0 +1,128 @@
+  console.error
+    AI Classification failed, falling back to local heuristic Cannot read properties of undefined (reading 'subscribe')
+
+    [0m [90m 89 |[39m       }[33m;[39m
+     [90m 90 |[39m     } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 91 |[39m       console[33m.[39merror(
+     [90m    |[39m               [31m[1m^[22m[39m
+     [90m 92 |[39m         [32m"AI Classification failed, falling back to local heuristic"[39m[33m,[39m
+     [90m 93 |[39m         error[33m.[39mmessage[33m,[39m
+     [90m 94 |[39m       )[33m;[39m[0m
+
+      at ContentClassificationService.aiClassify (src/content-classification/content-classification.service.ts:91:15)
+      at ContentClassificationService.classifyContent (src/content-classification/content-classification.service.ts:41:30)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:57:22)
+
+  console.error
+    AI Classification failed, falling back to local heuristic Cannot read properties of undefined (reading 'subscribe')
+
+    [0m [90m 89 |[39m       }[33m;[39m
+     [90m 90 |[39m     } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 91 |[39m       console[33m.[39merror(
+     [90m    |[39m               [31m[1m^[22m[39m
+     [90m 92 |[39m         [32m"AI Classification failed, falling back to local heuristic"[39m[33m,[39m
+     [90m 93 |[39m         error[33m.[39mmessage[33m,[39m
+     [90m 94 |[39m       )[33m;[39m[0m
+
+      at ContentClassificationService.aiClassify (src/content-classification/content-classification.service.ts:91:15)
+      at ContentClassificationService.classifyContent (src/content-classification/content-classification.service.ts:41:30)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:68:22)
+
+  console.error
+    AI Classification failed, falling back to local heuristic Cannot read properties of undefined (reading 'subscribe')
+
+    [0m [90m 89 |[39m       }[33m;[39m
+     [90m 90 |[39m     } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 91 |[39m       console[33m.[39merror(
+     [90m    |[39m               [31m[1m^[22m[39m
+     [90m 92 |[39m         [32m"AI Classification failed, falling back to local heuristic"[39m[33m,[39m
+     [90m 93 |[39m         error[33m.[39mmessage[33m,[39m
+     [90m 94 |[39m       )[33m;[39m[0m
+
+      at ContentClassificationService.aiClassify (src/content-classification/content-classification.service.ts:91:15)
+      at ContentClassificationService.classifyContent (src/content-classification/content-classification.service.ts:41:30)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:79:22)
+
+  console.error
+    AI Classification failed, falling back to local heuristic Cannot read properties of undefined (reading 'subscribe')
+
+    [0m [90m 89 |[39m       }[33m;[39m
+     [90m 90 |[39m     } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 91 |[39m       console[33m.[39merror(
+     [90m    |[39m               [31m[1m^[22m[39m
+     [90m 92 |[39m         [32m"AI Classification failed, falling back to local heuristic"[39m[33m,[39m
+     [90m 93 |[39m         error[33m.[39mmessage[33m,[39m
+     [90m 94 |[39m       )[33m;[39m[0m
+
+      at ContentClassificationService.aiClassify (src/content-classification/content-classification.service.ts:91:15)
+      at ContentClassificationService.classifyContent (src/content-classification/content-classification.service.ts:41:30)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:90:22)
+
+  console.error
+    AI Classification failed, falling back to local heuristic Cannot read properties of undefined (reading 'subscribe')
+
+    [0m [90m 89 |[39m       }[33m;[39m
+     [90m 90 |[39m     } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 91 |[39m       console[33m.[39merror(
+     [90m    |[39m               [31m[1m^[22m[39m
+     [90m 92 |[39m         [32m"AI Classification failed, falling back to local heuristic"[39m[33m,[39m
+     [90m 93 |[39m         error[33m.[39mmessage[33m,[39m
+     [90m 94 |[39m       )[33m;[39m[0m
+
+      at ContentClassificationService.aiClassify (src/content-classification/content-classification.service.ts:91:15)
+      at ContentClassificationService.suggestClassification (src/content-classification/content-classification.service.ts:218:28)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:131:22)
+
+  console.error
+    AI Classification failed, falling back to local heuristic Cannot read properties of undefined (reading 'subscribe')
+
+    [0m [90m 89 |[39m       }[33m;[39m
+     [90m 90 |[39m     } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 91 |[39m       console[33m.[39merror(
+     [90m    |[39m               [31m[1m^[22m[39m
+     [90m 92 |[39m         [32m"AI Classification failed, falling back to local heuristic"[39m[33m,[39m
+     [90m 93 |[39m         error[33m.[39mmessage[33m,[39m
+     [90m 94 |[39m       )[33m;[39m[0m
+
+      at ContentClassificationService.aiClassify (src/content-classification/content-classification.service.ts:91:15)
+      at ContentClassificationService.suggestClassification (src/content-classification/content-classification.service.ts:218:28)
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:144:22)
+
+FAIL src/content-classification/content-classification.service.spec.ts
+  ContentClassificationService
+    √ should be defined (11 ms)
+    classifyContent
+      √ should return existing classification if provided (2 ms)
+      √ should classify basic content for young ages (28 ms)
+      √ should classify intermediate content (4 ms)
+      √ should classify advanced content for teens (4 ms)
+      √ should provide confidence score (4 ms)
+    filterContentByAge
+      × should filter content within age range (3 ms)
+      √ should include unclassified content (1 ms)
+    suggestClassification
+      √ should suggest classification with confidence (4 ms)
+      √ should flag low confidence for review (2 ms)
+
+  ● ContentClassificationService › filterContentByAge › should filter content within age range
+
+    expect(received).toContainEqual(expected) // deep equality
+
+    Expected value: {"ageMax": 8, "ageMin": 4, "id": "1", "title": "Basic Math"}
+    Received array: [{"ageMax": 12, "ageMin": 8, "id": "2", "title": "Intermediate Science"}, {"id": "4", "title": "Unclassified"}]
+
+      111 |       });
+      112 |
+    > 113 |       expect(filtered).toContainEqual(mockContent[0]); // 4-8 within 6-14
+          |                        ^
+      114 |       expect(filtered).toContainEqual(mockContent[1]); // 8-12 within 6-14
+      115 |       expect(filtered).toContainEqual(mockContent[3]); // Unclassified passes
+      116 |       expect(filtered).not.toContainEqual(mockContent[2]); // 12-18 exceeds max
+
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:113:24)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 9 passed, 10 total
+Snapshots:   0 total
+Time:        4.636 s, estimated 8 s
+Ran all test suites matching /src\\content-classification\\content-classification.service.spec.ts/i.

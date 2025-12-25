@@ -1,19 +1,19 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import * as crypto from 'crypto';
+import { Injectable, UnauthorizedException } from "@nestjs/common";
+import * as crypto from "crypto";
 
 interface EncryptedData {
-  encryptedValue: string;  // Base64
-  encryptedDek: string;    // Base64 (includes auth tag)
-  iv: string;              // Base64
-  authTag: string;         // Base64
-  keyId: string;           // Master key version
+  encryptedValue: string; // Base64
+  encryptedDek: string; // Base64 (includes auth tag)
+  iv: string; // Base64
+  authTag: string; // Base64
+  keyId: string; // Master key version
 }
 
 @Injectable()
 export class EncryptionService {
   private masterKey: Buffer;
-  private readonly keyId: string = 'v1';
-  private readonly algorithm = 'aes-256-gcm';
+  private readonly keyId: string = "v1";
+  private readonly algorithm = "aes-256-gcm";
 
   constructor() {
     this.initializeMasterKey();
@@ -21,17 +21,17 @@ export class EncryptionService {
 
   private initializeMasterKey() {
     const masterKeyBase64 = process.env.ADMIN_MASTER_KEY;
-    
+
     if (!masterKeyBase64) {
       throw new Error(
-        'ADMIN_MASTER_KEY not configured. Generate one with: node -e "console.log(crypto.randomBytes(32).toString(\'base64\'))"'
+        "ADMIN_MASTER_KEY not configured. Generate one with: node -e \"console.log(crypto.randomBytes(32).toString('base64'))\"",
       );
     }
 
-    this.masterKey = Buffer.from(masterKeyBase64, 'base64');
+    this.masterKey = Buffer.from(masterKeyBase64, "base64");
 
     if (this.masterKey.length !== 32) {
-      throw new Error('ADMIN_MASTER_KEY must be 32 bytes (256 bits)');
+      throw new Error("ADMIN_MASTER_KEY must be 32 bytes (256 bits)");
     }
   }
 
@@ -51,7 +51,7 @@ export class EncryptionService {
     // Encrypt plaintext with DEK
     const cipher = crypto.createCipheriv(this.algorithm, dek, iv);
     const encrypted = Buffer.concat([
-      cipher.update(plaintext, 'utf8'),
+      cipher.update(plaintext, "utf8"),
       cipher.final(),
     ]);
     const authTag = cipher.getAuthTag();
@@ -65,10 +65,12 @@ export class EncryptionService {
     const dekAuthTag = dekCipher.getAuthTag();
 
     return {
-      encryptedValue: encrypted.toString('base64'),
-      encryptedDek: Buffer.concat([encryptedDek, dekAuthTag]).toString('base64'),
-      iv: iv.toString('base64'),
-      authTag: authTag.toString('base64'),
+      encryptedValue: encrypted.toString("base64"),
+      encryptedDek: Buffer.concat([encryptedDek, dekAuthTag]).toString(
+        "base64",
+      ),
+      iv: iv.toString("base64"),
+      authTag: authTag.toString("base64"),
       keyId: this.keyId,
     };
   }
@@ -81,17 +83,21 @@ export class EncryptionService {
   decrypt(data: EncryptedData): string {
     try {
       // Decode base64
-      const iv = Buffer.from(data.iv, 'base64');
-      const encrypted = Buffer.from(data.encryptedValue, 'base64');
-      const authTag = Buffer.from(data.authTag, 'base64');
-      const encryptedDekWithTag = Buffer.from(data.encryptedDek, 'base64');
+      const iv = Buffer.from(data.iv, "base64");
+      const encrypted = Buffer.from(data.encryptedValue, "base64");
+      const authTag = Buffer.from(data.authTag, "base64");
+      const encryptedDekWithTag = Buffer.from(data.encryptedDek, "base64");
 
       // Split encrypted DEK and its auth tag (last 16 bytes)
       const encryptedDek = encryptedDekWithTag.slice(0, -16);
       const dekAuthTag = encryptedDekWithTag.slice(-16);
 
       // Decrypt DEK with master key
-      const dekDecipher = crypto.createDecipheriv(this.algorithm, this.masterKey, iv);
+      const dekDecipher = crypto.createDecipheriv(
+        this.algorithm,
+        this.masterKey,
+        iv,
+      );
       dekDecipher.setAuthTag(dekAuthTag);
       const dek = Buffer.concat([
         dekDecipher.update(encryptedDek),
@@ -106,9 +112,11 @@ export class EncryptionService {
         decipher.final(),
       ]);
 
-      return decrypted.toString('utf8');
+      return decrypted.toString("utf8");
     } catch (error) {
-      throw new UnauthorizedException('Failed to decrypt: invalid key or corrupted data');
+      throw new UnauthorizedException(
+        "Failed to decrypt: invalid key or corrupted data",
+      );
     }
   }
 
@@ -117,7 +125,7 @@ export class EncryptionService {
    */
   maskValue(value: string): string {
     if (value.length <= 6) {
-      return '***';
+      return "***";
     }
     const lastChars = value.slice(-6);
     return `***${lastChars}`;
@@ -128,9 +136,9 @@ export class EncryptionService {
    */
   validateMasterKey(): boolean {
     try {
-      const testData = this.encrypt('test');
+      const testData = this.encrypt("test");
       const decrypted = this.decrypt(testData);
-      return decrypted === 'test';
+      return decrypted === "test";
     } catch {
       return false;
     }
@@ -140,6 +148,6 @@ export class EncryptionService {
    * Generate a new master key (for initial setup or rotation)
    */
   static generateMasterKey(): string {
-    return crypto.randomBytes(32).toString('base64');
+    return crypto.randomBytes(32).toString("base64");
   }
 }

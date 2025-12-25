@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 
 export interface PlanLimits {
   highlightsPerMonth: number;
@@ -40,10 +40,10 @@ export class PlanLimitsService {
     // Note: Subscription schema uses planId but doesn't have explicit relation
     // We'll just use planId to fetch the plan separately
     const subscription = await this.prisma.subscription.findFirst({
-      where: { 
-        scopeType: 'USER',
+      where: {
+        scopeType: "USER",
         scopeId: userId,
-        status: 'ACTIVE' 
+        status: "ACTIVE",
       },
     });
 
@@ -56,7 +56,7 @@ export class PlanLimitsService {
       const planName = plan?.name?.toUpperCase() || 'FREE';
       return this.PLAN_LIMITS[planName] || this.PLAN_LIMITS.FREE;
       */
-      
+
       // Temporary: Use FREE plan
       return this.PLAN_LIMITS.FREE;
     }
@@ -86,11 +86,11 @@ export class PlanLimitsService {
   private async getUsageCount(
     userId: string,
     metric: string,
-    startDate: Date
+    startDate: Date,
   ): Promise<number> {
     // Map metric to database table
     switch (metric) {
-      case 'highlights':
+      case "highlights":
         return this.prisma.highlight.count({
           where: {
             userId,
@@ -98,7 +98,7 @@ export class PlanLimitsService {
           },
         });
 
-      case 'cornellNotes':
+      case "cornellNotes":
         return this.prisma.cornellNotes.count({
           where: {
             userId,
@@ -106,7 +106,7 @@ export class PlanLimitsService {
           },
         });
 
-      case 'contents':
+      case "contents":
         return this.prisma.content.count({
           where: {
             ownerUserId: userId,

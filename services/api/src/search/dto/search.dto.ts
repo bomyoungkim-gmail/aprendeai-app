@@ -1,6 +1,14 @@
-import { IsOptional, IsString, IsEnum, IsDateString, IsInt, Min, Max } from 'class-validator';
-import { Type } from 'class-transformer';
-import { ContentType, Language } from '@prisma/client';
+import {
+  IsOptional,
+  IsString,
+  IsEnum,
+  IsDateString,
+  IsInt,
+  Min,
+  Max,
+} from "class-validator";
+import { Type } from "class-transformer";
+import { ContentType, Language } from "@prisma/client";
 
 export class SearchDto {
   @IsString()
@@ -27,8 +35,8 @@ export class SearchDto {
   endDate?: string;
 
   @IsOptional()
-  @IsEnum(['content', 'annotation', 'note', 'transcript'])
-  searchIn?: 'content' | 'annotation' | 'note' | 'transcript';
+  @IsEnum(["content", "annotation", "note", "transcript"])
+  searchIn?: "content" | "annotation" | "note" | "transcript";
 
   @IsOptional()
   @Type(() => Number)

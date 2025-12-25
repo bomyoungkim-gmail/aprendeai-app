@@ -7,6 +7,7 @@ import { ChevronLeft, BarChart2, DollarSign, Users, UserPlus, Trash2, Shield, Us
 import { InviteMemberModal } from '@/components/family/InviteMemberModal';
 import { useAuthStore } from '@/stores/auth-store';
 import { ROUTES } from '@/lib/config/routes';
+import { Toast, useToast } from '@/components/ui/Toast';
 
 export default function FamilyDashboard({ params }: { params: { id: string } }) {
   // ===== ALL HOOKS FIRST (React Rules of Hooks) =====
@@ -18,6 +19,7 @@ export default function FamilyDashboard({ params }: { params: { id: string } }) 
   const setPrimary = useSetPrimaryFamily();
   const deleteFamily = useDeleteFamily();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const { toast, success, error: toastError, info, hide } = useToast();
 
   // Early returns
   if (familyLoading) {
@@ -49,14 +51,15 @@ export default function FamilyDashboard({ params }: { params: { id: string } }) 
   const handleSetPrimary = async () => {
     try {
         await setPrimary.mutateAsync(family.id);
-        alert('Primary family updated successfully');
+        success('Primary family updated successfully');
     } catch (e) {
-        alert('Failed to set primary family');
+        toastError('Failed to set primary family');
     }
   };
 
   return (
     <div className="space-y-6">
+      {toast && <Toast type={toast.type} message={toast.message} onClose={hide} />}
       {/* Header */}
       <div>
         <div className="flex justify-between items-start mb-2">
@@ -86,7 +89,7 @@ export default function FamilyDashboard({ params }: { params: { id: string } }) 
                                     await deleteFamily.mutateAsync(family.id);
                                     router.push(ROUTES.FAMILY.HOME);
                                 } catch (error) {
-                                    alert('Failed to delete family');
+                                    toastError('Failed to delete family');
                                 }
                             }
                         }}

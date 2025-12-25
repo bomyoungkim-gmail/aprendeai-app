@@ -767,7 +767,7 @@ function SSOTab({ config, onSave, onTest }: any) {
                         <p className="text-sm text-blue-700">
                            Configure your Identity Provider (IdP) with this Entity ID (Audience): <strong>aprendeai-sso</strong>
                            <br/>
-                           Assertion Consumer Service (ACS) URL: <strong>https://api.aprendeai.com/auth/sso/callback</strong>
+                           Assertion Consumer Service (ACS) URL: <strong>{process.env.NEXT_PUBLIC_API_URL || 'https://api.aprendeai.com'}/auth/sso/callback</strong>
                         </p>
                       </div>
                     </div>

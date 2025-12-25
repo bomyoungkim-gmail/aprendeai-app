@@ -1,9 +1,13 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateAnnotationDto, UpdateAnnotationDto } from './dto/annotation.dto';
-import { SearchAnnotationsDto } from './dto/search-annotations.dto';
-import { CreateReplyDto } from './dto/create-reply.dto';
-import { StudyGroupsWebSocketGateway } from '../websocket/study-groups-ws.gateway';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { CreateAnnotationDto, UpdateAnnotationDto } from "./dto/annotation.dto";
+import { SearchAnnotationsDto } from "./dto/search-annotations.dto";
+import { CreateReplyDto } from "./dto/create-reply.dto";
+import { StudyGroupsWebSocketGateway } from "../websocket/study-groups-ws.gateway";
 
 @Injectable()
 export class AnnotationService {
@@ -34,8 +38,8 @@ export class AnnotationService {
     });
 
     // Real-time broadcast to group members
-    if (dto.visibility === 'GROUP' && dto.groupId) {
-      this.wsGateway.emitToGroup(dto.groupId, 'annotation:created', annotation);
+    if (dto.visibility === "GROUP" && dto.groupId) {
+      this.wsGateway.emitToGroup(dto.groupId, "annotation:created", annotation);
     }
 
     return annotation;
@@ -46,9 +50,9 @@ export class AnnotationService {
       where: {
         contentId,
         OR: [
-          { userId, visibility: 'PRIVATE' },
-          { groupId, visibility: 'GROUP' },
-          { visibility: 'PUBLIC' },
+          { userId, visibility: "PRIVATE" },
+          { groupId, visibility: "GROUP" },
+          { visibility: "PUBLIC" },
         ],
       },
       include: {
@@ -57,10 +61,10 @@ export class AnnotationService {
           include: {
             user: { select: { id: true, name: true } },
           },
-          orderBy: { createdAt: 'asc' },
+          orderBy: { createdAt: "asc" },
         },
       },
-      orderBy: { startOffset: 'asc' },
+      orderBy: { startOffset: "asc" },
     });
   }
 
@@ -70,11 +74,11 @@ export class AnnotationService {
     });
 
     if (!annotation) {
-      throw new NotFoundException('Annotation not found');
+      throw new NotFoundException("Annotation not found");
     }
 
     if (annotation.userId !== userId) {
-      throw new ForbiddenException('Not your annotation');
+      throw new ForbiddenException("Not your annotation");
     }
 
     const updated = await this.prisma.annotation.update({
@@ -86,8 +90,12 @@ export class AnnotationService {
     });
 
     // Real-time broadcast
-    if (annotation.visibility === 'GROUP' && annotation.groupId) {
-      this.wsGateway.emitToGroup(annotation.groupId, 'annotation:updated', updated);
+    if (annotation.visibility === "GROUP" && annotation.groupId) {
+      this.wsGateway.emitToGroup(
+        annotation.groupId,
+        "annotation:updated",
+        updated,
+      );
     }
 
     return updated;
@@ -99,18 +107,20 @@ export class AnnotationService {
     });
 
     if (!annotation) {
-      throw new NotFoundException('Annotation not found');
+      throw new NotFoundException("Annotation not found");
     }
 
     if (annotation.userId !== userId) {
-      throw new ForbiddenException('Not your annotation');
+      throw new ForbiddenException("Not your annotation");
     }
 
     await this.prisma.annotation.delete({ where: { id } });
 
     // Real-time broadcast
-    if (annotation.visibility === 'GROUP' && annotation.groupId) {
-      this.wsGateway.emitToGroup(annotation.groupId, 'annotation:deleted', { id });
+    if (annotation.visibility === "GROUP" && annotation.groupId) {
+      this.wsGateway.emitToGroup(annotation.groupId, "annotation:deleted", {
+        id,
+      });
     }
 
     return { deleted: true };
@@ -129,8 +139,8 @@ export class AnnotationService {
     if (params.query) {
       where.AND.push({
         OR: [
-          { text: { contains: params.query, mode: 'insensitive' } },
-          { selectedText: { contains: params.query, mode: 'insensitive' } },
+          { text: { contains: params.query, mode: "insensitive" } },
+          { selectedText: { contains: params.query, mode: "insensitive" } },
         ],
       });
     }
@@ -188,7 +198,7 @@ export class AnnotationService {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   }
 
@@ -201,14 +211,14 @@ export class AnnotationService {
     });
 
     if (!parent) {
-      throw new NotFoundException('Parent annotation not found');
+      throw new NotFoundException("Parent annotation not found");
     }
 
     const reply = await this.prisma.annotation.create({
       data: {
         contentId: parent.contentId,
         userId,
-        type: 'COMMENT',
+        type: "COMMENT",
         startOffset: parent.startOffset,
         endOffset: parent.endOffset,
         text: dto.content,
@@ -224,14 +234,14 @@ export class AnnotationService {
     });
 
     // Real-time broadcast
-    if (parent.visibility === 'GROUP' && parent.groupId) {
-      this.wsGateway.emitToGroup(parent.groupId, 'annotation:reply', reply);
+    if (parent.visibility === "GROUP" && parent.groupId) {
+      this.wsGateway.emitToGroup(parent.groupId, "annotation:reply", reply);
     }
 
     // Audit trail - track reply creation
     await this.prisma.sessionEvent.create({
       data: {
-        eventType: 'ANNOTATION_REPLY_CREATED',
+        eventType: "ANNOTATION_REPLY_CREATED",
         payloadJson: {
           annotationId: parentId,
           replyId: reply.id,
@@ -252,11 +262,11 @@ export class AnnotationService {
     });
 
     if (!annotation) {
-      throw new NotFoundException('Annotation not found');
+      throw new NotFoundException("Annotation not found");
     }
 
     if (annotation.userId !== userId) {
-      throw new ForbiddenException('Not your annotation');
+      throw new ForbiddenException("Not your annotation");
     }
 
     const updated = await this.prisma.annotation.update({
@@ -270,7 +280,7 @@ export class AnnotationService {
     // Audit trail - track favorite toggle
     await this.prisma.sessionEvent.create({
       data: {
-        eventType: 'ANNOTATION_FAVORITE_TOGGLED',
+        eventType: "ANNOTATION_FAVORITE_TOGGLED",
         payloadJson: {
           annotationId: id,
           favorite: updated.isFavorite,

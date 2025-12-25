@@ -1,3 +1,5 @@
-export { PDFViewer } from './PDFViewer';
+export { PDFViewer } from './PDFViewerNew';
 export { ImageViewer } from './ImageViewer';
 export { DocxViewer } from './DocxViewer';
+
+

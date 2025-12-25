@@ -1,6 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { GameProgressDto, UpdateGameProgressDto, GameProgressSummary } from './dto/game-progress.dto';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import {
+  GameProgressDto,
+  UpdateGameProgressDto,
+  GameProgressSummary,
+} from "./dto/game-progress.dto";
 
 @Injectable()
 export class GameProgressService {
@@ -14,13 +18,13 @@ export class GameProgressService {
   async getUserProgress(userId: string): Promise<GameProgressSummary> {
     const progress = await this.prisma.gameProgress.findMany({
       where: { userId },
-      orderBy: { totalPlays: 'desc' },
+      orderBy: { totalPlays: "desc" },
     });
 
     const totalStars = progress.reduce((sum, p) => sum + p.stars, 0);
-    const totalGamesPlayed = progress.filter(p => p.totalPlays > 0).length;
+    const totalGamesPlayed = progress.filter((p) => p.totalPlays > 0).length;
     const favoriteGame = progress.length > 0 ? progress[0].gameId : null;
-    const currentStreak = Math.max(...progress.map(p => p.streak), 0);
+    const currentStreak = Math.max(...progress.map((p) => p.streak), 0);
 
     return {
       totalGamesPlayed,
@@ -34,7 +38,10 @@ export class GameProgressService {
   /**
    * Get progress for a specific game
    */
-  async getGameProgress(userId: string, gameId: string): Promise<GameProgressDto | null> {
+  async getGameProgress(
+    userId: string,
+    gameId: string,
+  ): Promise<GameProgressDto | null> {
     const progress = await this.prisma.gameProgress.findUnique({
       where: {
         userId_gameId: { userId, gameId },
@@ -60,13 +67,12 @@ export class GameProgressService {
       ? Math.max(existing.bestScore, update.score)
       : update.score;
 
-    const newStreak = update.won
-      ? (existing?.streak || 0) + 1
-      : 0;
+    const newStreak = update.won ? (existing?.streak || 0) + 1 : 0;
 
-    const newStars = update.stars !== undefined
-      ? update.stars
-      : this.calculateStars(newBestScore);
+    const newStars =
+      update.stars !== undefined
+        ? update.stars
+        : this.calculateStars(newBestScore);
 
     const updated = await this.prisma.gameProgress.upsert({
       where: { userId_gameId: { userId, gameId } },

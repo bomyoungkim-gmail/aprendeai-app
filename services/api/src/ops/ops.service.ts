@@ -1,14 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { OpsCoachService } from '../family/services/ops-coach.service';
-import { FamilyPolicyService } from '../family/services/family-policy.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { OpsCoachService } from "../family/services/ops-coach.service";
+import { FamilyPolicyService } from "../family/services/family-policy.service";
 import {
   DailySnapshotDto,
   TaskDto,
   ContextCardDto,
   LogTimeDto,
-} from './dto/ops.dto';
-import { FAMILY_CONFIG } from '../config/family-classroom.config';
+} from "./dto/ops.dto";
+import { FAMILY_CONFIG } from "../config/family-classroom.config";
 
 @Injectable()
 export class OpsService {
@@ -36,7 +36,9 @@ export class OpsService {
     // Calculate progress (duration = finishedAt - startedAt)
     const minutesToday = sessions.reduce((sum, s) => {
       if (s.finishedAt && s.startedAt) {
-        const duration = Math.floor((s.finishedAt.getTime() - s.startedAt.getTime()) / 60000);
+        const duration = Math.floor(
+          (s.finishedAt.getTime() - s.startedAt.getTime()) / 60000,
+        );
         return sum + duration;
       }
       return sum;
@@ -50,7 +52,8 @@ export class OpsService {
     });
 
     const policy = policies[0];
-    const dailyMinutes = policy?.dailyMinMinutes || FAMILY_CONFIG.POLICY.DEFAULT_DAILY_MIN_MINUTES;
+    const dailyMinutes =
+      policy?.dailyMinMinutes || FAMILY_CONFIG.POLICY.DEFAULT_DAILY_MIN_MINUTES;
 
     // Get streak
     const streakDays = await this.calculateStreak(userId);
@@ -70,7 +73,7 @@ export class OpsService {
       },
       goals: {
         dailyMinutes,
-        goalType: 'MINUTES',
+        goalType: "MINUTES",
       },
       nextTasks,
     };
@@ -88,13 +91,13 @@ export class OpsService {
 
     if (dueReviews > 0) {
       tasks.push({
-        id: 'review-vocab',
-        title: 'Review Vocabulary',
+        id: "review-vocab",
+        title: "Review Vocabulary",
         description: `${dueReviews} cards waiting`,
         estimatedMin: Math.min(dueReviews * 2, 30),
-        type: 'REVIEW',
-        ctaUrl: '/dashboard/review',
-        priority: 'HIGH',
+        type: "REVIEW",
+        ctaUrl: "/dashboard/review",
+        priority: "HIGH",
       });
     }
 
@@ -104,30 +107,30 @@ export class OpsService {
     });
 
     const today = new Date().getDay();
-    const hasCoReading = policies.some(p => p.coReadingDays?.includes(today));
+    const hasCoReading = policies.some((p) => p.coReadingDays?.includes(today));
 
     if (hasCoReading) {
       tasks.push({
-        id: 'co-reading',
-        title: 'Co-Reading Session',
-        description: 'Scheduled with your educator',
+        id: "co-reading",
+        title: "Co-Reading Session",
+        description: "Scheduled with your educator",
         estimatedMin: 20,
-        type: 'CO_READING',
-        ctaUrl: '/dashboard/co-reading',
-        priority: 'HIGH',
+        type: "CO_READING",
+        ctaUrl: "/dashboard/co-reading",
+        priority: "HIGH",
       });
     }
 
     // Add continue learning if no high priority tasks
     if (tasks.length === 0) {
       tasks.push({
-        id: 'continue-learning',
-        title: 'Continue Learning',
-        description: 'Pick up where you left off',
+        id: "continue-learning",
+        title: "Continue Learning",
+        description: "Pick up where you left off",
         estimatedMin: 15,
-        type: 'LESSON',
-        ctaUrl: '/dashboard/library',
-        priority: 'MEDIUM',
+        type: "LESSON",
+        ctaUrl: "/dashboard/library",
+        priority: "MEDIUM",
       });
     }
 
@@ -146,16 +149,16 @@ export class OpsService {
       where: { learnerUserId: userId },
     });
 
-    const hasCoReading = policies.some(p => p.coReadingDays?.includes(today));
+    const hasCoReading = policies.some((p) => p.coReadingDays?.includes(today));
     if (hasCoReading) {
       cards.push({
-        id: 'co-reading-reminder',
-        type: 'CO_READING',
-        title: '🗓️ Co-Reading Time!',
-        message: 'You have a co-reading session scheduled for today.',
-        ctaText: 'Start Session',
-        ctaUrl: '/families/co-sessions/start',
-        color: 'blue',
+        id: "co-reading-reminder",
+        type: "CO_READING",
+        title: "🗓️ Co-Reading Time!",
+        message: "You have a co-reading session scheduled for today.",
+        ctaText: "Start Session",
+        ctaUrl: "/families/co-sessions/start",
+        color: "blue",
       });
     }
 
@@ -165,26 +168,26 @@ export class OpsService {
 
     if (dueReviews >= 10) {
       cards.push({
-        id: 'review-due',
-        type: 'REVIEW_DUE',
-        title: '📚 Reviews Waiting',
+        id: "review-due",
+        type: "REVIEW_DUE",
+        title: "📚 Reviews Waiting",
         message: `You have ${dueReviews} vocabulary cards ready to review.`,
-        ctaText: 'Review Now',
-        ctaUrl: '/dashboard/review',
-        color: 'green',
+        ctaText: "Review Now",
+        ctaUrl: "/dashboard/review",
+        color: "green",
       });
     }
 
     // Weekly plan (Sundays)
     if (today === 0) {
       cards.push({
-        id: 'weekly-plan',
-        type: 'WEEKLY_PLAN',
-        title: '📅 Plan Your Week',
-        message: 'Take a moment to set your goals for the week ahead.',
-        ctaText: 'Create Plan',
-        ctaUrl: '/dashboard/planning',
-        color: 'purple',
+        id: "weekly-plan",
+        type: "WEEKLY_PLAN",
+        title: "📅 Plan Your Week",
+        message: "Take a moment to set your goals for the week ahead.",
+        ctaText: "Create Plan",
+        ctaUrl: "/dashboard/planning",
+        color: "purple",
       });
     }
 

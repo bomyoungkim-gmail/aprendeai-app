@@ -1,15 +1,15 @@
 /**
  * Event Schema Service
- * 
+ *
  * Phase 0: MVP-Hardening - Event Schema Registry
  * Validates SessionEvent payloadJson against JSON Schema
  */
 
-import { Injectable, Logger } from '@nestjs/common';
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
-import * as fs from 'fs';
-import * as path from 'path';
+import { Injectable, Logger } from "@nestjs/common";
+import Ajv from "ajv";
+import addFormats from "ajv-formats";
+import * as fs from "fs";
+import * as path from "path";
 
 export interface ValidationResult {
   valid: boolean;
@@ -29,13 +29,13 @@ export class EventSchemaService {
       strict: true,
       useDefaults: true,
     });
-    
+
     // Add format validators (uuid, date-time, etc)
     addFormats(this.ajv);
-    
+
     // Load all schema files
     this.loadSchemas();
-    
+
     this.logger.log(`Loaded ${this.schemas.size} event schemas`);
   }
 
@@ -43,8 +43,8 @@ export class EventSchemaService {
    * Load all JSON Schema files from schemas directory
    */
   private loadSchemas(): void {
-    const schemasDir = path.join(__dirname, 'schemas');
-    
+    const schemasDir = path.join(__dirname, "schemas");
+
     // Check if directory exists
     if (!fs.existsSync(schemasDir)) {
       this.logger.warn(`Schemas directory not found: ${schemasDir}`);
@@ -52,13 +52,13 @@ export class EventSchemaService {
     }
 
     const files = fs.readdirSync(schemasDir);
-    
+
     for (const file of files) {
-      if (file.endsWith('.json')) {
+      if (file.endsWith(".json")) {
         try {
           const filePath = path.join(schemasDir, file);
-          const schema = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-          
+          const schema = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+
           // Store schema by $id
           if (schema.$id) {
             this.schemas.set(schema.$id, schema);
@@ -76,17 +76,13 @@ export class EventSchemaService {
 
   /**
    * Validate event payload against schema
-   * 
+   *
    * @param eventType - Event type enum value
    * @param version - Schema version (default: 1)
    * @param payload - JSON payload to validate
    * @returns Validation result with errors if invalid
    */
-  validate(
-    eventType: string,
-    version: number,
-    payload: any,
-  ): ValidationResult {
+  validate(eventType: string, version: number, payload: any): ValidationResult {
     const schemaId = `${eventType}.v${version}`;
     const validate = this.ajv.getSchema(schemaId);
 
@@ -111,7 +107,7 @@ export class EventSchemaService {
 
   /**
    * Get latest version number for an event type
-   * 
+   *
    * @param eventType - Event type enum value
    * @returns Latest version number, or 1 if not found
    */
@@ -133,7 +129,7 @@ export class EventSchemaService {
    */
   getAvailableEventTypes(): string[] {
     return Array.from(this.schemas.keys())
-      .map((id) => id.split('.v')[0])
+      .map((id) => id.split(".v")[0])
       .filter((type, index, self) => self.indexOf(type) === index);
   }
 

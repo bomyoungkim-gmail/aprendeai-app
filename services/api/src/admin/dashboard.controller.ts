@@ -1,17 +1,22 @@
-import { Controller, Get, Put, Query, Param, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from './guards/roles.guard';
-import { Roles } from './decorators/roles.decorator';
-import { UserRole } from '@prisma/client';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { MetricsService } from '../observability/metrics.service';
-import { ErrorTrackingService } from '../observability/error-tracking.service';
-import { ProviderUsageService } from '../observability/provider-usage.service';
-import { MetricsQueryDto, ErrorQueryDto, UsageQueryDto, OverviewQueryDto } from './dto/dashboard.dto';
+import { Controller, Get, Put, Query, Param, UseGuards } from "@nestjs/common";
+import { AuthGuard } from "@nestjs/passport";
+import { RolesGuard } from "./guards/roles.guard";
+import { Roles } from "./decorators/roles.decorator";
+import { UserRole } from "@prisma/client";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { MetricsService } from "../observability/metrics.service";
+import { ErrorTrackingService } from "../observability/error-tracking.service";
+import { ProviderUsageService } from "../observability/provider-usage.service";
+import {
+  MetricsQueryDto,
+  ErrorQueryDto,
+  UsageQueryDto,
+  OverviewQueryDto,
+} from "./dto/dashboard.dto";
 
-@ApiTags('admin-dashboard')
-@Controller('admin/dashboard')
-@UseGuards(AuthGuard('jwt'), RolesGuard)
+@ApiTags("admin-dashboard")
+@Controller("admin/dashboard")
+@UseGuards(AuthGuard("jwt"), RolesGuard)
 export class DashboardController {
   constructor(
     private metricsService: MetricsService,
@@ -23,21 +28,22 @@ export class DashboardController {
   // Overview (Main Dashboard)
   // ========================================
 
-  @Get('overview')
+  @Get("overview")
   @Roles(UserRole.ADMIN, UserRole.OPS, UserRole.SUPPORT)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get dashboard overview (last 24h by default)' })
+  @ApiOperation({ summary: "Get dashboard overview (last 24h by default)" })
   async getOverview(@Query() query: OverviewQueryDto) {
     const hours = query.hours || 24;
     const from = new Date(Date.now() - hours * 60 * 60 * 1000);
     const to = new Date();
 
-    const [requestStats, errorStats, usageStats, recentErrors] = await Promise.all([
-      this.metricsService.getStats('api_request', from, to),
-      this.metricsService.getStats('api_latency', from, to),
-      this.usageService.getUsageStats({ from, to }),
-      this.errorService.getErrors({ from, to, resolved: false, limit: 10 }),
-    ]);
+    const [requestStats, errorStats, usageStats, recentErrors] =
+      await Promise.all([
+        this.metricsService.getStats("api_request", from, to),
+        this.metricsService.getStats("api_latency", from, to),
+        this.usageService.getUsageStats({ from, to }),
+        this.errorService.getErrors({ from, to, resolved: false, limit: 10 }),
+      ]);
 
     return {
       period: { from, to, hours },
@@ -53,7 +59,7 @@ export class DashboardController {
       usage: usageStats,
       errors: {
         total: recentErrors.length,
-        unresolved: recentErrors.filter(e => !e.resolved).length,
+        unresolved: recentErrors.filter((e) => !e.resolved).length,
         recent: recentErrors.slice(0, 5),
       },
     };
@@ -63,10 +69,10 @@ export class DashboardController {
   // Metrics
   // ========================================
 
-  @Get('metrics')
+  @Get("metrics")
   @Roles(UserRole.ADMIN, UserRole.OPS)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get time-series metrics' })
+  @ApiOperation({ summary: "Get time-series metrics" })
   async getMetrics(@Query() query: MetricsQueryDto) {
     const from = new Date(query.from);
     const to = new Date(query.to);
@@ -79,14 +85,14 @@ export class DashboardController {
     });
   }
 
-  @Get('metrics/stats')
+  @Get("metrics/stats")
   @Roles(UserRole.ADMIN, UserRole.OPS)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get aggregated metric stats' })
+  @ApiOperation({ summary: "Get aggregated metric stats" })
   async getMetricStats(
-    @Query('metric') metric: string,
-    @Query('from') from: string,
-    @Query('to') to: string,
+    @Query("metric") metric: string,
+    @Query("from") from: string,
+    @Query("to") to: string,
   ) {
     return this.metricsService.getStats(metric, new Date(from), new Date(to));
   }
@@ -95,10 +101,10 @@ export class DashboardController {
   // Errors
   // ========================================
 
-  @Get('errors')
+  @Get("errors")
   @Roles(UserRole.ADMIN, UserRole.SUPPORT)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get error logs' })
+  @ApiOperation({ summary: "Get error logs" })
   async getErrors(@Query() query: ErrorQueryDto) {
     const filters: any = {};
 
@@ -111,30 +117,30 @@ export class DashboardController {
     return this.errorService.getErrors(filters);
   }
 
-  @Get('errors/:id')
+  @Get("errors/:id")
   @Roles(UserRole.ADMIN, UserRole.SUPPORT)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get error details' })
-  async getErrorDetails(@Param('id') id: string) {
+  @ApiOperation({ summary: "Get error details" })
+  async getErrorDetails(@Param("id") id: string) {
     return this.errorService.getErrorDetails(id);
   }
 
-  @Get('errors/by-endpoint')
+  @Get("errors/by-endpoint")
   @Roles(UserRole.ADMIN, UserRole.SUPPORT)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get errors grouped by endpoint' })
+  @ApiOperation({ summary: "Get errors grouped by endpoint" })
   async getErrorsByEndpoint(
-    @Query('from') from: string,
-    @Query('to') to: string,
+    @Query("from") from: string,
+    @Query("to") to: string,
   ) {
     return this.errorService.getErrorsByEndpoint(new Date(from), new Date(to));
   }
 
-  @Put('errors/:id/resolve')
+  @Put("errors/:id/resolve")
   @Roles(UserRole.ADMIN, UserRole.SUPPORT)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Mark error as resolved' })
-  async markErrorResolved(@Param('id') id: string) {
+  @ApiOperation({ summary: "Mark error as resolved" })
+  async markErrorResolved(@Param("id") id: string) {
     return this.errorService.markResolved(id);
   }
 
@@ -142,10 +148,10 @@ export class DashboardController {
   // Provider Usage
   // ========================================
 
-  @Get('usage')
+  @Get("usage")
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get provider usage stats' })
+  @ApiOperation({ summary: "Get provider usage stats" })
   async getUsage(@Query() query: UsageQueryDto) {
     return this.usageService.getUsageStats({
       provider: query.provider,
@@ -154,25 +160,28 @@ export class DashboardController {
     });
   }
 
-  @Get('usage/by-provider')
+  @Get("usage/by-provider")
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get usage breakdown by provider' })
+  @ApiOperation({ summary: "Get usage breakdown by provider" })
   async getUsageByProvider(
-    @Query('from') from: string,
-    @Query('to') to: string,
+    @Query("from") from: string,
+    @Query("to") to: string,
   ) {
     return this.usageService.getUsageByProvider(new Date(from), new Date(to));
   }
 
-  @Get('usage/recent')
+  @Get("usage/recent")
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get recent provider calls' })
+  @ApiOperation({ summary: "Get recent provider calls" })
   async getRecentCalls(
-    @Query('provider') provider?: string,
-    @Query('limit') limit?: number,
+    @Query("provider") provider?: string,
+    @Query("limit") limit?: number,
   ) {
-    return this.usageService.getRecentCalls(provider, limit ? Number(limit) : 50);
+    return this.usageService.getRecentCalls(
+      provider,
+      limit ? Number(limit) : 50,
+    );
   }
 }

@@ -35,9 +35,9 @@ export default function DashboardError({
   }, [error, user]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-12">
       <div className="w-full max-w-2xl">
-        <div className="rounded-lg bg-white p-8 shadow-lg">
+        <div className="rounded-lg bg-white dark:bg-gray-800 p-8 shadow-lg">
           {/* Error Icon */}
           <div className="mb-6 flex justify-center">
             <div className="rounded-full bg-red-100 p-4">
@@ -46,12 +46,12 @@ export default function DashboardError({
           </div>
 
           {/* Error Title */}
-          <h1 className="mb-4 text-center text-2xl font-bold text-gray-900">
+          <h1 className="mb-4 text-center text-2xl font-bold text-gray-900 dark:text-white">
             Ops! Algo deu errado
           </h1>
 
           {/* Error Description */}
-          <p className="mb-6 text-center text-gray-600">
+          <p className="mb-6 text-center text-gray-600 dark:text-gray-400">
             Encontramos um erro inesperado. Nossa equipe foi notificada e está trabalhando para resolver o problema.
           </p>
 
@@ -95,7 +95,7 @@ export default function DashboardError({
             </button>
             <button
               onClick={() => router.push(ROUTES.DASHBOARD.HOME)}
-              className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="inline-flex items-center justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-6 py-3 text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               <Home className="mr-2 h-4 w-4" />
               Voltar ao Dashboard

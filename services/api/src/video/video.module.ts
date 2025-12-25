@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common';
-import { VideoService } from './video.service';
+import { Module } from "@nestjs/common";
+import { VideoService } from "./video.service";
 
 @Module({
   providers: [VideoService],

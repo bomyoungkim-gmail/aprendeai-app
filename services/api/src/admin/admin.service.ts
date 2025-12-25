@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { UserRole, Environment, ScopeType } from '@prisma/client';
-import { JwtService } from '@nestjs/jwt';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { UserRole, Environment, ScopeType } from "@prisma/client";
+import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
 export class AdminService {
@@ -13,20 +17,23 @@ export class AdminService {
   // ... existing methods (getUserWithRoles, searchUsers, etc.) ...
 
   // Feature Flags Methods
-  async listFeatureFlags(filter?: { environment?: Environment; enabled?: boolean }) {
+  async listFeatureFlags(filter?: {
+    environment?: Environment;
+    enabled?: boolean;
+  }) {
     const where: any = {};
-    
+
     if (filter?.environment) {
       where.environment = filter.environment;
     }
-    
+
     if (filter?.enabled !== undefined) {
       where.enabled = filter.enabled;
     }
 
     return this.prisma.featureFlag.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   }
 
@@ -67,7 +74,9 @@ export class AdminService {
     });
 
     if (existing) {
-      throw new BadRequestException(`Feature flag with key "${data.key}" already exists`);
+      throw new BadRequestException(
+        `Feature flag with key "${data.key}" already exists`,
+      );
     }
 
     const flag = await this.prisma.featureFlag.create({
@@ -83,8 +92,8 @@ export class AdminService {
     await this.createAuditLog({
       actorUserId: createdBy,
       actorRole,
-      action: 'FEATURE_FLAG_CREATED',
-      resourceType: 'FEATURE_FLAG',
+      action: "FEATURE_FLAG_CREATED",
+      resourceType: "FEATURE_FLAG",
       resourceId: flag.id,
       afterJson: flag,
     });
@@ -120,8 +129,8 @@ export class AdminService {
     await this.createAuditLog({
       actorUserId,
       actorRole,
-      action: 'FEATURE_FLAG_UPDATED',
-      resourceType: 'FEATURE_FLAG',
+      action: "FEATURE_FLAG_UPDATED",
+      resourceType: "FEATURE_FLAG",
       resourceId: id,
       beforeJson: existing,
       afterJson: updated,
@@ -148,8 +157,8 @@ export class AdminService {
     await this.createAuditLog({
       actorUserId,
       actorRole,
-      action: 'FEATURE_FLAG_TOGGLED',
-      resourceType: 'FEATURE_FLAG',
+      action: "FEATURE_FLAG_TOGGLED",
+      resourceType: "FEATURE_FLAG",
       resourceId: id,
       beforeJson: { enabled: existing.enabled },
       afterJson: { enabled },
@@ -175,8 +184,8 @@ export class AdminService {
     await this.createAuditLog({
       actorUserId,
       actorRole,
-      action: 'FEATURE_FLAG_DELETED',
-      resourceType: 'FEATURE_FLAG',
+      action: "FEATURE_FLAG_DELETED",
+      resourceType: "FEATURE_FLAG",
       resourceId: id,
       beforeJson: existing,
       reason,
@@ -191,17 +200,17 @@ export class AdminService {
     institutionId?: string,
   ): Promise<{ enabled: boolean; reason?: string }> {
     // Priority: USER > INSTITUTION > GLOBAL
-    
+
     // Try user-scoped first
     if (userId) {
       const userFlag = await this.prisma.featureFlag.findFirst({
         where: {
           key,
-          scopeType: 'USER',
+          scopeType: "USER",
           scopeId: userId,
         },
       });
-      
+
       if (userFlag) {
         return {
           enabled: userFlag.enabled,
@@ -215,11 +224,11 @@ export class AdminService {
       const instFlag = await this.prisma.featureFlag.findFirst({
         where: {
           key,
-          scopeType: 'INSTITUTION',
+          scopeType: "INSTITUTION",
           scopeId: institutionId,
         },
       });
-      
+
       if (instFlag) {
         return {
           enabled: instFlag.enabled,
@@ -229,8 +238,9 @@ export class AdminService {
     }
 
     // Fall back to global (or environment-specific global)
-    const currentEnv = (process.env.NODE_ENV?.toUpperCase() || 'DEV') as Environment;
-    
+    const currentEnv = (process.env.NODE_ENV?.toUpperCase() ||
+      "DEV") as Environment;
+
     const globalFlag = await this.prisma.featureFlag.findFirst({
       where: {
         key,
@@ -241,7 +251,7 @@ export class AdminService {
         ],
       },
       orderBy: {
-        environment: 'desc', // Prefer environment-specific over null
+        environment: "desc", // Prefer environment-specific over null
       },
     });
 
@@ -255,7 +265,7 @@ export class AdminService {
     // Flag not found - default to disabled
     return {
       enabled: false,
-      reason: 'Flag not found - defaulting to disabled',
+      reason: "Flag not found - defaulting to disabled",
     };
   }
 
@@ -304,15 +314,19 @@ export class AdminService {
   /**
    * List all institutions with pagination (for admin dashboard)
    */
-  async listInstitutions(page: number = 1, limit: number = 20, search?: string) {
+  async listInstitutions(
+    page: number = 1,
+    limit: number = 20,
+    search?: string,
+  ) {
     const skip = (page - 1) * limit;
 
     const where = search
       ? {
           OR: [
-            { name: { contains: search, mode: 'insensitive' as const } },
-            { city: { contains: search, mode: 'insensitive' as const } },
-            { state: { contains: search, mode: 'insensitive' as const } },
+            { name: { contains: search, mode: "insensitive" as const } },
+            { city: { contains: search, mode: "insensitive" as const } },
+            { state: { contains: search, mode: "insensitive" as const } },
           ],
         }
       : {};
@@ -330,7 +344,7 @@ export class AdminService {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.institution.count({ where }),
     ]);
@@ -347,7 +361,7 @@ export class AdminService {
   }
 
   // ... existing methods continue below ...
-  
+
   async getUserWithRoles(userId: string) {
     return this.prisma.user.findUnique({
       where: { id: userId },
@@ -384,8 +398,8 @@ export class AdminService {
 
     if (query) {
       where.OR = [
-        { email: { contains: query, mode: 'insensitive' } },
-        { name: { contains: query, mode: 'insensitive' } },
+        { email: { contains: query, mode: "insensitive" } },
+        { name: { contains: query, mode: "insensitive" } },
       ];
     }
 
@@ -421,7 +435,7 @@ export class AdminService {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.user.count({ where }),
     ]);
@@ -471,8 +485,8 @@ export class AdminService {
     await this.createAuditLog({
       actorUserId,
       actorRole,
-      action: 'USER_STATUS_CHANGED',
-      resourceType: 'USER',
+      action: "USER_STATUS_CHANGED",
+      resourceType: "USER",
       resourceId: userId,
       beforeJson: { status: user.status },
       afterJson: { status },
@@ -510,8 +524,8 @@ export class AdminService {
     await this.createAuditLog({
       actorUserId,
       actorRole,
-      action: 'USER_ROLES_UPDATED',
-      resourceType: 'USER',
+      action: "USER_ROLES_UPDATED",
+      resourceType: "USER",
       resourceId: userId,
       beforeJson: { roles: existingRoles },
       afterJson: { roles },
@@ -534,7 +548,7 @@ export class AdminService {
     });
 
     if (!targetUser) {
-      throw new Error('Target user not found');
+      throw new Error("Target user not found");
     }
 
     const expiresAt = new Date(Date.now() + durationMinutes * 60 * 1000);
@@ -547,7 +561,7 @@ export class AdminService {
       impersonatedByRole: actorRole,
       reason,
       expiresAt: expiresAt.toISOString(),
-      type: 'impersonation',
+      type: "impersonation",
     };
 
     const token = this.jwtService.sign(payload, {
@@ -557,8 +571,8 @@ export class AdminService {
     await this.createAuditLog({
       actorUserId,
       actorRole,
-      action: 'USER_IMPERSONATION_STARTED',
-      resourceType: 'USER',
+      action: "USER_IMPERSONATION_STARTED",
+      resourceType: "USER",
       resourceId: targetUserId,
       reason,
       afterJson: {
@@ -609,7 +623,7 @@ export class AdminService {
       skip,
       take,
       where,
-      orderBy: orderBy || { createdAt: 'desc' },
+      orderBy: orderBy || { createdAt: "desc" },
     });
   }
 }

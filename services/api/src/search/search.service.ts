@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { SearchDto } from './dto/search.dto';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { SearchDto } from "./dto/search.dto";
 
 export interface SearchResult {
   id: string;
-  type: 'content' | 'annotation' | 'note' | 'transcript';
+  type: "content" | "annotation" | "note" | "transcript";
   title: string;
   snippet: string;
   relevance: number;
@@ -23,22 +23,22 @@ export class SearchService {
     const results: SearchResult[] = [];
 
     // Search in different areas based on searchIn filter
-    if (!dto.searchIn || dto.searchIn === 'content') {
+    if (!dto.searchIn || dto.searchIn === "content") {
       const contentResults = await this.searchContent(userId, dto);
       results.push(...contentResults);
     }
 
-    if (!dto.searchIn || dto.searchIn === 'annotation') {
+    if (!dto.searchIn || dto.searchIn === "annotation") {
       const annotationResults = await this.searchAnnotations(userId, dto);
       results.push(...annotationResults);
     }
 
-    if (!dto.searchIn || dto.searchIn === 'note') {
+    if (!dto.searchIn || dto.searchIn === "note") {
       const noteResults = await this.searchNotes(userId, dto);
       results.push(...noteResults);
     }
 
-    if (!dto.searchIn || dto.searchIn === 'transcript') {
+    if (!dto.searchIn || dto.searchIn === "transcript") {
       const transcriptResults = await this.searchTranscripts(userId, dto);
       results.push(...transcriptResults);
     }
@@ -54,11 +54,14 @@ export class SearchService {
   /**
    * Search in content (title, rawText)
    */
-  private async searchContent(userId: string, dto: SearchDto): Promise<SearchResult[]> {
+  private async searchContent(
+    userId: string,
+    dto: SearchDto,
+  ): Promise<SearchResult[]> {
     const where: any = {
       OR: [
-        { title: { contains: dto.query, mode: 'insensitive' } },
-        { rawText: { contains: dto.query, mode: 'insensitive' } },
+        { title: { contains: dto.query, mode: "insensitive" } },
+        { rawText: { contains: dto.query, mode: "insensitive" } },
       ],
     };
 
@@ -91,10 +94,14 @@ export class SearchService {
 
     return contents.map((content: any) => ({
       id: content.id,
-      type: 'content' as const,
+      type: "content" as const,
       title: content.title,
       snippet: this.extractSnippet(content.rawText, dto.query, 150),
-      relevance: this.calculateRelevance(content.title, content.rawText, dto.query),
+      relevance: this.calculateRelevance(
+        content.title,
+        content.rawText,
+        dto.query,
+      ),
       metadata: {
         type: content.type,
         language: content.originalLanguage,
@@ -107,12 +114,15 @@ export class SearchService {
   /**
    * Search in video/audio transcripts
    */
-  private async searchTranscripts(userId: string, dto: SearchDto): Promise<SearchResult[]> {
+  private async searchTranscripts(
+    userId: string,
+    dto: SearchDto,
+  ): Promise<SearchResult[]> {
     const contents = await this.prisma.content.findMany({
       where: {
-        type: { in: ['VIDEO', 'AUDIO'] as any }, // Cast to any to avoid Enum issues
+        type: { in: ["VIDEO", "AUDIO"] as any }, // Cast to any to avoid Enum issues
         metadata: {
-          path: ['transcription', 'text'],
+          path: ["transcription", "text"],
           string_contains: dto.query,
         },
       },
@@ -123,14 +133,15 @@ export class SearchService {
     });
 
     return contents.map((content: any) => {
-      const transcription = (content.metadata as any)?.transcription?.text || '';
-      
+      const transcription =
+        (content.metadata as any)?.transcription?.text || "";
+
       return {
         id: content.id,
-        type: 'transcript' as const,
+        type: "transcript" as const,
         title: `${content.title} (Transcript)`,
         snippet: this.extractSnippet(transcription, dto.query, 150),
-        relevance: this.calculateRelevance('', transcription, dto.query),
+        relevance: this.calculateRelevance("", transcription, dto.query),
         metadata: {
           type: content.type,
           owner: content.ownerUser,
@@ -143,13 +154,16 @@ export class SearchService {
   /**
    * Search in annotations
    */
-  private async searchAnnotations(userId: string, dto: SearchDto): Promise<SearchResult[]> {
+  private async searchAnnotations(
+    userId: string,
+    dto: SearchDto,
+  ): Promise<SearchResult[]> {
     const annotations = await this.prisma.annotation.findMany({
       where: {
         userId,
         OR: [
-          { text: { contains: dto.query, mode: 'insensitive' } },
-          { selectedText: { contains: dto.query, mode: 'insensitive' } },
+          { text: { contains: dto.query, mode: "insensitive" } },
+          { selectedText: { contains: dto.query, mode: "insensitive" } },
         ],
       },
       include: {
@@ -161,17 +175,17 @@ export class SearchService {
 
     return annotations.map((annotation) => ({
       id: annotation.id,
-      type: 'annotation' as const,
+      type: "annotation" as const,
       title: `Annotation on ${annotation.content.title}`,
       snippet: this.extractSnippet(
-        annotation.text || annotation.selectedText || '',
+        annotation.text || annotation.selectedText || "",
         dto.query,
-        150
+        150,
       ),
       relevance: this.calculateRelevance(
-        '',
-        annotation.text || annotation.selectedText || '',
-        dto.query
+        "",
+        annotation.text || annotation.selectedText || "",
+        dto.query,
       ),
       metadata: {
         contentId: annotation.content.id,
@@ -185,14 +199,17 @@ export class SearchService {
   /**
    * Search in Cornell notes
    */
-  private async searchNotes(userId: string, dto: SearchDto): Promise<SearchResult[]> {
+  private async searchNotes(
+    userId: string,
+    dto: SearchDto,
+  ): Promise<SearchResult[]> {
     const notes = await this.prisma.cornellNotes.findMany({
       where: {
         userId,
         OR: [
           // JSON search is complex in Prisma, limiting search to summaryText for MVP
-          // { cuesJson: { string_contains: dto.query } }, 
-          { summaryText: { contains: dto.query, mode: 'insensitive' } },
+          // { cuesJson: { string_contains: dto.query } },
+          { summaryText: { contains: dto.query, mode: "insensitive" } },
         ],
       },
       include: {
@@ -206,13 +223,13 @@ export class SearchService {
       const cuesText = JSON.stringify(note.cuesJson || []);
       const notesText = JSON.stringify(note.notesJson || []);
       const combinedText = `${cuesText} ${notesText} ${note.summaryText}`;
-      
+
       return {
         id: note.id,
-        type: 'note' as const,
+        type: "note" as const,
         title: `Cornell Note on ${note.content.title}`,
         snippet: this.extractSnippet(combinedText, dto.query, 150),
-        relevance: this.calculateRelevance('', combinedText, dto.query),
+        relevance: this.calculateRelevance("", combinedText, dto.query),
         metadata: {
           contentId: note.content.id,
           contentTitle: note.content.title,
@@ -227,7 +244,7 @@ export class SearchService {
    * Extract snippet with query context
    */
   private extractSnippet(text: string, query: string, length: number): string {
-    if (!text) return '';
+    if (!text) return "";
 
     const lowerText = text.toLowerCase();
     const lowerQuery = query.toLowerCase();
@@ -235,17 +252,20 @@ export class SearchService {
 
     if (queryIndex === -1) {
       // Query not found, return beginning
-      return text.substring(0, length) + (text.length > length ? '...' : '');
+      return text.substring(0, length) + (text.length > length ? "..." : "");
     }
 
     // Extract around query
     const start = Math.max(0, queryIndex - length / 3);
-    const end = Math.min(text.length, queryIndex + query.length + (length * 2) / 3);
+    const end = Math.min(
+      text.length,
+      queryIndex + query.length + (length * 2) / 3,
+    );
 
     let snippet = text.substring(start, end);
-    
-    if (start > 0) snippet = '...' + snippet;
-    if (end < text.length) snippet = snippet + '...';
+
+    if (start > 0) snippet = "..." + snippet;
+    if (end < text.length) snippet = snippet + "...";
 
     return snippet;
   }
@@ -253,7 +273,11 @@ export class SearchService {
   /**
    * Calculate relevance score
    */
-  private calculateRelevance(title: string, content: string, query: string): number {
+  private calculateRelevance(
+    title: string,
+    content: string,
+    query: string,
+  ): number {
     const lowerQuery = query.toLowerCase();
     const lowerTitle = title.toLowerCase();
     const lowerContent = content.toLowerCase();
@@ -272,9 +296,10 @@ export class SearchService {
     // Content match
     if (lowerContent.includes(lowerQuery)) {
       score += 5;
-      
+
       // Count occurrences (up to 5)
-      const matches = (lowerContent.match(new RegExp(lowerQuery, 'g')) || []).length;
+      const matches = (lowerContent.match(new RegExp(lowerQuery, "g")) || [])
+        .length;
       score += Math.min(matches, 5);
     }
 

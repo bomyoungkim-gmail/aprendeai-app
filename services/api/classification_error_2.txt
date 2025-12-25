@@ -1,0 +1,55 @@
+FAIL src/content-classification/content-classification.service.spec.ts
+  ContentClassificationService
+    √ should be defined (11 ms)
+    classifyContent
+      √ should return existing classification if provided (3 ms)
+      √ should classify basic content for young ages (3 ms)
+      × should classify intermediate content (5 ms)
+      × should classify advanced content for teens (4 ms)
+      √ should provide confidence score (1 ms)
+    filterContentByAge
+      √ should filter content within age range (2 ms)
+      √ should include unclassified content (1 ms)
+    suggestClassification
+      √ should suggest classification with confidence (7 ms)
+      √ should flag low confidence for review (1 ms)
+
+  ● ContentClassificationService › classifyContent › should classify intermediate content
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "INTERMEDIATE"
+    Received: "BASIC"
+
+      82 |       });
+      83 |
+    > 84 |       expect(result.complexity).toBe("INTERMEDIATE");
+         |                                 ^
+      85 |       expect(result.ageMin).toBeGreaterThanOrEqual(8);
+      86 |       expect(result.ageMax).toBeLessThanOrEqual(12);
+      87 |     });
+
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:84:33)
+
+  ● ContentClassificationService › classifyContent › should classify advanced content for teens
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "ADVANCED"
+    Received: "BASIC"
+
+      93 |       });
+      94 |
+    > 95 |       expect(result.complexity).toBe("ADVANCED");
+         |                                 ^
+      96 |       expect(result.ageMin).toBeGreaterThanOrEqual(12);
+      97 |       expect(result.contentRating).toMatch(/PG-13|TEEN/);
+      98 |     });
+
+      at Object.<anonymous> (src/content-classification/content-classification.service.spec.ts:95:33)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 8 passed, 10 total
+Snapshots:   0 total
+Time:        4.842 s, estimated 9 s
+Ran all test suites matching /src\\content-classification\\content-classification.service.spec.ts/i.

@@ -1,8 +1,10 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
-import { AssessmentService } from './assessment.service';
-import { CreateAssessmentDto } from './dto/assessment.dto';
+import { Controller, Post, Body, Get, UseGuards, Request } from "@nestjs/common";
+import { AuthGuard } from "@nestjs/passport";
+import { AssessmentService } from "./assessment.service";
+import { CreateAssessmentDto } from "./dto/assessment.dto";
 
-@Controller('assessment')
+@Controller("assessment")
+@UseGuards(AuthGuard("jwt"))
 export class AssessmentController {
   constructor(private readonly assessmentService: AssessmentService) {}
 
@@ -12,7 +14,7 @@ export class AssessmentController {
   }
 
   @Get()
-  findAll() {
-    return this.assessmentService.findAll();
+  findAll(@Request() req: any) {
+    return this.assessmentService.findAllByUser(req.user.id);
   }
 }

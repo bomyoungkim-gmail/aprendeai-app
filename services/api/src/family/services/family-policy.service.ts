@@ -1,9 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { PromptLibraryService } from '../../prompts/prompt-library.service';
-import { FamilyEventService } from '../../events/family-event.service';
-import { CreateFamilyPolicyDto, UpdateFamilyPolicyDto } from '../dto/family-policy.dto';
-import { FAMILY_CONFIG } from '../../config/family-classroom.config';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { PromptLibraryService } from "../../prompts/prompt-library.service";
+import { FamilyEventService } from "../../events/family-event.service";
+import {
+  CreateFamilyPolicyDto,
+  UpdateFamilyPolicyDto,
+} from "../dto/family-policy.dto";
+import { FAMILY_CONFIG } from "../../config/family-classroom.config";
 
 @Injectable()
 export class FamilyPolicyService {
@@ -15,11 +18,11 @@ export class FamilyPolicyService {
 
   /**
    * Creates a new family policy with default values
-   * 
+   *
    * @param dto - Policy creation data (familyId, learnerUserId, optional settings)
    * @returns Created policy with family and learner relations
    * @throws {Error} If family or learner doesn't exist
-   * 
+   *
    * @example
    * ```typescript
    * const policy = await service.create({
@@ -35,13 +38,17 @@ export class FamilyPolicyService {
       data: {
         familyId: dto.familyId,
         learnerUserId: dto.learnerUserId,
-        timeboxDefaultMin: dto.timeboxDefaultMin ?? FAMILY_CONFIG.POLICY.DEFAULT_TIMEBOX_MIN,
-        dailyMinMinutes: dto.dailyMinMinutes ?? FAMILY_CONFIG.POLICY.DEFAULT_DAILY_MIN_MINUTES,
-        dailyReviewCap: dto.dailyReviewCap ?? FAMILY_CONFIG.POLICY.DEFAULT_DAILY_REVIEW_CAP,
+        timeboxDefaultMin:
+          dto.timeboxDefaultMin ?? FAMILY_CONFIG.POLICY.DEFAULT_TIMEBOX_MIN,
+        dailyMinMinutes:
+          dto.dailyMinMinutes ?? FAMILY_CONFIG.POLICY.DEFAULT_DAILY_MIN_MINUTES,
+        dailyReviewCap:
+          dto.dailyReviewCap ?? FAMILY_CONFIG.POLICY.DEFAULT_DAILY_REVIEW_CAP,
         coReadingDays: dto.coReadingDays ?? [],
         coReadingTime: dto.coReadingTime,
         toolWordsGateEnabled: dto.toolWordsGateEnabled ?? true,
-        privacyMode: dto.privacyMode ?? FAMILY_CONFIG.POLICY.DEFAULT_PRIVACY_MODE,
+        privacyMode:
+          dto.privacyMode ?? FAMILY_CONFIG.POLICY.DEFAULT_PRIVACY_MODE,
       },
       include: {
         family: true,
@@ -54,15 +61,15 @@ export class FamilyPolicyService {
       `policy_${policy.id}`,
       dto.learnerUserId,
       {
-        domain: 'FAMILY',
-        type: 'FAMILY_POLICY_SET',
+        domain: "FAMILY",
+        type: "FAMILY_POLICY_SET",
         data: {
           householdId: dto.familyId,
           learnerUserId: dto.learnerUserId,
           policy: {
             timeboxDefaultMin: policy.timeboxDefaultMin,
             coReadingDays: policy.coReadingDays,
-            coReadingTime: policy.coReadingTime || '',
+            coReadingTime: policy.coReadingTime || "",
             toolWordsGateEnabled: policy.toolWordsGateEnabled,
             dailyMinMinutes: policy.dailyMinMinutes,
             dailyReviewCap: policy.dailyReviewCap,
@@ -77,7 +84,7 @@ export class FamilyPolicyService {
 
   /**
    * Retrieves policy for a specific learner in a family
-   * 
+   *
    * @param familyId - Family ID
    * @param learnerUserId - Learner's user ID
    * @returns Policy with relations
@@ -108,13 +115,13 @@ export class FamilyPolicyService {
 
   /**
    * Updates an existing family policy
-   * 
+   *
    * @param familyId - Family ID
    * @param learnerUserId - Learner's user ID
    * @param dto - Fields to update
    * @returns Updated policy
    * @throws {Error} If policy doesn't exist
-   * 
+   *
    * Logs FAMILY_POLICY_SET event after successful update
    */
   async update(
@@ -137,15 +144,15 @@ export class FamilyPolicyService {
       `policy_${policy.id}`,
       learnerUserId,
       {
-        domain: 'FAMILY',
-        type: 'FAMILY_POLICY_SET',
+        domain: "FAMILY",
+        type: "FAMILY_POLICY_SET",
         data: {
           householdId: familyId,
           learnerUserId,
           policy: {
             timeboxDefaultMin: policy.timeboxDefaultMin,
             coReadingDays: policy.coReadingDays,
-            coReadingTime: policy.coReadingTime || '',
+            coReadingTime: policy.coReadingTime || "",
             toolWordsGateEnabled: policy.toolWordsGateEnabled,
             dailyMinMinutes: policy.dailyMinMinutes,
             dailyReviewCap: policy.dailyReviewCap,
@@ -160,7 +167,7 @@ export class FamilyPolicyService {
 
   /**
    * Gets confirmation prompt after policy creation
-   * 
+   *
    * @param policyId - Policy ID
    * @returns Canonical prompt with interpolated timebox value
    * @throws {NotFoundException} If policy doesn't exist
@@ -174,7 +181,7 @@ export class FamilyPolicyService {
       throw new NotFoundException(`Policy ${policyId} not found`);
     }
 
-    return this.promptLibrary.getPrompt('FAM_CONTRACT_CONFIRM', {
+    return this.promptLibrary.getPrompt("FAM_CONTRACT_CONFIRM", {
       MIN: policy.timeboxDefaultMin,
     });
   }
@@ -183,13 +190,13 @@ export class FamilyPolicyService {
    * Get onboarding prompt for family mode
    */
   getOnboardingPrompt() {
-    return this.promptLibrary.getPrompt('FAM_ONBOARD_START');
+    return this.promptLibrary.getPrompt("FAM_ONBOARD_START");
   }
 
   /**
    * Get privacy mode selection prompt
    */
   getPrivacyModePrompt() {
-    return this.promptLibrary.getPrompt('FAM_PRIVACY_MODE');
+    return this.promptLibrary.getPrompt("FAM_PRIVACY_MODE");
   }
 }

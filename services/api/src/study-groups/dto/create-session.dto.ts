@@ -1,5 +1,13 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional, IsInt, Min, Max } from 'class-validator';
-import { GroupSessionMode } from '@prisma/client';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEnum,
+  IsOptional,
+  IsInt,
+  Min,
+  Max,
+} from "class-validator";
+import { GroupSessionMode } from "@prisma/client";
 
 export class CreateSessionDto {
   @IsString()
@@ -8,11 +16,11 @@ export class CreateSessionDto {
 
   @IsOptional()
   @IsEnum(GroupSessionMode)
-  mode?: GroupSessionMode = 'PI_SPRINT';
+  mode?: GroupSessionMode = "PI_SPRINT";
 
   @IsOptional()
   @IsString()
-  layer?: string = 'L1';
+  layer?: string = "L1";
 
   @IsInt()
   @Min(1)

@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import OpenAI from 'openai';
-import * as fs from 'fs';
+import { Injectable, Logger } from "@nestjs/common";
+import OpenAI from "openai";
+import * as fs from "fs";
 
 export interface TranscriptionSegment {
   id: number;
@@ -36,9 +36,11 @@ export class TranscriptionService {
 
   constructor() {
     const apiKey = process.env.OPENAI_API_KEY;
-    
+
     if (!apiKey) {
-      this.logger.warn('OPENAI_API_KEY not configured. Transcription will be unavailable.');
+      this.logger.warn(
+        "OPENAI_API_KEY not configured. Transcription will be unavailable.",
+      );
     } else {
       this.openai = new OpenAI({ apiKey });
     }
@@ -49,7 +51,7 @@ export class TranscriptionService {
    */
   async transcribe(filePath: string): Promise<Transcription> {
     if (!this.openai) {
-      throw new Error('OpenAI API key not configured');
+      throw new Error("OpenAI API key not configured");
     }
 
     try {
@@ -59,12 +61,14 @@ export class TranscriptionService {
 
       const response = await this.openai.audio.transcriptions.create({
         file: fileStream,
-        model: 'whisper-1',
-        response_format: 'verbose_json',
-        timestamp_granularities: ['word', 'segment'],
+        model: "whisper-1",
+        response_format: "verbose_json",
+        timestamp_granularities: ["word", "segment"],
       });
 
-      this.logger.log(`Transcription completed. Language: ${response.language}`);
+      this.logger.log(
+        `Transcription completed. Language: ${response.language}`,
+      );
 
       return {
         text: response.text,
@@ -83,12 +87,12 @@ export class TranscriptionService {
    * Generate WebVTT subtitle file from transcription
    */
   generateWebVTT(transcription: Transcription): string {
-    let vtt = 'WEBVTT\n\n';
+    let vtt = "WEBVTT\n\n";
 
     transcription.segments.forEach((segment, index) => {
       const startTime = this.formatTime(segment.start);
       const endTime = this.formatTime(segment.end);
-      
+
       vtt += `${index + 1}\n`;
       vtt += `${startTime} --> ${endTime}\n`;
       vtt += `${segment.text.trim()}\n\n`;
@@ -106,11 +110,11 @@ export class TranscriptionService {
     const secs = Math.floor(seconds % 60);
     const millis = Math.floor((seconds % 1) * 1000);
 
-    return `${hours.toString().padStart(2, '0')}:${minutes
+    return `${hours.toString().padStart(2, "0")}:${minutes
       .toString()
-      .padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${millis
+      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}.${millis
       .toString()
-      .padStart(3, '0')}`;
+      .padStart(3, "0")}`;
   }
 
   /**

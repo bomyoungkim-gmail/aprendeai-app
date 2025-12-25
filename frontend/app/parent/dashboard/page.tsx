@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { API_BASE_URL, API_ENDPOINTS } from '@/lib/config/api';
 import toast from 'react-hot-toast';
 import { SkeletonCard } from '@/components/ui/skeleton';
+import { StatsCard } from '@/components/dashboard/StatsCard';
 
 interface FamilyData {
   id: string;
@@ -87,29 +88,18 @@ export default function FamilyDashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-        <div className="bg-white overflow-hidden shadow rounded-lg p-5">
-          <div className="flex items-center">
-            <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
-              <span className="text-2xl">👥</span>
-            </div>
-            <div className="ml-5">
-              <dt className="text-sm font-medium text-gray-500 truncate">Total Members</dt>
-              <dd className="text-3xl font-semibold text-gray-900">{family.stats.totalMembers}</dd>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg p-5">
-          <div className="flex items-center">
-            <div className="flex-shrink-0 bg-green-100 rounded-md p-3">
-              <span className="text-2xl">⚡</span>
-            </div>
-            <div className="ml-5">
-              <dt className="text-sm font-medium text-gray-500 truncate">Active Learners</dt>
-              <dd className="text-3xl font-semibold text-gray-900">{family.stats.activeMembers}</dd>
-            </div>
-          </div>
-        </div>
+        <StatsCard
+          name="Total Members"
+          value={family.stats.totalMembers}
+          icon="👥"
+          color="bg-blue-500"
+        />
+        <StatsCard
+          name="Active Learners"
+          value={family.stats.activeMembers}
+          icon="⚡"
+          color="bg-green-500"
+        />
       </div>
 
       {/* Visual Placeholder for Activity Heatmap */}

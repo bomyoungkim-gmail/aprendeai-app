@@ -84,49 +84,31 @@ export default function AdminDashboard() {
     },
     {
       name: 'Content Items',
-      value: stats.totalContent.toLocaleString(),
-      icon: '📚',
-      color: 'bg-yellow-500',
-    },
-    {
-      name: 'Active This Week',
-      value: stats.activeUsersThisWeek.toLocaleString(),
-      icon: '⚡',
-      color: 'bg-orange-500',
-    },
-    {
-      name: 'New This Month',
-      value: stats.newUsersThisMonth.toLocaleString(),
-      icon: '🆕',
-      color: 'bg-pink-500',
-    },
+    { name: 'Total Users', value: stats.totalUsers.toLocaleString(), icon: '👥', color: 'bg-blue-500' },
+    { name: 'Institutions', value: stats.totalInstitutions.toLocaleString(), icon: '🏛️', color: 'bg-purple-500' },
+    { name: 'Families', value: stats.totalFamilies.toLocaleString(), icon: '👨‍👩‍👧‍👦', color: 'bg-green-500' },
+    { name: 'Content Items', value: stats.totalContent.toLocaleString(), icon: '📚', color: 'bg-yellow-500' },
+    { name: 'Active This Week', value: stats.activeUsersThisWeek.toLocaleString(), icon: '⚡', color: 'bg-orange-500' },
+    { name: 'New This Month', value: stats.newUsersThisMonth.toLocaleString(), icon: '🆕', color: 'bg-pink-500' },
   ];
 
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Platform Dashboard</h1>
-        <p className="text-gray-600 mt-1">Overview of AprendeAI platform metrics</p>
+        <h1 className="text-3xl font-bold text-gray-900">Admin Overview</h1>
+        <p className="text-gray-600 mt-1">Platform metrics and quick actions.</p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
         {statCards.map((stat) => (
-          <div key={stat.name} className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className={`flex-shrink-0 rounded-md p-3 ${stat.color}`}>
-                  <span className="text-2xl">{stat.icon}</span>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">{stat.name}</dt>
-                    <dd className="text-3xl font-semibold text-gray-900">{stat.value}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
+          <StatsCard
+            key={stat.name}
+            name={stat.name}
+            value={stat.value}
+            icon={stat.icon}
+            color={stat.color}
+          />
         ))}
       </div>
 

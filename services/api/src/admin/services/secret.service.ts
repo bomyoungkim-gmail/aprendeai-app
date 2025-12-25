@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { EncryptionService } from './encryption.service';
-import { UserRole, Environment } from '@prisma/client';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { EncryptionService } from "./encryption.service";
+import { UserRole, Environment } from "@prisma/client";
 
 @Injectable()
 export class SecretService {
@@ -12,11 +16,11 @@ export class SecretService {
 
   async listSecrets(filter?: { provider?: string; environment?: Environment }) {
     const where: any = {};
-    
+
     if (filter?.provider) {
       where.provider = filter.provider;
     }
-    
+
     if (filter?.environment) {
       where.environment = filter.environment;
     }
@@ -34,13 +38,13 @@ export class SecretService {
         updatedAt: true,
         // NEVER return encrypted fields in list
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
     // Add masked value for display
-    return secrets.map(secret => ({
+    return secrets.map((secret) => ({
       ...secret,
-      maskedValue: '***' + '****',  // Placeholder since we don't decrypt in list
+      maskedValue: "***" + "****", // Placeholder since we don't decrypt in list
     }));
   }
 
@@ -50,7 +54,7 @@ export class SecretService {
     });
 
     if (!secret) {
-      throw new NotFoundException('Secret not found');
+      throw new NotFoundException("Secret not found");
     }
 
     // Decrypt the value
@@ -66,7 +70,7 @@ export class SecretService {
       id: secret.id,
       key: secret.key,
       name: secret.name,
-      value: decryptedValue,  // Return plaintext (ADMIN only!)
+      value: decryptedValue, // Return plaintext (ADMIN only!)
       provider: secret.provider,
       environment: secret.environment,
       lastRotatedAt: secret.lastRotatedAt,
@@ -109,7 +113,9 @@ export class SecretService {
     });
 
     if (existing) {
-      throw new BadRequestException(`Secret with key "${data.key}" already exists`);
+      throw new BadRequestException(
+        `Secret with key "${data.key}" already exists`,
+      );
     }
 
     // Encrypt the value
@@ -151,7 +157,7 @@ export class SecretService {
     });
 
     if (!existing) {
-      throw new NotFoundException('Secret not found');
+      throw new NotFoundException("Secret not found");
     }
 
     // Encrypt new value
@@ -173,8 +179,8 @@ export class SecretService {
     await auditLogFn({
       actorUserId,
       actorRole,
-      action: 'SECRET_ROTATED',
-      resourceType: 'SECRET',
+      action: "SECRET_ROTATED",
+      resourceType: "SECRET",
       resourceId: id,
       beforeJson: { key: existing.key, lastRotatedAt: existing.lastRotatedAt },
       afterJson: { key: updated.key, lastRotatedAt: updated.lastRotatedAt },
@@ -202,7 +208,7 @@ export class SecretService {
     });
 
     if (!existing) {
-      throw new NotFoundException('Secret not found');
+      throw new NotFoundException("Secret not found");
     }
 
     await this.prisma.integrationSecret.delete({
@@ -213,8 +219,8 @@ export class SecretService {
     await auditLogFn({
       actorUserId,
       actorRole,
-      action: 'SECRET_DELETED',
-      resourceType: 'SECRET',
+      action: "SECRET_DELETED",
+      resourceType: "SECRET",
       resourceId: id,
       beforeJson: { key: existing.key, provider: existing.provider },
       reason,

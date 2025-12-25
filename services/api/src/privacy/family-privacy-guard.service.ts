@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrivacyMode, EducatorDashboardData, Alert } from './types';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrivacyMode, EducatorDashboardData, Alert } from "./types";
 
 @Injectable()
 export class FamilyPrivacyGuard {
@@ -23,19 +23,19 @@ export class FamilyPrivacyGuard {
     // Apply mode-specific filters
     if (privacyMode === PrivacyMode.AGGREGATED_ONLY) {
       // AGGREGATED_ONLY: Stats only, no blockers or alerts
-      this.logger.debug('Filtering with AGGREGATED_ONLY mode');
-      
+      this.logger.debug("Filtering with AGGREGATED_ONLY mode");
+
       // Explicitly exclude sensitive fields
       return filtered;
     }
 
     if (privacyMode === PrivacyMode.AGGREGATED_PLUS_TRIGGERS) {
       // AGGREGATED_PLUS_TRIGGERS: Stats + top blockers + alerts
-      this.logger.debug('Filtering with AGGREGATED_PLUS_TRIGGERS mode');
-      
+      this.logger.debug("Filtering with AGGREGATED_PLUS_TRIGGERS mode");
+
       filtered.topBlockers = data.topBlockers;
       filtered.alerts = this.sanitizeAlerts(data.alerts);
-      
+
       // Still exclude detailed logs and textual content
       return filtered;
     }
@@ -59,12 +59,15 @@ export class FamilyPrivacyGuard {
   /**
    * Check if a specific data field is allowed for the given privacy mode
    */
-  canViewField(field: keyof EducatorDashboardData, privacyMode: PrivacyMode): boolean {
+  canViewField(
+    field: keyof EducatorDashboardData,
+    privacyMode: PrivacyMode,
+  ): boolean {
     const alwaysAllowed: (keyof EducatorDashboardData)[] = [
-      'streakDays',
-      'minutesTotal',
-      'comprehensionAvg',
-      'comprehensionTrend',
+      "streakDays",
+      "minutesTotal",
+      "comprehensionAvg",
+      "comprehensionTrend",
     ];
 
     if (alwaysAllowed.includes(field)) {
@@ -72,8 +75,8 @@ export class FamilyPrivacyGuard {
     }
 
     const triggersAllowed: (keyof EducatorDashboardData)[] = [
-      'topBlockers',
-      'alerts',
+      "topBlockers",
+      "alerts",
     ];
 
     if (
@@ -90,6 +93,6 @@ export class FamilyPrivacyGuard {
    * Mask learner's textual responses (always prohibited for educators)
    */
   maskTextualContent(text: string): string {
-    return '[Content hidden for privacy]';
+    return "[Content hidden for privacy]";
   }
 }
