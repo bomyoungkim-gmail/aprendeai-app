@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Viewer, Worker, SpecialZoomLevel } from '@react-pdf-viewer/core';
 import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
 import { highlightPlugin, Trigger } from '@react-pdf-viewer/highlight';
@@ -29,7 +29,64 @@ interface PDFViewerProps {
 
 export function PDFViewer({ content, mode, highlights = [], onCreateHighlight }: PDFViewerProps) {
   const [selectedColor, setSelectedColor] = useState<string>('yellow');
+  const [pdfUrl, setPdfUrl] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>('');
   const fileUrl = content.file?.viewUrl;
+
+  // Fetch PDF with authentication and create blob URL
+  useEffect(() => {
+    if (!fileUrl) {
+      setError('No file URL provided');
+      setLoading(false);
+      return;
+    }
+
+    const fetchPDF = async () => {
+      try {
+        setLoading(true);
+        // Get token from store directly to ensure we have value even if localStorage format is different
+        const { useAuthStore } = await import('@/stores/auth-store');
+        const token = useAuthStore.getState().token;
+        
+        if (!token) {
+          console.error('PDF Fetch: No token found in auth store');
+          throw new Error('Authentication token missing. Please log in again.');
+        }
+
+        console.log(`PDF Fetch: Starting request to ${fileUrl}`);
+        
+        const response = await fetch(fileUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to load PDF: ${response.statusText}`);
+        }
+
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        setPdfUrl(blobUrl);
+        setError('');
+      } catch (err) {
+        console.error('PDF fetch error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load PDF');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPDF();
+
+    // Cleanup blob URL on unmount
+    return () => {
+      if (pdfUrl) {
+        URL.revokeObjectURL(pdfUrl);
+      }
+    };
+  }, [fileUrl]);
 
   // Convert backend highlights to ReactPDF format
   const reactPDFHighlights = convertHighlightsToReactPDF(highlights);
@@ -121,7 +178,6 @@ export function PDFViewer({ content, mode, highlights = [], onCreateHighlight }:
               width: area.width || 100,
               height: area.height || 20,
               pageIndex: area.pageIndex || 0,
-              height: area.height || 20,
             },
           ],
           comment: { emoji: '💛', message: '' },
@@ -150,14 +206,14 @@ export function PDFViewer({ content, mode, highlights = [], onCreateHighlight }:
       {/* Color Picker for Highlights - Responsive */}
       {mode === 'study' && (
         <div className="absolute top-2 right-2 z-50 bg-white rounded-lg shadow-lg p-2 flex flex-wrap gap-2 max-w-xs md:max-w-none">
-          <span className="text-xs text-gray-600 self-center font-medium hidden sm:block">
+          <span className="text-xs text-gray-600 self-center font-medium">
             Highlight:
           </span>
-          {['yellow', 'green', 'blue', 'red', 'purple', 'orange'].map((color) => (
+          {['yellow', 'green', 'blue', 'pink', 'purple'].map((color) => (
             <button
               key={color}
-              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-md border-2 transition-all ${
-                selectedColor === color ? 'border-gray-800 scale-110' : 'border-gray-300 hover:border-gray-500'
+              className={`w-8 h-8 rounded-full border-2 transition-all ${
+                selectedColor === color ? 'border-gray-800 scale-110' : 'border-gray-300'
               }`}
               style={{ backgroundColor: getColorForKey(color) }}
               onClick={() => setSelectedColor(color)}
@@ -170,51 +226,55 @@ export function PDFViewer({ content, mode, highlights = [], onCreateHighlight }:
 
       {/* PDF Viewer with Worker - Responsive */}
       <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
-        <div className="h-full w-full">
-          <Viewer
-            fileUrl={fileUrl}
-            plugins={[defaultLayoutPluginInstance, highlightPluginInstance, searchPluginInstance]}
-            defaultScale={SpecialZoomLevel.PageFit}
-            theme={{
-              theme: 'dark',
-            }}
-            renderLoader={(percentages: number) => (
-              <div className="flex items-center justify-center h-full bg-gray-900">
-                <div className="text-center px-4">
-                  <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-b-2 border-white mx-auto mb-4"></div>
-                  <p className="text-white text-sm sm:text-base">
-                    Loading PDF... {Math.round(percentages)}%
-                  </p>
-                </div>
+        <div className="h-full w-full bg-gray-900" style={{ minHeight: '600px' }}>
+          {loading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-white">Loading PDF...</div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center h-full bg-gray-900 p-4">
+              <div className="text-red-400 text-center max-w-md">
+                <svg 
+                  className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" 
+                  />
+                </svg>
+                <p className="text-base sm:text-lg font-semibold mb-2">Failed to load PDF</p>
+                <p className="text-xs sm:text-sm text-gray-400 mb-2">
+                  {error}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Please check your internet connection and try again
+                </p>
               </div>
-            )}
-            renderError={(error: any) => (
-              <div className="flex items-center justify-center h-full bg-gray-900 p-4">
-                <div className="text-red-400 text-center max-w-md">
-                  <svg 
-                    className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4" 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" 
-                    />
-                  </svg>
-                  <p className="text-base sm:text-lg font-semibold mb-2">Failed to load PDF</p>
-                  <p className="text-xs sm:text-sm text-gray-400 mb-2">
-                    {error?.message || 'Unknown error'}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Please check your internet connection and try again
-                  </p>
+            </div>
+          ) : pdfUrl ? (
+            <Viewer
+              fileUrl={pdfUrl}
+              plugins={[
+                defaultLayoutPluginInstance,
+                highlightPluginInstance,
+                searchPluginInstance,
+              ]}
+              defaultScale={SpecialZoomLevel.PageFit}
+              renderError={(error) => (
+                <div className="flex items-center justify-center h-full bg-gray-900 p-4">
+                  <div className="text-red-400 text-center max-w-md">
+                    <p className="text-base sm:text-lg font-semibold mb-2">Error rendering PDF</p>
+                    <p className="text-xs sm:text-sm text-gray-400">{error.message}</p>
+                  </div>
                 </div>
-              </div>
-            )}
-          />
+              )}
+            />
+          ) : null}
         </div>
       </Worker>
 

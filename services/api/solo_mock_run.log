@@ -1,0 +1,89 @@
+
+> api@0.0.1 test
+> jest test/integration/solo-sessions.integration.spec.ts
+
+  console.warn
+    ⚠️  FRONTEND_URL not set, using fallback: http://localhost:3000
+
+    [0m [90m 28 |[39m
+     [90m 29 |[39m     [36mif[39m (fallback) {
+    [31m[1m>[22m[39m[90m 30 |[39m       console[33m.[39mwarn([32m`⚠️  ${envVar} not set, using fallback: ${fallback}`[39m)[33m;[39m
+     [90m    |[39m               [31m[1m^[22m[39m
+     [90m 31 |[39m       [36mreturn[39m fallback[33m;[39m
+     [90m 32 |[39m     }
+     [90m 33 |[39m[0m
+
+      at requireInProduction (src/config/urls.config.ts:30:15)
+      at Object.<anonymous> (src/config/urls.config.ts:53:11)
+      at Object.<anonymous> (src/notifications/notifications.gateway.ts:13:1)
+      at Object.<anonymous> (src/queue/queue-consumer.service.ts:3:1)
+      at Object.<anonymous> (src/queue/queue.module.ts:4:1)
+      at Object.<anonymous> (src/app.module.ts:6:1)
+      at Object.<anonymous> (test/integration/solo-sessions.integration.spec.ts:5:1)
+
+[Nest] 46932  - 25/12/2025, 15:43:27   ERROR [ExceptionsHandler] TypeError: Do not know how to serialize a BigInt
+    at JSON.stringify (<anonymous>)
+    at stringify (C:\projects\aprendeai-app\services\api\node_modules\express\lib\response.js:1020:12)
+    at ServerResponse.json (C:\projects\aprendeai-app\services\api\node_modules\express\lib\response.js:243:14)
+    at ExpressAdapter.reply (C:\projects\aprendeai-app\services\api\node_modules\@nestjs\platform-express\adapters\express-adapter.js:80:62)
+    at RouterResponseController.apply (C:\projects\aprendeai-app\services\api\node_modules\@nestjs\core\router\router-response-controller.js:15:36)
+    at C:\projects\aprendeai-app\services\api\node_modules\@nestjs\core\router\router-execution-context.js:176:48
+    at C:\projects\aprendeai-app\services\api\node_modules\@nestjs\core\router\router-execution-context.js:47:13
+    at C:\projects\aprendeai-app\services\api\node_modules\@nestjs\core\router\router-proxy.js:9:17
+FAIL test/integration/solo-sessions.integration.spec.ts (6.308 s)
+  Sprint 2: Solo Sessions (Integration)
+    GET /sessions/:id - Enhanced Response
+      √ should return session with content, messages, and quickReplies (41 ms)
+      √ should return empty messages and quickReplies for new session (21 ms)
+      × should expose file.storageKey if content has file (29 ms)
+      √ should return 404 for non-existent session (21 ms)
+      √ should return 403 for session owned by another user (39 ms)
+    POST /sessions/:id/prompt - Message Persistence
+      × should create session event when sending prompt (36 ms)
+
+  ● Sprint 2: Solo Sessions (Integration) › GET /sessions/:id - Enhanced Response › should expose file.storageKey if content has file
+
+    expected 200 "OK", got 500 "Internal Server Error"
+
+      210 |         .get(`/api/v1/sessions/${testSessionId}`)
+      211 |         .set("Authorization", `Bearer ${authToken}`)
+    > 212 |         .expect(200);
+          |          ^
+      213 |
+      214 |       expect(response.body.content.file).toBeDefined();
+      215 |       expect(response.body.content.file.storageKey).toBe(
+
+      at Object.<anonymous> (test/integration/solo-sessions.integration.spec.ts:212:10)
+      ----
+      at Test._assertStatus (node_modules/supertest/lib/test.js:252:14)
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+  ● Sprint 2: Solo Sessions (Integration) › POST /sessions/:id/prompt - Message Persistence › should create session event when sending prompt
+
+    expect(received).toBeGreaterThan(expected)
+
+    Expected: > 0
+    Received:   0
+
+      334 |       });
+      335 |
+    > 336 |       expect(events.length).toBeGreaterThan(0);
+          |                             ^
+      337 |       const userEvent = events.find(
+      338 |         (e) =>
+      339 |           (e.payloadJson as any)?.text ===
+
+      at Object.<anonymous> (test/integration/solo-sessions.integration.spec.ts:336:29)
+
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 4 passed, 6 total
+Snapshots:   0 total
+Time:        6.51 s, estimated 9 s
+Ran all test suites matching /test\\integration\\solo-sessions.integration.spec.ts/i.
+Jest did not exit one second after the test run has completed.
+
+'This usually means that there are asynchronous operations that weren't stopped in your tests. Consider running Jest with `--detectOpenHandles` to troubleshoot this issue.
+[Nest] 46932  - 25/12/2025, 15:43:29   ERROR [QueueConsumerService] Failed to start consumer: Channel closed

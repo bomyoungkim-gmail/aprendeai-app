@@ -11,6 +11,12 @@ import { URL_CONFIG } from "./config/urls.config";
 import { json, urlencoded } from "express";
 
 async function bootstrap() {
+  // Fix BigInt JSON serialization - Required for integration tests
+  // @ts-ignore
+  BigInt.prototype.toJSON = function () {
+    return this.toString();
+  };
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const logger = new Logger("Bootstrap");
 

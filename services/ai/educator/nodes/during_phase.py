@@ -8,7 +8,7 @@ Handles active reading phase:
 """
 
 from ..state import EducatorState
-from llm_factory import get_cheap_llm
+
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 import logging

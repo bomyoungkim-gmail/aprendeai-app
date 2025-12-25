@@ -88,8 +88,9 @@ export function DashboardSidebar({ isOpen, onClose }: DashboardSidebarProps) {
         {/* Navigation */}
         <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
           {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+            const isActive = item.href === '/dashboard' 
+              ? pathname === '/dashboard'
+              : pathname.startsWith(item.href);
             
             return (
               <Link
@@ -104,7 +105,7 @@ export function DashboardSidebar({ isOpen, onClose }: DashboardSidebarProps) {
                 )}
                 onClick={() => onClose()}
               >
-                <Icon className="h-5 w-5 flex-shrink-0" />
+                <item.icon className="h-5 w-5 flex-shrink-0" />
                 {!isCollapsed && <span>{item.label}</span>}
               </Link>
             );

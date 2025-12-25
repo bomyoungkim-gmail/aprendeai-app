@@ -4,6 +4,9 @@ import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ConfigService } from '@nestjs/config';
+import { TestAuthHelper } from '../helpers/auth.helper';
+import { SessionTrackingService } from '../../src/analytics/session-tracking.service';
 
 describe('Study Session Analytics (Integration)', () => {
   let app: INestApplication;
@@ -23,25 +26,30 @@ describe('Study Session Analytics (Integration)', () => {
 
     prisma = app.get<PrismaService>(PrismaService);
     eventEmitter = app.get<EventEmitter2>(EventEmitter2);
+    const configService = app.get<ConfigService>(ConfigService);
+    const jwtSecret = configService.get<string>('JWT_SECRET');
 
-    // Create test user and get auth token
-    const testUser = await prisma.user.create({
-      data: {
+    // Use helper for auth
+    const authHelper = new TestAuthHelper(jwtSecret);
+
+    const testUser = await prisma.user.upsert({
+      where: { email: `analytics-test@test.com` },
+      create: {
         name: 'Analytics Test User',
-        email: `analytics-test-${Date.now()}@test.com`,
+        email: `analytics-test@test.com`,
         passwordHash: 'hashed',
         role: 'STUDENT',
         schoolingLevel: 'HIGH_SCHOOL',
       },
+      update: {},
     });
     userId = testUser.id;
 
-    // Get auth token (simplified - adapt to your auth flow)
-    const loginRes = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({ email: testUser.email, password: 'password' });
-    
-    authToken = loginRes.body.token || 'mock-token';
+    authToken = authHelper.generateToken({
+      id: userId,
+      email: testUser.email,
+      name: testUser.name,
+    });
   });
 
   afterAll(async () => {
@@ -218,7 +226,7 @@ describe('Study Session Analytics (Integration)', () => {
       });
 
       // Manually trigger cleanup (in real app, this would be a cron job)
-      const sessionTrackingService = app.get('SessionTrackingService');
+      const sessionTrackingService = app.get<SessionTrackingService>(SessionTrackingService);
       await sessionTrackingService.autoCloseAbandonedSessions(30);
 
       // Verify session was closed

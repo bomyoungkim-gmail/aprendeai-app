@@ -3,19 +3,29 @@ import { INestApplication, ValidationPipe } from "@nestjs/common";
 import * as request from "supertest";
 import { PrismaService } from "../../src/prisma/prisma.service";
 import { AppModule } from "../../src/app.module";
+import { ROUTES, apiUrl } from "../helpers/routes";
 
-describe("Sprint 1: Media Content (Integration)", () => {
+describe("Media Content (Integration)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let authToken: string;
   let testUserId: string;
 
   beforeAll(async () => {
+    // Ensure uploads dir exists for ServeStaticModule
+    const fs = require('fs');
+    const path = require('path');
+    const uploadsDir = path.join(__dirname, '../../uploads');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix("api/v1");  // Required for routes to work
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, transform: true }),
     );
@@ -23,12 +33,29 @@ describe("Sprint 1: Media Content (Integration)", () => {
 
     prisma = app.get<PrismaService>(PrismaService);
 
+    // Clean up any existing test users
+    await prisma.user.deleteMany({
+      where: { email: "maria@example.com" },
+    });
+
+    // Register test user (doesn't exist in seeds)
+    await request(app.getHttpServer())
+      .post(apiUrl(ROUTES.AUTH.REGISTER))
+      .send({
+        email: "maria@example.com",
+        password: "demo1234",
+        name: "Maria Silva",
+        role: "STUDENT",
+      })
+      .expect(201);
+
     // Create test user and get token
     const loginResponse = await request(app.getHttpServer())
-      .post("/api/v1/auth/login")
-      .send({ email: "maria@example.com", password: "demo123" });
+      .post(apiUrl(ROUTES.AUTH.LOGIN))
+      .send({ email: "maria@example.com", password: "demo1234" })
+      .expect(201);
 
-    authToken = loginResponse.body.accessToken;
+    authToken = loginResponse.body.access_token;  // API returns access_token (underscore)
     testUserId = loginResponse.body.user.id;
   });
 
@@ -39,7 +66,7 @@ describe("Sprint 1: Media Content (Integration)", () => {
   describe("ContentType Enum - VIDEO/AUDIO", () => {
     it("should create VIDEO content with duration", async () => {
       const response = await request(app.getHttpServer())
-        .post("/api/v1/content")
+        .post(apiUrl(ROUTES.CONTENT.BASE) + '/create_manual')
         .set("Authorization", `Bearer ${authToken}`)
         .send({
           title: "Test Video Content",
@@ -62,7 +89,7 @@ describe("Sprint 1: Media Content (Integration)", () => {
 
     it("should create AUDIO content with duration", async () => {
       const response = await request(app.getHttpServer())
-        .post("/api/v1/content")
+        .post(apiUrl(ROUTES.CONTENT.BASE) + '/create_manual')
         .set("Authorization", `Bearer ${authToken}`)
         .send({
           title: "Test Audio Content",
@@ -85,7 +112,7 @@ describe("Sprint 1: Media Content (Integration)", () => {
 
     it("should reject invalid content type", async () => {
       await request(app.getHttpServer())
-        .post("/api/v1/content")
+        .post(apiUrl(ROUTES.CONTENT.BASE) + '/create_manual')
         .set("Authorization", `Bearer ${authToken}`)
         .send({
           title: "Invalid Content",
@@ -100,7 +127,7 @@ describe("Sprint 1: Media Content (Integration)", () => {
   describe("Duration Field", () => {
     it("should accept null duration for non-media content", async () => {
       const response = await request(app.getHttpServer())
-        .post("/api/v1/content")
+        .post(apiUrl(ROUTES.CONTENT.BASE) + '/create_manual')
         .set("Authorization", `Bearer ${authToken}`)
         .send({
           title: "PDF Document",
@@ -119,7 +146,7 @@ describe("Sprint 1: Media Content (Integration)", () => {
     it("should update duration field", async () => {
       // Create content
       const createResponse = await request(app.getHttpServer())
-        .post("/api/v1/content")
+        .post(apiUrl(ROUTES.CONTENT.BASE) + '/create_manual')
         .set("Authorization", `Bearer ${authToken}`)
         .send({
           title: "Video to Update",
@@ -133,7 +160,7 @@ describe("Sprint 1: Media Content (Integration)", () => {
 
       // Update duration
       const updateResponse = await request(app.getHttpServer())
-        .patch(`/api/v1/content/${contentId}`)
+        .patch(apiUrl(ROUTES.CONTENT.BY_ID(contentId)) + '/update')
         .set("Authorization", `Bearer ${authToken}`)
         .send({ duration: 200 })
         .expect(200);
@@ -168,12 +195,14 @@ describe("Sprint 1: Media Content (Integration)", () => {
           rawText: "Transcript",
           duration: 150,
           fileId: file.id,
+          ownerUserId: testUserId,
         },
       });
 
       // GET content
+      const url = apiUrl(ROUTES.CONTENT.BY_ID(content.id));
       const response = await request(app.getHttpServer())
-        .get(`/api/v1/content/${content.id}`)
+        .get(url)
         .set("Authorization", `Bearer ${authToken}`)
         .expect(200);
 
@@ -187,16 +216,47 @@ describe("Sprint 1: Media Content (Integration)", () => {
     });
   });
 
-  describe("Static File Serving", () => {
-    it("should serve files from /api/uploads/", async () => {
-      // Note: This assumes a test file exists at uploads/test.txt
-      // In real scenario, you'd create the file programmatically
+  describe("Secure File Serving", () => {
+    it("should stream files via FilesController", async () => {
+      // 1. Create a physical file
+      const fs = require('fs');
+      const path = require('path');
+      const uploadsDir = path.join(__dirname, '../../uploads');
+      
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      
+      const fileName = `secure-test-${Date.now()}.txt`;
+      const filePath = path.join(uploadsDir, fileName);
+      const fileContent = 'Secure File Content';
+      fs.writeFileSync(filePath, fileContent);
+
+      // 2. Create File record in DB
+      const file = await prisma.file.create({
+        data: {
+          storageProvider: "LOCAL",
+          storageKey: fileName,
+          mimeType: "text/plain",
+          sizeBytes: BigInt(fileContent.length),
+          checksumSha256: "dummy-checksum",
+          originalFilename: "secure-test.txt",
+        },
+      });
+
+      // 3. Request file via Controller (Requires Auth)
       const response = await request(app.getHttpServer())
-        .get("/api/uploads/test.txt")
+        .get(apiUrl(ROUTES.FILES.VIEW(file.id)))
+        .set("Authorization", `Bearer ${authToken}`)
         .expect(200);
 
-      // Basic check that file serving works
-      expect(response.text).toBeDefined();
+      // 4. Verify content and headers
+      expect(response.text).toBe(fileContent);
+      expect(response.headers['content-type']).toContain('text/plain');
+
+      // Cleanup
+      fs.unlinkSync(filePath);
+      await prisma.file.delete({ where: { id: file.id } });
     });
   });
 });

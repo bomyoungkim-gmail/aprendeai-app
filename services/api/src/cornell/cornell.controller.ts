@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Put,
+  Patch,
   Request,
   Res,
   Query,
@@ -28,6 +29,8 @@ import {
   CreateHighlightDto,
   UpdateCornellDto,
   UpdateHighlightDto,
+  CreateContentDto,
+  UpdateContentDto,
 } from "./dto/cornell.dto";
 import { UploadContentDto } from "./dto/upload-content.dto";
 import { SearchContentDto } from "./dto/search-content.dto";
@@ -46,9 +49,38 @@ export class CornellController {
     private notificationsGateway: NotificationsGateway,
   ) {}
 
+  @Post("create_manual")
+  async createContent(@Body() dto: CreateContentDto, @Request() req) {
+    return this.contentService.createManualContent(req.user.id, dto);
+  }
+
+  @Patch(":id/update")
+  async updateContent(
+    @Param("id") id: string, 
+    @Body() dto: UpdateContentDto, 
+    @Request() req
+  ) {
+    return this.contentService.updateContent(id, req.user.id, dto);
+  }
+
   @Get("my-contents")
   async getMyContents(@Request() req) {
     return this.cornellService.getMyContents(req.user.id);
+  }
+
+  @Get(":id")
+  async getContent(@Param("id") id: string, @Request() req) {
+    return this.cornellService.getContent(id, req.user.id);
+  }
+
+  @Delete(":id")
+  async deleteContent(@Param("id") id: string, @Request() req) {
+    return this.cornellService.deleteContent(id, req.user.id);
+  }
+
+  @Post("bulk-delete")
+  async bulkDeleteContents(@Body() body: { contentIds: string[] }, @Request() req) {
+    return this.cornellService.bulkDeleteContents(body.contentIds, req.user.id);
   }
 
   /**
@@ -145,6 +177,34 @@ export class CornellController {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  @Get(":id/highlights")
+  async getHighlights(@Param("id") id: string, @Request() req) {
+    return this.cornellService.getHighlights(id, req.user.id);
+  }
+
+  @Post(":id/highlights")
+  async createHighlight(
+    @Param("id") id: string,
+    @Body() dto: CreateHighlightDto,
+    @Request() req,
+  ) {
+    return this.cornellService.createHighlight(id, dto, req.user.id);
+  }
+
+  @Get(":id/cornell")
+  async getCornellNotes(@Param("id") id: string, @Request() req) {
+    return this.cornellService.getOrCreateCornellNotes(id, req.user.id);
+  }
+
+  @Put(":id/cornell")
+  async updateCornellNotes(
+    @Param("id") id: string,
+    @Body() dto: UpdateCornellDto,
+    @Request() req,
+  ) {
+    return this.cornellService.updateCornellNotes(id, dto, req.user.id);
   }
 
   /**

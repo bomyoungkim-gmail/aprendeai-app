@@ -61,3 +61,41 @@ export class UpdateHighlightDto {
   @IsOptional()
   tags_json?: string[];
 }
+
+export class CreateContentDto {
+  @IsString()
+  title: string;
+
+  @IsEnum(["PDF", "IMAGE", "DOCX", "VIDEO", "AUDIO", "TEXT"])
+  type: "PDF" | "IMAGE" | "DOCX" | "VIDEO" | "AUDIO" | "TEXT";
+
+  @IsString()
+  @IsOptional()
+  originalLanguage?: string;
+
+  @IsString()
+  @IsOptional()
+  rawText?: string;
+
+  @IsInt()
+  @IsOptional()
+  duration?: number;
+
+  @IsString()
+  @IsOptional()
+  thumbnailUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  sourceUrl?: string;
+}
+
+export class UpdateContentDto {
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsInt()
+  duration?: number;
+}

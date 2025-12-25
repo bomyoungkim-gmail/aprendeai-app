@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import {
   CreateInstitutionDto,
@@ -53,7 +53,7 @@ export class InstitutionsService {
     });
 
     if (!institutionMember) {
-      throw new Error("User is not an institution admin");
+      throw new ForbiddenException("Insufficient permissions");
     }
 
     const institutionId = institutionMember.institutionId;

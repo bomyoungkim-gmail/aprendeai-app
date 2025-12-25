@@ -9,11 +9,13 @@ import { EncryptionService } from "./services/encryption.service";
 import { SecretService } from "./services/secret.service";
 import { ConfigService } from "./services/config.service";
 import { LLMModule } from "../llm/llm.module";
+import { ObservabilityModule } from "../observability/observability.module";
 
 @Module({
   imports: [
     PrismaModule,
     LLMModule,
+    ObservabilityModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || "your-secret-key",
       signOptions: { expiresIn: "60m" },

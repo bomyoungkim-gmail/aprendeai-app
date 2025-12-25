@@ -236,11 +236,14 @@ export class OutcomesService {
    * Calculate actual session duration from events
    */
   private calculateActualDuration(session: any): number {
-    if (session.events.length === 0) return 0;
+    if (!session.events || session.events.length === 0) return 0;
 
     const timestamps = session.events
-      .map((e) => e.timestamp)
+      .map((e) => e.occurredAt || e.createdAt || new Date())
+      .filter((t) => t instanceof Date)
       .sort((a, b) => a.getTime() - b.getTime());
+
+    if (timestamps.length === 0) return 0;
 
     const start = timestamps[0];
     const end = timestamps[timestamps.length - 1];

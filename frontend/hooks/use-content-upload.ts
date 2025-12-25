@@ -11,12 +11,14 @@ export function useUploadContent() {
           'Content-Type': 'multipart/form-data',
         },
       });
-      return res.data;
+      return res.data; // Returns { id, title, ... }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       // Invalidate content queries to refresh the list
       queryClient.invalidateQueries({ queryKey: ['contents'] });
       queryClient.invalidateQueries({ queryKey: ['my-contents'] });
+      // Return data for redirect
+      return data;
     },
   });
 }

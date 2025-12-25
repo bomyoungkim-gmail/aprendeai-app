@@ -1,5 +1,6 @@
 import React from 'react';
-import { Eye, BookOpen, Brain } from 'lucide-react';
+import Link from 'next/link';
+import { Eye, BookOpen, Brain, ArrowLeft } from 'lucide-react';
 import { SaveStatusIndicator } from './SaveStatusIndicator';
 import type { ViewMode, SaveStatus } from '@/lib/types/cornell';
 
@@ -39,10 +40,19 @@ export function TopBar({
 
   return (
     <div className="h-16 border-b border-gray-200 bg-white px-6 flex items-center justify-between shadow-sm">
-      {/* Title */}
-      <h1 className="text-xl font-semibold text-gray-900 truncate max-w-md">
-        {title || 'Untitled Document'}
-      </h1>
+      <div className="flex items-center gap-4">
+        <Link 
+          href="/dashboard" 
+          className="flex items-center text-gray-500 hover:text-gray-900 transition-colors p-2 -ml-2 rounded-lg hover:bg-gray-100"
+          title="Back to Dashboard"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <div className="h-6 w-px bg-gray-200"></div>
+        <h1 className="text-xl font-semibold text-gray-900 truncate max-w-md">
+          {title || 'Untitled Document'}
+        </h1>
+      </div>
 
       {/* Right side: Mode Toggle + Save Status */}
       <div className="flex items-center gap-6">

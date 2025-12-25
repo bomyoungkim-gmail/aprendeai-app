@@ -1,0 +1,105 @@
+
+> api@0.0.1 test:integration
+> jest --config ./test/jest-integration.config.js test/integration/solo-sessions.integration.spec.ts
+
+  console.log
+    ✅ Jest setup: BigInt.prototype.toJSON configured
+
+      at Object.<anonymous> (jest.setup.js:14:9)
+
+  console.warn
+    ⚠️  FRONTEND_URL not set, using fallback: http://localhost:3000
+
+    [0m [90m 28 |[39m
+     [90m 29 |[39m     [36mif[39m (fallback) {
+    [31m[1m>[22m[39m[90m 30 |[39m       console[33m.[39mwarn([32m`⚠️  ${envVar} not set, using fallback: ${fallback}`[39m)[33m;[39m
+     [90m    |[39m               [31m[1m^[22m[39m
+     [90m 31 |[39m       [36mreturn[39m fallback[33m;[39m
+     [90m 32 |[39m     }
+     [90m 33 |[39m[0m
+
+      at requireInProduction (../src/config/urls.config.ts:30:15)
+      at Object.<anonymous> (../src/config/urls.config.ts:53:11)
+      at Object.<anonymous> (../src/notifications/notifications.gateway.ts:13:1)
+      at Object.<anonymous> (../src/queue/queue-consumer.service.ts:3:1)
+      at Object.<anonymous> (../src/queue/queue.module.ts:4:1)
+      at Object.<anonymous> (../src/app.module.ts:6:1)
+      at Object.<anonymous> (integration/solo-sessions.integration.spec.ts:5:1)
+
+[Nest] 53168  - 25/12/2025, 15:47:11   ERROR [ExceptionsHandler] PrismaClientValidationError: 
+Invalid `this.prisma.sessionEvent.createMany()` invocation in
+C:\projects\aprendeai-app\services\api\src\sessions\reading-sessions.service.ts:672:36
+
+  669 // Note: Validation happens in QuickCommandParser for now
+  670 // Add DTO validation here in future if needed
+  671 
+→ 672 await this.prisma.sessionEvent.createMany({
+        data: [
+          {
+            readingSessionId: "106d3c41-82c1-4b18-bd04-0e95b790a556",
+            eventType: "PROMPT_SENT",
+            payloadJson: {
+              text: "What is the main idea of this article?",
+              role: "USER"
+            },
+            occurredAt: new Date("2025-12-25T18:47:11.907Z")
+          },
+          {
+            readingSessionId: "106d3c41-82c1-4b18-bd04-0e95b790a556",
+            eventType: "AGENT_RESPONSE",
+            payloadJson: {
+              text: "Mock response",
+              role: "ASSISTANT"
+            },
+            occurredAt: new Date("2025-12-25T18:47:11.907Z")
+          }
+        ]
+      })
+
+Unknown argument `occurredAt`. Available options are marked with ?.
+    at wn (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at l (C:\projects\aprendeai-app\services\api\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at ReadingSessionsService.persistEvents (C:\projects\aprendeai-app\services\api\src\sessions\reading-sessions.service.ts:672:5)
+    at ReadingSessionsService.processPrompt (C:\projects\aprendeai-app\services\api\src\sessions\reading-sessions.service.ts:598:7) {
+  clientVersion: '5.22.0'
+}
+FAIL test/integration/solo-sessions.integration.spec.ts (6.225 s)
+  Sprint 2: Solo Sessions (Integration)
+    GET /sessions/:id - Enhanced Response
+      √ should return session with content, messages, and quickReplies (40 ms)
+      √ should return empty messages and quickReplies for new session (19 ms)
+      √ should expose file.storageKey if content has file (31 ms)
+      √ should return 404 for non-existent session (22 ms)
+      √ should return 403 for session owned by another user (37 ms)
+    POST /sessions/:id/prompt - Message Persistence
+      × should create session event when sending prompt (43 ms)
+
+  ● Sprint 2: Solo Sessions (Integration) › POST /sessions/:id/prompt - Message Persistence › should create session event when sending prompt
+
+    expected 201 "Created", got 500 "Internal Server Error"
+
+      338 |           },
+      339 |         })
+    > 340 |         .expect(201);
+          |          ^
+      341 |
+      342 |       // Verify response has nextPrompt and quickReplies
+      343 |       expect(response.body).toHaveProperty("nextPrompt");
+
+      at Object.<anonymous> (integration/solo-sessions.integration.spec.ts:340:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:252:14)
+      at ../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../node_modules/supertest/lib/test.js:120:14)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 5 passed, 6 total
+Snapshots:   0 total
+Time:        6.421 s, estimated 10 s
+Ran all test suites matching /test\\integration\\solo-sessions.integration.spec.ts/i.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?

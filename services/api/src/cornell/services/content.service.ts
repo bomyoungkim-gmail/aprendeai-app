@@ -191,6 +191,40 @@ export class ContentService {
   }
 
   /**
+   * Create content manually (e.g. for external videos or text-only)
+   */
+  async createManualContent(userId: string, dto: any): Promise<Content> {
+    // Basic validation
+    if (!dto.title) throw new BadRequestException("Title is required");
+    if (!dto.type) throw new BadRequestException("Type is required");
+
+    // Create Content record without file
+    const content = await this.prisma.content.create({
+      data: {
+        title: dto.title,
+        type: dto.type,
+        originalLanguage: dto.originalLanguage || "PT_BR", // Default
+        rawText: dto.rawText || "",
+        ownerUserId: userId,
+        scopeType: ScopeType.USER, 
+        metadata: {
+          duration: dto.duration,
+          thumbnailUrl: dto.thumbnailUrl,
+          sourceUrl: dto.sourceUrl,
+        },
+        duration: dto.duration, // Mapped to column
+        sourceUrl: dto.sourceUrl,
+      },
+    });
+
+    this.logger.log(
+      `✅ Manual content created: ${content.id} (${content.title})`,
+    );
+
+    return content;
+  }
+
+  /**
    * Extract text from file based on mime type
    */
   private async extractText(file: Express.Multer.File): Promise<string> {
@@ -229,17 +263,25 @@ export class ContentService {
       // Convert Buffer to Uint8Array for unpdf
       const uint8Array = new Uint8Array(buffer);
       
+      this.logger.log(`Converted to Uint8Array, length: ${uint8Array.length}`);
+      
       const { text, totalPages } = await extractText(uint8Array, { mergePages: true });
       
       this.logger.log(`PDF extracted successfully. Text length: ${text?.length || 0}, pages: ${totalPages || 0}`);
+      
+      if (!text || text.trim().length === 0) {
+        this.logger.warn('PDF extraction returned empty text');
+        // For scanned PDFs or image-based PDFs, return placeholder
+        return '(This PDF may be image-based and requires OCR. Text extraction not available yet.)';
+      }
       
       // Sanitize text: Remove null bytes (\0) that PostgreSQL UTF8 doesn't accept
       const sanitized = (text || '').replace(/\0/g, '');
       
       return sanitized;
     } catch (error) {
-      this.logger.error(`unpdf extraction failed: ${error.message}`);
-      throw error;
+      this.logger.error(`unpdf extraction failed: ${error.message}`, error.stack);
+      throw new BadRequestException(`PDF extraction failed: ${error.message}`);
     }
   }
 
@@ -519,5 +561,25 @@ export class ContentService {
    */
   private escapeRegex(str: string): string {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  async updateContent(id: string, userId: string, dto: any): Promise<Content> {
+    const content = await this.prisma.content.findUnique({ where: { id } });
+    if (!content) throw new NotFoundException("Content not found");
+    if (content.ownerUserId !== userId) throw new ForbiddenException("Access denied");
+
+    const updatedMetadata = {
+       ...(content.metadata as any || {}),
+       duration: dto.duration ?? (content.metadata as any)?.duration,
+    };
+
+    return this.prisma.content.update({
+      where: { id },
+      data: {
+        title: dto.title,
+        duration: dto.duration,
+        metadata: updatedMetadata,
+      },
+    });
   }
 }

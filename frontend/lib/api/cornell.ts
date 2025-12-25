@@ -12,8 +12,17 @@ import type {
 export const cornellApi = {
   // Content
   async getContent(contentId: string): Promise<Content> {
-    const { data } = await api.get(`/contents/${contentId}`);
-    return data;
+    const response = await api.get(`/contents/${contentId}`);
+    return response.data;
+  },
+  
+  async deleteContent(contentId: string): Promise<void> {
+    await api.delete(`/contents/${contentId}`);
+  },
+
+  async bulkDeleteContents(contentIds: string[]): Promise<{ deleted: number; skipped: number }> {
+    const response = await api.post('/contents/bulk-delete', { contentIds });
+    return response.data;
   },
 
   async getFileViewUrl(fileId: string): Promise<{ url: string; expiresAt: string }> {

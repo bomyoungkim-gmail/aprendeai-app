@@ -7,8 +7,9 @@ import { TestAuthHelper } from "../helpers/auth.helper";
 
 import { IoAdapter } from "@nestjs/platform-socket.io";
 import { StudyGroupsWebSocketGateway } from "../../src/websocket/study-groups-ws.gateway";
+import { QueueService } from "../../src/queue/queue.service";
 
-describe("WebSocket Real-Time Events (Integration)", () => {
+describe("WebSocket Gateway (Integration)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let authHelper: TestAuthHelper;
@@ -22,8 +23,8 @@ describe("WebSocket Real-Time Events (Integration)", () => {
   let client1: ClientSocket;
   let client2: ClientSocket;
 
-  const SOCKET_PORT = 8001;
-  const SOCKET_URL = `http://localhost:${SOCKET_PORT}/study-groups`;
+  let SOCKET_PORT: number;
+  let SOCKET_URL: string;
 
   beforeAll(async () => {
     // Ensure consistent secret
@@ -37,7 +38,15 @@ describe("WebSocket Real-Time Events (Integration)", () => {
     app.setGlobalPrefix("api/v1");
     app.useWebSocketAdapter(new IoAdapter(app));
     await app.init();
-    await app.listen(SOCKET_PORT);
+    
+    // Use port 0 for dynamic allocation to avoid EADDRINUSE
+    await app.listen(0);
+    
+    // Extract the actual port assigned
+    const httpServer = app.getHttpServer();
+    const address = httpServer.address();
+    SOCKET_PORT = typeof address === 'string' ? parseInt(address) : address.port;
+    SOCKET_URL = `http://localhost:${SOCKET_PORT}/study-groups`;
 
     prisma = app.get<PrismaService>(PrismaService);
     // ConfigService will pick up the process.env we set
@@ -153,10 +162,11 @@ describe("WebSocket Real-Time Events (Integration)", () => {
   });
 
   afterAll(async () => {
-    // Cleanup
+    // Cleanup WebSocket clients
     if (client1?.connected) client1.disconnect();
     if (client2?.connected) client2.disconnect();
 
+    // Cleanup database records
     if (sessionId) {
       await prisma.groupEvent.deleteMany({ where: { sessionId } });
       await prisma.sharedCard.deleteMany({ where: { sessionId } });
@@ -172,6 +182,17 @@ describe("WebSocket Real-Time Events (Integration)", () => {
     await prisma.content.delete({ where: { id: contentId } });
     await prisma.user.delete({ where: { id: user1Id } });
     await prisma.user.delete({ where: { id: user2Id } });
+
+    // CRITICAL: Close RabbitMQ connections before closing the app
+    // CRITICAL: Close RabbitMQ connections before closing the app
+    try {
+      const queueService = app.get(QueueService);
+      if (queueService) {
+        await queueService.onModuleDestroy();
+      }
+    } catch (e) {
+      // QueueService might not be available or already closed
+    }
 
     await app.close();
   });
@@ -319,7 +340,7 @@ describe("WebSocket Real-Time Events (Integration)", () => {
     });
 
     afterEach(() => {
-      if (client1) null;
+      if (client1) client1.disconnect();
       if (client2) client2.disconnect();
     });
 

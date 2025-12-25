@@ -3,6 +3,7 @@ import { INestApplication, ValidationPipe } from "@nestjs/common";
 import * as request from "supertest";
 import { PrismaService } from "../../src/prisma/prisma.service";
 import { AppModule } from "../../src/app.module";
+import { ROUTES, apiUrl } from "../helpers/routes";
 
 describe("Sprint 3: Annotation Audit Trail (Integration)", () => {
   let app: INestApplication;
@@ -16,6 +17,7 @@ describe("Sprint 3: Annotation Audit Trail (Integration)", () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix("api/v1");  // Required for routes to work
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, transform: true }),
     );
@@ -23,12 +25,32 @@ describe("Sprint 3: Annotation Audit Trail (Integration)", () => {
 
     prisma = app.get<PrismaService>(PrismaService);
 
+    // Clean up any existing test users
+    await prisma.user.deleteMany({
+      where: { email: "maria@example.com" },
+    });
+
+    // Register test user (doesn't exist in seeds)
+    await request(app.getHttpServer())
+      .post(apiUrl(ROUTES.AUTH.REGISTER))
+      .send({
+        email: "maria@example.com",
+        password: "demo1234",
+        name: "Maria Silva",
+        role: "STUDENT",
+      })
+      .expect(201);
+
     // Login
     const loginResponse = await request(app.getHttpServer())
-      .post("/api/v1/auth/login")
-      .send({ email: "maria@example.com", password: "demo123" });
+      .post(apiUrl(ROUTES.AUTH.LOGIN))
+      .send({ email: "maria@example.com", password: "demo1234" })
+      .expect(201);
+    
 
-    authToken = loginResponse.body.accessToken;
+
+
+    authToken = loginResponse.body.access_token;  // API returns access_token (underscore)
     testUserId = loginResponse.body.user.id;
   });
 
@@ -71,7 +93,7 @@ describe("Sprint 3: Annotation Audit Trail (Integration)", () => {
 
     afterEach(async () => {
       // Cleanup
-      await prisma.sessionEvent.deleteMany({
+      const events = await prisma.sessionEvent.findMany({
         where: {
           payloadJson: {
             path: ["annotationId"],
@@ -79,6 +101,11 @@ describe("Sprint 3: Annotation Audit Trail (Integration)", () => {
           },
         },
       });
+      if (events.length > 0) {
+        await prisma.sessionEvent.deleteMany({
+          where: { id: { in: events.map((e) => e.id) } },
+        });
+      }
       await prisma.annotation.delete({ where: { id: testAnnotationId } });
       await prisma.content.delete({ where: { id: testContentId } });
     });
@@ -185,7 +212,7 @@ describe("Sprint 3: Annotation Audit Trail (Integration)", () => {
 
     afterEach(async () => {
       // Cleanup
-      await prisma.sessionEvent.deleteMany({
+      const events = await prisma.sessionEvent.findMany({
         where: {
           payloadJson: {
             path: ["annotationId"],
@@ -193,6 +220,11 @@ describe("Sprint 3: Annotation Audit Trail (Integration)", () => {
           },
         },
       });
+      if (events.length > 0) {
+        await prisma.sessionEvent.deleteMany({
+          where: { id: { in: events.map((e) => e.id) } },
+        });
+      }
       await prisma.annotation.deleteMany({
         where: {
           OR: [{ id: testAnnotationId }, { parentId: testAnnotationId }],
@@ -315,7 +347,7 @@ describe("Sprint 3: Annotation Audit Trail (Integration)", () => {
       await prisma.annotation.deleteMany({
         where: { contentId: testContentId },
       });
-      await prisma.content.delete({ where: { id: testContentId } });
+      await prisma.content.deleteMany({ where: { id: testContentId } });
     });
 
     it("should search annotations by query", async () => {

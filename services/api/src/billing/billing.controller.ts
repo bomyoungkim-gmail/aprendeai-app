@@ -61,7 +61,7 @@ export class BillingController {
 
     // Audit log
     await this.adminService.createAuditLog({
-      actorUserId: req.user.userId,
+      actorUserId: req.user.id,
       actorRole: req.user.role,
       action: "PLAN_CREATED",
       resourceType: "PLAN",
@@ -86,7 +86,7 @@ export class BillingController {
 
     // Audit log
     await this.adminService.createAuditLog({
-      actorUserId: req.user.userId,
+      actorUserId: req.user.id,
       actorRole: req.user.role,
       action: "PLAN_UPDATED",
       resourceType: "PLAN",
@@ -107,7 +107,7 @@ export class BillingController {
 
     // Audit log
     await this.adminService.createAuditLog({
-      actorUserId: req.user.userId,
+      actorUserId: req.user.id,
       actorRole: req.user.role,
       action: "PLAN_DELETED",
       resourceType: "PLAN",
@@ -147,13 +147,13 @@ export class BillingController {
       dto.scopeType,
       dto.scopeId,
       dto.planCode,
-      req.user.userId,
+      req.user.id,
       dto.reason,
     );
 
     // Audit log
     await this.adminService.createAuditLog({
-      actorUserId: req.user.userId,
+      actorUserId: req.user.id,
       actorRole: req.user.role,
       action: "SUBSCRIPTION_ASSIGNED",
       resourceType: "SUBSCRIPTION",
@@ -182,7 +182,7 @@ export class BillingController {
 
     // Audit log
     await this.adminService.createAuditLog({
-      actorUserId: req.user.userId,
+      actorUserId: req.user.id,
       actorRole: req.user.role,
       action: "SUBSCRIPTION_CANCELED",
       resourceType: "SUBSCRIPTION",
@@ -225,12 +225,12 @@ export class BillingController {
       dto.scopeId,
       dto.overrides,
       dto.reason,
-      req.user.userId,
+      req.user.id,
     );
 
     // Audit log
     await this.adminService.createAuditLog({
-      actorUserId: req.user.userId,
+      actorUserId: req.user.id,
       actorRole: req.user.role,
       action: "ENTITLEMENT_OVERRIDE_SET",
       resourceType: "ENTITLEMENT_OVERRIDE",
@@ -261,7 +261,7 @@ export class BillingController {
     // Audit log
     if (before) {
       await this.adminService.createAuditLog({
-        actorUserId: req.user.userId,
+        actorUserId: req.user.id,
         actorRole: req.user.role,
         action: "ENTITLEMENT_OVERRIDE_REMOVED",
         resourceType: "ENTITLEMENT_OVERRIDE",

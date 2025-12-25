@@ -15,7 +15,21 @@ module.exports = {
   moduleNameMapper: {
     '^src/(.*)$': '<rootDir>/src/$1',
   },
+  
+  // Setup file to run before each test file
+  setupFilesAfterEnv: ['./jest.setup.js'],
   // Integration test specific settings
   testTimeout: 30000,  // 30 seconds for DB operations
   maxWorkers: 1,  // Run integration tests sequentially
+  
+  // Exclude Playwright e2e tests from Jest
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/',
+    '/test/e2e/',  // Playwright tests should use 'npx playwright test'
+  ],
+  
+  // Force exit after tests complete to prevent hanging on unclosed resources
+  forceExit: true,
+  detectOpenHandles: false,
 };

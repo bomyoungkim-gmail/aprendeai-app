@@ -269,17 +269,17 @@ export class EntitlementsService {
         userId,
         source: computed.source,
         planType: computed.planType,
-        limits: computed.limits,
-        features: computed.features,
+        limits: computed.limits || {},
+        features: computed.features || {},
         expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24), // 24h cache
       },
       update: {
         source: computed.source,
         planType: computed.planType,
-        limits: computed.limits,
-        features: computed.features,
+        limits: computed.limits || {},
+        features: computed.features || {},
         updatedAt: new Date(),
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24), // 24h cache
       },
     });
     

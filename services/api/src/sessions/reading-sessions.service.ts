@@ -674,7 +674,7 @@ export class ReadingSessionsService {
         readingSessionId: sessionId,
         eventType: e.eventType,
         payloadJson: e.payloadJson,
-        occurredAt: new Date(),
+        // occurredAt field does not exist in schema, relying on createdAt default
       })),
     });
 

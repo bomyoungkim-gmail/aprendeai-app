@@ -22,7 +22,7 @@ export class UserBillingController {
   async getMySubscription(@Request() req) {
     return this.subscriptionService.getActiveSubscription(
       "USER",
-      req.user.userId,
+      req.user.id,
     );
   }
 
@@ -32,7 +32,7 @@ export class UserBillingController {
   async getMyEntitlements(@Request() req) {
     return this.entitlementsService.resolve(
       "USER",
-      req.user.userId,
+      req.user.id,
       (process.env.NODE_ENV as any) || "DEVELOPMENT",
     );
   }
@@ -43,7 +43,7 @@ export class UserBillingController {
   async getMyUsage(@Request() req, @Query() dto: UsageRangeDto) {
     return this.usageTrackingService.getUsageStats(
       "USER",
-      req.user.userId,
+      req.user.id,
       dto.range || "today",
     );
   }

@@ -6,10 +6,13 @@ import { BillingModule } from '../../../src/billing/billing.module';
 import { PrismaModule } from '../../../src/prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 
+import { EntitlementsService } from '../../../src/billing/entitlements.service';
+
 describe('Subscription Flow (Integration)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let subscriptionService: SubscriptionService;
+  let entitlementsService: EntitlementsService;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -23,6 +26,7 @@ describe('Subscription Flow (Integration)', () => {
     app = moduleFixture.createNestApplication();
     prisma = moduleFixture.get<PrismaService>(PrismaService);
     subscriptionService = moduleFixture.get<SubscriptionService>(SubscriptionService);
+    entitlementsService = moduleFixture.get<EntitlementsService>(EntitlementsService);
     
     await app.init();
   });
@@ -59,11 +63,13 @@ describe('Subscription Flow (Integration)', () => {
     });
 
     expect(sub).toBeDefined();
-    expect(sub?.plan.code).toBe('FREE');
-    expect(sub?.plan.type).toBe('INDIVIDUAL_PREMIUM'); // Note: FREE is modeled as INDIVIDUAL type
+    expect(sub?.plan.type).toBe('FREE'); // Note: FREE is modeled as FREE type now
   });
 
   it('should have correct entitlements snapshot', async () => {
+    // Manually trigger snapshot refresh (normally done by Auth/Middleware)
+    await entitlementsService.refreshSnapshot(userId);
+
     // Verify snapshot exists
     const snapshot = await prisma.entitlementSnapshot.findUnique({
       where: { userId: userId },

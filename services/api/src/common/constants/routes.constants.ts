@@ -42,6 +42,7 @@ export const ROUTES = {
   // Family routes
   FAMILY: {
     BASE: "families",
+    MY_FAMILY: "families/my-family",
     BY_ID: (id: string) => `families/${id}`,
     INVITE: (id: string) => `families/${id}/invite`,
     ACCEPT: (id: string) => `families/${id}/accept`,
@@ -185,6 +186,13 @@ export const ROUTES = {
     PENDING: (id: string) => `institutions/${id}/pending`,
     PROCESS_APPROVAL: (id: string, approvalId: string) =>
       `institutions/${id}/pending/${approvalId}`,
+  },
+
+  // File routes
+  FILES: {
+    BASE: "files",
+    VIEW: (id: string) => `files/${id}/view`,
+    VIEW_URL: (id: string) => `files/${id}/view-url`,
   },
 
   // WebClip routes (Browser Extension)

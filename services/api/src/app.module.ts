@@ -54,6 +54,9 @@ import { AIContentModule } from "./common/services/ai-content.module";
 import { LLMModule } from "./llm/llm.module";
 import { SessionTrackingModule } from "./analytics/session-tracking.module";
 
+import { ServeStaticModule } from "@nestjs/serve-static";
+import { join } from "path";
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -73,6 +76,10 @@ import { SessionTrackingModule } from "./analytics/session-tracking.module";
           NODE_ENV: process.env.NODE_ENV || "development",
         }),
       ],
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), "uploads"),
+      serveRoot: "/api/uploads",
     }),
     EventEmitterModule.forRoot({ global: true }),
     PrismaModule,
@@ -122,6 +129,7 @@ import { SessionTrackingModule } from "./analytics/session-tracking.module";
     AssessmentModule,
     // Real-time Notifications
     NotificationsModule,
+    SessionTrackingModule,
   ],
   controllers: [AppController],
   providers: [

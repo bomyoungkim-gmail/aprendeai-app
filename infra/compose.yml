@@ -85,14 +85,14 @@ services:
     image: socrates/ai
     container_name: socrates-ai
     ports:
-      - "8000:8000"
+      - "8001:8001"
     volumes:
       - ./services/ai:/app
     environment:
-      PORT: 8000
+      PORT: 8001
     networks:
       - socrates-network
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
 
   # Workers
   news_ingestor:
@@ -143,7 +143,7 @@ services:
     environment:
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-aprendeai}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
-      AI_SERVICE_URL: http://ai:8000
+      AI_SERVICE_URL: http://ai:8001
     depends_on:
       rabbitmq:
         condition: service_healthy

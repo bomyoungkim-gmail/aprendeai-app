@@ -128,7 +128,7 @@ describe("InstitutionsService - getInstitutionForAdmin", () => {
       mockPrisma.institutionMember.findFirst.mockResolvedValue(null);
 
       await expect(service.getInstitutionForAdmin(userId)).rejects.toThrow(
-        "User is not an institution admin",
+        "Insufficient permissions",
       );
 
       expect(mockPrisma.institutionMember.findFirst).toHaveBeenCalledWith({

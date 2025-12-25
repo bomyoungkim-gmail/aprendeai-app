@@ -128,6 +128,20 @@ class LLMFactory:
             max_retries=max_retries,
         )
     
+    def get_fake_llm(self, temperature: Optional[float] = None):
+        """Get Fake LLM for testing"""
+        from langchain_core.language_models import FakeListChatModel
+        
+        # Responses to cycle through
+        responses = [
+            "This is a mocked response from the AI service.",
+            "I understand the concept related to this.",
+            "Here is a question to check your understanding.",
+            "Great job explaining that!"
+        ]
+        
+        return FakeListChatModel(responses=responses)
+
     def get_default_llm(self, temperature: Optional[float] = None):
         """Get default LLM based on availability"""
         # Try providers in order
@@ -137,8 +151,18 @@ class LLMFactory:
             return self.get_azure_llm(temperature=temperature)
         elif self.anthropic_key:
             return self.get_anthropic_llm(temperature=temperature)
+        
+        # Fallback to Fake LLM only if explicitly allowed (e.g. in tests)
+        # NEVER use mock in dev/prod automatically just because keys are missing
+        allow_mock = os.getenv("ALLOW_MOCK_LLM", "false").lower() == "true"
+        is_test_env = os.getenv("ENV", "development").lower() == "test"
+        
+        if allow_mock or (is_test_env and not self.openai_key):
+            print("WARNING: Using Fake LLM (Test Mode/Explicit Allow).")
+            return self.get_fake_llm(temperature=temperature)
+            
         else:
-            raise ValueError("No LLM provider credentials found. Set OPENAI_API_KEY, Azure credentials, or ANTHROPIC_API_KEY")
+            raise ValueError("No LLM provider credentials found and Mock LLM is not allowed in this environment. Set OPENAI_API_KEY, Azure credentials, or ANTHROPIC_API_KEY.")
     
     # ============================================
     # NEW: Phase 2 Enhancements
@@ -158,8 +182,16 @@ class LLMFactory:
                 temperature=temperature if temperature is not None else self.default_temperature,
                 api_key=self.openai_key
             )
-        else:
-            return self.get_default_llm(temperature=temperature)
+        
+        # Fallback logic - Strict check
+        allow_mock = os.getenv("ALLOW_MOCK_LLM", "false").lower() == "true"
+        is_test_env = os.getenv("ENV", "development").lower() == "test"
+
+        if allow_mock or (is_test_env and not self.openai_key):
+             return self.get_fake_llm(temperature=temperature)
+             
+        # Fallback to default (which will raise if no keys)
+        return self.get_default_llm(temperature=temperature)
     
     def get_smart_llm(self, temperature: Optional[float] = None):
         """
@@ -174,9 +206,16 @@ class LLMFactory:
             )
         elif self.anthropic_key:
             return self.get_anthropic_llm(model="claude-3-5-sonnet-20241022", temperature=temperature)
-        else:
-            # Fallback to default
-            return self.get_default_llm(temperature=temperature)
+        
+        # Fallback logic - Strict check
+        allow_mock = os.getenv("ALLOW_MOCK_LLM", "false").lower() == "true"
+        is_test_env = os.getenv("ENV", "development").lower() == "test"
+        
+        if allow_mock or (is_test_env and not self.openai_key):
+             return self.get_fake_llm(temperature=temperature)
+
+        # Fallback to default
+        return self.get_default_llm(temperature=temperature)
 
 # Global instance
 llm_factory = LLMFactory()

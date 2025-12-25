@@ -3,6 +3,7 @@ import { INestApplication, ValidationPipe } from "@nestjs/common";
 import * as request from "supertest";
 import { PrismaService } from "../../src/prisma/prisma.service";
 import { AppModule } from "../../src/app.module";
+import { AiServiceClient } from "../../src/ai-service/ai-service.client";
 
 describe("Sprint 2: Solo Sessions (Integration)", () => {
   let app: INestApplication;
@@ -13,9 +14,36 @@ describe("Sprint 2: Solo Sessions (Integration)", () => {
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(AiServiceClient)
+      .useValue({
+        sendPrompt: jest.fn().mockResolvedValue({
+          threadId: "test-thread-id",
+          readingSessionId: "session-id",
+          nextPrompt: "Mock Prompt",
+          quickReplies: ["Mock Reply"],
+          eventsToWrite: [
+            {
+              eventType: "PROMPT_SENT",
+              payloadJson: {
+                text: "What is the main idea of this article?",
+                role: "USER",
+              },
+            },
+            {
+              eventType: "PROMPT_RECEIVED",
+              payloadJson: {
+                text: "Mock response",
+                role: "ASSISTANT",
+              },
+            },
+          ],
+        }),
+      })
+      .compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api/v1');
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, transform: true }),
     );
@@ -23,13 +51,33 @@ describe("Sprint 2: Solo Sessions (Integration)", () => {
 
     prisma = app.get<PrismaService>(PrismaService);
 
+    // Clean up existing user
+    await prisma.user.deleteMany({ where: { email: "maria@example.com" } });
+
+    // Register test user (creates valid hash and meets password length reqs)
+    await request(app.getHttpServer())
+      .post("/api/v1/auth/register")
+      .send({
+        email: "maria@example.com",
+        password: "demo1234",
+        name: "Maria Test",
+        role: "STUDENT",
+        schoolingLevel: "MEDIO",
+      })
+      .expect(201);
+
     // Login
     const loginResponse = await request(app.getHttpServer())
       .post("/api/v1/auth/login")
-      .send({ email: "maria@example.com", password: "demo123" });
+      .send({ email: "maria@example.com", password: "demo1234" })
+      .expect(201);
 
-    authToken = loginResponse.body.accessToken;
-    testUserId = loginResponse.body.user.id;
+    authToken = loginResponse.body.access_token;
+    testUserId = loginResponse.body.user?.id;
+    
+    if (!authToken || !testUserId) {
+      throw new Error(`Login failed: token=${!!authToken}, userId=${!!testUserId}`);
+    }
   });
 
   afterAll(async () => {
@@ -70,11 +118,15 @@ describe("Sprint 2: Solo Sessions (Integration)", () => {
 
     afterEach(async () => {
       // Cleanup
-      await prisma.sessionEvent.deleteMany({
-        where: { readingSessionId: testSessionId },
-      });
-      await prisma.readingSession.delete({ where: { id: testSessionId } });
-      await prisma.content.delete({ where: { id: testContentId } });
+      if (testSessionId) {
+        await prisma.sessionEvent.deleteMany({
+          where: { readingSessionId: testSessionId },
+        });
+        await prisma.readingSession.delete({ where: { id: testSessionId } });
+      }
+      if (testContentId) {
+        await prisma.content.delete({ where: { id: testContentId } });
+      }
     });
 
     it("should return session with content, messages, and quickReplies", async () => {
@@ -275,6 +327,15 @@ describe("Sprint 2: Solo Sessions (Integration)", () => {
         .send({
           text: "What is the main idea of this article?",
           actorRole: "LEARNER",
+          threadId: "test-thread-id",
+          readingSessionId: testSessionId,
+          clientTs: new Date().toISOString(),
+          metadata: {
+            uiMode: "DURING",
+            contentId: testContentId,
+            assetLayer: "L1", // Valid enum value
+            readingIntent: "analytical", // Valid enum value
+          },
         })
         .expect(201);
 

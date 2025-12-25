@@ -57,8 +57,12 @@ export class StorageService {
   }
 
   async streamFile(fileId: string, res: Response) {
+    console.log(`[StorageService] Streaming file: ${fileId}`);
     const file = await this.prisma.file.findUnique({ where: { id: fileId } });
-    if (!file) throw new NotFoundException("File not found");
+    if (!file) {
+      console.error(`[StorageService] File record not found in DB: ${fileId}`);
+      throw new NotFoundException("File not found");
+    }
 
     // Security: prevent path traversal
     const safeKey = path
@@ -67,9 +71,13 @@ export class StorageService {
 
     const uploadPath = this.config.get("STORAGE_LOCAL_PATH", "./uploads");
     const filePath = path.join(uploadPath, safeKey);
+    
+    console.log(`[StorageService] Resolved path: ${filePath}`);
+    console.log(`[StorageService] Absolute path: ${path.resolve(filePath)}`);
 
     // Check if file exists
     if (!fs.existsSync(filePath)) {
+      console.error(`[StorageService] File NOT found on disk: ${filePath}`);
       throw new NotFoundException("File not found on disk");
     }
 

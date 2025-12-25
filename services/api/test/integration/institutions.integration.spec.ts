@@ -77,35 +77,59 @@ describe("Institutional Registration (Integration)", () => {
   });
 
   describe("Setup: Create Admin User and Institution", () => {
-    it("should register admin user", async () => {
+    /**
+     * IMPORTANT: This test uses TWO separate users with different roles:
+     * 
+     * 1. GLOBAL ADMIN (global-admin@test.com, role: ADMIN)
+     *    - Can create institutions
+     *    - Cannot manage individual institutions
+     * 
+     * 2. INSTITUTION ADMIN (admin@inst-test.com, role: INSTITUTION_ADMIN)
+     *    - Cannot create institutions
+     *    - Can manage their institution (invites, domains, etc.)
+     *    - Must be added as institutionMember
+     * 
+     * Email/Name/Role MUST be coherent:
+     * - Email domain suggests scope (global vs institution)
+     * - Name reflects the user's role
+     * - Role enum matches the actual permissions needed
+     */
+
+    it("should create institution using global admin", async () => {
+      // Clean up existing users + their owned institutions/memberships
+      await prisma.institution.deleteMany({
+        where: { name: "Test Institution" },
+      });
+      await prisma.user.deleteMany({
+        where: { email: { in: ["global-admin@test.com", "admin@inst-test.com", "teacher@inst-test.com", "student@inst-test.com"] } },
+      });
+
+      // Register GLOBAL ADMIN
+      // NOTE: email/name/role are coherent - this is a global system admin
       await request(app.getHttpServer())
         .post(apiUrl(ROUTES.AUTH.REGISTER))
         .send({
-          email: "admin@inst-test.com",
+          email: "global-admin@test.com", // Generic test domain (not institution-specific)
           password: "Test123!@#",
-          name: "Institution Admin",
-          role: "ADMIN",
+          name: "Global Admin", // Reflects global scope
+          role: "ADMIN", // Global admin role
         })
         .expect(201);
 
-      const loginResponse = await request(app.getHttpServer())
+      const globalAdminLogin = await request(app.getHttpServer())
         .post(apiUrl(ROUTES.AUTH.LOGIN))
         .send({
-          email: "admin@inst-test.com",
+          email: "global-admin@test.com",
           password: "Test123!@#",
         })
         .expect(201);
 
-      adminToken = loginResponse.body.access_token;
-      adminUserId = loginResponse.body.user.id;
+      const globalAdminToken = globalAdminLogin.body.access_token;
 
-      expect(adminToken).toBeDefined();
-    });
-
-    it("should create institution", async () => {
+      // Create institution as GLOBAL ADMIN (only ADMIN role can create institutions)
       const response = await request(app.getHttpServer())
         .post(apiUrl(ROUTES.INSTITUTIONS.CREATE))
-        .set("Authorization", `Bearer ${adminToken}`)
+        .set("Authorization", `Bearer ${globalAdminToken}`)
         .send({
           name: "Test Institution",
           type: "SCHOOL",
@@ -117,6 +141,45 @@ describe("Institutional Registration (Integration)", () => {
 
       institutionId = response.body.id;
       expect(response.body.name).toBe("Test Institution");
+    });
+
+    it("should register institution admin and add as member", async () => {
+      // Register INSTITUTION ADMIN
+      // NOTE: email/name/role are coherent - this manages the specific institution
+      await request(app.getHttpServer())
+        .post(apiUrl(ROUTES.AUTH.REGISTER))
+        .send({
+          email: "admin@inst-test.com", // Institution-specific email domain
+          password: "Test123!@#",
+          name: "Institution Admin", // Reflects institution scope
+          role: "INSTITUTION_ADMIN", // Institution admin role
+        })
+        .expect(201);
+
+      const instAdminLogin = await request(app.getHttpServer())
+        .post(apiUrl(ROUTES.AUTH.LOGIN))
+        .send({
+          email: "admin@inst-test.com",
+          password: "Test123!@#",
+        })
+        .expect(201);
+
+      adminToken = instAdminLogin.body.access_token;
+      adminUserId = instAdminLogin.body.user.id;
+
+      // CRITICAL: Add INSTITUTION_ADMIN as member of the institution
+      // Without this, they won't have permission to manage invites/domains
+      await prisma.institutionMember.create({
+        data: {
+          userId: adminUserId,
+          institutionId,
+          role: "INSTITUTION_ADMIN",
+          status: "ACTIVE",
+        },
+      });
+
+      expect(adminToken).toBeDefined();
+      expect(adminUserId).toBeDefined();
     });
   });
 
