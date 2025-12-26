@@ -1,6 +1,6 @@
 'use client';
 
-import { useReview } from '@/hooks/useReview';
+import { useReview } from '@/hooks/cornell/use-review';
 import { VocabCard } from './VocabCard';
 
 export function ReviewMode() {

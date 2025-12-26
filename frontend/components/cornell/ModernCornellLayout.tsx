@@ -6,7 +6,14 @@ import type { UnifiedStreamItem } from '@/lib/types/unified-stream';
 import { SaveStatusIndicator } from './SaveStatusIndicator';
 import { StreamCard } from './StreamCard';
 import { SearchBar, type FilterType } from './SearchBar';
-import { useStreamFilter } from '@/hooks/useStreamFilter';
+import { useStreamFilter } from '@/hooks/cornell/use-stream-filter';
+import { CORNELL_LABELS } from '@/lib/cornell/labels';
+import { ActionToolbar } from './ActionToolbar';
+import { SuggestionsPanel } from './SuggestionsPanel';
+import { TextSelectionMenu, type SelectionAction } from './TextSelectionMenu'; 
+import { EducationalPDFViewer } from './EducationalPDFViewer'; // NEW
+import { useContentContext } from '@/hooks/cornell/use-content-context';
+import { useSuggestions } from '@/hooks/cornell/use-suggestions';
 
 interface ModernCornellLayoutProps {
   // Header
@@ -15,6 +22,7 @@ interface ModernCornellLayoutProps {
   onModeToggle: () => void;
   saveStatus: SaveStatus;
   lastSaved?: Date | null;
+  contentId: string; // NEW - for fetching context
 
   // Content
   viewer: React.ReactNode;
@@ -34,6 +42,9 @@ interface ModernCornellLayoutProps {
   // Summary
   summary: string;
   onSummaryChange: (summary: string) => void;
+
+  // Creation (NEW)
+  onCreateStreamItem?: (type: 'annotation' | 'note' | 'question' | 'star', content: string, context?: any) => void;
 }
 
 type SidebarTab = 'stream' | 'cues';
@@ -44,6 +55,7 @@ export function ModernCornellLayout({
   onModeToggle,
   saveStatus,
   lastSaved,
+  contentId,
   viewer,
   streamItems,
   onStreamItemClick,
@@ -55,10 +67,18 @@ export function ModernCornellLayout({
   onCueClick,
   summary,
   onSummaryChange,
+  onCreateStreamItem, // NEW
 }: ModernCornellLayoutProps) {
-  // Mobile-first: sidebar collapsed by default on mobile
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<SidebarTab>('stream');
+  const [activeAction, setActiveAction] = useState<'highlight' | 'note' | 'question' | 'ai' | null>(null);
+  
+  // Selection State
+  const [selectionInfo, setSelectionInfo] = useState<{ text: string; rect: DOMRect | null } | null>(null);
+  const [chatInitialInput, setChatInitialInput] = useState(''); // NEW
+  
+  // Fetch content context and suggestions
+  const { suggestions, acceptSuggestion, dismissSuggestion, hasUnseenSuggestions } = useSuggestions(contentId);
   
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -107,7 +127,9 @@ export function ModernCornellLayout({
       <div className="flex-1 flex overflow-hidden relative">
         {/* PDF Viewer (70% desktop, 100% mobile) */}
         <div className="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-950">
-          {viewer}
+          <EducationalPDFViewer theme="sepia">
+            {viewer}
+          </EducationalPDFViewer>
         </div>
 
         {/* Sidebar (30% desktop, overlay mobile) */}
@@ -133,7 +155,7 @@ export function ModernCornellLayout({
                 }
               `}
             >
-              Anotações
+              {CORNELL_LABELS.HIGHLIGHTS_NOTES}
             </button>
             <button
               onClick={() => setActiveTab('cues')}
@@ -145,7 +167,7 @@ export function ModernCornellLayout({
                 }
               `}
             >
-              Tópicos
+              {CORNELL_LABELS.IMPORTANT_QUESTIONS}
             </button>
           </div>
 
@@ -224,7 +246,7 @@ export function ModernCornellLayout({
       <div className="h-0 sm:h-32 lg:h-40 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0 overflow-hidden transition-all">
         <div className="h-full p-4">
           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Resumo
+            {CORNELL_LABELS.SYNTHESIS}
           </label>
           <textarea
             value={summary}

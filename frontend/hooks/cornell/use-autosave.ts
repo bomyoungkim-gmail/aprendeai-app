@@ -1,6 +1,9 @@
 import { useCallback, useState, useRef, useEffect } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
-import type { SaveStatus } from '../lib/types/cornell';
+import type { SaveStatus as SaveStatusType } from '@/lib/types/cornell';
+
+// Re-export SaveStatus for barrel file
+export type SaveStatus = SaveStatusType;
 
 interface AutosaveOptions<T> {
   onSave: (data: T) => Promise<void>;
@@ -22,7 +25,7 @@ export function useCornellAutosave<T>({
   onSuccess,
   onError,
 }: AutosaveOptions<T>): AutosaveReturn<T> {
-  const [status, setStatus] = useState<SaveStatus>('saved');
+  const [status, setStatus] = useState<SaveStatusType>('saved');
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const pendingDataRef = useRef<T | null>(null);
   const isSavingRef = useRef(false);
@@ -86,7 +89,7 @@ export function useAutosave<T>(
   saveFn: (data: T) => Promise<void>,
   delay = 1000
 ) {
-  const [status, setStatus] = useState<SaveStatus>('saved');
+  const [status, setStatus] = useState<SaveStatusType>('saved');
 
   const save = useDebouncedCallback(
     async (data: T) => {

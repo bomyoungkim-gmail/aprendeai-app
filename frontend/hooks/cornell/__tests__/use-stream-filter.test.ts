@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { useStreamFilter } from '../useStreamFilter';
+import { useStreamFilter } from '../use-stream-filter';
 import type { UnifiedStreamItem } from '@/lib/types/unified-stream';
 
 describe('useStreamFilter', () => {

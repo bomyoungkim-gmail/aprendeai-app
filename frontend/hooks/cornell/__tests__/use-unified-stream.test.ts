@@ -1,11 +1,11 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useUnifiedStream } from '../useUnifiedStream';
-import { useHighlights, useCornellNotes } from '../useCornellData';
+import { useUnifiedStream } from '../use-unified-stream';
+import { useHighlights, useCornellNotes } from '../use-data';
 import React from 'react';
 
 // Mock the Cornell data hooks
-jest.mock('../useCornellData', () => ({
+jest.mock('../use-data', () => ({
   useHighlights: jest.fn(),
   useCornellNotes: jest.fn(),
 }));
