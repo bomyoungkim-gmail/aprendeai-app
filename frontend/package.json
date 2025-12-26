@@ -16,7 +16,10 @@
     "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
     "analyze:hooks": "ts-node scripts/analyze-hooks.ts",
     "migrate:hooks": "ts-node scripts/migrate-hooks.ts",
-    "migrate:hooks:execute": "ts-node scripts/migrate-hooks.ts --execute"
+    "migrate:hooks:execute": "ts-node scripts/migrate-hooks.ts --execute",
+    "validate:hooks": "node scripts/validate-hooks.js",
+    "visualize:hooks": "ts-node scripts/visualize-hooks.ts",
+    "docs:hooks": "ts-node scripts/generate-hooks-docs.ts"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
