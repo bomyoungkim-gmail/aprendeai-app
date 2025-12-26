@@ -1,6 +1,6 @@
 'use client';
 
-import { UserSettings, useUserSettings, useUpdateSettings } from '@/hooks/use-user-profile';
+import { UserSettings, useUserSettings, useUpdateSettings } from '@/hooks/profile/use-user-profile';
 import { Toast, useToast } from '@/components/ui/Toast';
 
 export default function NotificationsPage() {

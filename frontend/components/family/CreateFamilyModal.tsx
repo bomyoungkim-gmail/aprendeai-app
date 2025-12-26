@@ -2,7 +2,7 @@
 
 import { useState, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { useCreateFamily } from '@/hooks/use-family';
+import { useCreateFamily } from '@/hooks/social/use-family';
 import { useRouter } from 'next/navigation';
 import { X, Loader2 } from 'lucide-react';
 import { ROUTES } from '@/lib/config/routes';

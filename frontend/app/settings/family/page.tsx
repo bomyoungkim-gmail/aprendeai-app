@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useFamilies, useRemoveMember, useAcceptInvite } from '@/hooks/use-family';
+import { useFamilies, useRemoveMember, useAcceptInvite } from '@/hooks/social/use-family';
 import { CreateFamilyModal } from '@/components/family/CreateFamilyModal';
 import { InviteMemberModal } from '@/components/family/InviteMemberModal';
 import { Plus, Users, UserPlus, Trash2, Shield, User as UserIcon, Check, X } from 'lucide-react';

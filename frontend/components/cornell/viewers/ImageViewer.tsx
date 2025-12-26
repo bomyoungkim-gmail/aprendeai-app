@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Stage, Layer, Image as KonvaImage, Rect } from 'react-konva';
 import useImage from 'use-image';
 import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { logger } from '@/lib/utils/logger';
 import type { Content, Highlight, ViewMode } from '@/lib/types/cornell';
 
 interface ImageViewerProps {
@@ -119,7 +120,7 @@ export function ImageViewer({ content, mode, highlights = [], onCreateHighlight 
           tagsJson: [],
         });
       } catch (error) {
-        console.error('Failed to create highlight:', error);
+        logger.error('Failed to create highlight', error, { contentId: content.id });
         // TODO: Show error toast
       }
     }

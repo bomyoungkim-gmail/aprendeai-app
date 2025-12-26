@@ -2,7 +2,7 @@
 
 import { MessageSquare, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { useAnnotations, useDeleteAnnotation, Annotation } from '@/hooks/use-annotations';
+import { useAnnotations, useDeleteAnnotation, Annotation } from '@/hooks/content/use-annotations';
 import { formatDistanceToNow } from 'date-fns';
 
 interface AnnotationsSidebarProps {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useUserProfile, useUserStats, useUserActivity, useUploadAvatar } from '@/hooks/use-user-profile';
+import { useUserProfile, useUserStats, useUserActivity, useUploadAvatar } from '@/hooks/profile/use-user-profile';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ProfileStats } from '@/components/profile/ProfileStats';
 import { RecentActivity } from '@/components/profile/RecentActivity';

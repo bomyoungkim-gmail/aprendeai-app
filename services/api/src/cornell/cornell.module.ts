@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { CacheModule } from "@nestjs/cache-manager";
 import { PrismaModule } from "../prisma/prisma.module";
-import { CornellController } from "./cornell.controller";
+import { CornellController, HighlightsController } from "./cornell.controller";
 import { FilesController } from '../common/files.controller';
 import { CornellService } from "./cornell.service";
 import { ContentService } from "./services/content.service";
@@ -16,6 +16,9 @@ import { TopicMasteryModule } from "../analytics/topic-mastery.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { cacheConfig } from "../config/cache.config";
 
+import { ContentPedagogicalController } from "./controllers/content-pedagogical.controller";
+import { ContentPedagogicalService } from "./services/content-pedagogical.service";
+
 @Module({
   imports: [
     PrismaModule,
@@ -28,8 +31,8 @@ import { cacheConfig } from "../config/cache.config";
     TopicMasteryModule,
     NotificationsModule,
   ],
-  controllers: [CornellController, FilesController],
-  providers: [CornellService, ContentService, StorageService, ContentAccessService],
+  controllers: [CornellController, HighlightsController, FilesController, ContentPedagogicalController],
+  providers: [CornellService, ContentService, StorageService, ContentAccessService, ContentPedagogicalService],
   exports: [CornellService, ContentService, StorageService, ContentAccessService],
 })
 export class CornellModule {}

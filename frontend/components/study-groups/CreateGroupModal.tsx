@@ -2,7 +2,7 @@
 
 import { useState, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { useCreateGroup } from '@/hooks/use-groups';
+import { useCreateGroup } from '@/hooks/social/use-groups';
 import { X } from 'lucide-react';
 
 interface CreateGroupModalProps {

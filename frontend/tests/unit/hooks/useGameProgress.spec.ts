@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { useGameProgress, useGameProgressById } from '@/hooks/useGameProgress';
+import { useGameProgress, useGameProgressById } from '@/hooks/games';
 
 global.fetch = jest.fn();
 

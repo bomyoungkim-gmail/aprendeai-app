@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useHighlights, useCornellNotes } from './useCornellData';
+import { useHighlights, useCornellNotes } from './use-data';
 import type { UnifiedStreamItem } from '@/lib/types/unified-stream';
 import { highlightToStreamItem, noteToStreamItem, sortStreamItems } from '@/lib/types/unified-stream';
 

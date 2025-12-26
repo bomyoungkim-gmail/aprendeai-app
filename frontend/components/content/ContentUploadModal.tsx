@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDropzone } from 'react-dropzone';
 import { Upload, X, FileText, CheckCircle, AlertCircle } from 'lucide-react';
-import { useUploadContent } from '@/hooks/use-content-upload';
+import { useUploadContent } from '@/hooks/content/use-upload';
 
 interface ContentUploadModalProps {
   isOpen: boolean;

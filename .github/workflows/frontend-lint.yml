@@ -1,0 +1,80 @@
+name: Frontend Lint & TypeCheck
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/**'
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  lint:
+    name: ESLint & TypeScript
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./frontend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: false
+      
+      - name: TypeScript Type Check
+        run: npx tsc --noEmit
+        continue-on-error: false
+      
+      - name: Check for barrel imports
+        run: |
+          if grep -r "from '@/hooks'" app/ components/ --include="*.ts" --include="*.tsx" | grep -v "from '@/hooks/"; then
+            echo "❌ Found imports from deprecated @/hooks barrel"
+            echo "Please use direct imports like: @/hooks/cornell/use-autosave"
+            exit 1
+          else
+            echo "✅ No deprecated barrel imports found"
+          fi
+        shell: bash
+
+  build:
+    name: Production Build Test
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    defaults:
+      run:
+        working-directory: ./frontend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build production bundle
+        run: npm run build
+        env:
+          NODE_ENV: production

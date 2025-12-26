@@ -49,10 +49,56 @@ export class AuthService {
       await this.subscriptionService.createFreeSubscription(user.id);
     }
 
+    // Generate access token (15 min) and refresh token (7 days)
+    const access_token = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const refresh_token = this.jwtService.sign(
+      { sub: user.id, type: 'refresh' },
+      { expiresIn: '7d' }
+    );
+
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token,
+      refresh_token,
       user: user,
     };
+  }
+
+  async refreshAccessToken(refreshToken: string) {
+    try {
+      // Verify refresh token
+      const payload = this.jwtService.verify(refreshToken);
+      
+      // Ensure it's a refresh token
+      if (payload.type !== 'refresh') {
+        throw new UnauthorizedException('Invalid token type');
+      }
+
+      // Fetch user to ensure they still exist
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+        },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      // Generate new access token
+      const newPayload = { email: user.email, sub: user.id, role: user.role };
+      const access_token = this.jwtService.sign(newPayload, { expiresIn: '15m' });
+
+      return {
+        access_token,
+        user,
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
   }
 
   async register(registerDto: RegisterDto, inviteToken?: string) {

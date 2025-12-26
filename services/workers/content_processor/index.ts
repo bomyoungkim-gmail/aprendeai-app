@@ -2,15 +2,14 @@
 const amqp = require('amqplib');
 import dotenv from 'dotenv';
 import axios from 'axios';
+import { AI_SERVICE_URL, API_URL, AI_ENDPOINTS, API_ENDPOINTS, WORKER_CONFIG } from './config';
 
 dotenv.config();
 
-const QUEUE = 'content.process';
-const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://ai:8001';
-const API_URL = process.env.DATABASE_URL ? process.env.DATABASE_URL.replace('postgres://', 'http://api:4000/api/v1') : 'http://localhost:4000/api/v1';
+const QUEUE = WORKER_CONFIG.queue.name;
 
 async function start() {
-  const rabbitUrl = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
+  const rabbitUrl = WORKER_CONFIG.rabbitUrl;
   
   let connection;
   try {
@@ -36,7 +35,7 @@ async function start() {
 
         if (task.action === 'SIMPLIFY') {
             console.log("Calling AI Simplify...");
-            const aiRes = await axios.post(`${AI_SERVICE_URL}/simplify`, {
+            const aiRes = await axios.post(`${AI_SERVICE_URL}${AI_ENDPOINTS.simplify}`, {
                 text: task.text,
                 source_lang: task.sourceLang || 'PT_BR',
                 target_lang: task.targetLang || 'PT_BR',
@@ -46,7 +45,7 @@ async function start() {
             const result = aiRes.data; // { simplified_text, summary, glossary }
             
             // Save as ContentVersion
-            await axios.post(`${API_URL}/content/${task.contentId}/versions`, {
+            await axios.post(`${API_URL}${API_ENDPOINTS.contentVersions(task.contentId)}`, {
                 targetLanguage: task.targetLang || 'PT_BR',
                 schoolingLevelTarget: task.level || '5_EF',
                 simplifiedText: result.simplified_text,
@@ -57,7 +56,7 @@ async function start() {
 
         } else if (task.action === 'ASSESSMENT') {
             console.log("Calling AI Assessment...");
-            const aiRes = await axios.post(`${AI_SERVICE_URL}/generate-assessment`, {
+            const aiRes = await axios.post(`${AI_SERVICE_URL}${AI_ENDPOINTS.assessment}`, {
                 text: task.text,
                 schooling_level: task.level || '1_EM',
                 num_questions: 5
@@ -74,12 +73,33 @@ async function start() {
             }));
 
             // Save Assessment
-            await axios.post(`${API_URL}/assessment`, {
+            await axios.post(`${API_URL}${API_ENDPOINTS.assessment}`, {
                 contentId: task.contentId,
                 schoolingLevelTarget: task.level || '1_EM',
                 questions: questionsDto
             });
             console.log("Saved assessment.");
+
+        } else if (task.action === 'PEDAGOGICAL_ENRICHMENT') {
+            console.log("Calling AI Pedagogical Enrichment...");
+            const aiRes = await axios.post(`${AI_SERVICE_URL}${AI_ENDPOINTS.pedagogicalEnrich}`, {
+                text: task.text,
+                contentId: task.contentId,
+                level: task.level || '5_EF'
+            });
+
+            const result = aiRes.data; // { vocabularyTriage, socraticQuestions, ... }
+
+            console.log("Saving pedagogical data...");
+            await axios.post(`${API_URL}${API_ENDPOINTS.pedagogicalData(task.contentId)}`, {
+               vocabularyTriage: result.vocabularyTriage,
+               socraticQuestions: result.socraticQuestions,
+               quizQuestions: result.quizQuestions,
+               tabooCards: result.gameConfigs?.taboo,
+               bossFightConfig: result.gameConfigs?.bossFight,
+               processingVersion: result.processingVersion
+            });
+            console.log("Saved pedagogical data.");
         }
 
       } catch (err) {

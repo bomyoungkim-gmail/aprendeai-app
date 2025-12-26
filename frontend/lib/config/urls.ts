@@ -76,5 +76,6 @@ export const URLS = {
  * Export for backward compatibility
  */
 export const API_BASE_URL = URLS.api.v1;
+export const urls = URLS;
 
 export default URLS;

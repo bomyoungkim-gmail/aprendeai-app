@@ -2,7 +2,7 @@
 
 import { useState, Fragment } from 'react';
 import { Tab } from '@headlessui/react';
-import { useGroup } from '@/hooks/use-groups';
+import { useGroup } from '@/hooks/social/use-groups';
 import AuthGuard from '@/components/auth-guard';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';

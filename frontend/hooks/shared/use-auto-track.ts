@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useTrackActivity } from '@/hooks/use-activity';
+import { useTrackActivity } from '@/hooks/profile/use-activity';
 
 /**
  * Auto-track reading activity
@@ -27,7 +27,8 @@ export function useAutoTrackReading(contentId: string) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [contentId, trackActivity]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentId]); // trackActivity (mutate) is ref-stable, omit from deps
 }
 
 /**
@@ -56,7 +57,8 @@ export function useAutoTrackVideo(contentId: string, isPlaying: boolean) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [contentId, isPlaying, trackActivity]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentId, isPlaying]); // trackActivity (mutate) is ref-stable, omit from deps
 }
 
 /**
@@ -98,5 +100,6 @@ export function useAutoTrackSession(sessionId: string | null, isActive: boolean)
         clearInterval(intervalRef.current);
       }
     };
-  }, [sessionId, isActive, trackActivity]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, isActive]); // trackActivity (mutate) is ref-stable, omit from deps
 }

@@ -5,14 +5,15 @@ import { useEffect, useState } from 'react';
 // Note: In production, install recharts: npm install recharts
 // import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
+import { URLS } from '@/lib/config/urls';
+
 export default function AnalyticsDashboard() {
   const [learningCurve, setLearningCurve] = useState<any>(null);
   const [skillHeatmap, setSkillHeatmap] = useState<any>(null);
   const [predictive, setPredictive] = useState<any>(null);
 
   const userId = "student_123";  // Get from auth
-import { urls } from '@/lib/config/urls';
-  const API_URL = urls.ai.base + "/api";
+  const API_URL = URLS.ai.base + "/api";
 
   useEffect(() => {
     Promise.all([

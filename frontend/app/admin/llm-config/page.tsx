@@ -24,7 +24,7 @@ interface EditingConfig {
 }
 
 export default function LLMConfigPage() {
-  const { success, error: toastError } = useToast();
+  const { toast, hide, success, error: toastError } = useToast();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<EditingConfig | null>(null);
 
@@ -127,7 +127,13 @@ export default function LLMConfigPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <Toast />
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={hide}
+        />
+      )}
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">

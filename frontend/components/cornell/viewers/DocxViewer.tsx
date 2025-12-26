@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import mammoth from 'mammoth';
 import { FileText, AlertCircle, Loader2 } from 'lucide-react';
+import { logger } from '@/lib/utils/logger';
 import type { Content, ViewMode } from '@/lib/types/cornell';
 
 interface DocxViewerProps {
@@ -61,10 +62,10 @@ export function DocxViewer({ content, mode }: DocxViewerProps) {
       setHtml(result.value);
 
       if (result.messages.length > 0) {
-        console.warn('Mammoth conversion warnings:', result.messages);
+        logger.warn('Mammoth conversion warnings', { warnings: result.messages });
       }
     } catch (err) {
-      console.error('DOCX conversion error:', err);
+      logger.error('DOCX conversion failed', err, { contentId: content.id });
       setError(err instanceof Error ? err.message : 'Failed to load DOCX file');
     } finally {
       setLoading(false);

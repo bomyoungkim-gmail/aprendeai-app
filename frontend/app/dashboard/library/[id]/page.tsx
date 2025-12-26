@@ -6,7 +6,7 @@ import { Loader2, ArrowLeft, Wand2, GraduationCap, Layers, CheckCircle, ChevronL
 import Link from 'next/link';
 import { ROUTES } from '@/lib/config/routes';
 import { Toast, useToast } from '@/components/ui/Toast';
-import { useSocket } from '@/hooks/use-socket';
+import { useSocket } from '@/hooks/shared';
 import { API_ENDPOINTS } from '@/lib/config/api';
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';

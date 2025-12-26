@@ -10,7 +10,7 @@ import { ROUTES } from '@/lib/config/routes';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, Loader2 } from 'lucide-react';
 import OAuthButton from '@/components/auth/OAuthButton';
-import { useOAuth } from '@/hooks/use-oauth';
+import { useOAuth } from '@/hooks/auth/use-oauth';
 import { loginSchema, LoginFormData } from '@/lib/validation/auth-schemas';
 import { AuthInput } from '@/components/auth/AuthInput';
 
@@ -34,7 +34,7 @@ export default function LoginPage() {
     setError('');
     try {
       const res = await api.post(API_ENDPOINTS.AUTH.LOGIN, data);
-      setAuth(res.data.access_token, res.data.user);
+      setAuth(res.data.access_token, res.data.refresh_token, res.data.user);
       
       // Role-based redirect
       const userRole = res.data.user.role;

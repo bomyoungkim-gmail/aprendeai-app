@@ -14,6 +14,33 @@ interface PlatformStats {
   newUsersThisMonth: number;
 }
 
+interface StatsCardProps {
+  name: string;
+  value: string;
+  icon: string;
+  color: string;
+}
+
+function StatsCard({ name, value, icon, color }: StatsCardProps) {
+  return (
+    <div className="bg-white overflow-hidden shadow rounded-lg">
+      <div className="p-5">
+        <div className="flex items-center">
+          <div className={`flex-shrink-0 ${color} rounded-md p-3`}>
+            <span className="text-2xl">{icon}</span>
+          </div>
+          <div className="ml-5 w-0 flex-1">
+            <dl>
+              <dt className="text-sm font-medium text-gray-500 truncate">{name}</dt>
+              <dd className="text-lg font-medium text-gray-900">{value}</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,12 +111,22 @@ export default function AdminDashboard() {
     },
     {
       name: 'Content Items',
-    { name: 'Total Users', value: stats.totalUsers.toLocaleString(), icon: '👥', color: 'bg-blue-500' },
-    { name: 'Institutions', value: stats.totalInstitutions.toLocaleString(), icon: '🏛️', color: 'bg-purple-500' },
-    { name: 'Families', value: stats.totalFamilies.toLocaleString(), icon: '👨‍👩‍👧‍👦', color: 'bg-green-500' },
-    { name: 'Content Items', value: stats.totalContent.toLocaleString(), icon: '📚', color: 'bg-yellow-500' },
-    { name: 'Active This Week', value: stats.activeUsersThisWeek.toLocaleString(), icon: '⚡', color: 'bg-orange-500' },
-    { name: 'New This Month', value: stats.newUsersThisMonth.toLocaleString(), icon: '🆕', color: 'bg-pink-500' },
+      value: stats.totalContent.toLocaleString(),
+      icon: '📚',
+      color: 'bg-yellow-500',
+    },
+    {
+      name: 'Active This Week',
+      value: stats.activeUsersThisWeek.toLocaleString(),
+      icon: '⚡',
+      color: 'bg-orange-500',
+    },
+    {
+      name: 'New This Month',
+      value: stats.newUsersThisMonth.toLocaleString(),
+      icon: '🆕',
+      color: 'bg-pink-500',
+    },
   ];
 
   return (

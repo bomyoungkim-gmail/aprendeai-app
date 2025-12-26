@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { GroupRound } from '@/lib/types/study-groups';
 import { useWebSocket } from '@/contexts/WebSocketContext';
-import { useChatHistory, useSendChatMessage } from '@/hooks/use-chat';
+import { useChatHistory, useSendChatMessage } from '@/hooks/social/use-chat';
 import { useAuthStore } from '@/stores/auth-store';
 import { ChatMessage } from './ChatMessage';
 import { Send, MessageSquare } from 'lucide-react';

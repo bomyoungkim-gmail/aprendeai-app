@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { UserSettings, useUserSettings, useUpdateSettings } from '@/hooks/use-user-profile';
-import { useChangePassword, useDeleteAccount } from '@/hooks/use-user-profile';
+import { UserSettings, useUserSettings, useUpdateSettings , useChangePassword, useDeleteAccount } from '@/hooks/profile/use-user-profile';
+
 import { Toast, useToast } from '@/components/ui/Toast';
 import { Download, Lock, AlertTriangle, Shield } from 'lucide-react';
 import { SettingsPageHeader } from '@/components/ui/SettingsPageHeader';

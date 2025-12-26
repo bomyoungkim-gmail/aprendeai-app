@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
+import { logger } from '@/lib/utils/logger';
 import api from '@/lib/api';
 
 interface IAAssistPanelProps {
@@ -33,7 +34,7 @@ export function IAAssistPanel({ contentId, onAssetGenerated }: IAAssistPanelProp
       }
     } catch (error) {
       setStatus('❌ Erro ao gerar conteúdo');
-      console.error('Asset generation error:', error);
+      logger.error('Asset generation error', error);
     } finally {
       setGenerating(false);
     }

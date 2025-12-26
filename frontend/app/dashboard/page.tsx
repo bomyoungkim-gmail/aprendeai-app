@@ -13,7 +13,7 @@ import { ActivityHeatmap } from '@/components/dashboard/ActivityHeatmap';
 import { ActivityStats } from '@/components/dashboard/ActivityStats';
 import { HourlyPerformanceChart } from '@/components/analytics/HourlyPerformanceChart';
 import { QualityOverviewCard } from '@/components/analytics/QualityOverviewCard';
-import { useActivityHeatmap, useActivityStats } from '@/hooks/use-activity';
+import { useActivityHeatmap, useActivityStats } from '@/hooks/profile';
 import { Loader2, BookOpen, Upload } from 'lucide-react';
 
 type GamificationData = {
@@ -41,11 +41,11 @@ async function fetchGamification() {
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
   
+  // Queries restored - infinite loop fixed!
   const { data: gameStats, isLoading } = useQuery({
     queryKey: ['gamification-dashboard'],
     queryFn: fetchGamification,
-    refetchInterval: 60000, // Refresh every minute
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 5 * 60 * 1000, // Consider fresh for 5 minutes
   });
 
   // Activity heatmap and stats
@@ -56,7 +56,7 @@ export default function DashboardPage() {
   // So we keep activityStats as-is, no need to merge
   const consolidatedStats = activityStats;
 
-  // Debug logging (can be removed later)
+  // Debug logging
   console.log('Dashboard Debug:', {
     hasActivityStats: !!activityStats,
     hasGameStats: !!gameStats,

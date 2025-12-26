@@ -1,37 +1,36 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ModernCornellLayout } from '@/components/cornell/ModernCornellLayout';
 import { ACTION_LABELS, CORNELL_LABELS } from '@/lib/cornell/labels';
-import * as useSuggestionsHook from '@/hooks/cornell/useSuggestions';
+import * as useSuggestionsHook from '@/hooks/cornell/use-suggestions';
 
-vi.mock('@/hooks/cornell/useSuggestions');
+jest.mock('@/hooks/cornell/use-suggestions');
 
 describe('ModernCornellLayout - Sprint 2 Integration', () => {
   const mockProps = {
     title: 'Test Document',
     contentId: 'content-123',
     mode: 'view' as const,
-    onModeToggle: vi.fn(),
+    onModeToggle: jest.fn(),
     saveStatus: 'saved' as const,
     viewer: <div data-testid="mock-viewer">PDF Viewer</div>,
     streamItems: [],
     cues: [],
-    onCuesChange: vi.fn(),
+    onCuesChange: jest.fn(),
     summary: '',
-    onSummaryChange: vi.fn(),
+    onSummaryChange: jest.fn(),
   };
 
   const mockUseSuggestions = {
     suggestions: [],
-    acceptSuggestion: vi.fn(),
-    dismissSuggestion: vi.fn(),
-    dismissAll: vi.fn(),
+    acceptSuggestion: jest.fn(),
+    dismissSuggestion: jest.fn(),
+    dismissAll: jest.fn(),
     hasUnseenSuggestions: false,
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(useSuggestionsHook.useSuggestions).mockReturnValue(mockUseSuggestions);
+    jest.clearAllMocks();
+    (useSuggestionsHook.useSuggestions as jest.Mock).mockReturnValue(mockUseSuggestions);
   });
 
   describe('ActionToolbar Integration', () => {
@@ -61,7 +60,7 @@ describe('ModernCornellLayout - Sprint 2 Integration', () => {
     });
 
     it('should pass hasUnseenSuggestions to ActionToolbar', () => {
-      vi.mocked(useSuggestionsHook.useSuggestions).mockReturnValue({
+      (useSuggestionsHook.useSuggestions as jest.Mock).mockReturnValue({
         ...mockUseSuggestions,
         hasUnseenSuggestions: true,
       });
@@ -86,7 +85,7 @@ describe('ModernCornellLayout - Sprint 2 Integration', () => {
         },
       ];
 
-      vi.mocked(useSuggestionsHook.useSuggestions).mockReturnValue({
+      (useSuggestionsHook.useSuggestions as jest.Mock).mockReturnValue({
         ...mockUseSuggestions,
         suggestions: mockSuggestions,
         hasUnseenSuggestions: true,
@@ -116,7 +115,7 @@ describe('ModernCornellLayout - Sprint 2 Integration', () => {
         },
       ];
 
-      vi.mocked(useSuggestionsHook.useSuggestions).mockReturnValue({
+      (useSuggestionsHook.useSuggestions as jest.Mock).mockReturnValue({
         ...mockUseSuggestions,
         suggestions: mockSuggestions,
       });

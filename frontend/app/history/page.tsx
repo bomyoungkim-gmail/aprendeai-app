@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useSessionsHistory } from '@/hooks/use-sessions-history';
+import { useSessionsHistory } from '@/hooks/sessions/use-sessions-history';
 import { SessionCard } from '@/components/sessions/SessionCard';
 import { SessionAnalytics } from '@/components/sessions/SessionAnalytics';
 import { Loader2, Calendar, Filter, BarChart3 } from 'lucide-react';

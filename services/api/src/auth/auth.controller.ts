@@ -65,6 +65,20 @@ export class AuthController {
     return this.authService.login(user);
   }
 
+  @Public()
+  @Post("refresh")
+  @ApiOperation({ summary: "Refresh access token using refresh token" })
+  @ApiResponse({
+    status: 200,
+    description: "Token refreshed successfully, returns new access token",
+  })
+  @ApiResponse({ status: 401, description: "Invalid or expired refresh token" })
+  @ApiBody({ schema: { properties: { refresh_token: { type: 'string' } } } })
+  async refresh(@Body() body: { refresh_token: string }) {
+    this.logger.log('Token refresh attempt');
+    return this.authService.refreshAccessToken(body.refresh_token);
+  }
+
   @Get("profile")
   @UseGuards(AuthGuard("jwt"))
   @ApiBearerAuth()

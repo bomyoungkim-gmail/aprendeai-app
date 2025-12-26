@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect , Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
+import { logger } from '@/lib/utils/logger';
+
 
 interface PrePhaseFormProps {
   isOpen: boolean;
@@ -70,7 +71,7 @@ export function PrePhaseForm({
         targetWordsJson: filledWords,
       });
     } catch (error) {
-      console.error('Failed to submit pre-phase:', error);
+      logger.error('Failed to submit pre-phase', error);
       setErrors({
         submit: error instanceof Error ? error.message : 'Failed to start reading session',
       });

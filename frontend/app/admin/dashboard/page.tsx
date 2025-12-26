@@ -34,7 +34,6 @@ export default function TeacherDashboard() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* ... */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Selecione uma Turma
@@ -51,10 +50,6 @@ export default function TeacherDashboard() {
           ))}
         </select>
       </div>
-// ...
-    </div>
-  );
-}
 
       {classOverview && (
         <div className="grid gap-6 md:grid-cols-3 mb-8">

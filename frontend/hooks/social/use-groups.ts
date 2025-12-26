@@ -37,7 +37,7 @@ export function useCreateGroup() {
   });
 }
 
-export function useInviteMember(groupId: string) {
+export function useInviteGroupMember(groupId: string) {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -50,7 +50,7 @@ export function useInviteMember(groupId: string) {
   });
 }
 
-export function useRemoveMember(groupId: string) {
+export function useRemoveGroupMember(groupId: string) {
   const queryClient = useQueryClient();
   
   return useMutation({

@@ -47,7 +47,7 @@ export function Toast({ type, message, onClose }: ToastProps) {
 
   return (
     <div
-      className={`fixed bottom-4 right-4 flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg ${styles.bg} ${styles.border} animate-in slide-in-from-bottom-5 duration-300`}
+      className={`fixed top-4 right-4 flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg ${styles.bg} ${styles.border} animate-in slide-in-from-top-5 duration-300`}
     >
       {styles.icon}
       <p className={`text-sm font-medium ${styles.text}`}>{message}</p>

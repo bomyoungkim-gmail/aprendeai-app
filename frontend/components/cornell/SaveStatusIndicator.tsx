@@ -13,43 +13,47 @@ export function SaveStatusIndicator({
   lastSaved,
   className = '',
 }: SaveStatusIndicatorProps) {
-  const getStatusDisplay = () => {
+  const getStatusConfig = () => {
     switch (status) {
       case 'saved':
         return {
-          icon: <Check className="h-4 w-4 text-green-600" />,
-          text: lastSaved
-            ? `Saved ${getTimeAgo(lastSaved)}`
-            : 'All changes saved',
-          textColor: 'text-green-700',
+          icon: <Check className="w-4 h-4" />,
+          text: 'Salvo',
+          className: 'text-green-600 dark:text-green-400',
         };
       case 'saving':
         return {
-          icon: <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />,
-          text: 'Saving...',
-          textColor: 'text-blue-700',
+          icon: <Loader2 className="w-4 h-4 animate-spin" />,
+          text: 'Salvando...',
+          className: 'text-blue-600 dark:text-blue-400',
         };
-      case 'offline':
+      case 'offline': // Keeping offline case as it was not explicitly removed by the instruction, only by the snippet
         return {
-          icon: <WifiOff className="h-4 w-4 text-orange-600" />,
-          text: 'Offline - changes will sync',
-          textColor: 'text-orange-700',
+          icon: <WifiOff className="w-4 h-4" />, // Simplified icon className
+          text: 'Offline - changes will sync', // Keeping original text for offline as no Portuguese equivalent was provided
+          className: 'text-orange-600 dark:text-orange-400', // New className structure
         };
       case 'error':
         return {
-          icon: <AlertCircle className="h-4 w-4 text-red-600" />,
-          text: 'Failed to save',
-          textColor: 'text-red-700',
+          icon: <AlertCircle className="w-4 h-4" />,
+          text: 'Não Salvo',
+          className: 'text-red-600 dark:text-red-400',
+        };
+      default: // Added default case as per snippet
+        return {
+          icon: <AlertCircle className="w-4 h-4" />,
+          text: 'Não Salvo',
+          className: 'text-gray-600 dark:text-gray-400',
         };
     }
   };
 
-  const display = getStatusDisplay();
+  const display = getStatusConfig(); // Renamed function call
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       {display.icon}
-      <span className={`text-sm ${display.textColor}`}>{display.text}</span>
+      <span className={`text-sm ${display.className}`}>{display.text}</span>
     </div>
   );
 }

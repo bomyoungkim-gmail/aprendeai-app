@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { StudyGroup } from '@/lib/types/study-groups';
-import { useGroupSessions } from '@/hooks/use-groups';
+import { useGroupSessions } from '@/hooks/social/use-groups';
 import { CreateSessionModal } from './CreateSessionModal';
 import { Calendar, Play, CheckCircle, Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';

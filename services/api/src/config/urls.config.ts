@@ -69,6 +69,15 @@ export const URL_CONFIG = {
     get health(): string {
       return `${this.base}/health`;
     },
+    get simplify(): string {
+      return `${this.base}/simplify`;
+    },
+    get assessment(): string {
+      return `${this.base}/generate-assessment`;
+    },
+    get pedagogicalEnrich(): string {
+      return `${this.base}/api/pedagogical/enrich`;
+    },
   },
 
   // API URL (for webhooks, callbacks)

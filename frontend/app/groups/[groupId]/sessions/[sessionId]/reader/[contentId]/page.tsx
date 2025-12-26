@@ -5,20 +5,20 @@ import { CornellLayout } from '@/components/cornell';
 import { PDFViewer, ImageViewer, DocxViewer } from '@/components/cornell/viewers';
 import { ReviewMode } from '@/components/cornell/review/ReviewMode';
 import { Toast, useToast } from '@/components/ui/Toast';
+import { useContent } from '@/hooks/cornell/use-data';
 import {
-  useContent,
   useCornellNotes,
   useUpdateCornellNotes,
   useHighlights,
   useCreateHighlight,
   useCornellAutosave,
-  useSaveStatusWithOnline,
-} from '@/hooks';
+} from '@/hooks/cornell';
+import { useSaveStatusWithOnline } from '@/hooks/ui/use-online-status';
 import { AnnotationToolbar } from '@/components/annotations/AnnotationToolbar';
 import { AnnotationsSidebar } from '@/components/annotations/AnnotationsSidebar';
-import { useTextSelection } from '@/hooks/use-text-selection';
-import { useCreateAnnotation } from '@/hooks/use-annotations';
-import { useStudySession } from '@/hooks/use-study-session';
+import { useTextSelection } from '@/hooks/ui';
+import { useCreateAnnotation } from '@/hooks/content';
+import { useStudySession } from '@/hooks/sessions/reading';
 import type { ViewMode, CueItem, NoteItem, UpdateCornellDto } from '@/lib/types/cornell';
 
 interface GroupReaderPageProps {

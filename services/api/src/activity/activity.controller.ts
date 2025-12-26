@@ -2,9 +2,14 @@ import { Controller, Get, Post, Body, Query, UseGuards } from "@nestjs/common";
 import { ActivityService } from "./activity.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { CurrentUser } from "../auth/current-user.decorator";
+import { IsEnum, IsNumber, IsOptional } from "class-validator";
 
 class TrackActivityDto {
+  @IsEnum(["study", "annotation", "read", "session"])
   type: "study" | "annotation" | "read" | "session";
+
+  @IsOptional()
+  @IsNumber()
   minutes?: number;
 }
 
@@ -15,7 +20,7 @@ export class ActivityController {
 
   @Post("track")
   async trackActivity(
-    @CurrentUser("sub") userId: string,
+    @CurrentUser("id") userId: string,
     @Body() dto: TrackActivityDto,
   ) {
     await this.activityService.trackActivity(userId, dto.type, dto.minutes);
@@ -24,7 +29,7 @@ export class ActivityController {
 
   @Get("heatmap")
   async getHeatmap(
-    @CurrentUser("sub") userId: string,
+    @CurrentUser("id") userId: string,
     @Query("days") days?: string,
   ) {
     const daysNum = days ? parseInt(days, 10) : 365;
@@ -32,7 +37,7 @@ export class ActivityController {
   }
 
   @Get("stats")
-  async getStats(@CurrentUser("sub") userId: string) {
+  async getStats(@CurrentUser("id") userId: string) {
     return this.activityService.getActivityStats(userId);
   }
 }

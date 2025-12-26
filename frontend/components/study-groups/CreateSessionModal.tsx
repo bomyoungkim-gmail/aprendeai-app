@@ -2,7 +2,7 @@
 
 import { useState, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { useCreateSession } from '@/hooks/use-sessions';
+import { useCreateSession } from '@/hooks/sessions/group/use-sessions';
 import { GroupContent } from '@/lib/types/study-groups';
 import { X } from 'lucide-react';
 

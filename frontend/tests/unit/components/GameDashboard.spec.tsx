@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { GameDashboard } from '@/components/games/stats/GameDashboard';
 
 // Mock hooks
-jest.mock('@/hooks/useGameProgress', () => ({
+jest.mock('@/hooks/games/use-game-progress', () => ({
   useGameProgress: jest.fn(),
 }));
 
@@ -20,7 +20,7 @@ jest.mock('@/components/games/stats/Leaderboard', () => ({
   Leaderboard: () => <div data-testid="leaderboard">Leaderboard</div>,
 }));
 
-import { useGameProgress } from '@/hooks/useGameProgress';
+import { useGameProgress } from '@/hooks/games';
 
 describe('GameDashboard', () => {
   const mockProgress = {

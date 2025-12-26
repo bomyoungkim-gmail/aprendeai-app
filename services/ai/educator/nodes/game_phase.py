@@ -11,7 +11,7 @@ from games.registry import game_registry
 from games.middleware import GamePipeline, CorrelationIdMiddleware, MetricsMiddleware, EventEmitterMiddleware
 
 logger = logging.getLogger(__name__)
-from services.ai.utils.dataset_collector import dataset_collector
+from utils.dataset_collector import dataset_collector
 
 
 # Create default game pipeline

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Search, Filter, FileText, MessageSquare, StickyNote, Video, X } from 'lucide-react';
-import { useSearch } from '@/hooks/use-search';
+import { useSearch } from '@/hooks/shared/use-search';
 
 const typeIcons = {
   content: FileText,

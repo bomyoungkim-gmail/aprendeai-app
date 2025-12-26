@@ -215,6 +215,11 @@ export const ROUTES = {
     // AI operations
     SIMPLIFY: (contentId: string) => `contents/${contentId}/simplify`,
     ASSESSMENT: (contentId: string) => `contents/${contentId}/assessment`,
+    
+    // Pedagogical Data (Cornell Enhancement)
+    PEDAGOGICAL_CONTEXT: (contentId: string) => `cornell/contents/${contentId}/context`,
+    PEDAGOGICAL_DATA: (contentId: string) => `cornell/contents/${contentId}/pedagogical`,
+    GAME_RESULTS: (contentId: string) => `cornell/contents/${contentId}/game-results`,
   },
 
   // WebClip routes (Browser Extension)

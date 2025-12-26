@@ -5,7 +5,7 @@ import { ViewMode } from '@/lib/types/cornell';
 import { CornellLayout } from '@/components/cornell/CornellLayout';
 import { PromptConsole } from '@/components/reading/PromptConsole';
 import { PromptDrawer } from '@/components/reading/PromptDrawer';
-import { useReadingSession } from '@/hooks/use-reading-session';
+import { useReadingSession } from '@/hooks/sessions/reading/use-reading-session';
 import '@/components/reading/prompt-drawer.css';
 
 interface ReadingSessionPageProps {
@@ -73,8 +73,6 @@ export default function ReadingSessionPage({ params }: ReadingSessionPageProps) 
       <PromptDrawer sessionId={sessionId}>
         <PromptConsole 
           sessionId={sessionId}
-          initialMessages={messages || []}
-          initialQuickReplies={quickReplies || []}
         />
       </PromptDrawer>
     </div>

@@ -1,8 +1,19 @@
 // Group Sessions Hooks Barrel File
 // Group study session management with WebSocket events
 
-export * from './use-sessions';
-export * from './use-session-events';
+// Export specific hooks from use-sessions
+export {
+  useSession as useGroupSession,
+  useCreateSession,
+  useStartSession,
+  useAdvanceRound,
+  useSubmitEvent,
+  useSessionEvents as useGroupSessionEventsLegacy,
+  useSharedCards
+} from './use-sessions';
 
-// Re-export enums for convenience
-export { StudyGroupEvent } from './use-session-events';
+// Export from use-session-events (aliased to avoid conflict)
+export {
+  useSessionEvents as useGroupSessionEvents,
+  StudyGroupEvent
+} from './use-session-events';

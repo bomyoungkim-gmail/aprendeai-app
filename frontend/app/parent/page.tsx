@@ -17,6 +17,8 @@ type ChildProgress = {
   time_analytics: { total_minutes: number; avg_per_day: number; trend: string };
 };
 
+import { URLS } from '@/lib/config/urls';
+
 export default function ParentDashboard() {
   const [children, setChildren] = useState<Child[]>([]);
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
@@ -25,8 +27,7 @@ export default function ParentDashboard() {
 
   // Mock parent ID - get from auth in production
   const parentId = "parent_123";
-import { urls } from '@/lib/config/urls';
-  const API_URL = urls.api.base;
+  const API_URL = URLS.api.base;
 
   useEffect(() => {
     fetch(`${API_URL}/parent/children/${parentId}`)

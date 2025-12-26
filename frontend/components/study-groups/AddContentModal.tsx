@@ -2,7 +2,7 @@
 
 import { useState, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { useAddContent } from '@/hooks/use-groups';
+import { useAddContent } from '@/hooks/social/use-groups';
 import { X } from 'lucide-react';
 
 interface AddContentModalProps {

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { StudyGroup } from '@/lib/types/study-groups';
 import { useAuthStore } from '@/stores/auth-store';
-import { useRemoveMember } from '@/hooks/use-groups';
+import { useRemoveGroupMember } from '@/hooks/social/use-groups';
 import { InviteMemberModal } from './InviteMemberModal';
 import { UserPlus, Crown, Shield, User as UserIcon, Trash2 } from 'lucide-react';
 
@@ -14,7 +14,7 @@ interface MembersTabProps {
 export function MembersTab({ group }: MembersTabProps) {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const { user } = useAuthStore();
-  const removeMember = useRemoveMember(group.id);
+  const removeMember = useRemoveGroupMember(group.id);
 
   const myMembership = group.members?.find((m) => m.userId === user?.id);
   const canManageMembers = myMembership?.role === 'OWNER' || myMembership?.role === 'MOD';

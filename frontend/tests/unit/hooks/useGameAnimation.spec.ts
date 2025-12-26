@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { useGameAnimation } from '@/hooks/useGameAnimation';
+import { useGameAnimation } from '@/hooks/games';
 import confetti from 'canvas-confetti';
 
 jest.mock('canvas-confetti');

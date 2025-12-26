@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { StudyGroup } from '@/lib/types/study-groups';
 import { useAuthStore } from '@/stores/auth-store';
-import { useRemoveContent } from '@/hooks/use-groups';
+import { useRemoveContent } from '@/hooks/social/use-groups';
 import { AddContentModal } from './AddContentModal';
 import { Plus, Trash2, BookOpen } from 'lucide-react';
 

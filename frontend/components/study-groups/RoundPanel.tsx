@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { GroupSession, GroupRound } from '@/lib/types/study-groups';
-import { useSubmitEvent, useSessionEvents } from '@/hooks/use-sessions';
+import { useSubmitEvent, useSessionEvents } from '@/hooks/sessions/group/use-sessions';
 import { useAuthStore } from '@/stores/auth-store';
 import { ChatPanel } from './ChatPanel';
 import { AlertCircle, ChevronRight } from 'lucide-react';

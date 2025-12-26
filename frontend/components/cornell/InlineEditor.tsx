@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Check, X } from 'lucide-react';
-import { HIGHLIGHT_COLORS, type HighlightColor } from '@/lib/types/cornell';
+import { HIGHLIGHT_COLORS, getDefaultPalette, type ColorKey } from '@/lib/constants/colors';
 
 interface AnnotationEditorProps {
   initialComment?: string;
@@ -44,18 +44,21 @@ export function AnnotationEditor({
           Cor:
         </span>
         <div className="flex gap-1.5">
-          {Object.entries(HIGHLIGHT_COLORS).map(([key, color]) => (
-            <button
-              key={key}
-              onClick={() => setSelectedColor(key)}
-              className={`
-                w-6 h-6 rounded-full border-2 transition-all
-                ${selectedColor === key ? 'border-gray-900 dark:border-white scale-110' : 'border-transparent'}
-              `}
-              style={{ backgroundColor: color.bg }}
-              title={color.label}
-            />
-          ))}
+          {getDefaultPalette().map((key) => {
+            const color = HIGHLIGHT_COLORS[key];
+            return (
+              <button
+                key={key}
+                onClick={() => setSelectedColor(key)}
+                className={`
+                  w-6 h-6 rounded-full border-2 transition-all
+                  ${selectedColor === key ? 'border-gray-900 dark:border-white scale-110' : 'border-transparent'}
+                `}
+                style={{ backgroundColor: color.rgb }}
+                title={color.name}
+              />
+            );
+          })}
         </div>
       </div>
 

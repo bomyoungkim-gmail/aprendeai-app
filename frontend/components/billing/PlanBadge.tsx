@@ -1,5 +1,5 @@
 import React from 'react';
-import { useEntitlements, PlanType } from '@/hooks/use-entitlements';
+import { useEntitlements, PlanType } from '@/hooks/billing/use-entitlements';
 import { SparklesIcon } from '@heroicons/react/24/solid';
 
 const PlanColors: Record<PlanType, string> = {

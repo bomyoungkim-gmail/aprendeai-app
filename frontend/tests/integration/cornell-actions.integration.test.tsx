@@ -1,48 +1,47 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ModernCornellLayout } from '@/components/cornell/ModernCornellLayout';
-import * as useSuggestionsHook from '@/hooks/cornell/useSuggestions';
+import * as useSuggestionsHook from '@/hooks/cornell/use-suggestions';
 
-vi.mock('@/hooks/cornell/useSuggestions');
+jest.mock('@/hooks/cornell/use-suggestions');
 
 describe('ModernCornellLayout - Action Integration', () => {
-  const mockCreateStreamItem = vi.fn();
+  const mockCreateStreamItem = jest.fn();
   
   const mockProps = {
     title: 'Test Document',
     contentId: 'content-123',
     mode: 'view' as const,
-    onModeToggle: vi.fn(),
+    onModeToggle: jest.fn(),
     saveStatus: 'saved' as const,
     viewer: <div data-testid="pdf-viewer">PDF Content with text to select</div>,
     streamItems: [],
     cues: [],
-    onCuesChange: vi.fn(),
+    onCuesChange: jest.fn(),
     summary: '',
-    onSummaryChange: vi.fn(),
+    onSummaryChange: jest.fn(),
     onCreateStreamItem: mockCreateStreamItem,
   };
 
   const mockUseSuggestions = {
     suggestions: [],
-    acceptSuggestion: vi.fn(),
-    dismissSuggestion: vi.fn(),
+    acceptSuggestion: jest.fn(),
+    dismissSuggestion: jest.fn(),
     hasUnseenSuggestions: false,
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(useSuggestionsHook.useSuggestions).mockReturnValue(mockUseSuggestions);
+    jest.clearAllMocks();
+    (useSuggestionsHook.useSuggestions as jest.Mock).mockReturnValue(mockUseSuggestions);
 
     // Mock Selection
-    const mockGetSelection = vi.fn().mockReturnValue({
+    const mockGetSelection = jest.fn().mockReturnValue({
       toString: () => 'Selected Text',
       trim: () => 'Selected Text',
       rangeCount: 1,
       getRangeAt: () => ({
         getBoundingClientRect: () => ({ top: 100, left: 100, width: 50, height: 20 }),
       }),
-      removeAllRanges: vi.fn(),
+      removeAllRanges: jest.fn(),
     });
     Object.defineProperty(window, 'getSelection', { value: mockGetSelection });
   });

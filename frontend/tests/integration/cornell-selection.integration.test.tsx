@@ -1,55 +1,94 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ModernCornellLayout } from '@/components/cornell/ModernCornellLayout';
-import * as useSuggestionsHook from '@/hooks/cornell/useSuggestions';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import api from '@/lib/api';
 
-vi.mock('@/hooks/cornell/useSuggestions');
+// Mock API
+jest.mock('@/lib/api', () => {
+  const mockApi = {
+    get: jest.fn(),
+    put: jest.fn(),
+    post: jest.fn(),
+    delete: jest.fn(),
+  };
+  return {
+    __esModule: true,
+    default: mockApi,
+    api: mockApi, // Support named import
+  };
+});
+
+// Helper for wrapper
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        staleTime: 0,
+      },
+    },
+  });
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+};
 
 describe('ModernCornellLayout - Text Selection Integration', () => {
   const mockProps = {
     title: 'Test Document',
     contentId: 'content-123',
     mode: 'view' as const,
-    onModeToggle: vi.fn(),
+    onModeToggle: jest.fn(),
     saveStatus: 'saved' as const,
     viewer: <div data-testid="pdf-viewer">PDF Content with text to select</div>,
     streamItems: [],
     cues: [],
-    onCuesChange: vi.fn(),
+    onCuesChange: jest.fn(),
     summary: '',
-    onSummaryChange: vi.fn(),
-  };
-
-  const mockUseSuggestions = {
-    suggestions: [],
-    acceptSuggestion: vi.fn(),
-    dismissSuggestion: vi.fn(),
-    dismissAll: vi.fn(),
-    hasUnseenSuggestions: false,
+    onSummaryChange: jest.fn(),
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(useSuggestionsHook.useSuggestions).mockReturnValue(mockUseSuggestions);
+    jest.clearAllMocks();
+    
+    // Setup API Mocks
+    (api.get as jest.Mock).mockImplementation((url: string) => {
+      // Return empty suggestions context
+      if (url.includes('/context')) {
+        return Promise.resolve({ data: { suggestions: [] } });
+      }
+      return Promise.resolve({ data: {} });
+    });
   });
 
   it('should show TextSelectionMenu when text is selected', async () => {
-    render(<ModernCornellLayout {...mockProps} />);
+    render(<ModernCornellLayout {...mockProps} />, { wrapper: createWrapper() });
 
     // Mock window.getSelection
-    const mockGetSelection = vi.fn().mockReturnValue({
+    const pdfViewer = screen.getByTestId('pdf-viewer');
+    const textNode = pdfViewer.firstChild;
+    
+    const mockGetSelection = jest.fn().mockReturnValue({
       toString: () => 'Selected Text',
       trim: () => 'Selected Text',
       rangeCount: 1,
       getRangeAt: () => ({
         getBoundingClientRect: () => ({ top: 100, left: 100, width: 50, height: 20 }),
+        commonAncestorContainer: pdfViewer,
+        startContainer: textNode,
+        startOffset: 0,
+        endContainer: textNode,
+        endOffset: 5,
       }),
-      removeAllRanges: vi.fn(),
+      anchorNode: textNode,
+      focusNode: textNode,
+      removeAllRanges: jest.fn(),
     });
     Object.defineProperty(window, 'getSelection', { value: mockGetSelection });
 
     // Simulate mouse up to trigger selection handler
     fireEvent.mouseUp(screen.getByTestId('pdf-viewer'));
+    // fireEvent(document, new Event('selectionchange')); // Not needed for mouseup listener
 
     await waitFor(() => {
       // Menu should appear
@@ -58,13 +97,13 @@ describe('ModernCornellLayout - Text Selection Integration', () => {
   });
 
   it('should hide TextSelectionMenu when selection is cleared', async () => {
-    render(<ModernCornellLayout {...mockProps} />);
+    render(<ModernCornellLayout {...mockProps} />, { wrapper: createWrapper() });
 
     // Mock empty selection
-    const mockGetSelection = vi.fn().mockReturnValue({
+    const mockGetSelection = jest.fn().mockReturnValue({
       toString: () => '',
       trim: () => '',
-      removeAllRanges: vi.fn(),
+      removeAllRanges: jest.fn(),
     });
     Object.defineProperty(window, 'getSelection', { value: mockGetSelection });
 
@@ -77,17 +116,17 @@ describe('ModernCornellLayout - Text Selection Integration', () => {
   });
 
   it('should call handleSelectionAction when menu item is clicked', async () => {
-    render(<ModernCornellLayout {...mockProps} />);
+    render(<ModernCornellLayout {...mockProps} />, { wrapper: createWrapper() });
 
     // 1. Trigger selection
-    const mockGetSelection = vi.fn().mockReturnValue({
+    const mockGetSelection = jest.fn().mockReturnValue({
       toString: () => 'Text',
       trim: () => 'Text',
       rangeCount: 1,
       getRangeAt: () => ({
         getBoundingClientRect: () => ({ top: 100, left: 100, width: 50, height: 20 }),
       }),
-      removeAllRanges: vi.fn(),
+      removeAllRanges: jest.fn(),
     });
     Object.defineProperty(window, 'getSelection', { value: mockGetSelection });
 

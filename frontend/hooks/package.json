@@ -1,0 +1,15 @@
+{
+  "name": "@aprendeai/hooks",
+  "version": "1.0.0",
+  "description": "Shared React hooks for AprendeAI",
+  "main": "index.ts",
+  "private": true,
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "@tanstack/react-query": ">=4.0.0"
+  },
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint . --ext .ts,.tsx"
+  }
+}

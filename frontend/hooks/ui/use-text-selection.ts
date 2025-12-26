@@ -6,6 +6,7 @@ interface TextSelection {
   text: string;
   startOffset: number;
   endOffset: number;
+  rect: DOMRect;
   x: number;
   y: number;
 }
@@ -35,6 +36,7 @@ export function useTextSelection(containerElement: HTMLElement | null) {
             text,
             startOffset,
             endOffset,
+            rect, // Return the rect
             x: rect.left + rect.width / 2,
             y: rect.top - 10,
           });

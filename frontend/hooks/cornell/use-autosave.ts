@@ -1,5 +1,6 @@
 import { useCallback, useState, useRef, useEffect } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
+import { logger } from '@/lib/utils/logger';
 import type { SaveStatus as SaveStatusType } from '@/lib/types/cornell';
 
 // Re-export SaveStatus for barrel file
@@ -84,12 +85,14 @@ export function useCornellAutosave<T>({
   };
 }
 
-// Simpler version for basic autosave
+// Simpler version for basic autosave with retry limit
 export function useAutosave<T>(
   saveFn: (data: T) => Promise<void>,
-  delay = 1000
+  delay = 1000,
+  maxRetries = 3
 ) {
   const [status, setStatus] = useState<SaveStatusType>('saved');
+  const retriesRef = useRef(0);
 
   const save = useDebouncedCallback(
     async (data: T) => {
@@ -97,14 +100,24 @@ export function useAutosave<T>(
         setStatus('saving');
         await saveFn(data);
         setStatus('saved');
+        retriesRef.current = 0; // Reset on success
       } catch (error) {
-        console.error('Autosave error:', error);
+        logger.error('Autosave error', error);
         setStatus('error');
         
-        // Retry after 5 seconds
-        setTimeout(() => {
-          save(data);
-        }, 5000);
+        // Retry with exponential backoff if under maxRetries
+        if (retriesRef.current < maxRetries) {
+          retriesRef.current++;
+          const backoffDelay = 5000 * retriesRef.current; // 5s, 10s, 15s
+          console.log(`Retrying autosave (${retriesRef.current}/${maxRetries}) in ${backoffDelay}ms`);
+          
+          setTimeout(() => {
+            save(data);
+          }, backoffDelay);
+        } else {
+          console.error('Max retries reached. Autosave failed permanently.');
+          retriesRef.current = 0; // Reset for next attempt
+        }
       }
     },
     delay

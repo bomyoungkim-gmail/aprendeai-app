@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, Lock, Mail, User } from 'lucide-react';
 import OAuthButton from '@/components/auth/OAuthButton';
-import { useOAuth } from '@/hooks/use-oauth';
+import { useOAuth } from '@/hooks/auth/use-oauth';
 import { registerSchema, RegisterFormData } from '@/lib/validation/auth-schemas';
 import { AuthInput } from '@/components/auth/AuthInput';
 

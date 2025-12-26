@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { URLS } from '@/lib/config/urls';
+
 // Define types for our experiment data
 type ExperimentStats = {
   total_participants: number;
@@ -18,7 +20,7 @@ type Experiment = {
 
 type ExperimentsResponse = {
   status: string;
-  experiments: Record<str, Experiment>;
+  experiments: Record<string, Experiment>;
 };
 
 export default function ExperimentsDashboard() {
@@ -28,8 +30,7 @@ export default function ExperimentsDashboard() {
 
   useEffect(() => {
     // In a real app, use environment variable: process.env.NEXT_PUBLIC_AI_SERVICE_URL
-  import { urls } from '@/lib/config/urls';
-    const API_URL = `${urls.ai.base}/api/experiments`; 
+    const API_URL = `${URLS.ai.base}/api/experiments`; 
 
     fetch(API_URL)
       .then(res => {

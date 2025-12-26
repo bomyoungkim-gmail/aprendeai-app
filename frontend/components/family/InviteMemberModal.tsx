@@ -2,7 +2,7 @@
 
 import { useState, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { useInviteMember } from '@/hooks/use-family';
+import { useInviteMember } from '@/hooks/social/use-family';
 import { X } from 'lucide-react';
 import { FamilyRole } from '@/lib/types/family';
 

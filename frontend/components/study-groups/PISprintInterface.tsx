@@ -3,9 +3,9 @@
 import { useState, useMemo, useEffect } from 'react';
 import { GroupSession } from '@/lib/types/study-groups';
 import { useAuthStore } from '@/stores/auth-store';
-import { useRoundTimer } from '@/hooks/use-round-timer';
-import { useStartSession, useAdvanceRound, useSharedCards } from '@/hooks/use-sessions';
-import { useSessionEvents } from '@/hooks/use-session-events';
+import { useRoundTimer } from '@/hooks/games/use-round-timer';
+import { useStartSession, useAdvanceRound, useSharedCards } from '@/hooks/sessions/group/use-sessions';
+import { useSessionEvents } from '@/hooks/sessions/group/use-session-events';
 import { RoundPanel } from './RoundPanel';
 import { ReferencePanel } from './ReferencePanel';
 import { SharedCardsDrawer } from './SharedCardsDrawer';

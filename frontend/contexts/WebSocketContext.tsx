@@ -43,14 +43,14 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
       setIsReconnecting(false);
       setReconnectAttempts(0);
 
-      // Re-join active session on reconnect
+      // Re-join active session on reconnect (event-driven, no query invalidation)
       if (activeSessionIdRef.current) {
         console.log('[WebSocket] Re-joining session after reconnect:', activeSessionIdRef.current);
         newSocket.emit('joinSession', { sessionId: activeSessionIdRef.current });
         
-        // Sync state by invalidating queries
-        queryClient.invalidateQueries({ queryKey: ['session', activeSessionIdRef.current] });
-        queryClient.invalidateQueries({ queryKey: ['events', activeSessionIdRef.current] });
+        // REMOVED: Query invalidation on connect (anti-pattern)
+        // React Query's refetchOnReconnect handles this automatically
+        // Specific updates should be event-driven (when data actually changes)
       }
     });
 
@@ -94,7 +94,8 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     return () => {
       newSocket.disconnect();
     };
-  }, [queryClient]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // queryClient is stable, don't include in deps (prevents infinite loop)
 
   const joinSession = useCallback((sessionId: string) => {
     if (socket && isConnected) {

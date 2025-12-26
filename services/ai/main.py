@@ -455,6 +455,14 @@ app.include_router(whiteboard_ws_router)
 from api.srs_router import router as srs_router
 app.include_router(srs_router, prefix="/api")
 
+# Include Pedagogical Enrichment Router (Cornell)
+from api.pedagogical_router import router as pedagogical_router
+app.include_router(pedagogical_router, prefix="/api")
+
+# Include Chat Router (Educator)
+from api.chat_router import router as chat_router
+app.include_router(chat_router, prefix="/api")
+
 
 
 # Legacy endpoints (optional)

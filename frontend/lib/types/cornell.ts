@@ -104,37 +104,30 @@ export interface BoundingRect {
 
 // API DTOs
 export interface UpdateCornellDto {
-  cuesJson?: CueItem[];
-  notesJson?: NoteItem[];
-  summaryText?: string;
+  cues_json?: CueItem[];
+  notes_json?: NoteItem[];
+  summary_text?: string;
 }
 
 export interface CreateHighlightDto {
   kind: 'TEXT' | 'AREA';
-  targetType: 'PDF' | 'IMAGE' | 'DOCX';
-  pageNumber?: number;
-  anchorJson: PDFTextAnchor | PDFAreaAnchor | ImageAreaAnchor | DocxTextAnchor;
-  colorKey?: string;
-  commentText?: string;
-  tagsJson?: string[];
+  target_type: 'PDF' | 'IMAGE' | 'DOCX';
+  page_number?: number;
+  anchor_json: PDFTextAnchor | PDFAreaAnchor | ImageAreaAnchor | DocxTextAnchor;
+  color_key?: string;
+  comment_text?: string;
+  tags_json?: string[];
 }
 
 export interface UpdateHighlightDto {
-  colorKey?: string;
-  commentText?: string;
-  tagsJson?: string[];
+  color_key?: string;
+  comment_text?: string;
+  tags_json?: string[];
 }
 
 // UI State
 export type ViewMode = 'original' | 'study' | 'review';
 export type SaveStatus = 'saved' | 'saving' | 'offline' | 'error';
 
-export const HIGHLIGHT_COLORS = {
-  yellow: { bg: '#fff176', border: '#fdd835', label: 'Yellow' },
-  green: { bg: '#aed581', border: '#9ccc65', label: 'Green' },
-  blue: { bg: '#64b5f6', border: '#42a5f5', label: 'Blue' },
-  red: { bg: '#e57373', border: '#ef5350', label: 'Red' },
-  purple: { bg: '#ba68c8', border: '#ab47bc', label: 'Purple' },
-} as const;
-
-export type HighlightColor = keyof typeof HIGHLIGHT_COLORS;
+// Re-export color types from centralized location
+export type { ColorKey as HighlightColor } from '@/lib/constants/colors';

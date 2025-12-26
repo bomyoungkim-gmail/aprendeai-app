@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Transition } from '@headlessui/react';
+import { logger } from '@/lib/utils/logger';
 
 interface PostPhasePanelProps {
   isOpen: boolean;
@@ -40,7 +41,7 @@ export function PostPhasePanel({
       setHasProduction(true);
       alert('Production text saved! ✅');
     } catch (error) {
-      console.error('Failed to submit production:', error);
+      logger.error('Failed to submit production', error);
       alert('Failed to save production text');
     } finally {
       setIsSubmitting(false);

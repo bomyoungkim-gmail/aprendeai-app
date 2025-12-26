@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useFamily, useFamilyUsage, useRemoveMember, useSetPrimaryFamily, useDeleteFamily } from '@/hooks/use-family';
+import { useFamily, useFamilyUsage, useRemoveMember, useSetPrimaryFamily, useDeleteFamily } from '@/hooks/social/use-family';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, BarChart2, DollarSign, Users, UserPlus, Trash2, Shield, User as UserIcon } from 'lucide-react';
 import { InviteMemberModal } from '@/components/family/InviteMemberModal';

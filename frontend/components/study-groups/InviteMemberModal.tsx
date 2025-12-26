@@ -2,7 +2,7 @@
 
 import { useState, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { useInviteMember } from '@/hooks/use-groups';
+import { useInviteGroupMember } from '@/hooks/social/use-groups';
 import { X } from 'lucide-react';
 
 interface InviteMemberModalProps {
@@ -14,7 +14,7 @@ interface InviteMemberModalProps {
 export function InviteMemberModal({ groupId, isOpen, onClose }: InviteMemberModalProps) {
   const [userId, setUserId] = useState('');
   const [role, setRole] = useState<'MEMBER' | 'MOD'>('MEMBER');
-  const inviteMember = useInviteMember(groupId);
+  const inviteMember = useInviteGroupMember(groupId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

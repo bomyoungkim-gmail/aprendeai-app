@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { format } from 'date-fns';
+import { logger } from '@/lib/utils/logger';
 
 interface ReadingSession {
   id: string;
@@ -47,8 +48,8 @@ export function SessionRibbon({ session, onAdvancePhase }: SessionRibbonProps) {
       } else if (session.phase === 'POST') {
         await onAdvancePhase('FINISHED');
       }
-    } catch (error) {
-      console.error('Failed to advance phase:', error);
+      } catch (error) {
+        logger.error('Failed to advance phase', error);
       alert(error instanceof Error ? error.message : 'Failed to advance phase');
     } finally {
       setIsAdvancing(false);

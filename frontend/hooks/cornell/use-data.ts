@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { cornellApi } from '../lib/api/cornell';
+import { cornellApi } from '@/lib/api/cornell';
 import type {
   Content,
   CornellNotes,
@@ -7,7 +7,8 @@ import type {
   UpdateCornellDto,
   CreateHighlightDto,
   UpdateHighlightDto,
-} from '../lib/types/cornell';
+} from '@/lib/types/cornell';
+import { logger } from '@/lib/utils/logger';
 
 // Query Keys
 export const cornellKeys = {
@@ -46,7 +47,7 @@ export function useUpdateCornellNotes(contentId: string) {
       queryClient.setQueryData(cornellKeys.notes(contentId), data);
     },
     onError: (error) => {
-      console.error('Failed to update Cornell notes:', error);
+      logger.error('Failed to update Cornell notes', error, { contentId });
     },
   });
 }
@@ -66,12 +67,9 @@ export function useCreateHighlight(contentId: string) {
   return useMutation({
     mutationFn: (highlight: CreateHighlightDto) =>
       cornellApi.createHighlight(contentId, highlight),
-    onSuccess: (newHighlight) => {
-      // Add to cache
-      queryClient.setQueryData<Highlight[]>(
-        cornellKeys.highlights(contentId),
-        (old) => (old ? [...old, newHighlight] : [newHighlight])
-      );
+    onSuccess: () => {
+      // Invalidate highlights to refetch and show new highlight
+      queryClient.invalidateQueries({ queryKey: cornellKeys.highlights(contentId) });
     },
   });
 }
@@ -82,12 +80,9 @@ export function useUpdateHighlight() {
   return useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: UpdateHighlightDto }) =>
       cornellApi.updateHighlight(id, updates),
-    onSuccess: (updatedHighlight, { id }) => {
-      // Update in cache
-      queryClient.setQueriesData<Highlight[]>(
-        { queryKey: cornellKeys.all },
-        (old) => old?.map((h) => (h.id === id ? updatedHighlight : h))
-      );
+    onSuccess: () => {
+      // Invalidate all highlights queries to refetch
+      queryClient.invalidateQueries({ queryKey: cornellKeys.all });
     },
   });
 }
@@ -97,12 +92,9 @@ export function useDeleteHighlight() {
 
   return useMutation({
     mutationFn: (highlightId: string) => cornellApi.deleteHighlight(highlightId),
-    onSuccess: (_, highlightId) => {
-      // Remove from cache
-      queryClient.setQueriesData<Highlight[]>(
-        { queryKey: cornellKeys.all },
-        (old) => old?.filter((h) => h.id !== highlightId)
-      );
+    onSuccess: () => {
+      // Invalidate all highlights queries to refetch
+      queryClient.invalidateQueries({ queryKey: cornellKeys.all });
     },
   });
 }
