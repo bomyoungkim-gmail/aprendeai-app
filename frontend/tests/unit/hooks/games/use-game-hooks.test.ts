@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useGameAnimation } from '../use-game-animation';
-import { useGameProgress } from '../use-game-progress';
+import { useGameAnimation } from '@/hooks/games/use-game-animation';
+import { useGameProgress } from '@/hooks/games/use-game-progress';
 
 describe('Games Hooks', () => {
   describe('useGameAnimation', () => {

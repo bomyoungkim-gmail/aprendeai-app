@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useDebounce } from '../use-debounce';
-import { useOnlineStatus } from '../use-online-status';
+import { useDebounce } from '@/hooks/ui/use-debounce';
+import { useOnlineStatus } from '@/hooks/ui/use-online-status';
 
 describe('UI Hooks', () => {
   describe('useDebounce', () => {
