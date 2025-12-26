@@ -42,6 +42,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // Cornell Notes handlers
+  if (message.type === 'CREATE_CORNELL_NOTE') {
+    handleCreateCornellNote(message.payload)
+      .then(result => sendResponse({ success: true, ...result }))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+
+  if (message.type === 'SEND_AI_CHAT_MESSAGE') {
+    handleAIChatMessage(message.payload)
+      .then(result => sendResponse({ success: true, ...result }))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+
   return false;
 });
 

@@ -32,11 +32,19 @@
 
   <!-- Authenticated State -->
   <div id="authenticatedSection" style="display: none;">
-    <!-- User Info -->
     <div class="user-info">
       <span id="userName">Loading...</span>
       <button id="logoutBtn" class="btn-logout">Logout</button>
     </div>
+
+    <!-- Tab Navigation -->
+    <div class="tab-navigation">
+      <button class="tab-btn active" data-tab="webclip">📄 WebClip</button>
+      <button class="tab-btn" data-tab="cornell">📝 Cornell</button>
+    </div>
+
+    <!-- WebClip Tab Content -->
+    <div id="webclipTab" class="tab-content active">
 
     <!-- Mode Toggle -->
     <div class="mode-toggle">
@@ -84,6 +92,25 @@
         👩‍🏫 Atribuir à Turma
       </button>
     </div>
+    </div> <!-- End WebClip Tab -->
+
+    <!-- Cornell Tab Content -->
+    <div id="cornellTab" class="tab-content" style="display: none;">
+      <div class="cornell-header">
+        <h3>📝 Cornell Notes</h3>
+        <button id="toggleCornellMode" class="btn-secondary">
+          Ativar Modo Cornell (Ctrl+Shift+C)
+        </button>
+      </div>
+
+      <div class="cornell-stats">
+        <span id="notesCount">0 notas nesta página</span>
+      </div>
+
+      <div id="cornellNotesList" class="notes-list">
+        <p class="empty-state">Nenhuma nota ainda. Selecione texto e pressione Ctrl+Shift+C</p>
+      </div>
+    </div> <!-- End Cornell Tab -->
   </div>
 
   <!-- Status -->

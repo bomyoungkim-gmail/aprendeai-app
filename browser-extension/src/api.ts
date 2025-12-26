@@ -73,6 +73,39 @@ export class APIClient {
   }
 
   /**
+   * Create Cornell Note
+   * Route: POST /api/v1/cornell/notes
+   */
+  async createCornellNote(data: {
+    type: string;
+    text: string;
+    url: string;
+    context?: any;
+  }): Promise<{ id: string }> {
+    return this.fetch('/api/v1/cornell/notes', 'POST', data);
+  }
+
+  /**
+   * Get Cornell Notes for URL
+   * Route: GET /api/v1/cornell/notes?url=...
+   */
+  async getCornellNotes(url: string): Promise<{ notes: any[] }> {
+    const encodedUrl = encodeURIComponent(url);
+    return this.fetch(`/api/v1/cornell/notes?url=${encodedUrl}`, 'GET');
+  }
+
+  /**
+   * Send AI Chat Message
+   * Route: POST /api/v1/cornell/chat (proxied to AI service)
+   */
+  async sendChatMessage(data: {
+    message: string;
+    context?: any;
+  }): Promise<{ content: string }> {
+    return this.fetch('/api/v1/cornell/chat', 'POST', data);
+  }
+
+  /**
    * Generic fetch wrapper
    */
   private async fetch(path: string, method: string, body?: any): Promise<any> {

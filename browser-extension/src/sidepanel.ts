@@ -35,25 +35,12 @@ function setupEventListeners() {
   
   // History button
   document.getElementById('viewHistory')?.addEventListener('click', loadSessionHistory);
-}
-
-function setupEventListeners() {
-  // Login
-  document.getElementById('loginBtn')?.addEventListener('click', startLogin);
-  document.getElementById('openVerifyBtn')?.addEventListener('click', openVerificationPage);
-  document.getElementById('logoutBtn')?.addEventListener('click', logout);
   
-  // Mode toggle
-  document.getElementById('studentMode')?.addEventListener('click', () => setMode(false));
-  document.getElementById('teacherMode')?.addEventListener('click', () => setMode(true));
-
-  // Capture buttons
-  document.getElementById('captureSelection')?.addEventListener('click', () => captureWebClip('SELECTION'));
-  document.getElementById('capturePage')?.addEventListener('click', () => captureWebClip('READABILITY'));
-
-  // Teacher mode button
-  document.getElementById('assignToClass')?.addEventListener('click', assignToClassroom);
+  // Cornell tab listeners
+  setupTabNavigation();
+  document.getElementById('toggleCornellMode')?.addEventListener('click', toggleCornellMode);
 }
+
 
 /**
  * Check if user is authenticated
