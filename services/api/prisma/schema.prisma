@@ -37,7 +37,7 @@ model Institution {
   domains      InstitutionDomain[]
   pendingUsers PendingUserApproval[]
   ssoConfig    SSOConfiguration?
-  
+
   // Billing
   subscriptions Subscription[]
   providerUsage ProviderUsage[]
@@ -186,15 +186,15 @@ enum PaymentProvider {
 }
 
 model EntitlementSnapshot {
-  id           String   @id @default(uuid())
-  userId       String   @unique @map("user_id")
-  source       String   // "ORG" | "FAMILY" | "INDIVIDUAL" | "FREE"
-  planType     PlanType @map("plan_type")
-  limits       Json     // Cached limits
-  features     Json     @default("{}") // Cached boolean flags
-  effectiveAt  DateTime @default(now()) @map("effective_at")
-  expiresAt    DateTime? @map("expires_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id          String    @id @default(uuid())
+  userId      String    @unique @map("user_id")
+  source      String // "ORG" | "FAMILY" | "INDIVIDUAL" | "FREE"
+  planType    PlanType  @map("plan_type")
+  limits      Json // Cached limits
+  features    Json      @default("{}") // Cached boolean flags
+  effectiveAt DateTime  @default(now()) @map("effective_at")
+  expiresAt   DateTime? @map("expires_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -202,14 +202,14 @@ model EntitlementSnapshot {
 }
 
 model OrgSubscriptionPolicy {
-  id            String   @id @default(uuid())
-  institutionId String   @unique @map("institution_id")
-  baselineSeats Int      @default(0) @map("baseline_seats")
-  allowOverage  Boolean  @default(true) @map("allow_overage")
-  graceDays     Int      @default(30) @map("grace_days")
-  trueUpDayOfMonth Int   @default(1)  @map("true_up_day_of_month")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id               String   @id @default(uuid())
+  institutionId    String   @unique @map("institution_id")
+  baselineSeats    Int      @default(0) @map("baseline_seats")
+  allowOverage     Boolean  @default(true) @map("allow_overage")
+  graceDays        Int      @default(30) @map("grace_days")
+  trueUpDayOfMonth Int      @default(1) @map("true_up_day_of_month")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
 
@@ -248,7 +248,7 @@ model User {
   age                Int?
   sex                String?
   birthday           DateTime? // Date of birth for age calculation and personalization
-  address            String?   // Full address for institutional/family context
+  address            String? // Full address for institutional/family context
   preferredLanguages Json      @default("[]") @map("preferred_languages")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
@@ -271,19 +271,20 @@ model User {
   usageEvents         UsageEvent[]
 
   // Family Relations
-  ownedFamilies     Family[]             @relation("FamilyOwner")
-  memberships       FamilyMember[]
-  highlights        Highlight[]          @relation("UserHighlights")
-  cornellNotes      CornellNote[]
-  readingSessions   ReadingSession[]
-  streak            Streak?
-  assignedBadges    UserBadge[]
-  libraryItems      UserLibraryItem[]
-  roleAssignments   UserRoleAssignment[] @relation("UserRoles")
-  vocabularyEntries UserVocabulary[]
-  layerEligibility  LayerEligibility?
-  institution       Institution?         @relation(fields: [institutionId], references: [id])
-  LearnerProfile    LearnerProfile[]
+  ownedFamilies      Family[]             @relation("FamilyOwner")
+  memberships        FamilyMember[]
+  highlights         Highlight[]          @relation("UserHighlights")
+  annotationComments AnnotationComment[]  @relation("UserAnnotationComments")
+  cornellNotes       CornellNote[]
+  readingSessions    ReadingSession[]
+  streak             Streak?
+  assignedBadges     UserBadge[]
+  libraryItems       UserLibraryItem[]
+  roleAssignments    UserRoleAssignment[] @relation("UserRoles")
+  vocabularyEntries  UserVocabulary[]
+  layerEligibility   LayerEligibility?
+  institution        Institution?         @relation(fields: [institutionId], references: [id])
+  LearnerProfile     LearnerProfile[]
 
   // Study Groups relations
   ownedGroups         StudyGroup[]         @relation("GroupOwner")
@@ -318,12 +319,12 @@ model User {
   QuestionResult         QuestionResult[]
   topicMastery           UserTopicMastery[]
   studySessions          StudySession[]
-  
+
   // Billing
-  entitlementSnapshot    EntitlementSnapshot?
-  subscriptions          Subscription[]
-  providerUsage          ProviderUsage[]
-  gameResults            GameResult[]
+  entitlementSnapshot EntitlementSnapshot?
+  subscriptions       Subscription[]
+  providerUsage       ProviderUsage[]
+  gameResults         GameResult[]
 
   @@unique([oauthProvider, oauthId])
   @@map("users")
@@ -356,10 +357,10 @@ model GameProgress {
 }
 
 model UserTopicMastery {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  topic     String
-  subject   String
+  id      String @id @default(uuid())
+  userId  String @map("user_id")
+  topic   String
+  subject String
 
   masteryLevel       Float @default(0) @map("mastery_level") // 0-100
   questionsAttempted Int   @default(0) @map("questions_attempted")
@@ -370,7 +371,7 @@ model UserTopicMastery {
   lastActivityAt DateTime @default(now()) @map("last_activity_at")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, topic, subject])
   @@index([userId])
@@ -380,8 +381,8 @@ model UserTopicMastery {
 
 // Study Session Analytics
 model StudySession {
-  id     String   @id @default(uuid())
-  userId String   @map("user_id")
+  id     String @id @default(uuid())
+  userId String @map("user_id")
 
   // Time tracking
   startTime       DateTime  @map("start_time")
@@ -884,36 +885,36 @@ model ErrorLog {
 }
 
 model ProviderUsage {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   provider  String
   model     String?
   operation String
-  
+
   // Consumption Breakdown
-  tokens           Int?    
-  promptTokens     Int?    @map("prompt_tokens")
-  completionTokens Int?    @map("completion_tokens")
-  totalTokens      Int?    @map("total_tokens")
-  costUsd          Float?  @map("cost_usd")
-  
-  latency          Int?
-  statusCode       Int?    @map("status_code")
-  
+  tokens           Int?
+  promptTokens     Int?   @map("prompt_tokens")
+  completionTokens Int?   @map("completion_tokens")
+  totalTokens      Int?   @map("total_tokens")
+  costUsd          Float? @map("cost_usd")
+
+  latency    Int?
+  statusCode Int? @map("status_code")
+
   // Context Granularity
-  userId        String?  @map("user_id")
-  familyId      String?  @map("family_id")
-  groupId       String?  @map("group_id")
-  institutionId String?  @map("institution_id")
-  
-  feature       String   @default("unknown")
-  metadata      Json?
-  timestamp     DateTime @default(now())
+  userId        String? @map("user_id")
+  familyId      String? @map("family_id")
+  groupId       String? @map("group_id")
+  institutionId String? @map("institution_id")
+
+  feature   String   @default("unknown")
+  metadata  Json?
+  timestamp DateTime @default(now())
 
   // Relations
-  user          User?        @relation(fields: [userId], references: [id])
-  family        Family?      @relation(fields: [familyId], references: [id])
-  institution   Institution? @relation(fields: [institutionId], references: [id])
-  group         StudyGroup?  @relation(fields: [groupId], references: [id])
+  user        User?        @relation(fields: [userId], references: [id])
+  family      Family?      @relation(fields: [familyId], references: [id])
+  institution Institution? @relation(fields: [institutionId], references: [id])
+  group       StudyGroup?  @relation(fields: [groupId], references: [id])
 
   @@index([timestamp])
   @@index([userId, timestamp])
@@ -958,21 +959,21 @@ model AppConfig {
 }
 
 model Plan {
-  id            String         @id @default(uuid())
-  code          String         @unique // key in script
-  name          String
-  description   String?
-  type          PlanType       @default(FREE)
-  billingPeriod BillingPeriod? @map("billing_period")
-  currency      String         @default("BRL")
-  priceCents    Int            @default(0) @map("price_cents")
-  seatPriceCents Int?          @map("seat_price_cents")
-  
-  isActive      Boolean        @default(true) @map("is_active")
-  entitlements  Json
-  monthlyPrice  Float?         @map("monthly_price") // Legacy support
-  yearlyPrice   Float?         @map("yearly_price") // Legacy support
-  
+  id             String         @id @default(uuid())
+  code           String         @unique // key in script
+  name           String
+  description    String?
+  type           PlanType       @default(FREE)
+  billingPeriod  BillingPeriod? @map("billing_period")
+  currency       String         @default("BRL")
+  priceCents     Int            @default(0) @map("price_cents")
+  seatPriceCents Int?           @map("seat_price_cents")
+
+  isActive     Boolean @default(true) @map("is_active")
+  entitlements Json
+  monthlyPrice Float?  @map("monthly_price") // Legacy support
+  yearlyPrice  Float?  @map("yearly_price") // Legacy support
+
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
   subscriptions Subscription[]
@@ -983,44 +984,44 @@ model Plan {
 }
 
 model Subscription {
-  id                     String             @id @default(uuid())
-  
+  id String @id @default(uuid())
+
   // Polymorphic scope (Keeping for backward compat or generic access)
-  scopeType              ScopeType          @map("scope_type")
-  scopeId                String             @map("scope_id")
+  scopeType ScopeType @map("scope_type")
+  scopeId   String    @map("scope_id")
 
   // Explicit relations (New)
-  userId                 String?            @map("user_id")
-  familyId               String?            @map("family_id")
-  institutionId          String?            @map("institution_id") // Org
+  userId        String? @map("user_id")
+  familyId      String? @map("family_id")
+  institutionId String? @map("institution_id") // Org
 
-  planId                 String             @map("plan_id")
-  status                 SubscriptionStatus
-  source                 SubscriptionSource
-  
-  currentPeriodStart     DateTime?          @map("current_period_start")
-  currentPeriodEnd       DateTime?          @map("current_period_end")
-  cancelAtPeriodEnd      Boolean            @default(false) @map("cancel_at_period_end")
-  canceledAt             DateTime?          @map("canceled_at")
-  endedAt                DateTime?          @map("ended_at")
-  graceUntil             DateTime?          @map("grace_until")
-  
-  provider               PaymentProvider?   // New
-  providerCode           String?            @map("provider_code") // Legacy
-  providerCustomerId     String?            @map("provider_customer_id")
-  providerSubscriptionId String?            @map("provider_subscription_id")
-  providerPriceId        String?            @map("provider_price_id")
-  
-  metadata               Json?
+  planId String             @map("plan_id")
+  status SubscriptionStatus
+  source SubscriptionSource
 
-  createdAt              DateTime           @default(now()) @map("created_at")
-  updatedAt              DateTime           @updatedAt @map("updated_at")
+  currentPeriodStart DateTime? @map("current_period_start")
+  currentPeriodEnd   DateTime? @map("current_period_end")
+  cancelAtPeriodEnd  Boolean   @default(false) @map("cancel_at_period_end")
+  canceledAt         DateTime? @map("canceled_at")
+  endedAt            DateTime? @map("ended_at")
+  graceUntil         DateTime? @map("grace_until")
 
-  plan                   Plan               @relation(fields: [planId], references: [id])
+  provider               PaymentProvider? // New
+  providerCode           String?          @map("provider_code") // Legacy
+  providerCustomerId     String?          @map("provider_customer_id")
+  providerSubscriptionId String?          @map("provider_subscription_id")
+  providerPriceId        String?          @map("provider_price_id")
+
+  metadata Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  plan        Plan         @relation(fields: [planId], references: [id])
   // Optional relations
-  user                   User?              @relation(fields: [userId], references: [id])
-  family                 Family?            @relation(fields: [familyId], references: [id])
-  institution            Institution?       @relation(fields: [institutionId], references: [id])
+  user        User?        @relation(fields: [userId], references: [id])
+  family      Family?      @relation(fields: [familyId], references: [id])
+  institution Institution? @relation(fields: [institutionId], references: [id])
 
   @@unique([scopeType, scopeId, status], name: "unique_active_subscription", map: "subscriptions_scope_status_unique")
   @@unique([providerSubscriptionId])
@@ -1128,14 +1129,56 @@ model Highlight {
   colorKey    String        @default("yellow")
   commentText String?
   tagsJson    Json          @default("[]")
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @default(now())
-  content     Content       @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  user        User          @relation("UserHighlights", fields: [userId], references: [id])
+
+  // Cornell Notes: Timestamp for video/audio
+  timestampMs Int? @map("timestamp_ms")
+  durationMs  Int? @map("duration_ms")
+
+  // Cornell Notes: Granular sharing
+  visibility      AnnotationVisibility @default(PRIVATE)
+  visibilityScope VisibilityScope?     @map("visibility_scope")
+  contextType     ContextType?         @map("context_type")
+  contextId       String?              @map("context_id")
+  learnerId       String?              @map("learner_id")
+
+  // Cornell Notes: Soft delete
+  status    AnnotationStatus @default(ACTIVE)
+  deletedAt DateTime?        @map("deleted_at")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  content  Content             @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  user     User                @relation("UserHighlights", fields: [userId], references: [id])
+  comments AnnotationComment[]
 
   @@index([contentId])
   @@index([userId])
+  @@index([visibility])
+  @@index([contextType])
+  @@index([contextId])
+  @@index([status])
   @@map("highlights")
+}
+
+// Cornell Notes: Comment/Thread system
+model AnnotationComment {
+  id          String           @id @default(uuid())
+  highlightId String           @map("highlight_id")
+  userId      String           @map("user_id")
+  text        String           @db.Text
+  status      AnnotationStatus @default(ACTIVE)
+  deletedAt   DateTime?        @map("deleted_at")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  highlight Highlight @relation(fields: [highlightId], references: [id], onDelete: Cascade)
+  user      User      @relation("UserAnnotationComments", fields: [userId], references: [id])
+
+  @@index([highlightId])
+  @@index([userId])
+  @@index([status])
+  @@map("annotation_comments")
 }
 
 model ContentExtraction {
@@ -1540,11 +1583,11 @@ model StudyGroup {
   name        String
   createdAt   DateTime   @default(now()) @map("created_at")
 
-  owner       User               @relation("GroupOwner", fields: [ownerUserId], references: [id])
-  members     StudyGroupMember[]
-  contents    GroupContent[]
-  sessions    GroupSession[]
-  annotations Annotation[]
+  owner         User               @relation("GroupOwner", fields: [ownerUserId], references: [id])
+  members       StudyGroupMember[]
+  contents      GroupContent[]
+  sessions      GroupSession[]
+  annotations   Annotation[]
   providerUsage ProviderUsage[]
 
   @@index([ownerUserId])
@@ -1938,6 +1981,29 @@ enum FamilyMemberStatus {
   REMOVED
 }
 
+// --- CORNELL NOTES ENUMS ---
+
+// Granular visibility scopes for annotations
+enum VisibilityScope {
+  CLASS_PROJECT // Institution: educators + students
+  ONLY_EDUCATORS // Institution: only educators
+  RESPONSIBLES_OF_LEARNER // Institution/Family: guardians of specific learner
+  GROUP_MEMBERS // Group/Family: all active members
+}
+
+// Type of sharing context
+enum ContextType {
+  INSTITUTION
+  GROUP_STUDY
+  FAMILY
+}
+
+// Annotation status (for soft delete)
+enum AnnotationStatus {
+  ACTIVE
+  DELETED
+}
+
 model Family {
   id       String  @id @default(uuid())
   name     String
@@ -1952,10 +2018,10 @@ model Family {
   contents          Content[]
   policies          FamilyPolicy[]
   coReadingSessions CoReadingSession[]
-  
+
   // Billing
-  subscriptions     Subscription[]
-  providerUsage     ProviderUsage[]
+  subscriptions Subscription[]
+  providerUsage ProviderUsage[]
 
   @@map("families")
 }
@@ -2153,42 +2219,42 @@ model ClassPlanWeek {
 // ===== Cornell Pedagogical Data Models =====
 
 model ContentPedagogicalData {
-  id        String   @id @default(uuid())
-  contentId String   @unique @map("content_id")
-  
+  id        String @id @default(uuid())
+  contentId String @unique @map("content_id")
+
   // Pedagogical Resources (Generated by AI)
-  vocabularyTriage  Json? @map("vocabulary_triage")  // { words: [{ word, definition, example, difficulty }] }
+  vocabularyTriage  Json? @map("vocabulary_triage") // { words: [{ word, definition, example, difficulty }] }
   socraticQuestions Json? @map("socratic_questions") // [{ sectionId, questions: [{ question, type, difficulty }] }]
-  quizQuestions     Json? @map("quiz_questions")     // [{ sectionId, questions: [{ question, options, correct }] }]
-  tabooCards        Json? @map("taboo_cards")        // [{ targetWord, forbiddenWords, hint }]
-  bossFightConfig   Json? @map("boss_fight_config")  // { vocabList, difficulty, rounds }
+  quizQuestions     Json? @map("quiz_questions") // [{ sectionId, questions: [{ question, options, correct }] }]
+  tabooCards        Json? @map("taboo_cards") // [{ targetWord, forbiddenWords, hint }]
+  bossFightConfig   Json? @map("boss_fight_config") // { vocabList, difficulty, rounds }
   freeRecallPrompts Json? @map("free_recall_prompts") // [{ prompt, type }]
-  
+
   // Metadata
   processingVersion String   @default("v1.0") @map("processing_version")
   processedAt       DateTime @default(now()) @map("processed_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
-  
+
   content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  
+
   @@index([contentId])
   @@map("content_pedagogical_data")
 }
 
 model GameResult {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  contentId String   @map("content_id")
-  
-  gameType  String   // "QUIZ" | "TABOO" | "BOSS_FIGHT" | "FREE_RECALL"
-  score     Float    // 0-100
-  metadata  Json?    // { weakWords: [...], strongConcepts: [...], attemptCount, timeSpent }
-  
-  playedAt  DateTime @default(now()) @map("played_at")
-  
+  id        String @id @default(uuid())
+  userId    String @map("user_id")
+  contentId String @map("content_id")
+
+  gameType String // "QUIZ" | "TABOO" | "BOSS_FIGHT" | "FREE_RECALL"
+  score    Float // 0-100
+  metadata Json? // { weakWords: [...], strongConcepts: [...], attemptCount, timeSpent }
+
+  playedAt DateTime @default(now()) @map("played_at")
+
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   content Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  
+
   @@index([userId, contentId])
   @@index([gameType])
   @@index([playedAt])
