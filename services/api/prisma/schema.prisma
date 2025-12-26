@@ -1472,6 +1472,8 @@ enum TargetType {
   PDF
   IMAGE
   DOCX
+  VIDEO
+  AUDIO
 }
 
 enum ExtractionStatus {

@@ -1,0 +1,226 @@
+/**
+ * DTO for creating Cornell Notes highlights
+ * 
+ * Supports multiple media types (PDF, Image, Video, Audio) with conditional anchoring.
+ * Uses centralized enums for type safety.
+ * 
+ * @module cornell/dto
+ */
+
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsObject,
+  ValidateIf,
+  Min,
+} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  AnnotationVisibility,
+  TargetType,
+  VisibilityScope,
+  ContextType,
+} from '../../common/constants/enums';
+import {
+  CornellType,
+  getColorForType,
+  getTagsForType,
+} from '../constants/cornell-type-map';
+
+/**
+ * Geometry for area-based highlights (PDF, Image)
+ */
+export interface AnchorGeometry {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * DTO for creating a Cornell highlight
+ */
+export class CreateCornellHighlightDto {
+  @ApiProperty({
+    enum: ['HIGHLIGHT', 'NOTE', 'STAR', 'QUESTION'],
+    description: 'Cornell annotation type',
+    example: 'NOTE',
+  })
+  @IsEnum(['HIGHLIGHT', 'NOTE', 'STAR', 'QUESTION'], {
+    message: 'Type must be one of: HIGHLIGHT, NOTE, STAR, QUESTION',
+  })
+  type: Exclude<CornellType, 'SUMMARY' | 'AI_RESPONSE'>;
+
+  @ApiProperty({
+    enum: TargetType,
+    description: 'Media type being annotated',
+    example: 'PDF',
+  })
+  @IsEnum(TargetType, {
+    message: 'Target type must be PDF, IMAGE, DOCX, VIDEO, or AUDIO',
+  })
+  target_type: TargetType;
+
+  // ========================================
+  // CONDITIONAL ANCHORING
+  // ========================================
+
+  @ApiPropertyOptional({
+    description: 'Page number (required for PDF/DOCX)',
+    example: 1,
+    minimum: 1,
+  })
+  @ValidateIf((o) => o.target_type === TargetType.PDF || o.target_type === TargetType.DOCX)
+  @IsInt()
+  @Min(1)
+  page_number?: number;
+
+  @ApiPropertyOptional({
+    description: 'Anchor geometry (required for PDF/IMAGE)',
+    example: { x: 100, y: 200, width: 150, height: 50 },
+  })
+  @ValidateIf((o) => o.target_type === TargetType.PDF || o.target_type === TargetType.IMAGE)
+  @IsObject()
+  anchor_json?: AnchorGeometry;
+
+  @ApiPropertyOptional({
+    description: 'Timestamp in milliseconds (required for VIDEO/AUDIO)',
+    example: 30000,
+    minimum: 0,
+  })
+  @ValidateIf((o) => o.target_type === TargetType.VIDEO || o.target_type === TargetType.AUDIO)
+  @IsInt()
+  @Min(0)
+  timestamp_ms?: number;
+
+  @ApiPropertyOptional({
+    description: 'Duration in milliseconds (optional for VIDEO/AUDIO)',
+    example: 5000,
+    minimum: 0,
+  })
+  @ValidateIf((o) => o.target_type === TargetType.VIDEO || o.target_type === TargetType.AUDIO)
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  duration_ms?: number;
+
+  // ========================================
+  // ANNOTATION CONTENT
+  // ========================================
+
+  @ApiPropertyOptional({
+    description: 'Comment/note text',
+    example: 'This is an important concept about photosynthesis',
+  })
+  @IsOptional()
+  @IsString()
+  comment_text?: string;
+
+  // ========================================
+  // GRANULAR SHARING
+  // ========================================
+
+  @ApiPropertyOptional({
+    enum: AnnotationVisibility,
+    description: 'Visibility level',
+    default: AnnotationVisibility.PRIVATE,
+  })
+  @IsOptional()
+  @IsEnum(AnnotationVisibility)
+  visibility?: AnnotationVisibility;
+
+  @ApiPropertyOptional({
+    enum: VisibilityScope,
+    description: 'Granular scope (required if visibility is GROUP)',
+  })
+  @ValidateIf((o) => o.visibility === AnnotationVisibility.GROUP)
+  @IsEnum(VisibilityScope)
+  visibility_scope?: VisibilityScope;
+
+  @ApiPropertyOptional({
+    enum: ContextType,
+    description: 'Context type (required if visibility is GROUP)',
+  })
+  @ValidateIf((o) => o.visibility === AnnotationVisibility.GROUP)
+  @IsEnum(ContextType)
+  context_type?: ContextType;
+
+  @ApiPropertyOptional({
+    description: 'Context ID (required if visibility is GROUP)',
+    example: 'institution-123',
+  })
+  @ValidateIf((o) => o.visibility === AnnotationVisibility.GROUP)
+  @IsString()
+  context_id?: string;
+
+  @ApiPropertyOptional({
+    description: 'Learner ID (required for RESPONSIBLES_OF_LEARNER scope)',
+    example: 'user-456',
+  })
+  @ValidateIf((o) => o.visibility_scope === VisibilityScope.RESPONSIBLES_OF_LEARNER)
+  @IsString()
+  learner_id?: string;
+
+  // ========================================
+  // AUTO-COMPUTED FIELDS
+  // ========================================
+
+  /**
+   * Auto-computed color key based on Cornell type
+   * Should not be provided in request
+   */
+  get color_key(): string {
+    return getColorForType(this.type);
+  }
+
+  /**
+   * Auto-computed semantic tags based on Cornell type
+   * Should not be provided in request
+   */
+  get tags_json(): string[] {
+    return getTagsForType(this.type);
+  }
+}
+
+/**
+ * DTO for updating highlight visibility
+ */
+export class UpdateHighlightVisibilityDto {
+  @ApiProperty({ enum: AnnotationVisibility })
+  @IsEnum(AnnotationVisibility)
+  visibility: AnnotationVisibility;
+
+  @ApiPropertyOptional({ enum: VisibilityScope })
+  @IsOptional()
+  @IsEnum(VisibilityScope)
+  visibility_scope?: VisibilityScope;
+
+  @ApiPropertyOptional({ enum: ContextType })
+  @IsOptional()
+  @IsEnum(ContextType)
+  context_type?: ContextType;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  context_id?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  learner_id?: string;
+}
+
+/**
+ * DTO for creating annotation comment (thread)
+ */
+export class CreateAnnotationCommentDto {
+  @ApiProperty({
+    description: 'Comment text',
+    example: 'I agree with this point',
+  })
+  @IsString()
+  text: string;
+}
