@@ -1,6 +1,6 @@
 'use client';
 
-import { useGameProgress } from '@/hooks/useGameProgress';
+import { useGameProgress } from '@/hooks/games/use-game-progress';
 import { GameStatsCard } from './GameStatsCard';
 import { StarsPerGameChart } from './StarsPerGameChart';
 import { Leaderboard } from './Leaderboard';
