@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState , useRef } from 'react';
 import Link from 'next/link';
 import { Menu, X, ChevronRight } from 'lucide-react';
 import type { ViewMode, SaveStatus, CueItem } from '@/lib/types/cornell';
@@ -11,9 +11,11 @@ import { CORNELL_LABELS } from '@/lib/cornell/labels';
 import { ActionToolbar } from './ActionToolbar';
 import { SuggestionsPanel } from './SuggestionsPanel';
 import { TextSelectionMenu, type SelectionAction } from './TextSelectionMenu'; 
-import { EducationalPDFViewer } from './EducationalPDFViewer'; // NEW
 import { useContentContext } from '@/hooks/cornell/use-content-context';
 import { useSuggestions } from '@/hooks/cornell/use-suggestions';
+import { useTextSelection } from '@/hooks/ui/use-text-selection';
+import { getColorForKey, getDefaultPalette, DEFAULT_COLOR } from '@/lib/constants/colors';
+
 
 interface ModernCornellLayoutProps {
   // Header
@@ -22,7 +24,7 @@ interface ModernCornellLayoutProps {
   onModeToggle: () => void;
   saveStatus: SaveStatus;
   lastSaved?: Date | null;
-  contentId: string; // NEW - for fetching context
+  contentId: string;
 
   // Content
   viewer: React.ReactNode;
@@ -43,11 +45,16 @@ interface ModernCornellLayoutProps {
   summary: string;
   onSummaryChange: (summary: string) => void;
 
-  // Creation (NEW)
+  // Creation
   onCreateStreamItem?: (type: 'annotation' | 'note' | 'question' | 'star', content: string, context?: any) => void;
+
+  // Highlight Controls
+  selectedColor?: string;
+  onColorChange?: (color: string) => void;
+  disableSelectionMenu?: boolean;
 }
 
-type SidebarTab = 'stream' | 'cues';
+type SidebarTab = 'stream' | 'cues' | 'synthesis';
 
 export function ModernCornellLayout({
   title,
@@ -67,15 +74,42 @@ export function ModernCornellLayout({
   onCueClick,
   summary,
   onSummaryChange,
-  onCreateStreamItem, // NEW
+  onCreateStreamItem,
+  selectedColor = DEFAULT_COLOR,
+  onColorChange,
+  disableSelectionMenu = false,
 }: ModernCornellLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<SidebarTab>('stream');
   const [activeAction, setActiveAction] = useState<'highlight' | 'note' | 'question' | 'ai' | null>(null);
   
   // Selection State
-  const [selectionInfo, setSelectionInfo] = useState<{ text: string; rect: DOMRect | null } | null>(null);
-  const [chatInitialInput, setChatInitialInput] = useState(''); // NEW
+  const [contentElement, setContentElement] = useState<HTMLDivElement | null>(null);
+  const { selection, clearSelection } = useTextSelection(contentElement);
+  const [chatInitialInput, setChatInitialInput] = useState('');
+
+  // Handle selection actions
+  const handleSelectionAction = (action: SelectionAction, text: string) => {
+    switch (action) {
+      case 'highlight':
+        onCreateStreamItem?.('annotation', text, selection);
+        break;
+      case 'note':
+        onCreateStreamItem?.('note', text, selection);
+        break;
+      case 'question':
+        onCreateStreamItem?.('question', text, selection);
+        break;
+      case 'star':
+        onCreateStreamItem?.('star', text, selection);
+        break;
+      case 'ai':
+        setChatInitialInput(text);
+        // TODO: Open chat panel
+        break;
+    }
+    clearSelection();
+  };
   
   // Fetch content context and suggestions
   const { suggestions, acceptSuggestion, dismissSuggestion, hasUnseenSuggestions } = useSuggestions(contentId);
@@ -94,45 +128,97 @@ export function ModernCornellLayout({
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="h-14 sm:h-16 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 sm:px-6 flex items-center justify-between shrink-0 z-30">
-        <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 md:px-4 py-2 md:py-3 flex items-center justify-between gap-2 md:gap-4 flex-shrink-0">
+        {/* Left: Back button */}
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
           <Link 
             href="/dashboard" 
-            className="flex items-center text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors p-1 sm:p-2 -ml-1 sm:-ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-            title="Back to Dashboard"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0"
           >
-            <ChevronRight className="h-5 w-5 rotate-180" />
+            <ChevronRight className="w-5 h-5 rotate-180 text-gray-600 dark:text-gray-300" />
           </Link>
-          <div className="h-5 sm:h-6 w-px bg-gray-200 dark:bg-gray-700 hidden sm:block"></div>
-          <h1 className="text-base sm:text-xl font-semibold text-gray-900 dark:text-gray-100 truncate" title={title}>
-            {title || 'Untitled Document'}
-          </h1>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-          <SaveStatusIndicator status={saveStatus} lastSaved={lastSaved} />
-          
-          {/* Mobile: Sidebar Toggle */}
+        {/* Center: Color Picker & Actions */}
+        <div className="flex items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar">
+           {/* Color Picker */}
+           <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-full p-1 shrink-0">
+              {getDefaultPalette().map((color) => (
+                <button
+                  key={color}
+                  className={`w-6 h-6 rounded-full border-2 transition-all ${
+                    selectedColor === color ? 'border-gray-800 dark:border-gray-100 scale-110 shadow-sm' : 'border-transparent hover:scale-105'
+                  }`}
+                  style={{ backgroundColor: getColorForKey(color) }}
+                  onClick={() => onColorChange?.(color)}
+                  title={color.charAt(0).toUpperCase() + color.slice(1)}
+                  aria-label={`Select color ${color}`}
+                />
+              ))}
+           </div>
+
+           <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 shrink-0"></div>
+
+           {/* Action Buttons */}
+           <div className="flex items-center gap-2 shrink-0">
+              <button 
+                className={`flex items-center gap-1.5 px-2 md:px-3 py-1.5 text-sm font-medium rounded-lg transition-colors
+                  ${activeAction === 'ai'
+                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 ring-2 ring-purple-500'
+                    : 'bg-purple-50 text-purple-700 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50'
+                  }`}
+                onClick={() => setActiveAction(activeAction === 'ai' ? null : 'ai')}
+                title="IA Assistente"
+              >
+                <span className="text-lg">✨</span>
+                <span className="hidden md:inline">IA</span>
+              </button>
+              <button 
+                 className={`flex items-center gap-1.5 px-2 md:px-3 py-1.5 text-sm font-medium rounded-lg transition-colors
+                  ${activeAction === 'question'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 ring-2 ring-blue-500'
+                    : 'bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50'
+                  }`}
+                 onClick={() => setActiveAction(activeAction === 'question' ? null : 'question')}
+                 title="Triagem"
+              >
+                <span className="text-lg">📖</span>
+                <span className="hidden md:inline">Triagem</span>
+              </button>
+           </div>
+        </div>
+
+        {/* Right: Menu */}
+        <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden flex items-center p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
-            aria-label="Toggle sidebar"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors lg:hidden"
+            aria-label="Menu"
           >
-            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {sidebarOpen ? (
+              <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            ) : (
+              <Menu className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            )}
           </button>
         </div>
       </header>
 
       {/* Main: PDF + Sidebar */}
       <div className="flex-1 flex overflow-hidden relative">
-        {/* PDF Viewer (70% desktop, 100% mobile) */}
-        <div className="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-950">
-          <EducationalPDFViewer theme="sepia">
-            {viewer}
-          </EducationalPDFViewer>
+        {/* PDF Viewer */}
+        <div className="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-950" ref={setContentElement}>
+          {!disableSelectionMenu && (
+            <TextSelectionMenu 
+              selectionInfo={selection} 
+              onAction={handleSelectionAction} 
+            />
+          )}
+          
+          {viewer}
         </div>
 
-        {/* Sidebar (30% desktop, overlay mobile) */}
+        {/* Sidebar */}
         <aside
           className={`
             fixed lg:relative inset-y-0 right-0 z-40
@@ -169,13 +255,24 @@ export function ModernCornellLayout({
             >
               {CORNELL_LABELS.IMPORTANT_QUESTIONS}
             </button>
+            <button
+              onClick={() => setActiveTab('synthesis')}
+              className={`
+                flex-1 px-4 py-3 text-sm font-medium transition-colors
+                ${activeTab === 'synthesis' 
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' 
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }
+              `}
+            >
+              {CORNELL_LABELS.SYNTHESIS}
+            </button>
           </div>
 
           {/* Tab Content */}
           <div className="flex-1 overflow-y-auto">
             {activeTab === 'stream' && (
               <div className="p-4 space-y-4">
-                {/* Search Bar */}
                 <SearchBar
                   value={searchQuery}
                   onChange={setSearchQuery}
@@ -185,7 +282,6 @@ export function ModernCornellLayout({
                   resultCount={filteredCount}
                 />
                 
-                {/* Stream Items */}
                 <div className="space-y-3">
                   {filteredItems.length === 0 ? (
                     <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
@@ -210,7 +306,7 @@ export function ModernCornellLayout({
             )}
 
             {activeTab === 'cues' && (
-              <div className="space-y-3">
+              <div className="p-4 space-y-3">
                 {cues.length === 0 ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
                     Nenhum tópico ainda. Adicione perguntas para estudar.
@@ -230,6 +326,20 @@ export function ModernCornellLayout({
                 )}
               </div>
             )}
+
+            {activeTab === 'synthesis' && (
+              <div className="p-4 h-full flex flex-col">
+                <label className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <span>{CORNELL_LABELS.SYNTHESIS}</span>
+                </label>
+                <textarea
+                  value={summary}
+                  onChange={(e) => onSummaryChange(e.target.value)}
+                  className="flex-1 w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-100"
+                  placeholder="Resuma os principais pontos aqui..."
+                />
+              </div>
+            )}
           </div>
         </aside>
 
@@ -242,20 +352,27 @@ export function ModernCornellLayout({
         )}
       </div>
 
-      {/* Bottom: Summary (Collapsible on mobile) */}
-      <div className="h-0 sm:h-32 lg:h-40 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0 overflow-hidden transition-all">
-        <div className="h-full p-4">
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-            {CORNELL_LABELS.SYNTHESIS}
-          </label>
-          <textarea
-            value={summary}
-            onChange={(e) => onSummaryChange(e.target.value)}
-            className="w-full h-[calc(100%-2rem)] px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-100"
-            placeholder="Resuma os principais pontos aqui..."
-          />
+      {/* Footer with Title and Status */}
+      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <h1 className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+            {title}
+          </h1>
         </div>
-      </div>
+        <div className="flex items-center gap-4 flex-shrink-0">
+          <SaveStatusIndicator status={saveStatus} lastSaved={lastSaved} />
+          {lastSaved && (
+            <div className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
+              Modificado: {new Date(lastSaved as Date).toLocaleString('pt-BR', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              })}
+            </div>
+          )}
+        </div>
+      </footer>
     </div>
   );
 }

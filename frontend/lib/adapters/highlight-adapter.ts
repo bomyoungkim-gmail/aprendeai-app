@@ -1,33 +1,5 @@
-/**
- * Highlight Adapter
- * Converts between @react-pdf-viewer highlight format and backend Highlight model
- */
-
-export interface BackendHighlight {
-  id: string;
-  contentId: string;
-  userId: string;
-  kind: 'HIGHLIGHT' | 'UNDERLINE' | 'STRIKETHROUGH';
-  targetType: 'PDF_TEXT' | 'PDF_RECT';
-  pageNumber: number | null;
-  anchorJson: {
-    startOffset: number;
-    endOffset: number;
-    boundingRect?: {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    };
-    pageIndex?: number;
-    text?: string;
-  };
-  colorKey: string;
-  commentText: string | null;
-  tagsJson: string[];
-  createdAt: string;
-  updatedAt: string;
-}
+import type { Highlight as BackendHighlight } from '@/lib/types/cornell';
+import { getColorForKey, getEmojiForColor } from '@/lib/constants/colors';
 
 export interface ReactPDFHighlight {
   id: string;
@@ -66,6 +38,7 @@ export interface ReactPDFHighlight {
     top: number;
     width: number;
   }>;
+  colorKey: string; // Added to track the color of each highlight
 }
 
 /**
@@ -74,58 +47,69 @@ export interface ReactPDFHighlight {
 export function backendToReactPDF(highlight: BackendHighlight): ReactPDFHighlight | null {
   try {
     const { anchorJson, colorKey, commentText, pageNumber } = highlight;
-    const pageIndex = pageNumber !== null ? pageNumber - 1 : 0; // Backend uses 1-indexed pages
+    const pageIndex = (pageNumber ?? 1) - 1; // Backend uses 1-indexed pages
 
-    // Extract bounding rect from anchorJson
-    const boundingRect = anchorJson.boundingRect || {
-      x: 0,
-      y: 0,
-      width: 100,
-      height: 20,
-    };
-
-    return {
-      id: highlight.id,
-      content: {
-        text: anchorJson.text || '',
-      },
-      position: {
-        boundingRect: {
-          x1: boundingRect.x,
-          y1: boundingRect.y,
-          x2: boundingRect.x + boundingRect.width,
-          y2: boundingRect.y + boundingRect.height,
-          width: boundingRect.width,
-          height: boundingRect.height,
-          pageIndex,
+    // Handle PDF_TEXT type
+    if (highlight.targetType === 'PDF' && anchorJson.type === 'PDF_TEXT') {
+       const { position, quote } = anchorJson;
+       const boundingRect = position.boundingRect;
+       
+       return {
+        id: highlight.id,
+        content: {
+          text: quote || '',
         },
-        rects: [
-          {
-            x1: boundingRect.x,
-            y1: boundingRect.y,
-            x2: boundingRect.x + boundingRect.width,
-            y2: boundingRect.y + boundingRect.height,
+        position: {
+          boundingRect: {
+            x1: boundingRect.x1,
+            y1: boundingRect.y1,
+            x2: boundingRect.x2,
+            y2: boundingRect.y2,
             width: boundingRect.width,
             height: boundingRect.height,
             pageIndex,
           },
-        ],
-        pageIndex,
-      },
-      comment: {
-        emoji: getEmojiForColor(colorKey),
-        message: commentText || '',
-      },
-      highlightAreas: [
-        {
-          height: boundingRect.height,
-          left: boundingRect.x,
+          rects: position.rects.map(r => ({
+             x1: r.x1,
+             y1: r.y1,
+             x2: r.x2,
+             y2: r.y2,
+             width: r.width,
+             height: r.height,
+             pageIndex: r.pageNumber ? r.pageNumber - 1 : pageIndex, 
+          })),
           pageIndex,
-          top: boundingRect.y,
-          width: boundingRect.width,
         },
-      ],
-    };
+        comment: {
+          emoji: getEmojiForColor(colorKey),
+          message: commentText || '',
+        },
+        // Reconstruct highlightAreas from position.rects for multi-line support
+        highlightAreas: position.rects && position.rects.length > 0
+          ? position.rects.map(rect => ({
+              height: rect.height,
+              left: rect.x1,
+              pageIndex: rect.pageNumber ? rect.pageNumber - 1 : pageIndex,
+              top: rect.y1,
+              width: rect.width,
+            }))
+          : [
+              // Fallback to single area from boundingRect
+              {
+                height: boundingRect.height,
+                left: boundingRect.x1,
+                pageIndex,
+                top: boundingRect.y1,
+                width: boundingRect.width,
+              },
+            ],
+        colorKey: colorKey, // Include the color key
+      };
+    }
+    
+    // TODO: Handle other types (PDF_AREA, IMAGE, etc.) if needed
+    return null;
+
   } catch (error) {
     console.error('Failed to convert backend highlight to ReactPDF format:', error);
     return null;
@@ -140,64 +124,37 @@ export function reactPDFToBackend(
   contentId: string,
   userId: string,
   colorKey: string = 'yellow'
-): Omit<BackendHighlight, 'id' | 'createdAt' | 'updatedAt'> {
+): Omit<import('@/lib/types/cornell').CreateHighlightDto, 'kind' | 'target_type'> & { kind: 'TEXT'; target_type: 'PDF' } {
   const pageIndex = highlight.position?.pageIndex ?? 0;
   const boundingRect = highlight.position?.boundingRect || highlight.highlightAreas?.[0];
 
   return {
-    contentId,
-    userId,
-    kind: 'HIGHLIGHT',
-    targetType: 'PDF_TEXT',
-    pageNumber: pageIndex + 1, // Backend uses 1-indexed pages
-    anchorJson: {
-      startOffset: 0, // Will be calculated if needed
-      endOffset: highlight.content?.text?.length || 0,
-      boundingRect: boundingRect
+    kind: 'TEXT' as const,
+    target_type: 'PDF' as const,
+    page_number: pageIndex + 1,
+    anchor_json: {
+      type: 'PDF_TEXT',
+      position: {
+        boundingRect: boundingRect
         ? {
-            x: ('left' in boundingRect ? boundingRect.left : 'x1' in boundingRect ? boundingRect.x1 : 0),
-            y: ('top' in boundingRect ? boundingRect.top : 'y1' in boundingRect ? boundingRect.y1 : 0),
+            x1: ('left' in boundingRect ? boundingRect.left : 'x1' in boundingRect ? boundingRect.x1 : 0),
+            y1: ('top' in boundingRect ? boundingRect.top : 'y1' in boundingRect ? boundingRect.y1 : 0),
+            x2: ('left' in boundingRect ? boundingRect.left + boundingRect.width : 'x2' in boundingRect ? boundingRect.x2 : 0),
+            y2: ('top' in boundingRect ? boundingRect.top + boundingRect.height : 'y2' in boundingRect ? boundingRect.y2 : 0),
             width: boundingRect.width || 0,
             height: boundingRect.height || 0,
           }
-        : undefined,
-      pageIndex,
-      text: highlight.content?.text || '',
+        : { x1: 0, y1: 0, x2: 0, y2: 0, width: 0, height: 0 },
+        // CRITICAL FIX: Save actual rects for multi-line support
+        rects: highlight.position?.rects || [],
+        pageNumber: pageIndex + 1,
+      },
+      quote: highlight.content?.text || '',
     },
-    colorKey,
-    commentText: highlight.comment?.message || null,
-    tagsJson: [],
+    color_key: colorKey,
+    comment_text: highlight.comment?.message || undefined,
+    tags_json: [],
   };
-}
-
-/**
- * Get emoji representation for color key
- */
-function getEmojiForColor(colorKey: string): string {
-  const emojiMap: Record<string, string> = {
-    yellow: '💛',
-    green: '💚',
-    blue: '💙',
-    red: '❤️',
-    purple: '💜',
-    orange: '🧡',
-  };
-  return emojiMap[colorKey] || '💡';
-}
-
-/**
- * Get CSS color for highlight color key
- */
-export function getColorForKey(colorKey: string): string {
-  const colorMap: Record<string, string> = {
-    yellow: 'rgba(255, 235, 59, 0.3)',
-    green: 'rgba(76, 175, 80, 0.3)',
-    blue: 'rgba(33, 150, 243, 0.3)',
-    red: 'rgba(244, 67, 54, 0.3)',
-    purple: 'rgba(156, 39, 176, 0.3)',
-    orange: 'rgba(255, 152, 0, 0.3)',
-  };
-  return colorMap[colorKey] || colorMap.yellow;
 }
 
 /**
@@ -209,17 +166,8 @@ export function convertHighlightsToReactPDF(
 ): ReactPDFHighlight[] {
   return highlights
     .map((h) => {
-      // Convert to BackendHighlight if needed
-      const backendHighlight: BackendHighlight = h.kind === 'TEXT' || h.kind === 'AREA' 
-        ? {
-            ...h,
-            kind: 'HIGHLIGHT' as const,
-            targetType: h.targetType === 'PDF' ? 'PDF_TEXT' as const : 'PDF_RECT' as const,
-            pageNumber: h.pageNumber ?? null,
-            commentText: h.commentText ?? null,
-          }
-        : h;
-      return backendToReactPDF(backendHighlight);
+      // Direct pass-through, assuming data is in correct BackendHighlight format
+      return backendToReactPDF(h as BackendHighlight);
     })
     .filter((h): h is ReactPDFHighlight => h !== null);
 }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Highlighter, FileText, Sparkles, Trash2, Edit2, MapPin } from 'lucide-react';
 import type { UnifiedStreamItem, AnnotationStreamItem, NoteStreamItem, AISuggestionStreamItem } from '@/lib/types/unified-stream';
-import { HIGHLIGHT_COLORS } from '@/lib/types/cornell';
+import { HIGHLIGHT_COLORS, getColorForKey } from '@/lib/constants/colors';
 import { AnnotationEditor, NoteEditor } from './InlineEditor';
 import { ITEM_TYPE_LABELS, ITEM_TYPE_ICONS } from '@/lib/cornell/labels';
 import type { QuestionStreamItem, StarStreamItem, AIResponseStreamItem } from '@/lib/types/unified-stream';
@@ -50,10 +50,11 @@ function AnnotationCard({ item, onClick, onEdit, onDelete, onSaveEdit }: {
   onSaveEdit?: (item: UnifiedStreamItem, updates: any) => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
-  const color = HIGHLIGHT_COLORS[item.colorKey as keyof typeof HIGHLIGHT_COLORS] || HIGHLIGHT_COLORS.yellow;
+  const rgb = getColorForKey(item.colorKey);
   
   const handleSaveEdit = (comment: string, colorKey: string) => {
-    onSaveEdit?.(item, { commentText: comment, colorKey });
+    // Backend expects snake_case field names
+    onSaveEdit?.(item, { comment_text: comment, color_key: colorKey });
     setIsEditing(false);
   };
   
@@ -72,7 +73,8 @@ function AnnotationCard({ item, onClick, onEdit, onDelete, onSaveEdit }: {
   
   return (
     <div 
-      className="group relative p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer"
+      className="group relative p-3 rounded-lg border hover:shadow-md transition-all cursor-pointer"
+      style={{ borderColor: rgb }}
       onClick={onClick}
     >
       {/* Header */}
@@ -80,7 +82,7 @@ function AnnotationCard({ item, onClick, onEdit, onDelete, onSaveEdit }: {
         <div className="flex items-center gap-2">
           <Highlighter 
             className="h-4 w-4 shrink-0" 
-            style={{ color: color.border }}
+            style={{ color: rgb }}
           />
           {item.pageNumber && (
             <span className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
@@ -119,7 +121,7 @@ function AnnotationCard({ item, onClick, onEdit, onDelete, onSaveEdit }: {
       {item.quote && (
         <p 
           className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3 px-2 py-1 rounded"
-          style={{ backgroundColor: color.bg + '20' }}
+          style={{ backgroundColor: rgb + '20' }}
         >
           "{item.quote}"
         </p>
