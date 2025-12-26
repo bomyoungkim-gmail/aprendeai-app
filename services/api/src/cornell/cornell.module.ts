@@ -18,6 +18,8 @@ import { cacheConfig } from "../config/cache.config";
 
 import { ContentPedagogicalController } from "./controllers/content-pedagogical.controller";
 import { ContentPedagogicalService } from "./services/content-pedagogical.service";
+import { CornellHighlightsController } from "./controllers/cornell-highlights.controller";
+import { CornellHighlightsService } from "./services/cornell-highlights.service";
 
 @Module({
   imports: [
@@ -31,8 +33,21 @@ import { ContentPedagogicalService } from "./services/content-pedagogical.servic
     TopicMasteryModule,
     NotificationsModule,
   ],
-  controllers: [CornellController, HighlightsController, FilesController, ContentPedagogicalController],
-  providers: [CornellService, ContentService, StorageService, ContentAccessService, ContentPedagogicalService],
+  controllers: [
+    CornellController,
+    HighlightsController,
+    FilesController,
+    ContentPedagogicalController,
+    CornellHighlightsController,
+  ],
+  providers: [
+    CornellService,
+    ContentService,
+    StorageService,
+    ContentAccessService,
+    ContentPedagogicalService,
+    CornellHighlightsService,
+  ],
   exports: [CornellService, ContentService, StorageService, ContentAccessService],
 })
 export class CornellModule {}
