@@ -11,6 +11,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   CreateCornellHighlightDto,
@@ -23,10 +24,14 @@ import {
   VisibilityScope,
   ContextType,
 } from '../../common/constants/enums';
+import { CornellEvent, type CornellEventPayload } from '../events/cornell.events';
 
 @Injectable()
 export class CornellHighlightsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   /**
    * Create a new Cornell highlight
@@ -47,7 +52,7 @@ export class CornellHighlightsService {
       );
     }
 
-    return this.prisma.highlight.create({
+    const highlight = await this.prisma.highlight.create({
       data: {
         contentId,
         userId,
@@ -71,6 +76,18 @@ export class CornellHighlightsService {
         user: { select: { id: true, name: true, email: true } },
       },
     });
+
+    // Emit event for real-time notifications
+    this.eventEmitter.emit(CornellEvent.HIGHLIGHT_CREATED, {
+      contentId,
+      highlightId: highlight.id,
+      userId,
+      action: CornellEvent.HIGHLIGHT_CREATED,
+      timestamp: Date.now(),
+      data: { type: dto.type },
+    } as CornellEventPayload);
+
+    return highlight;
   }
 
   /**
@@ -138,7 +155,7 @@ export class CornellHighlightsService {
       );
     }
 
-    return this.prisma.highlight.update({
+    const updated = await this.prisma.highlight.update({
       where: { id: highlightId },
       data: {
         visibility: dto.visibility,
@@ -148,6 +165,18 @@ export class CornellHighlightsService {
         learnerId: dto.learner_id,
       },
     });
+
+    // Emit event
+    this.eventEmitter.emit(CornellEvent.HIGHLIGHT_UPDATED, {
+      contentId: highlight.contentId,
+      highlightId,
+      userId,
+      action: CornellEvent.HIGHLIGHT_UPDATED,
+      timestamp: Date.now(),
+      data: { visibility: dto.visibility },
+    } as CornellEventPayload);
+
+    return updated;
   }
 
   /**
@@ -166,13 +195,24 @@ export class CornellHighlightsService {
       throw new ForbiddenException('Only owner can delete');
     }
 
-    return this.prisma.highlight.update({
+    const deleted = await this.prisma.highlight.update({
       where: { id: highlightId },
       data: {
         status: AnnotationStatus.DELETED,
         deletedAt: new Date(),
       },
     });
+
+    // Emit event
+    this.eventEmitter.emit(CornellEvent.HIGHLIGHT_DELETED, {
+      contentId: highlight.contentId,
+      highlightId,
+      userId,
+      action: CornellEvent.HIGHLIGHT_DELETED,
+      timestamp: Date.now(),
+    } as CornellEventPayload);
+
+    return deleted;
   }
 
   /**
@@ -196,7 +236,7 @@ export class CornellHighlightsService {
       throw new ForbiddenException('Cannot comment on this highlight');
     }
 
-    return this.prisma.annotationComment.create({
+    const comment = await this.prisma.annotationComment.create({
       data: {
         highlightId,
         userId,
@@ -207,6 +247,18 @@ export class CornellHighlightsService {
         user: { select: { id: true, name: true } },
       },
     });
+
+    // Emit event
+    this.eventEmitter.emit(CornellEvent.COMMENT_ADDED, {
+      contentId: highlight.contentId,
+      highlightId,
+      userId,
+      action: CornellEvent.COMMENT_ADDED,
+      timestamp: Date.now(),
+      data: { commentId: comment.id },
+    } as CornellEventPayload);
+
+    return comment;
   }
 
   // ========================================

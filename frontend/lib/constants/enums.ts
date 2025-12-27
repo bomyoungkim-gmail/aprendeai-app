@@ -177,7 +177,18 @@ export const CONTEXT_TYPE_LABELS: Record<ContextType, string> = {
  * Human-readable labels for annotation visibility
  */
 export const ANNOTATION_VISIBILITY_LABELS: Record<AnnotationVisibility, string> = {
-  [AnnotationVisibility.PRIVATE]: '🔒 Privado',
-  [AnnotationVisibility.GROUP]: '👥 Compartilhado',
-  [AnnotationVisibility.PUBLIC]: '🌐 Público',
+  [AnnotationVisibility.PRIVATE]: 'Privado',
+  [AnnotationVisibility.GROUP]: 'Grupo',
+  [AnnotationVisibility.PUBLIC]: 'Público',
 };
+
+// Cornell Type Labels (for UI)
+export const CORNELL_TYPE_LABELS: Record<string, string> = {
+  NOTE: 'Nota',
+  QUESTION: 'Questão',
+  STAR: 'Importante',
+  HIGHLIGHT: 'Destaque',
+  SUMMARY: 'Resumo',
+  AI_RESPONSE: 'Resposta IA',
+};
+
