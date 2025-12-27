@@ -3,10 +3,13 @@
  * 
  * React Query hooks for Cornell Notes highlights CRUD operations.
  * Integrates with backend API with optimistic updates and caching.
+ * Supports offline operations with automatic queue.
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApiClient } from '@/hooks/use-api-client';
+import { useOnlineStatus } from '@/hooks/use-online-status';
+import { offlineQueue } from '@/lib/cornell/offline-queue';
 import type {
   AnnotationVisibility,
   VisibilityScope,
@@ -130,9 +133,20 @@ export function useGetHighlights(contentId: string) {
 export function useCreateHighlight(contentId: string) {
   const api = useApiClient();
   const queryClient = useQueryClient();
+  const isOnline = useOnlineStatus();
 
   return useMutation({
     mutationFn: async (data: CreateHighlightData) => {
+      // If offline, queue the operation
+      if (!isOnline) {
+        offlineQueue.add({
+          type: 'CREATE',
+          contentId,
+          payload: data,
+        });
+        throw new Error('Offline - operation queued');
+      }
+
       const response = await api.post<Highlight>(
         `/cornell/contents/${contentId}/highlights`,
         data
