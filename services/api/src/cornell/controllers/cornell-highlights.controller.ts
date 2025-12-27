@@ -131,4 +131,10 @@ export class CornellHighlightsController {
   ) {
     return this.highlightsService.createComment(highlightId, userId, dto);
   }
+
+  @Sse('events/:contentId')
+  @ApiOperation({ summary: 'Stream real-time events for content' })
+  events(@Param('contentId') contentId: string): Observable<MessageEvent> {
+    return this.highlightsService.subscribeToEvents(contentId);
+  }
 }

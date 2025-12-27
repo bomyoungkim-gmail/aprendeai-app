@@ -12,6 +12,8 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { fromEvent } from 'rxjs';
+import { map, filter } from 'rxjs/operators';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   CreateCornellHighlightDto,
@@ -408,5 +410,18 @@ export class CornellHighlightsService {
    */
   private getHighlightKind(targetType: string): 'TEXT' | 'AREA' {
     return targetType === 'VIDEO' || targetType === 'AUDIO' ? 'TEXT' : 'AREA';
+  }
+
+  /**
+   * Subscribe to Cornell events for a specific content
+   * Returns an Observable for SSE
+   */
+  subscribeToEvents(contentId: string) {
+    return fromEvent(this.eventEmitter, 'cornell.*').pipe(
+      filter((payload: any) => payload.contentId === contentId),
+      map((payload: any) => ({
+        data: payload,
+      })),
+    );
   }
 }
