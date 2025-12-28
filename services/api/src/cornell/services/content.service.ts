@@ -165,6 +165,20 @@ export class ContentService {
       this.logger.warn(`Failed to track upload activity: ${err.message}`)
     );
 
+    // Determine owner based on context and dto
+    // If scope is FAMILY or INSTITUTION, use that as owner
+    // Otherwise default to USER
+    let ownerType: string;
+    let ownerId: string;
+
+    if (dto.scopeType === 'FAMILY' || dto.scopeType === 'INSTITUTION') {
+      ownerType = dto.scopeType;
+      ownerId = dto.scopeId || userId; //  Fallback to userId if no scopeId
+    } else {
+      ownerType = 'USER';
+      ownerId = userId;
+    }
+
     // 3. Create Content record
     const content = await this.prisma.content.create({
       data: {
@@ -173,7 +187,9 @@ export class ContentService {
         originalLanguage: dto.originalLanguage,
         rawText,
         fileId: fileRecord.id,
-        ownerUserId: userId,
+        ownerUserId: userId, // Legacy field - kept for backward compat
+        ownerType: ownerType, // NEW: Consolidated owner pattern
+        ownerId: ownerId,     // NEW: Consolidated owner ID
         scopeType: dto.scopeType,
         scopeId: dto.scopeId,
         metadata: {
@@ -194,9 +210,13 @@ export class ContentService {
    * Create content manually (e.g. for external videos or text-only)
    */
   async createManualContent(userId: string, dto: any): Promise<Content> {
-    // Basic validation
+    //  Basic validation
     if (!dto.title) throw new BadRequestException("Title is required");
     if (!dto.type) throw new BadRequestException("Type is required");
+
+    // NEW: Support owner type specification or default to USER
+    const ownerType = dto.ownerType || 'USER';
+    const ownerId = dto.ownerId || userId;
 
     // Create Content record without file
     const content = await this.prisma.content.create({
@@ -205,8 +225,11 @@ export class ContentService {
         type: dto.type,
         originalLanguage: dto.originalLanguage || "PT_BR", // Default
         rawText: dto.rawText || "",
-        ownerUserId: userId,
-        scopeType: ScopeType.USER, 
+        ownerUserId: userId, // Legacy
+        ownerType: ownerType, // NEW
+        ownerId: ownerId,     // NEW
+        scopeType: dto.scopeType || ScopeType.USER,
+        scopeId: dto.scopeId,
         metadata: {
           duration: dto.duration,
           thumbnailUrl: dto.thumbnailUrl,
@@ -475,18 +498,10 @@ export class ContentService {
       throw new NotFoundException(`Content not found`);
     }
 
-    // Check ownership/access
-    if (content.ownerUserId !== userId) {
-      // Check Family Access
-      if (content.scopeType === ScopeType.FAMILY && content.scopeId) {
-        const families = await this.familyService.findAllForUser(userId);
-        const isFamilyMember = families.some((f) => f.id === content.scopeId);
-        if (!isFamilyMember) {
-          throw new ForbiddenException("Access denied to this content");
-        }
-      } else {
-        throw new ForbiddenException("Access denied to this content");
-      }
+    // NEW: Use canAccessContent helper for unified ownership check
+    const hasAccess = await this.canAccessContent(contentId, userId);
+    if (!hasAccess) {
+      throw new ForbiddenException("Access denied to this content");
     }
 
     // Transform BigInt to Number for JSON serialization
