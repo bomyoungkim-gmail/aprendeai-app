@@ -15,6 +15,7 @@ import { UserRole } from "@prisma/client";
 import { InstitutionInviteService } from "../institutions/institution-invite.service";
 import { InstitutionDomainService } from "../institutions/institution-domain.service";
 import { ApprovalService } from "../institutions/approval.service";
+import { FeatureFlagsService } from "../common/feature-flags.service";
 
 @Injectable()
 export class AuthService {
@@ -27,6 +28,7 @@ export class AuthService {
     private inviteService: InstitutionInviteService,
     private domainService: InstitutionDomainService,
     private approvalService: ApprovalService,
+    private featureFlagsService: FeatureFlagsService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
@@ -39,7 +41,26 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = { email: user.email, sub: user.id, role: user.role };
+    // Check feature flag for context roles
+    const useContextRoles = await this.featureFlagsService.isEnabled(
+      'auth.context_role_v2',
+      user.id
+    );
+
+    // Build JWT payload based on feature flag
+    const payload = useContextRoles
+      ? {
+          email: user.email,
+          sub: user.id,
+          systemRole: user.systemRole,
+          contextRole: user.contextRole,
+          activeInstitutionId: user.activeInstitutionId,
+        }
+      : {
+          email: user.email,
+          sub: user.id,
+          role: user.role, // Legacy single role
+        };
 
     // Validate user has subscription (self-heal if missing)
     const hasSubscription =
@@ -81,6 +102,9 @@ export class AuthService {
           email: true,
           name: true,
           role: true,
+          systemRole: true,
+          contextRole: true,
+          activeInstitutionId: true,
         },
       });
 
@@ -88,8 +112,27 @@ export class AuthService {
         throw new UnauthorizedException('User not found');
       }
 
-      // Generate new access token
-      const newPayload = { email: user.email, sub: user.id, role: user.role };
+      // Check feature flag for context roles
+      const useContextRoles = await this.featureFlagsService.isEnabled(
+        'auth.context_role_v2',
+        user.id
+      );
+
+      // Generate new access token with appropriate payload
+      const newPayload = useContextRoles
+        ? {
+            email: user.email,
+            sub: user.id,
+            systemRole: user.systemRole,
+            contextRole: user.contextRole,
+            activeInstitutionId: user.activeInstitutionId,
+          }
+        : {
+            email: user.email,
+            sub: user.id,
+            role: user.role,
+          };
+
       const access_token = this.jwtService.sign(newPayload, { expiresIn: '15m' });
 
       return {
