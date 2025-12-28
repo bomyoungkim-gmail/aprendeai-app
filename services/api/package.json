@@ -32,6 +32,9 @@
     "backfill:entitlement-scopes": "ts-node scripts/backfill-entitlement-scopes.ts",
     "backfill:entitlement-scopes:dry-run": "ts-node scripts/backfill-entitlement-scopes.ts --dry-run",
     "backfill:entitlement-scopes:validate": "ts-node scripts/backfill-entitlement-scopes.ts --validate",
+    "backfill:content-ownership": "ts-node scripts/backfill-content-ownership.ts",
+    "backfill:content-ownership:dry-run": "ts-node scripts/backfill-content-ownership.ts --dry-run",
+    "backfill:content-ownership:validate": "ts-node scripts/backfill-content-ownership.ts --validate",
     "playwright": "playwright test"
   },
   "dependencies": {

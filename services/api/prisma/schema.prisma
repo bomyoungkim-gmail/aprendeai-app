@@ -408,6 +408,8 @@ model contents {
   scope_id                            String?
   source_url                          String?
   duration                            Int?
+  owner_type                          String?
+  owner_id                            String?
   annotations                         annotations[]
   assessments                         assessments[]
   content_chunks                      content_chunks[]
