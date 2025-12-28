@@ -30,6 +30,7 @@ import {
   GetInterventionPromptDto,
   GetDashboardPromptDto,
 } from "./dto/classroom.dto";
+import { TeacherVerifiedGuard } from "./guards/teacher-verified.guard";
 
 @ApiTags("Classrooms")
 @ApiBearerAuth()
@@ -48,6 +49,7 @@ export class ClassroomController {
   // CRUD Operations
 
   @Post()
+  @UseGuards(TeacherVerifiedGuard) // Only verified teachers can create classrooms
   @ApiOperation({ summary: "Create a new classroom" })
   async create(@Body() dto: CreateClassroomDto) {
     return this.classroomService.create(dto);
@@ -60,12 +62,14 @@ export class ClassroomController {
   }
 
   @Put(":id")
+  @UseGuards(TeacherVerifiedGuard) // Only verified teachers can update classrooms
   @ApiOperation({ summary: "Update classroom" })
   async update(@Param("id") id: string, @Body() dto: UpdateClassroomDto) {
     return this.classroomService.update(id, dto);
   }
 
   @Delete(":id")
+  @UseGuards(TeacherVerifiedGuard) // Only verified teachers can delete classrooms
   @ApiOperation({ summary: "Delete classroom" })
   async delete(@Param("id") id: string) {
     return this.classroomService.delete(id);
@@ -83,6 +87,7 @@ export class ClassroomController {
   // Enrollment
 
   @Post(":id/enroll")
+  @UseGuards(TeacherVerifiedGuard) // Only verified teachers can enroll students
   @ApiOperation({ summary: "Enroll student in classroom" })
   async enroll(
     @Param("id") classroomId: string,
