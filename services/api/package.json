@@ -26,6 +26,9 @@
     "test:sprint2": "jest --config ./test/jest-integration.config.js --testNamePattern='Sprint 2'",
     "test:sprint3": "jest --config ./test/jest-integration.config.js --testNamePattern='Sprint 3'",
     "seed:e2e": "ts-node prisma/seed-e2e.ts",
+    "backfill:context-roles": "ts-node scripts/backfill-context-roles.ts",
+    "backfill:context-roles:dry-run": "ts-node scripts/backfill-context-roles.ts --dry-run",
+    "backfill:context-roles:validate": "ts-node scripts/backfill-context-roles.ts --validate",
     "playwright": "playwright test"
   },
   "dependencies": {
