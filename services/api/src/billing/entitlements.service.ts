@@ -172,6 +172,46 @@ export class EntitlementsService {
   }
 
   /**
+   * Get entitlement snapshot for a user in a specific scope
+   * Falls back to USER scope if not found in requested scope
+   * 
+   * @param userId - User ID to check entitlements for
+   * @param scopeType - Scope type (USER, FAMILY, INSTITUTION)
+   * @param scopeId - Scope ID (defaults to userId for USER scope)
+   * @returns Entitlement snapshot or null
+   */
+  async getEntitlement(
+    userId: string, 
+    scopeType: ScopeType = 'USER' as ScopeType, 
+    scopeId?: string
+  ) {
+    const effectiveScopeId = scopeId || userId;
+
+    // Try to find snapshot for requested scope
+    const snapshot = await this.prisma.entitlementSnapshot.findFirst({
+      where: {
+        userId: userId,
+        scopeType: scopeType,
+        scopeId: effectiveScopeId,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // If found and not expired, return it
+    if (snapshot && snapshot.expiresAt > new Date()) {
+      return snapshot;
+    }
+
+    // If not found or expired, try USER scope fallback (unless already USER scope)
+    if (scopeType !== 'USER') {
+      return this.getEntitlement(userId, 'USER' as ScopeType, userId);
+    }
+
+    // If USER scope not found or expired, refresh it
+    return this.refreshSnapshot(userId);
+  }
+
+  /**
    * Resolve entitlements using Cached Snapshot (User specific)
    */
   async resolveUser(userId: string) {
