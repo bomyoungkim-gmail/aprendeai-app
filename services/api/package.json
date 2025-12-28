@@ -29,6 +29,9 @@
     "backfill:context-roles": "ts-node scripts/backfill-context-roles.ts",
     "backfill:context-roles:dry-run": "ts-node scripts/backfill-context-roles.ts --dry-run",
     "backfill:context-roles:validate": "ts-node scripts/backfill-context-roles.ts --validate",
+    "backfill:entitlement-scopes": "ts-node scripts/backfill-entitlement-scopes.ts",
+    "backfill:entitlement-scopes:dry-run": "ts-node scripts/backfill-entitlement-scopes.ts --dry-run",
+    "backfill:entitlement-scopes:validate": "ts-node scripts/backfill-entitlement-scopes.ts --validate",
     "playwright": "playwright test"
   },
   "dependencies": {

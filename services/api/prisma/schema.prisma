@@ -8,807 +8,64 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Institution {
-  id               String                 @id @default(uuid())
-  name             String
-  type             InstitutionType
-  city             String?
-  state            String?
-  country          String?
-  createdAt        DateTime               @default(now()) @map("created_at")
-  updatedAt        DateTime               @updatedAt @map("updated_at")
-  maxMembers       Int?
-  requiresApproval Boolean                @default(false) @map("requires_approval")
-  slug             String?                @unique
-  ssoEnabled       Boolean                @default(false) @map("sso_enabled")
-  kind             InstitutionKind        @default(EDUCATION)
-  assessments      Assessment[]
-  classes          Class[]
-  contents         Content[]
-  domains          InstitutionDomain[]
-  invites          InstitutionInvite[]
-  members          InstitutionMember[]
-  policy           OrgSubscriptionPolicy?
-  pendingUsers     PendingUserApproval[]
-  providerUsage    ProviderUsage[]
-  ssoConfig        SSOConfiguration?
-  subscriptions    Subscription[]
-  users            User[]
+model annotation_comments {
+  id           String           @id
+  highlight_id String
+  user_id      String
+  text         String
+  status       AnnotationStatus @default(ACTIVE)
+  deleted_at   DateTime?
+  created_at   DateTime         @default(now())
+  updated_at   DateTime
+  highlights   highlights       @relation(fields: [highlight_id], references: [id], onDelete: Cascade)
+  users        users            @relation(fields: [user_id], references: [id])
 
-  @@index([slug])
-  @@map("institutions")
+  @@index([highlight_id])
+  @@index([status])
+  @@index([user_id])
 }
 
-model InstitutionMember {
-  id            String       @id @default(uuid())
-  institutionId String       @map("institution_id")
-  userId        String       @map("user_id")
-  role          UserRole     @default(COMMON_USER)
-  status        MemberStatus @default(ACTIVE)
-  joinedAt      DateTime     @default(now()) @map("joined_at")
-  leftAt        DateTime?    @map("left_at")
-  institution   Institution  @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-  user          User         @relation("InstitutionMemberships", fields: [userId], references: [id], onDelete: Cascade)
+model annotation_shares {
+  annotation_id String
+  context_type  ShareContextType
+  context_id    String
+  mode          AnnotationShareMode @default(VIEW)
+  created_by    String?
+  created_at    DateTime            @default(now())
 
-  @@unique([institutionId, userId])
-  @@index([institutionId, status])
-  @@map("institution_members")
+  @@id([annotation_id, context_type, context_id])
+  @@index([context_type, context_id])
 }
 
-model InstitutionInvite {
-  id            String      @id @default(uuid())
-  institutionId String      @map("institution_id")
-  email         String
-  role          UserRole    @default(COMMON_USER)
-  token         String      @unique
-  expiresAt     DateTime    @map("expires_at")
-  usedAt        DateTime?   @map("used_at")
-  invitedBy     String      @map("invited_by")
-  createdAt     DateTime    @default(now()) @map("created_at")
-  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-  inviter       User        @relation("InvitesCreated", fields: [invitedBy], references: [id])
+model annotations {
+  id                String               @id
+  content_id        String
+  user_id           String
+  type              AnnotationType
+  start_offset      Int
+  end_offset        Int
+  selected_text     String?
+  text              String?
+  color             String?
+  visibility        AnnotationVisibility
+  group_id          String?
+  parent_id         String?
+  is_favorite       Boolean              @default(false)
+  created_at        DateTime             @default(now())
+  updated_at        DateTime
+  contents          contents             @relation(fields: [content_id], references: [id], onDelete: Cascade)
+  study_groups      study_groups?        @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  annotations       annotations?         @relation("annotationsToannotations", fields: [parent_id], references: [id], onDelete: Cascade)
+  other_annotations annotations[]        @relation("annotationsToannotations")
+  users             users                @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@index([token])
-  @@index([email])
-  @@index([institutionId, email])
-  @@map("institution_invites")
+  @@index([content_id])
+  @@index([group_id])
+  @@index([user_id])
 }
 
-model InstitutionDomain {
-  id            String      @id @default(uuid())
-  institutionId String      @map("institution_id")
-  domain        String      @unique
-  autoApprove   Boolean     @default(false) @map("auto_approve")
-  defaultRole   UserRole    @default(COMMON_USER) @map("default_role")
-  createdAt     DateTime    @default(now()) @map("created_at")
-  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-
-  @@index([domain])
-  @@map("institution_domains")
-}
-
-model PendingUserApproval {
-  id               String         @id @default(uuid())
-  institutionId    String         @map("institution_id")
-  email            String
-  name             String
-  tempPasswordHash String         @map("temp_password_hash")
-  requestedRole    UserRole       @default(COMMON_USER) @map("requested_role")
-  status           ApprovalStatus @default(PENDING)
-  reviewedBy       String?        @map("reviewed_by")
-  reviewedAt       DateTime?      @map("reviewed_at")
-  rejectionReason  String?        @map("rejection_reason")
-  createdAt        DateTime       @default(now()) @map("created_at")
-  institution      Institution    @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-  reviewer         User?          @relation("ApprovalsReviewed", fields: [reviewedBy], references: [id])
-
-  @@index([institutionId, status])
-  @@index([email])
-  @@map("pending_user_approvals")
-}
-
-model SSOConfiguration {
-  id             String      @id @default(uuid())
-  institutionId  String      @unique @map("institution_id")
-  provider       SSOProvider
-  enabled        Boolean     @default(false)
-  entityId       String?     @map("entity_id")
-  ssoUrl         String?     @map("sso_url")
-  certificate    String?
-  clientId       String?     @map("client_id")
-  clientSecret   String?     @map("client_secret")
-  authUrl        String?     @map("auth_url")
-  tokenUrl       String?     @map("token_url")
-  userInfoUrl    String?     @map("user_info_url")
-  emailAttribute String?     @default("email") @map("email_attribute")
-  nameAttribute  String?     @default("name") @map("name_attribute")
-  roleAttribute  String?     @map("role_attribute")
-  roleMapping    Json?       @map("role_mapping")
-  createdAt      DateTime    @default(now()) @map("created_at")
-  updatedAt      DateTime    @updatedAt @map("updated_at")
-  institution    Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-
-  @@map("sso_configurations")
-}
-
-model EntitlementSnapshot {
-  id          String    @id @default(uuid())
-  userId      String    @unique @map("user_id")
-  source      String
-  planType    PlanType  @map("plan_type")
-  limits      Json
-  features    Json      @default("{}")
-  effectiveAt DateTime  @default(now()) @map("effective_at")
-  expiresAt   DateTime? @map("expires_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("entitlement_snapshots")
-}
-
-model OrgSubscriptionPolicy {
-  id               String      @id @default(uuid())
-  institutionId    String      @unique @map("institution_id")
-  baselineSeats    Int         @default(0) @map("baseline_seats")
-  allowOverage     Boolean     @default(true) @map("allow_overage")
-  graceDays        Int         @default(30) @map("grace_days")
-  trueUpDayOfMonth Int         @default(1) @map("true_up_day_of_month")
-  createdAt        DateTime    @default(now()) @map("created_at")
-  updatedAt        DateTime    @updatedAt @map("updated_at")
-  institution      Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-
-  @@map("org_subscription_policies")
-}
-
-model SeatAllocationEvent {
-  id            String   @id @default(uuid())
-  institutionId String   @map("institution_id")
-  delta         Int
-  reason        String
-  createdAt     DateTime @default(now()) @map("created_at")
-
-  @@index([institutionId, createdAt])
-  @@map("seat_allocation_events")
-}
-
-model User {
-  id                     String                @id @default(uuid())
-  institutionId          String?               @map("institution_id")
-  name                   String
-  email                  String                @unique
-  passwordHash           String?               @map("password_hash")
-  oauthProvider          String?               @map("oauth_provider")
-  oauthId                String?               @map("oauth_id")
-  oauthPicture           String?               @map("oauth_picture")
-  role                   UserRole
-  schoolingLevel         String                @map("schooling_level")
-  age                    Int?
-  sex                    String?
-  preferredLanguages     Json                  @default("[]") @map("preferred_languages")
-  createdAt              DateTime              @default(now()) @map("created_at")
-  updatedAt              DateTime              @updatedAt @map("updated_at")
-  lastLoginAt            DateTime?             @map("last_login_at")
-  status                 String                @default("ACTIVE")
-  avatarUrl              String?               @map("avatar_url")
-  bio                    String?
-  settings               Json?                 @default("{}")
-  ssoProvider            String?               @map("sso_provider")
-  ssoSubject             String?               @unique @map("sso_subject")
-  passwordResetExpires   DateTime?             @map("password_reset_expires")
-  passwordResetToken     String?               @map("password_reset_token")
-  address                String?
-  birthday               DateTime?
-  activeInstitutionId    String?               @map("active_institution_id")
-  contextRole            ContextRole           @default(OWNER) @map("context_role")
-  systemRole             SystemRole?           @map("system_role")
-  annotationComments     AnnotationComment[]   @relation("UserAnnotationComments")
-  annotations            Annotation[]
-  assessmentAttempts     AssessmentAttempt[]
-  createdClassPlans      ClassPlanWeek[]       @relation("ClassPlansCreated")
-  enrollments            ClassStudent[]
-  ownedClassrooms        Classroom[]           @relation("ClassroomOwner")
-  educatorSessions       CoReadingSession[]    @relation("EducatorSessions")
-  learnerSessions        CoReadingSession[]    @relation("LearnerSessions")
-  createdContents        Content[]             @relation("ContentCreator")
-  ownedContents          Content[]             @relation("ContentOwner")
-  cornellNotesEntries    CornellNotes[]        @relation("UserCornellNotes")
-  dailyActivities        DailyActivity[]
-  dailyGoals             DailyGoal[]
-  studentEnrollments     Enrollment[]          @relation("StudentEnrollments")
-  entitlementSnapshot    EntitlementSnapshot?
-  extensionDeviceAuths   ExtensionDeviceAuth[]
-  extensionGrants        ExtensionGrant[]
-  ownedFamilies          Family[]              @relation("FamilyOwner")
-  memberships            FamilyMember[]
-  familyPolicies         FamilyPolicy[]        @relation("FamilyPolicies")
-  gameProgress           GameProgress[]
-  gameResults            GameResult[]
-  chatMessages           GroupChatMessage[]
-  groupSessionMembers    GroupSessionMember[]
-  highlights             Highlight[]           @relation("UserHighlights")
-  invitesCreated         InstitutionInvite[]   @relation("InvitesCreated")
-  institutionMemberships InstitutionMember[]   @relation("InstitutionMemberships")
-  layerEligibility       LayerEligibility?
-  LearnerProfile         LearnerProfile?
-  cornellNotes           CornellNote[]
-  approvalsReviewed      PendingUserApproval[] @relation("ApprovalsReviewed")
-  providerUsage          ProviderUsage[]
-  QuestionResult         QuestionResult[]
-  readingSessions        ReadingSession[]
-  streak                 Streak?
-  groupMemberships       StudyGroupMember[]
-  ownedGroups            StudyGroup[]          @relation("GroupOwner")
-  studySessions          StudySession[]
-  subscriptions          Subscription[]
-  usageEvents            UsageEvent[]
-  assignedBadges         UserBadge[]
-  libraryItems           UserLibraryItem[]
-  roleAssignments        UserRoleAssignment[]  @relation("UserRoles")
-  topicMastery           UserTopicMastery[]
-  vocabularyEntries      UserVocabulary[]
-  institution            Institution?          @relation(fields: [institutionId], references: [id])
-
-  @@unique([oauthProvider, oauthId])
-  @@map("users")
-}
-
-model GameProgress {
-  id         String    @id @default(uuid())
-  userId     String    @map("user_id")
-  gameId     String    @map("game_id")
-  stars      Int       @default(0)
-  bestScore  Float     @default(0)
-  totalPlays Int       @default(0) @map("total_plays")
-  streak     Int       @default(0)
-  lastPlayed DateTime? @map("last_played")
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, gameId])
-  @@index([userId])
-  @@index([gameId])
-  @@map("game_progress")
-}
-
-model UserTopicMastery {
-  id                 String   @id @default(uuid())
-  userId             String   @map("user_id")
-  topic              String
-  subject            String
-  masteryLevel       Float    @default(0) @map("mastery_level")
-  questionsAttempted Int      @default(0) @map("questions_attempted")
-  questionsCorrect   Int      @default(0) @map("questions_correct")
-  streak             Int      @default(0)
-  timeSpent          Int      @default(0) @map("time_spent")
-  lastActivityAt     DateTime @default(now()) @map("last_activity_at")
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, topic, subject])
-  @@index([userId])
-  @@index([topic])
-  @@map("user_topic_mastery")
-}
-
-model StudySession {
-  id              String    @id @default(uuid())
-  userId          String    @map("user_id")
-  startTime       DateTime  @map("start_time")
-  endTime         DateTime? @map("end_time")
-  durationMinutes Int?      @map("duration_minutes")
-  netFocusMinutes Int?      @map("net_focus_minutes")
-  focusScore      Float?    @map("focus_score")
-  interruptions   Int       @default(0)
-  activityType    String    @map("activity_type")
-  contentId       String?   @map("content_id")
-  sourceId        String?   @map("source_id")
-  accuracyRate    Float?    @map("accuracy_rate")
-  engagementScore Float?    @map("engagement_score")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, startTime])
-  @@index([userId, activityType])
-  @@map("study_sessions")
-}
-
-model Class {
-  id            String         @id @default(uuid())
-  institutionId String         @map("institution_id")
-  name          String
-  gradeLevel    String         @map("grade_level")
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
-  students      ClassStudent[]
-  institution   Institution    @relation(fields: [institutionId], references: [id])
-
-  @@map("classes")
-}
-
-model ClassStudent {
-  classId   String @map("class_id")
-  studentId String @map("student_id")
-  class     Class  @relation(fields: [classId], references: [id])
-  student   User   @relation(fields: [studentId], references: [id])
-
-  @@id([classId, studentId])
-  @@map("class_students")
-}
-
-model Course {
-  id          String   @id @default(uuid())
-  title       String
-  description String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  lessons     Lesson[]
-
-  @@map("courses")
-}
-
-model Lesson {
-  id               String           @id @default(uuid())
-  courseId         String           @map("course_id")
-  title            String
-  orderIndex       Int              @map("order_index")
-  estimatedMinutes Int              @map("estimated_minutes")
-  createdAt        DateTime         @default(now()) @map("created_at")
-  updatedAt        DateTime         @updatedAt @map("updated_at")
-  contentId        String?          @map("content_id")
-  progress         LessonProgress[]
-  content          Content?         @relation(fields: [contentId], references: [id])
-  course           Course           @relation(fields: [courseId], references: [id])
-
-  @@map("lessons")
-}
-
-model LessonProgress {
-  id          String       @id @default(uuid())
-  userId      String       @map("user_id")
-  lessonId    String       @map("lesson_id")
-  status      LessonStatus @default(AVAILABLE)
-  progressPct Int          @default(0) @map("progress_pct")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
-  lesson      Lesson       @relation(fields: [lessonId], references: [id])
-
-  @@unique([userId, lessonId])
-  @@map("lesson_progress")
-}
-
-model Content {
-  id               String                  @id @default(uuid())
-  institutionId    String?                 @map("institution_id")
-  type             ContentType
-  sourceId         String?                 @map("source_id")
-  title            String
-  originalLanguage Language                @map("original_language")
-  rawText          String                  @map("raw_text")
-  metadata         Json?
-  createdBy        String?                 @map("created_by")
-  createdAt        DateTime                @default(now()) @map("created_at")
-  updatedAt        DateTime                @updatedAt @map("updated_at")
-  scopeType        ScopeType               @default(USER) @map("scope_type")
-  familyId         String?                 @map("family_id")
-  fileId           String?                 @map("file_id")
-  languageGuess    String?                 @map("language_guess")
-  ownerUserId      String?                 @map("owner_user_id")
-  scopeId          String?                 @map("scope_id")
-  sourceUrl        String?                 @map("source_url")
-  duration         Int?                    @map("duration")
-  annotations      Annotation[]
-  assessments      Assessment[]
-  chunks           ContentChunk[]
-  extractions      ContentExtraction?
-  pedagogicalData  ContentPedagogicalData?
-  versions         ContentVersion[]
-  creator          User?                   @relation("ContentCreator", fields: [createdBy], references: [id])
-  family           Family?                 @relation(fields: [familyId], references: [id])
-  file             File?                   @relation(fields: [fileId], references: [id])
-  institution      Institution?            @relation(fields: [institutionId], references: [id])
-  ownerUser        User?                   @relation("ContentOwner", fields: [ownerUserId], references: [id])
-  cornellNotes     CornellNotes[]
-  gameResults      GameResult[]
-  groupContents    GroupContent[]
-  groupSessions    GroupSession[]
-  highlights       Highlight[]
-  learningAssets   LearningAsset[]
-  lessons          Lesson[]
-  ReadingSession   ReadingSession[]
-  UserLibraryItem  UserLibraryItem[]
-  UserVocabulary   UserVocabulary[]
-
-  @@index([title])
-  @@index([ownerUserId])
-  @@map("contents")
-}
-
-model ContentVersion {
-  id                   String            @id @default(uuid())
-  contentId            String            @map("content_id")
-  targetLanguage       Language          @map("target_language")
-  schoolingLevelTarget String            @map("schooling_level_target")
-  simplifiedText       String            @map("simplified_text")
-  summary              String?
-  vocabularyGlossary   Json?             @map("vocabulary_glossary")
-  createdAt            DateTime          @default(now()) @map("created_at")
-  assessments          Assessment[]
-  content              Content           @relation(fields: [contentId], references: [id])
-  readingSessions      ReadingSession[]
-  libraryItems         UserLibraryItem[]
-
-  @@map("content_versions")
-}
-
-model UserLibraryItem {
-  id               String          @id @default(uuid())
-  userId           String          @map("user_id")
-  contentId        String          @map("content_id")
-  contentVersionId String?         @map("content_version_id")
-  status           LibraryStatus   @default(SAVED)
-  lastAccessedAt   DateTime        @default(now()) @map("last_accessed_at")
-  createdAt        DateTime        @default(now()) @map("created_at")
-  content          Content         @relation(fields: [contentId], references: [id])
-  contentVersion   ContentVersion? @relation(fields: [contentVersionId], references: [id])
-  user             User            @relation(fields: [userId], references: [id])
-
-  @@map("user_library_items")
-}
-
-model ReadingSession {
-  id               String            @id @default(uuid())
-  userId           String            @map("user_id")
-  contentId        String            @map("content_id")
-  contentVersionId String?           @map("content_version_id")
-  startedAt        DateTime          @default(now()) @map("started_at")
-  finishedAt       DateTime?         @map("finished_at")
-  phase            SessionPhase?     @default(PRE)
-  modality         SessionModality?  @default(READING)
-  assetLayer       String?           @default("L1") @map("asset_layer")
-  goalStatement    String?           @map("goal_statement")
-  predictionText   String?           @map("prediction_text")
-  targetWordsJson  Json?             @map("target_words_json")
-  coReadingSession CoReadingSession?
-  cornellNotes     CornellNote[]
-  content          Content           @relation(fields: [contentId], references: [id])
-  contentVersion   ContentVersion?   @relation(fields: [contentVersionId], references: [id])
-  user             User              @relation(fields: [userId], references: [id])
-  events           SessionEvent[]
-  outcome          SessionOutcome?
-  VocabAttempt     VocabAttempt[]
-
-  @@index([userId, startedAt(sort: Desc)], map: "user_sessions_list")
-  @@index([userId, phase, startedAt], map: "user_sessions_phase")
-  @@map("reading_sessions")
-}
-
-model CornellNote {
-  id               String         @id @default(uuid())
-  userId           String         @map("user_id")
-  readingSessionId String         @map("reading_session_id")
-  mainNotes        Json           @map("main_notes")
-  cueColumn        String?        @map("cue_column")
-  summary          String?
-  createdAt        DateTime       @default(now()) @map("created_at")
-  updatedAt        DateTime       @updatedAt @map("updated_at")
-  readingSession   ReadingSession @relation(fields: [readingSessionId], references: [id])
-  user             User           @relation(fields: [userId], references: [id])
-
-  @@map("legacy_cornell_notes")
-}
-
-model Assessment {
-  id                   String               @id @default(uuid())
-  contentId            String               @map("content_id")
-  contentVersionId     String?              @map("content_version_id")
-  institutionId        String?              @map("institution_id")
-  schoolingLevelTarget String               @map("schooling_level_target")
-  createdAt            DateTime             @default(now()) @map("created_at")
-  updatedAt            DateTime             @updatedAt @map("updated_at")
-  attempts             AssessmentAttempt[]
-  questions            AssessmentQuestion[]
-  content              Content              @relation(fields: [contentId], references: [id])
-  contentVersion       ContentVersion?      @relation(fields: [contentVersionId], references: [id])
-  institution          Institution?         @relation(fields: [institutionId], references: [id])
-
-  @@map("assessments")
-}
-
-model AssessmentQuestion {
-  id            String             @id @default(uuid())
-  assessmentId  String             @map("assessment_id")
-  questionType  QuestionType       @map("question_type")
-  questionText  String             @map("question_text")
-  options       Json?
-  correctAnswer Json               @map("correct_answer")
-  skills        String[]           @default([])
-  answers       AssessmentAnswer[]
-  assessment    Assessment         @relation(fields: [assessmentId], references: [id])
-
-  @@map("assessment_questions")
-}
-
-model AssessmentAttempt {
-  id           String             @id @default(uuid())
-  assessmentId String             @map("assessment_id")
-  userId       String             @map("user_id")
-  startedAt    DateTime           @default(now()) @map("started_at")
-  finishedAt   DateTime?          @map("finished_at")
-  scoreRaw     Float?             @map("score_raw")
-  scorePercent Float?             @map("score_percent")
-  answers      AssessmentAnswer[]
-  assessment   Assessment         @relation(fields: [assessmentId], references: [id])
-  user         User               @relation(fields: [userId], references: [id])
-
-  @@map("assessment_attempts")
-}
-
-model AssessmentAnswer {
-  id                  String             @id @default(uuid())
-  assessmentAttemptId String             @map("assessment_attempt_id")
-  questionId          String             @map("question_id")
-  userAnswer          Json               @map("user_answer")
-  isCorrect           Boolean            @map("is_correct")
-  timeSpentSeconds    Int?               @map("time_spent_seconds")
-  assessmentAttempt   AssessmentAttempt  @relation(fields: [assessmentAttemptId], references: [id])
-  question            AssessmentQuestion @relation(fields: [questionId], references: [id])
-
-  @@map("assessment_answers")
-}
-
-model DailyGoal {
-  id        String        @id @default(uuid())
-  userId    String        @map("user_id")
-  goalType  DailyGoalType @map("goal_type")
-  goalValue Int           @map("goal_value")
-  createdAt DateTime      @default(now()) @map("created_at")
-  updatedAt DateTime      @updatedAt @map("updated_at")
-  user      User          @relation(fields: [userId], references: [id])
-
-  @@map("daily_goals")
-}
-
-model DailyActivity {
-  id                 String   @id @default(uuid())
-  userId             String   @map("user_id")
-  date               DateTime @db.Date
-  minutesStudied     Int      @default(0) @map("minutes_studied")
-  sessionsCount      Int      @default(0) @map("sessions_count")
-  contentsRead       Int      @default(0) @map("contents_read")
-  annotationsCreated Int      @default(0) @map("annotations_created")
-  minutesSpent       Int      @default(0) @map("minutes_spent")
-  lessonsCompleted   Int      @default(0) @map("lessons_completed")
-  goalMet            Boolean  @default(false) @map("goal_met")
-  createdAt          DateTime @default(now()) @map("created_at")
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, date])
-  @@index([userId, date])
-  @@map("daily_activities")
-}
-
-model Streak {
-  userId          String    @id @map("user_id")
-  currentStreak   Int       @default(0) @map("current_streak")
-  bestStreak      Int       @default(0) @map("best_streak")
-  lastGoalMetDate DateTime? @map("last_goal_met_date") @db.Date
-  freezeTokens    Int       @default(1) @map("freeze_tokens")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-  user            User      @relation(fields: [userId], references: [id])
-
-  @@map("streaks")
-}
-
-model Badge {
-  id          String      @id @default(uuid())
-  code        String      @unique
-  name        String
-  description String
-  imageUrl    String?     @map("image_url")
-  userBadges  UserBadge[]
-
-  @@map("badges")
-}
-
-model UserBadge {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  badgeId   String   @map("badge_id")
-  awardedAt DateTime @default(now()) @map("awarded_at")
-  badge     Badge    @relation(fields: [badgeId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
-
-  @@unique([userId, badgeId])
-  @@map("user_badges")
-}
-
-model UserVocabulary {
-  id             String         @id @default(uuid())
-  userId         String         @map("user_id")
-  word           String
-  language       Language
-  masteryScore   Int            @default(0) @map("mastery_score")
-  lastSeenAt     DateTime       @default(now()) @map("last_seen_at")
-  srsStage       SrsStage       @default(NEW) @map("srs_stage")
-  dueAt          DateTime       @default(now()) @map("due_at")
-  lapsesCount    Int            @default(0) @map("lapses_count")
-  masteryForm    Int            @default(0) @map("mastery_form")
-  masteryMeaning Int            @default(0) @map("mastery_meaning")
-  masteryUse     Int            @default(0) @map("mastery_use")
-  contentId      String?        @map("content_id")
-  meaningNote    String?        @map("meaning_note")
-  exampleNote    String?        @map("example_note")
-  createdAt      DateTime       @default(now()) @map("created_at")
-  updatedAt      DateTime       @updatedAt @map("updated_at")
-  content        Content?       @relation(fields: [contentId], references: [id])
-  user           User           @relation(fields: [userId], references: [id])
-  attempts       VocabAttempt[]
-
-  @@unique([userId, word, language])
-  @@index([userId, dueAt])
-  @@index([srsStage])
-  @@map("user_vocabularies")
-}
-
-model UserRoleAssignment {
-  id        String     @id @default(uuid())
-  userId    String     @map("user_id")
-  role      UserRole
-  scopeType ScopeType? @map("scope_type")
-  scopeId   String?    @map("scope_id")
-  createdAt DateTime   @default(now()) @map("created_at")
-  createdBy String?    @map("created_by")
-  user      User       @relation("UserRoles", fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, role, scopeType, scopeId])
-  @@index([userId])
-  @@index([role])
-  @@map("user_role_assignments")
-}
-
-model AuditLog {
-  id           String    @id @default(uuid())
-  actorUserId  String?   @map("actor_user_id")
-  actorRole    UserRole? @map("actor_role")
-  action       String
-  resourceType String    @map("resource_type")
-  resourceId   String?   @map("resource_id")
-  requestId    String?   @map("request_id")
-  ip           String?
-  userAgent    String?   @map("user_agent")
-  beforeJson   Json?     @map("before_json")
-  afterJson    Json?     @map("after_json")
-  reason       String?
-  createdAt    DateTime  @default(now()) @map("created_at")
-
-  @@index([actorUserId])
-  @@index([action])
-  @@index([resourceType])
-  @@index([createdAt])
-  @@index([requestId])
-  @@map("audit_logs")
-}
-
-model FeatureFlag {
-  id          String       @id @default(uuid())
-  key         String       @unique
-  name        String
-  description String?
-  enabled     Boolean      @default(false)
-  environment Environment?
-  scopeType   ScopeType?   @map("scope_type")
-  scopeId     String?      @map("scope_id")
-  createdBy   String?      @map("created_by")
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
-
-  @@index([key])
-  @@index([enabled])
-  @@map("feature_flags")
-}
-
-model IntegrationSecret {
-  id             String       @id @default(uuid())
-  key            String       @unique
-  name           String
-  provider       String?
-  encryptedValue String       @map("encrypted_value")
-  encryptedDek   String       @map("encrypted_dek")
-  iv             String
-  authTag        String       @map("auth_tag")
-  keyId          String       @default("v1") @map("key_id")
-  environment    Environment?
-  lastRotatedAt  DateTime?    @map("last_rotated_at")
-  createdBy      String?      @map("created_by")
-  createdAt      DateTime     @default(now()) @map("created_at")
-  updatedAt      DateTime     @updatedAt @map("updated_at")
-
-  @@index([key])
-  @@index([provider])
-  @@map("integration_secrets")
-}
-
-model SystemMetric {
-  id        String   @id @default(uuid())
-  metric    String
-  value     Float
-  tags      Json?
-  timestamp DateTime @default(now())
-  bucket    String
-
-  @@index([metric, timestamp])
-  @@index([bucket])
-  @@map("system_metrics")
-}
-
-model ErrorLog {
-  id         String   @id @default(uuid())
-  message    String
-  stack      String?
-  endpoint   String?
-  method     String?
-  statusCode Int?     @map("status_code")
-  userId     String?  @map("user_id")
-  requestId  String?  @map("request_id")
-  metadata   Json?
-  timestamp  DateTime @default(now())
-  resolved   Boolean  @default(false)
-
-  @@index([timestamp])
-  @@index([resolved])
-  @@index([endpoint])
-  @@map("error_logs")
-}
-
-model ProviderUsage {
-  id               String       @id @default(uuid())
-  provider         String
-  operation        String
-  tokens           Int?
-  latency          Int?
-  statusCode       Int?         @map("status_code")
-  userId           String?      @map("user_id")
-  metadata         Json?
-  timestamp        DateTime     @default(now())
-  completionTokens Int?         @map("completion_tokens")
-  costUsd          Float?       @map("cost_usd")
-  familyId         String?      @map("family_id")
-  feature          String       @default("unknown")
-  groupId          String?      @map("group_id")
-  institutionId    String?      @map("institution_id")
-  model            String?
-  promptTokens     Int?         @map("prompt_tokens")
-  totalTokens      Int?         @map("total_tokens")
-  family           Family?      @relation(fields: [familyId], references: [id])
-  group            StudyGroup?  @relation(fields: [groupId], references: [id])
-  institution      Institution? @relation(fields: [institutionId], references: [id])
-  user             User?        @relation(fields: [userId], references: [id])
-
-  @@index([timestamp])
-  @@index([userId, timestamp])
-  @@index([familyId, timestamp])
-  @@index([institutionId, timestamp])
-  @@map("provider_usage")
-}
-
-model BackgroundJob {
-  id          String    @id @default(uuid())
-  jobName     String    @map("job_name")
-  status      JobStatus
-  startedAt   DateTime  @map("started_at")
-  completedAt DateTime? @map("completed_at")
-  duration    Int?
-  error       String?
-  metadata    Json?
-
-  @@index([jobName, status])
-  @@index([startedAt])
-  @@map("background_jobs")
-}
-
-model AppConfig {
-  id          String       @id @default(uuid())
+model app_configs {
+  id          String       @id
   key         String       @unique
   value       String
   type        ConfigType
@@ -816,147 +73,369 @@ model AppConfig {
   environment Environment?
   description String?
   metadata    Json?
-  createdBy   String?      @map("created_by")
-  updatedBy   String?      @map("updated_by")
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
+  created_by  String?
+  updated_by  String?
+  created_at  DateTime     @default(now())
+  updated_at  DateTime
 
-  @@index([key])
   @@index([category])
   @@index([environment])
-  @@map("app_configs")
+  @@index([key])
 }
 
-model Plan {
-  id             String         @id @default(uuid())
-  code           String         @unique
+model assessment_answers {
+  id                    String               @id
+  assessment_attempt_id String
+  question_id           String
+  user_answer           Json
+  is_correct            Boolean
+  time_spent_seconds    Int?
+  assessment_attempts   assessment_attempts  @relation(fields: [assessment_attempt_id], references: [id])
+  assessment_questions  assessment_questions @relation(fields: [question_id], references: [id])
+}
+
+model assessment_attempts {
+  id                 String               @id
+  assessment_id      String
+  user_id            String
+  started_at         DateTime             @default(now())
+  finished_at        DateTime?
+  score_raw          Float?
+  score_percent      Float?
+  assessment_answers assessment_answers[]
+  assessments        assessments          @relation(fields: [assessment_id], references: [id])
+  users              users                @relation(fields: [user_id], references: [id])
+}
+
+model assessment_questions {
+  id                 String               @id
+  assessment_id      String
+  question_type      QuestionType
+  question_text      String
+  options            Json?
+  correct_answer     Json
+  skills             String[]             @default([])
+  assessment_answers assessment_answers[]
+  assessments        assessments          @relation(fields: [assessment_id], references: [id])
+}
+
+model assessments {
+  id                     String                 @id
+  content_id             String
+  content_version_id     String?
+  institution_id         String?
+  schooling_level_target String
+  created_at             DateTime               @default(now())
+  updated_at             DateTime
+  assessment_attempts    assessment_attempts[]
+  assessment_questions   assessment_questions[]
+  contents               contents               @relation(fields: [content_id], references: [id])
+  content_versions       content_versions?      @relation(fields: [content_version_id], references: [id])
+  institutions           institutions?          @relation(fields: [institution_id], references: [id])
+}
+
+model audit_logs {
+  id            String    @id
+  actor_user_id String?
+  actor_role    UserRole?
+  action        String
+  resource_type String
+  resource_id   String?
+  request_id    String?
+  ip            String?
+  user_agent    String?
+  before_json   Json?
+  after_json    Json?
+  reason        String?
+  created_at    DateTime  @default(now())
+
+  @@index([action])
+  @@index([actor_user_id])
+  @@index([created_at])
+  @@index([request_id])
+  @@index([resource_type])
+}
+
+model background_jobs {
+  id           String    @id
+  job_name     String
+  status       JobStatus
+  started_at   DateTime
+  completed_at DateTime?
+  duration     Int?
+  error        String?
+  metadata     Json?
+
+  @@index([job_name, status])
+  @@index([started_at])
+}
+
+model badges {
+  id          String        @id
+  code        String        @unique
+  name        String
+  description String
+  image_url   String?
+  user_badges user_badges[]
+}
+
+model billing_events {
+  id                String    @id
+  provider_code     String
+  provider_event_id String    @unique
+  event_type        String
+  payload           Json
+  processed_at      DateTime?
+  created_at        DateTime  @default(now())
+
+  @@index([processed_at])
+  @@index([provider_code])
+}
+
+model class_plan_weeks {
+  id                     String     @id
+  classroom_id           String
+  week_start             DateTime
+  created_by_educator_id String
+  title                  String?
+  notes                  String?
+  items_json             Json
+  tool_words_json        Json?
+  checkpoints_json       Json?
+  created_at             DateTime   @default(now())
+  updated_at             DateTime
+  classrooms             classrooms @relation(fields: [classroom_id], references: [id], onDelete: Cascade)
+  users                  users      @relation(fields: [created_by_educator_id], references: [id])
+
+  @@unique([classroom_id, week_start])
+}
+
+model class_policies {
+  id                      String           @id
+  classroom_id            String           @unique
+  timebox_default_min     Int              @default(15)
+  weekly_units_target     Int              @default(3)
+  tool_words_gate_enabled Boolean          @default(true)
+  daily_review_cap        Int              @default(10)
+  privacy_mode            ClassPrivacyMode @default(AGGREGATED_ONLY)
+  intervention_mode       InterventionMode @default(PROMPT_COACH)
+  created_at              DateTime         @default(now())
+  updated_at              DateTime
+  classrooms              classrooms       @relation(fields: [classroom_id], references: [id], onDelete: Cascade)
+}
+
+model class_students {
+  class_id   String
+  student_id String
+  classes    classes @relation(fields: [class_id], references: [id])
+  users      users   @relation(fields: [student_id], references: [id])
+
+  @@id([class_id, student_id])
+}
+
+model classes {
+  id             String           @id
+  institution_id String
   name           String
-  description    String?
-  isActive       Boolean        @default(true) @map("is_active")
-  entitlements   Json
-  monthlyPrice   Float?         @map("monthly_price")
-  yearlyPrice    Float?         @map("yearly_price")
-  createdAt      DateTime       @default(now()) @map("created_at")
-  updatedAt      DateTime       @updatedAt @map("updated_at")
-  billingPeriod  BillingPeriod? @map("billing_period")
-  currency       String         @default("BRL")
-  priceCents     Int            @default(0) @map("price_cents")
-  seatPriceCents Int?           @map("seat_price_cents")
-  type           PlanType       @default(FREE)
-  subscriptions  Subscription[]
-
-  @@index([code])
-  @@index([isActive])
-  @@map("plans")
+  grade_level    String
+  created_at     DateTime         @default(now())
+  updated_at     DateTime
+  class_students class_students[]
+  institutions   institutions     @relation(fields: [institution_id], references: [id])
 }
 
-model Subscription {
-  id                     String             @id @default(uuid())
-  scopeType              ScopeType          @map("scope_type")
-  scopeId                String             @map("scope_id")
-  planId                 String             @map("plan_id")
-  status                 SubscriptionStatus
-  source                 SubscriptionSource
-  currentPeriodStart     DateTime?          @map("current_period_start")
-  currentPeriodEnd       DateTime?          @map("current_period_end")
-  cancelAtPeriodEnd      Boolean            @default(false) @map("cancel_at_period_end")
-  providerCode           String?            @map("provider_code")
-  providerCustomerId     String?            @map("provider_customer_id")
-  providerSubscriptionId String?            @unique @map("provider_subscription_id")
-  providerPriceId        String?            @map("provider_price_id")
-  createdAt              DateTime           @default(now()) @map("created_at")
-  updatedAt              DateTime           @updatedAt @map("updated_at")
-  canceledAt             DateTime?          @map("canceled_at")
-  endedAt                DateTime?          @map("ended_at")
-  familyId               String?            @map("family_id")
-  graceUntil             DateTime?          @map("grace_until")
-  institutionId          String?            @map("institution_id")
-  metadata               Json?
-  provider               PaymentProvider?
-  userId                 String?            @map("user_id")
-  family                 Family?            @relation(fields: [familyId], references: [id])
-  institution            Institution?       @relation(fields: [institutionId], references: [id])
-  plan                   Plan               @relation(fields: [planId], references: [id])
-  user                   User?              @relation(fields: [userId], references: [id])
-
-  @@unique([scopeType, scopeId, status], name: "unique_active_subscription", map: "subscriptions_scope_status_unique")
-  @@index([scopeType, scopeId])
-  @@index([userId])
-  @@index([familyId])
-  @@index([institutionId])
-  @@index([planId])
-  @@index([status])
-  @@map("subscriptions")
+model classrooms {
+  id                String             @id
+  institution_id    String?
+  owner_educator_id String
+  name              String
+  grade_level       String?
+  created_at        DateTime           @default(now())
+  updated_at        DateTime
+  class_plan_weeks  class_plan_weeks[]
+  class_policies    class_policies?
+  users             users              @relation(fields: [owner_educator_id], references: [id])
+  enrollments       enrollments[]
 }
 
-model EntitlementOverride {
-  id        String    @id @default(uuid())
-  scopeType ScopeType @map("scope_type")
-  scopeId   String    @map("scope_id")
-  overrides Json
-  reason    String
-  updatedBy String    @map("updated_by")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-
-  @@unique([scopeType, scopeId])
-  @@map("entitlement_overrides")
+model co_reading_sessions {
+  id                                                String           @id
+  family_id                                         String
+  educator_user_id                                  String
+  learner_user_id                                   String
+  reading_session_id                                String           @unique
+  thread_id_learner                                 String
+  thread_id_educator                                String
+  type                                              CoSessionType    @default(CO_READING)
+  timebox_min                                       Int
+  status                                            CoReadingStatus  @default(ACTIVE)
+  started_at                                        DateTime         @default(now())
+  ended_at                                          DateTime?
+  users_co_reading_sessions_educator_user_idTousers users            @relation("co_reading_sessions_educator_user_idTousers", fields: [educator_user_id], references: [id])
+  families                                          families         @relation(fields: [family_id], references: [id], onDelete: Cascade)
+  users_co_reading_sessions_learner_user_idTousers  users            @relation("co_reading_sessions_learner_user_idTousers", fields: [learner_user_id], references: [id])
+  reading_sessions                                  reading_sessions @relation(fields: [reading_session_id], references: [id], onDelete: Cascade)
 }
 
-model UsageEvent {
-  id            String      @id @default(uuid())
-  environment   Environment
-  occurredAt    DateTime    @map("occurred_at")
-  scopeType     ScopeType   @map("scope_type")
-  scopeId       String      @map("scope_id")
-  providerCode  String?     @map("provider_code")
-  endpoint      String?
-  metric        String
-  quantity      Float
-  approxCostUsd Float?      @map("approx_cost_usd")
-  requestId     String?     @map("request_id")
-  userId        String?     @map("user_id")
-  metadata      Json?
-  createdAt     DateTime    @default(now()) @map("created_at")
-  User          User?       @relation(fields: [userId], references: [id])
+model comment_threads {
+  id           String            @id
+  context_type ShareContextType
+  context_id   String
+  target_type  CommentTargetType
+  target_id    String
+  created_at   DateTime          @default(now())
+  comments     comments[]
 
-  @@index([scopeType, scopeId, metric, occurredAt])
-  @@index([occurredAt])
-  @@index([metric])
-  @@map("usage_events")
+  @@unique([context_type, context_id, target_type, target_id])
+  @@index([context_type, context_id])
 }
 
-model BillingEvent {
-  id              String    @id @default(uuid())
-  providerCode    String    @map("provider_code")
-  providerEventId String    @unique @map("provider_event_id")
-  eventType       String    @map("event_type")
-  payload         Json
-  processedAt     DateTime? @map("processed_at")
-  createdAt       DateTime  @default(now()) @map("created_at")
+model comments {
+  id              String          @id
+  thread_id       String
+  author_id       String
+  body            String
+  created_at      DateTime        @default(now())
+  deleted_at      DateTime?
+  deleted_by      String?
+  delete_reason   String?
+  comment_threads comment_threads @relation(fields: [thread_id], references: [id], onDelete: Cascade)
 
-  @@index([providerCode])
-  @@index([processedAt])
-  @@map("billing_events")
+  @@index([thread_id, created_at])
 }
 
-model File {
-  id               String    @id @default(uuid())
-  storageProvider  String
-  storageKey       String
-  mimeType         String
-  sizeBytes        BigInt
-  checksumSha256   String?
-  originalFilename String?
-  createdAt        DateTime  @default(now())
-  contents         Content[]
+model concept_difficulty {
+  id              String   @id
+  topic           String
+  subject         String
+  total_attempts  Int      @default(0)
+  avg_score       Float
+  success_rate    Float
+  common_mistakes String[]
+  created_at      DateTime @default(now())
+  updated_at      DateTime
 
-  @@index([storageProvider, storageKey])
-  @@map("files")
+  @@unique([topic, subject])
 }
 
-model CornellNotes {
-  id          String   @id @default(uuid())
+model content_chunks {
+  id             String   @id
+  content_id     String
+  chunk_index    Int
+  page_number    Int?
+  text           String
+  token_estimate Int?
+  created_at     DateTime @default(now())
+  contents       contents @relation(fields: [content_id], references: [id], onDelete: Cascade)
+
+  @@unique([content_id, chunk_index])
+  @@index([content_id])
+  @@index([page_number])
+}
+
+model content_extractions {
+  id                 String           @id
+  content_id         String           @unique
+  status             ExtractionStatus @default(PENDING)
+  extracted_text_ref String?
+  metadata_json      Json?
+  created_at         DateTime         @default(now())
+  updated_at         DateTime
+  contents           contents         @relation(fields: [content_id], references: [id], onDelete: Cascade)
+}
+
+model content_pedagogical_data {
+  id                  String   @id
+  content_id          String   @unique
+  vocabulary_triage   Json?
+  socratic_questions  Json?
+  quiz_questions      Json?
+  taboo_cards         Json?
+  boss_fight_config   Json?
+  free_recall_prompts Json?
+  processing_version  String   @default("v1.0")
+  processed_at        DateTime @default(now())
+  updated_at          DateTime
+  contents            contents @relation(fields: [content_id], references: [id], onDelete: Cascade)
+
+  @@index([content_id])
+}
+
+model content_shares {
+  content_id   String
+  context_type ShareContextType
+  context_id   String
+  permission   SharePermission  @default(VIEW)
+  created_by   String?
+  created_at   DateTime         @default(now())
+
+  @@id([content_id, context_type, context_id])
+  @@index([context_type, context_id])
+}
+
+model content_versions {
+  id                     String               @id
+  content_id             String
+  target_language        Language
+  schooling_level_target String
+  simplified_text        String
+  summary                String?
+  vocabulary_glossary    Json?
+  created_at             DateTime             @default(now())
+  assessments            assessments[]
+  contents               contents             @relation(fields: [content_id], references: [id])
+  reading_sessions       reading_sessions[]
+  user_library_items     user_library_items[]
+}
+
+model contents {
+  id                                  String                    @id
+  institution_id                      String?
+  type                                ContentType
+  source_id                           String?
+  title                               String
+  original_language                   Language
+  raw_text                            String
+  metadata                            Json?
+  created_by                          String?
+  created_at                          DateTime                  @default(now())
+  updated_at                          DateTime
+  scope_type                          ScopeType                 @default(USER)
+  family_id                           String?
+  file_id                             String?
+  language_guess                      String?
+  owner_user_id                       String?
+  scope_id                            String?
+  source_url                          String?
+  duration                            Int?
+  annotations                         annotations[]
+  assessments                         assessments[]
+  content_chunks                      content_chunks[]
+  content_extractions                 content_extractions?
+  content_pedagogical_data            content_pedagogical_data?
+  content_versions                    content_versions[]
+  users_contents_created_byTousers    users?                    @relation("contents_created_byTousers", fields: [created_by], references: [id])
+  families                            families?                 @relation(fields: [family_id], references: [id])
+  files                               files?                    @relation(fields: [file_id], references: [id])
+  institutions                        institutions?             @relation(fields: [institution_id], references: [id])
+  users_contents_owner_user_idTousers users?                    @relation("contents_owner_user_idTousers", fields: [owner_user_id], references: [id])
+  cornell_notes                       cornell_notes[]
+  game_results                        game_results[]
+  group_contents                      group_contents[]
+  group_sessions                      group_sessions[]
+  highlights                          highlights[]
+  learning_assets                     learning_assets[]
+  lessons                             lessons[]
+  reading_sessions                    reading_sessions[]
+  user_library_items                  user_library_items[]
+  user_vocabularies                   user_vocabularies[]
+
+  @@index([owner_user_id])
+  @@index([title])
+}
+
+model cornell_notes {
+  id          String   @id
   contentId   String
   createdAt   DateTime @default(now())
   cuesJson    Json     @default("[]")
@@ -964,771 +443,1209 @@ model CornellNotes {
   summaryText String   @default("")
   updatedAt   DateTime @default(now())
   userId      String
-  content     Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  user        User     @relation("UserCornellNotes", fields: [userId], references: [id])
+  contents    contents @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  users       users    @relation(fields: [userId], references: [id])
 
   @@unique([contentId, userId])
   @@index([contentId])
   @@index([userId])
-  @@map("cornell_notes")
 }
 
-model Highlight {
-  id              String               @id @default(uuid())
-  contentId       String
-  userId          String
-  kind            HighlightKind
-  targetType      TargetType
-  pageNumber      Int?
-  anchorJson      Json
-  colorKey        String               @default("yellow")
-  commentText     String?
-  tagsJson        Json                 @default("[]")
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @default(now())
-  timestampMs     Int?                 @map("timestamp_ms")
-  durationMs      Int?                 @map("duration_ms")
-  visibility      AnnotationVisibility @default(PRIVATE)
-  visibilityScope VisibilityScope?     @map("visibility_scope")
-  contextType     ContextType?         @map("context_type")
-  contextId       String?              @map("context_id")
-  learnerId       String?              @map("learner_id")
-  status          AnnotationStatus     @default(ACTIVE)
-  deletedAt       DateTime?            @map("deleted_at")
-  comments        AnnotationComment[]
-  content         Content              @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  user            User                 @relation("UserHighlights", fields: [userId], references: [id])
+model courses {
+  id          String    @id
+  title       String
+  description String?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime
+  lessons     lessons[]
+}
+
+model daily_activities {
+  id                  String   @id
+  user_id             String
+  date                DateTime @db.Date
+  minutes_studied     Int      @default(0)
+  sessions_count      Int      @default(0)
+  contents_read       Int      @default(0)
+  annotations_created Int      @default(0)
+  minutes_spent       Int      @default(0)
+  lessons_completed   Int      @default(0)
+  goal_met            Boolean  @default(false)
+  created_at          DateTime @default(now())
+  users               users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, date])
+  @@index([user_id, date])
+}
+
+model daily_goals {
+  id         String        @id
+  user_id    String
+  goal_type  DailyGoalType
+  goal_value Int
+  created_at DateTime      @default(now())
+  updated_at DateTime
+  users      users         @relation(fields: [user_id], references: [id])
+}
+
+model enrollments {
+  id              String           @id
+  classroom_id    String
+  learner_user_id String
+  status          EnrollmentStatus @default(ACTIVE)
+  nickname        String?
+  enrolled_at     DateTime         @default(now())
+  classrooms      classrooms       @relation(fields: [classroom_id], references: [id], onDelete: Cascade)
+  users           users            @relation(fields: [learner_user_id], references: [id])
+
+  @@unique([classroom_id, learner_user_id])
+}
+
+model entitlement_overrides {
+  id         String    @id
+  scope_type ScopeType
+  scope_id   String
+  overrides  Json
+  reason     String
+  updated_by String
+  created_at DateTime  @default(now())
+  updated_at DateTime
+
+  @@unique([scope_type, scope_id])
+}
+
+model entitlement_snapshots {
+  id           String    @id
+  user_id      String    @unique
+  source       String
+  plan_type    PlanType
+  limits       Json
+  features     Json      @default("{}")
+  effective_at DateTime  @default(now())
+  expires_at   DateTime?
+  updated_at   DateTime
+  scope_type   String?
+  scope_id     String?
+  users        users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model error_logs {
+  id          String   @id
+  message     String
+  stack       String?
+  endpoint    String?
+  method      String?
+  status_code Int?
+  user_id     String?
+  request_id  String?
+  metadata    Json?
+  timestamp   DateTime @default(now())
+  resolved    Boolean  @default(false)
+
+  @@index([endpoint])
+  @@index([resolved])
+  @@index([timestamp])
+}
+
+model extension_device_auth {
+  id               String   @id
+  device_code      String   @unique
+  user_code        String   @unique
+  status           String   @default("PENDING")
+  client_id        String   @default("browser-extension")
+  requested_scopes Json     @default("[]")
+  user_id          String?
+  expires_at       DateTime
+  created_at       DateTime @default(now())
+  updated_at       DateTime
+  users            users?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([device_code])
+  @@index([status, expires_at])
+  @@index([user_code])
+}
+
+model extension_grants {
+  id               String    @id
+  user_id          String
+  client_id        String    @default("browser-extension")
+  scopes           Json      @default("[]")
+  access_token_jti String?
+  refresh_token    String?   @unique
+  revoked_at       DateTime?
+  last_used_at     DateTime?
+  created_at       DateTime  @default(now())
+  users            users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([access_token_jti])
+  @@index([refresh_token])
+  @@index([user_id])
+}
+
+model families {
+  id                  String                @id
+  name                String
+  join_code           String?               @unique
+  owner_id            String
+  created_at          DateTime              @default(now())
+  updated_at          DateTime
+  co_reading_sessions co_reading_sessions[]
+  contents            contents[]
+  users               users                 @relation(fields: [owner_id], references: [id])
+  family_members      family_members[]
+  family_policies     family_policies[]
+  provider_usage      provider_usage[]
+  subscriptions       subscriptions[]
+}
+
+model family_members {
+  id           String             @id
+  family_id    String
+  user_id      String
+  role         FamilyRole
+  status       FamilyMemberStatus @default(INVITED)
+  display_name String?
+  joined_at    DateTime           @default(now())
+  families     families           @relation(fields: [family_id], references: [id], onDelete: Cascade)
+  users        users              @relation(fields: [user_id], references: [id])
+
+  @@unique([family_id, user_id])
+}
+
+model family_policies {
+  id                      String      @id
+  family_id               String
+  learner_user_id         String
+  timebox_default_min     Int         @default(15)
+  daily_min_minutes       Int         @default(15)
+  daily_review_cap        Int         @default(20)
+  co_reading_days         Int[]
+  co_reading_time         String?
+  tool_words_gate_enabled Boolean     @default(true)
+  privacy_mode            PrivacyMode @default(AGGREGATED_ONLY)
+  created_at              DateTime    @default(now())
+  updated_at              DateTime
+  families                families    @relation(fields: [family_id], references: [id], onDelete: Cascade)
+  users                   users       @relation(fields: [learner_user_id], references: [id], onDelete: Cascade)
+
+  @@unique([family_id, learner_user_id])
+}
+
+model feature_flags {
+  id          String       @id
+  key         String       @unique
+  name        String
+  description String?
+  enabled     Boolean      @default(false)
+  environment Environment?
+  scope_type  ScopeType?
+  scope_id    String?
+  created_by  String?
+  created_at  DateTime     @default(now())
+  updated_at  DateTime
+
+  @@index([enabled])
+  @@index([key])
+}
+
+model files {
+  id               String     @id
+  storageProvider  String
+  storageKey       String
+  mimeType         String
+  sizeBytes        BigInt
+  checksumSha256   String?
+  originalFilename String?
+  createdAt        DateTime   @default(now())
+  contents         contents[]
+
+  @@index([storageProvider, storageKey])
+}
+
+model game_progress {
+  id          String    @id
+  user_id     String
+  game_id     String
+  stars       Int       @default(0)
+  bestScore   Float     @default(0)
+  total_plays Int       @default(0)
+  streak      Int       @default(0)
+  last_played DateTime?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime
+  users       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, game_id])
+  @@index([game_id])
+  @@index([user_id])
+}
+
+model game_results {
+  id         String   @id
+  user_id    String
+  content_id String
+  gameType   String
+  score      Float
+  metadata   Json?
+  played_at  DateTime @default(now())
+  contents   contents @relation(fields: [content_id], references: [id], onDelete: Cascade)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([gameType])
+  @@index([played_at])
+  @@index([user_id, content_id])
+}
+
+model gradebook_exports {
+  id           String   @id
+  classroom_id String
+  created_by   String
+  range        Json
+  format       String   @default("CSV")
+  file_ref     String
+  created_at   DateTime @default(now())
+
+  @@index([classroom_id, created_at])
+}
+
+model group_chat_messages {
+  id             String         @id
+  session_id     String
+  round_id       String
+  user_id        String
+  message        String
+  created_at     DateTime       @default(now())
+  group_rounds   group_rounds   @relation(fields: [round_id], references: [id], onDelete: Cascade)
+  group_sessions group_sessions @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  users          users          @relation(fields: [user_id], references: [id])
+
+  @@index([created_at])
+  @@index([session_id, round_id])
+}
+
+model group_contents {
+  group_id         String
+  content_id       String
+  added_by_user_id String
+  created_at       DateTime     @default(now())
+  contents         contents     @relation(fields: [content_id], references: [id], onDelete: Cascade)
+  study_groups     study_groups @relation(fields: [group_id], references: [id], onDelete: Cascade)
+
+  @@id([group_id, content_id])
+  @@index([content_id])
+}
+
+model group_events {
+  id             String         @id
+  session_id     String
+  round_id       String?
+  user_id        String?
+  event_type     String
+  payload_json   Json
+  created_at     DateTime       @default(now())
+  group_rounds   group_rounds?  @relation(fields: [round_id], references: [id])
+  group_sessions group_sessions @relation(fields: [session_id], references: [id], onDelete: Cascade)
+
+  @@index([event_type])
+  @@index([round_id])
+  @@index([session_id])
+}
+
+model group_rounds {
+  id                  String                @id
+  session_id          String
+  round_index         Int
+  round_type          String                @default("PI")
+  prompt_json         Json
+  timing_json         Json
+  status              RoundStatus           @default(CREATED)
+  created_at          DateTime              @default(now())
+  group_chat_messages group_chat_messages[]
+  group_events        group_events[]
+  group_sessions      group_sessions        @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  shared_cards        shared_cards?
+
+  @@unique([session_id, round_index])
+  @@index([session_id])
+}
+
+model group_session_members {
+  session_id        String
+  user_id           String
+  assigned_role     SessionRole
+  attendance_status String         @default("JOINED")
+  group_sessions    group_sessions @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  users             users          @relation(fields: [user_id], references: [id])
+
+  @@id([session_id, user_id])
+}
+
+model group_sessions {
+  id                    String                  @id
+  group_id              String
+  content_id            String
+  mode                  GroupSessionMode        @default(PI_SPRINT)
+  layer                 String                  @default("L1")
+  status                GroupSessionStatus      @default(CREATED)
+  starts_at             DateTime?
+  ends_at               DateTime?
+  created_at            DateTime                @default(now())
+  group_chat_messages   group_chat_messages[]
+  group_events          group_events[]
+  group_rounds          group_rounds[]
+  group_session_members group_session_members[]
+  contents              contents                @relation(fields: [content_id], references: [id])
+  study_groups          study_groups            @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  shared_cards          shared_cards[]
+
+  @@index([group_id])
+  @@index([status])
+}
+
+model highlights {
+  id                  String                @id
+  contentId           String
+  userId              String
+  kind                HighlightKind
+  targetType          TargetType
+  pageNumber          Int?
+  anchorJson          Json
+  colorKey            String                @default("yellow")
+  commentText         String?
+  tagsJson            Json                  @default("[]")
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @default(now())
+  timestamp_ms        Int?
+  duration_ms         Int?
+  visibility          AnnotationVisibility  @default(PRIVATE)
+  visibility_scope    VisibilityScope?
+  context_type        ContextType?
+  context_id          String?
+  learner_id          String?
+  status              AnnotationStatus      @default(ACTIVE)
+  deleted_at          DateTime?
+  annotation_comments annotation_comments[]
+  contents            contents              @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  users               users                 @relation(fields: [userId], references: [id])
 
   @@index([contentId])
+  @@index([context_id])
+  @@index([context_type])
+  @@index([status])
   @@index([userId])
   @@index([visibility])
-  @@index([contextType])
-  @@index([contextId])
-  @@index([status])
-  @@map("highlights")
 }
 
-model AnnotationComment {
-  id          String           @id @default(uuid())
-  highlightId String           @map("highlight_id")
-  userId      String           @map("user_id")
-  text        String
-  status      AnnotationStatus @default(ACTIVE)
-  deletedAt   DateTime?        @map("deleted_at")
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
-  highlight   Highlight        @relation(fields: [highlightId], references: [id], onDelete: Cascade)
-  user        User             @relation("UserAnnotationComments", fields: [userId], references: [id])
+model institution_domains {
+  id             String       @id
+  institution_id String
+  domain         String       @unique
+  auto_approve   Boolean      @default(false)
+  default_role   UserRole     @default(COMMON_USER)
+  created_at     DateTime     @default(now())
+  institutions   institutions @relation(fields: [institution_id], references: [id], onDelete: Cascade)
 
-  @@index([highlightId])
-  @@index([userId])
-  @@index([status])
-  @@map("annotation_comments")
+  @@index([domain])
 }
 
-model ContentExtraction {
-  id               String           @id @default(uuid())
-  contentId        String           @unique @map("content_id")
-  status           ExtractionStatus @default(PENDING)
-  extractedTextRef String?          @map("extracted_text_ref")
-  metadataJson     Json?            @map("metadata_json")
-  createdAt        DateTime         @default(now()) @map("created_at")
-  updatedAt        DateTime         @updatedAt @map("updated_at")
-  content          Content          @relation(fields: [contentId], references: [id], onDelete: Cascade)
+model institution_invites {
+  id             String       @id
+  institution_id String
+  email          String
+  role           UserRole     @default(COMMON_USER)
+  token          String       @unique
+  expires_at     DateTime
+  used_at        DateTime?
+  invited_by     String
+  created_at     DateTime     @default(now())
+  institutions   institutions @relation(fields: [institution_id], references: [id], onDelete: Cascade)
+  users          users        @relation(fields: [invited_by], references: [id])
 
-  @@map("content_extractions")
+  @@index([email])
+  @@index([institution_id, email])
+  @@index([token])
 }
 
-model ContentChunk {
-  id            String   @id @default(uuid())
-  contentId     String   @map("content_id")
-  chunkIndex    Int      @map("chunk_index")
-  pageNumber    Int?     @map("page_number")
-  text          String
-  tokenEstimate Int?     @map("token_estimate")
-  createdAt     DateTime @default(now()) @map("created_at")
-  content       Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+model institution_members {
+  id             String       @id
+  institution_id String
+  user_id        String
+  role           UserRole     @default(COMMON_USER)
+  status         MemberStatus @default(ACTIVE)
+  joined_at      DateTime     @default(now())
+  left_at        DateTime?
+  institutions   institutions @relation(fields: [institution_id], references: [id], onDelete: Cascade)
+  users          users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@unique([contentId, chunkIndex])
-  @@index([contentId])
-  @@index([pageNumber])
-  @@map("content_chunks")
+  @@unique([institution_id, user_id])
+  @@index([institution_id, status])
 }
 
-model LearnerProfile {
-  userId              String         @id @map("user_id")
-  educationLevel      EducationLevel @default(ADULTO_LEIGO) @map("education_level")
-  readingLevelScore   Int?           @map("reading_level_score")
-  listeningLevelScore Int?           @map("listening_level_score")
-  writingLevelScore   Int?           @map("writing_level_score")
-  dailyTimeBudgetMin  Int            @default(30) @map("daily_time_budget_min")
-  dailyReviewCap      Int            @default(20) @map("daily_review_cap")
-  createdAt           DateTime       @default(now()) @map("created_at")
-  updatedAt           DateTime       @updatedAt @map("updated_at")
-  user                User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("learner_profiles")
+model institution_policies {
+  id                        String   @id
+  institution_id            String   @unique
+  allow_advanced_ai         Boolean  @default(false)
+  allow_external_sharing    Boolean  @default(false)
+  allow_text_extraction     Boolean  @default(false)
+  student_unenrollment_mode String   @default("TEACHER_OR_ADMIN_ONLY")
+  created_at                DateTime @default(now())
+  updated_at                DateTime
 }
 
-model SessionEvent {
-  id               String          @id @default(uuid())
-  readingSessionId String?         @map("reading_session_id")
-  eventType        EventType
-  payloadJson      Json            @map("payload_json")
-  createdAt        DateTime        @default(now()) @map("created_at")
-  session          ReadingSession? @relation(fields: [readingSessionId], references: [id], onDelete: Cascade)
+model institutions {
+  id                        String                     @id
+  name                      String
+  type                      InstitutionType
+  city                      String?
+  state                     String?
+  country                   String?
+  created_at                DateTime                   @default(now())
+  updated_at                DateTime
+  maxMembers                Int?
+  requires_approval         Boolean                    @default(false)
+  slug                      String?                    @unique
+  sso_enabled               Boolean                    @default(false)
+  kind                      InstitutionKind            @default(EDUCATION)
+  assessments               assessments[]
+  classes                   classes[]
+  contents                  contents[]
+  institution_domains       institution_domains[]
+  institution_invites       institution_invites[]
+  institution_members       institution_members[]
+  org_subscription_policies org_subscription_policies?
+  pending_user_approvals    pending_user_approvals[]
+  provider_usage            provider_usage[]
+  sso_configurations        sso_configurations?
+  subscriptions             subscriptions[]
+  users                     users[]
 
-  @@index([readingSessionId])
-  @@index([eventType])
-  @@map("session_events")
+  @@index([slug])
 }
 
-model SessionOutcome {
-  readingSessionId   String         @id @map("reading_session_id")
-  comprehensionScore Int            @default(0) @map("comprehension_score")
-  productionScore    Int            @default(0) @map("production_score")
-  frustrationIndex   Int            @default(0) @map("frustration_index")
-  computedAt         DateTime       @default(now()) @map("computed_at")
-  session            ReadingSession @relation(fields: [readingSessionId], references: [id], onDelete: Cascade)
+model integration_secrets {
+  id              String       @id
+  key             String       @unique
+  name            String
+  provider        String?
+  encrypted_value String
+  encrypted_dek   String
+  iv              String
+  auth_tag        String
+  key_id          String       @default("v1")
+  environment     Environment?
+  last_rotated_at DateTime?
+  created_by      String?
+  created_at      DateTime     @default(now())
+  updated_at      DateTime
 
-  @@map("session_outcomes")
+  @@index([key])
+  @@index([provider])
 }
 
-model ExtensionDeviceAuth {
-  id              String   @id @default(cuid())
-  deviceCode      String   @unique @map("device_code")
-  userCode        String   @unique @map("user_code")
-  status          String   @default("PENDING")
-  clientId        String   @default("browser-extension") @map("client_id")
-  requestedScopes Json     @default("[]") @map("requested_scopes")
-  userId          String?  @map("user_id")
-  expiresAt       DateTime @map("expires_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-  user            User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([deviceCode])
-  @@index([userCode])
-  @@index([status, expiresAt])
-  @@map("extension_device_auth")
+model layer_eligibility {
+  user_id     String   @id
+  eligible_l2 Boolean  @default(false)
+  eligible_l3 Boolean  @default(false)
+  reason_json Json?
+  updated_at  DateTime
+  users       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
-model ExtensionGrant {
-  id             String    @id @default(cuid())
-  userId         String    @map("user_id")
-  clientId       String    @default("browser-extension") @map("client_id")
-  scopes         Json      @default("[]")
-  accessTokenJti String?   @map("access_token_jti")
-  refreshToken   String?   @unique @map("refresh_token")
-  revokedAt      DateTime? @map("revoked_at")
-  lastUsedAt     DateTime? @map("last_used_at")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([accessTokenJti])
-  @@index([refreshToken])
-  @@map("extension_grants")
+model learner_profiles {
+  user_id               String         @id
+  education_level       EducationLevel @default(ADULTO_LEIGO)
+  reading_level_score   Int?
+  listening_level_score Int?
+  writing_level_score   Int?
+  daily_time_budget_min Int            @default(30)
+  daily_review_cap      Int            @default(20)
+  created_at            DateTime       @default(now())
+  updated_at            DateTime
+  users                 users          @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
-model VocabAttempt {
-  id        String          @id @default(uuid())
-  vocabId   String          @map("vocab_id")
-  sessionId String?         @map("session_id")
-  dimension VocabDimension
-  result    AttemptResult
-  createdAt DateTime        @default(now()) @map("created_at")
-  session   ReadingSession? @relation(fields: [sessionId], references: [id])
-  vocab     UserVocabulary  @relation(fields: [vocabId], references: [id], onDelete: Cascade)
+model learning_assets {
+  id                  String          @id
+  content_id          String
+  layer               AssetLayer
+  modality            SessionModality
+  body_ref            String?
+  glossary_json       Json?
+  cues_json           Json?
+  checkpoints_json    Json?
+  quiz_post_json      Json?
+  difficulty_estimate Int?
+  length_estimate     Int?
+  prompt_version      String
+  created_at          DateTime        @default(now())
+  updated_at          DateTime
+  contents            contents        @relation(fields: [content_id], references: [id], onDelete: Cascade)
 
-  @@index([vocabId])
-  @@index([createdAt])
-  @@map("vocab_attempts")
+  @@unique([content_id, layer, modality, prompt_version])
+  @@index([content_id, layer])
+  @@index([prompt_version])
 }
 
-model LearningAsset {
-  id                 String          @id @default(uuid())
-  contentId          String          @map("content_id")
-  layer              AssetLayer
-  modality           SessionModality
-  bodyRef            String?         @map("body_ref")
-  glossaryJson       Json?           @map("glossary_json")
-  cuesJson           Json?           @map("cues_json")
-  checkpointsJson    Json?           @map("checkpoints_json")
-  quizPostJson       Json?           @map("quiz_post_json")
-  difficultyEstimate Int?            @map("difficulty_estimate")
-  lengthEstimate     Int?            @map("length_estimate")
-  promptVersion      String          @map("prompt_version")
-  createdAt          DateTime        @default(now()) @map("created_at")
-  updatedAt          DateTime        @updatedAt @map("updated_at")
-  content            Content         @relation(fields: [contentId], references: [id], onDelete: Cascade)
-
-  @@unique([contentId, layer, modality, promptVersion])
-  @@index([contentId, layer])
-  @@index([promptVersion])
-  @@map("learning_assets")
+model legacy_cornell_notes {
+  id                 String           @id
+  user_id            String
+  reading_session_id String
+  main_notes         Json
+  cue_column         String?
+  summary            String?
+  created_at         DateTime         @default(now())
+  updated_at         DateTime
+  reading_sessions   reading_sessions @relation(fields: [reading_session_id], references: [id])
+  users              users            @relation(fields: [user_id], references: [id])
 }
 
-model LayerEligibility {
-  userId     String   @id @map("user_id")
-  eligibleL2 Boolean  @default(false) @map("eligible_l2")
-  eligibleL3 Boolean  @default(false) @map("eligible_l3")
-  reasonJson Json?    @map("reason_json")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model lesson_progress {
+  id           String       @id
+  user_id      String
+  lesson_id    String
+  status       LessonStatus @default(AVAILABLE)
+  progress_pct Int          @default(0)
+  updated_at   DateTime
+  lessons      lessons      @relation(fields: [lesson_id], references: [id])
 
-  @@map("layer_eligibility")
+  @@unique([user_id, lesson_id])
 }
 
-model StudyGroup {
-  id            String             @id @default(uuid())
-  ownerUserId   String             @map("owner_user_id")
-  scopeType     ScopeType?         @map("scope_type")
-  scopeId       String?            @map("scope_id")
-  name          String
-  createdAt     DateTime           @default(now()) @map("created_at")
-  annotations   Annotation[]
-  contents      GroupContent[]
-  sessions      GroupSession[]
-  providerUsage ProviderUsage[]
-  members       StudyGroupMember[]
-  owner         User               @relation("GroupOwner", fields: [ownerUserId], references: [id])
-
-  @@index([ownerUserId])
-  @@index([scopeType, scopeId])
-  @@map("study_groups")
+model lessons {
+  id                String            @id
+  course_id         String
+  title             String
+  order_index       Int
+  estimated_minutes Int
+  created_at        DateTime          @default(now())
+  updated_at        DateTime
+  content_id        String?
+  lesson_progress   lesson_progress[]
+  contents          contents?         @relation(fields: [content_id], references: [id])
+  courses           courses           @relation(fields: [course_id], references: [id])
 }
 
-model StudyGroupMember {
-  groupId  String            @map("group_id")
-  userId   String            @map("user_id")
-  role     GroupRole
-  status   GroupMemberStatus @default(ACTIVE)
-  joinedAt DateTime          @default(now()) @map("joined_at")
-  group    StudyGroup        @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user     User              @relation(fields: [userId], references: [id])
-
-  @@id([groupId, userId])
-  @@index([userId])
-  @@map("study_group_members")
+model org_subscription_policies {
+  id                   String       @id
+  institution_id       String       @unique
+  baseline_seats       Int          @default(0)
+  allow_overage        Boolean      @default(true)
+  grace_days           Int          @default(30)
+  true_up_day_of_month Int          @default(1)
+  created_at           DateTime     @default(now())
+  updated_at           DateTime
+  institutions         institutions @relation(fields: [institution_id], references: [id], onDelete: Cascade)
 }
 
-model GroupContent {
-  groupId       String     @map("group_id")
-  contentId     String     @map("content_id")
-  addedByUserId String     @map("added_by_user_id")
-  createdAt     DateTime   @default(now()) @map("created_at")
-  content       Content    @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  group         StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+model pending_user_approvals {
+  id                 String         @id
+  institution_id     String
+  email              String
+  name               String
+  temp_password_hash String
+  requested_role     UserRole       @default(COMMON_USER)
+  status             ApprovalStatus @default(PENDING)
+  reviewed_by        String?
+  reviewed_at        DateTime?
+  rejection_reason   String?
+  created_at         DateTime       @default(now())
+  institutions       institutions   @relation(fields: [institution_id], references: [id], onDelete: Cascade)
+  users              users?         @relation(fields: [reviewed_by], references: [id])
 
-  @@id([groupId, contentId])
-  @@index([contentId])
-  @@map("group_contents")
+  @@index([email])
+  @@index([institution_id, status])
 }
 
-model GroupSession {
-  id           String               @id @default(uuid())
-  groupId      String               @map("group_id")
-  contentId    String               @map("content_id")
-  mode         GroupSessionMode     @default(PI_SPRINT)
-  layer        String               @default("L1")
-  status       GroupSessionStatus   @default(CREATED)
-  startsAt     DateTime?            @map("starts_at")
-  endsAt       DateTime?            @map("ends_at")
-  createdAt    DateTime             @default(now()) @map("created_at")
-  chatMessages GroupChatMessage[]
-  events       GroupEvent[]
-  rounds       GroupRound[]
-  members      GroupSessionMember[]
-  content      Content              @relation(fields: [contentId], references: [id])
-  group        StudyGroup           @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  SharedCard   SharedCard[]
+model plans {
+  id               String          @id
+  code             String          @unique
+  name             String
+  description      String?
+  is_active        Boolean         @default(true)
+  entitlements     Json
+  monthly_price    Float?
+  yearly_price     Float?
+  created_at       DateTime        @default(now())
+  updated_at       DateTime
+  billing_period   BillingPeriod?
+  currency         String          @default("BRL")
+  price_cents      Int             @default(0)
+  seat_price_cents Int?
+  type             PlanType        @default(FREE)
+  subscriptions    subscriptions[]
 
-  @@index([groupId])
-  @@index([status])
-  @@map("group_sessions")
+  @@index([code])
+  @@index([is_active])
 }
 
-model GroupSessionMember {
-  sessionId        String       @map("session_id")
-  userId           String       @map("user_id")
-  assignedRole     SessionRole  @map("assigned_role")
-  attendanceStatus String       @default("JOINED") @map("attendance_status")
-  session          GroupSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  user             User         @relation(fields: [userId], references: [id])
+model provider_usage {
+  id                String        @id
+  provider          String
+  operation         String
+  tokens            Int?
+  latency           Int?
+  status_code       Int?
+  user_id           String?
+  metadata          Json?
+  timestamp         DateTime      @default(now())
+  completion_tokens Int?
+  cost_usd          Float?
+  family_id         String?
+  feature           String        @default("unknown")
+  group_id          String?
+  institution_id    String?
+  model             String?
+  prompt_tokens     Int?
+  total_tokens      Int?
+  families          families?     @relation(fields: [family_id], references: [id])
+  study_groups      study_groups? @relation(fields: [group_id], references: [id])
+  institutions      institutions? @relation(fields: [institution_id], references: [id])
+  users             users?        @relation(fields: [user_id], references: [id])
 
-  @@id([sessionId, userId])
-  @@map("group_session_members")
+  @@index([family_id, timestamp])
+  @@index([institution_id, timestamp])
+  @@index([timestamp])
+  @@index([user_id, timestamp])
 }
 
-model GroupRound {
-  id           String             @id @default(uuid())
-  sessionId    String             @map("session_id")
-  roundIndex   Int                @map("round_index")
-  roundType    String             @default("PI") @map("round_type")
-  promptJson   Json               @map("prompt_json")
-  timingJson   Json               @map("timing_json")
-  status       RoundStatus        @default(CREATED)
-  createdAt    DateTime           @default(now()) @map("created_at")
-  chatMessages GroupChatMessage[]
-  events       GroupEvent[]
-  session      GroupSession       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  sharedCard   SharedCard?
-
-  @@unique([sessionId, roundIndex])
-  @@index([sessionId])
-  @@map("group_rounds")
+model question_analytics {
+  id              String        @id
+  question_id     String        @unique
+  total_attempts  Int           @default(0)
+  success_rate    Float
+  avg_score       Float
+  avg_time        Int
+  avg_self_rating Float?
+  common_mistakes Json
+  is_difficult    Boolean       @default(false)
+  updated_at      DateTime
+  question_bank   question_bank @relation(fields: [question_id], references: [id], onDelete: Cascade)
 }
 
-model GroupEvent {
-  id          String       @id @default(uuid())
-  sessionId   String       @map("session_id")
-  roundId     String?      @map("round_id")
-  userId      String?      @map("user_id")
-  eventType   String       @map("event_type")
-  payloadJson Json         @map("payload_json")
-  createdAt   DateTime     @default(now()) @map("created_at")
-  round       GroupRound?  @relation(fields: [roundId], references: [id])
-  session     GroupSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+model question_bank {
+  id                    String                  @id
+  language              String
+  universal_concept_id  String?
+  has_translations      Boolean                 @default(false)
+  game_type             String
+  subject               String
+  topic                 String
+  difficulty            Int
+  education_level       String
+  question              Json
+  answer                Json
+  metadata              Json?
+  source_type           String
+  source_content_id     String?
+  times_used            Int                     @default(0)
+  avg_score             Float?
+  created_at            DateTime                @default(now())
+  updated_at            DateTime
+  question_analytics    question_analytics?
+  question_results      question_results[]
+  question_translations question_translations[]
 
-  @@index([sessionId])
-  @@index([roundId])
-  @@index([eventType])
-  @@map("group_events")
+  @@index([education_level, difficulty])
+  @@index([language, game_type, subject, topic])
+  @@index([universal_concept_id])
 }
 
-model SharedCard {
-  id              String       @id @default(uuid())
-  sessionId       String       @map("session_id")
-  roundId         String       @unique @map("round_id")
-  createdByUserId String       @map("created_by_user_id")
-  cardJson        Json         @map("card_json")
-  createdAt       DateTime     @default(now()) @map("created_at")
-  round           GroupRound   @relation(fields: [roundId], references: [id], onDelete: Cascade)
-  session         GroupSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+model question_results {
+  id              String        @id
+  user_id         String
+  question_id     String
+  game_session_id String?
+  score           Int
+  time_taken      Int
+  is_correct      Boolean
+  self_rating     Int?
+  user_answer     Json?
+  mistakes        Json?
+  created_at      DateTime      @default(now())
+  question_bank   question_bank @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  users           users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@index([sessionId])
-  @@map("shared_cards")
+  @@index([question_id])
+  @@index([user_id, created_at])
 }
 
-model GroupChatMessage {
-  id        String       @id @default(cuid())
-  sessionId String       @map("session_id")
-  roundId   String       @map("round_id")
-  userId    String       @map("user_id")
-  message   String
-  createdAt DateTime     @default(now()) @map("created_at")
-  round     GroupRound   @relation(fields: [roundId], references: [id], onDelete: Cascade)
-  session   GroupSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  user      User         @relation(fields: [userId], references: [id])
-
-  @@index([sessionId, roundId])
-  @@index([createdAt])
-  @@map("group_chat_messages")
-}
-
-model QuestionBank {
-  id                 String                @id @default(cuid())
-  language           String
-  universalConceptId String?               @map("universal_concept_id")
-  hasTranslations    Boolean               @default(false) @map("has_translations")
-  gameType           String                @map("game_type")
-  subject            String
-  topic              String
-  difficulty         Int
-  educationLevel     String                @map("education_level")
+model question_translations {
+  id                 String        @id
+  source_question_id String
+  target_language    String
   question           Json
   answer             Json
-  metadata           Json?
-  sourceType         String                @map("source_type")
-  sourceContentId    String?               @map("source_content_id")
-  timesUsed          Int                   @default(0) @map("times_used")
-  avgScore           Float?                @map("avg_score")
-  createdAt          DateTime              @default(now()) @map("created_at")
-  updatedAt          DateTime              @updatedAt @map("updated_at")
-  analytics          QuestionAnalytics?
-  results            QuestionResult[]
-  translations       QuestionTranslation[]
+  subject            String
+  topic              String
+  is_ai_translated   Boolean       @default(true)
+  is_reviewed        Boolean       @default(false)
+  reviewed_by        String?
+  created_at         DateTime      @default(now())
+  updated_at         DateTime
+  question_bank      question_bank @relation(fields: [source_question_id], references: [id], onDelete: Cascade)
 
-  @@index([language, gameType, subject, topic])
-  @@index([universalConceptId])
-  @@index([educationLevel, difficulty])
-  @@map("question_bank")
+  @@unique([source_question_id, target_language])
+  @@index([target_language])
 }
 
-model QuestionTranslation {
-  id               String       @id @default(cuid())
-  sourceQuestionId String       @map("source_question_id")
-  targetLanguage   String       @map("target_language")
-  question         Json
-  answer           Json
-  subject          String
-  topic            String
-  isAITranslated   Boolean      @default(true) @map("is_ai_translated")
-  isReviewed       Boolean      @default(false) @map("is_reviewed")
-  reviewedBy       String?      @map("reviewed_by")
-  createdAt        DateTime     @default(now()) @map("created_at")
-  updatedAt        DateTime     @updatedAt @map("updated_at")
-  sourceQuestion   QuestionBank @relation(fields: [sourceQuestionId], references: [id], onDelete: Cascade)
+model reading_sessions {
+  id                   String                 @id
+  user_id              String
+  content_id           String
+  content_version_id   String?
+  started_at           DateTime               @default(now())
+  finished_at          DateTime?
+  phase                SessionPhase?          @default(PRE)
+  modality             SessionModality?       @default(READING)
+  asset_layer          String?                @default("L1")
+  goal_statement       String?
+  prediction_text      String?
+  target_words_json    Json?
+  co_reading_sessions  co_reading_sessions?
+  legacy_cornell_notes legacy_cornell_notes[]
+  contents             contents               @relation(fields: [content_id], references: [id])
+  content_versions     content_versions?      @relation(fields: [content_version_id], references: [id])
+  users                users                  @relation(fields: [user_id], references: [id])
+  session_events       session_events[]
+  session_outcomes     session_outcomes?
+  vocab_attempts       vocab_attempts[]
 
-  @@unique([sourceQuestionId, targetLanguage])
-  @@index([targetLanguage])
-  @@map("question_translations")
+  @@index([user_id, started_at(sort: Desc)], map: "user_sessions_list")
+  @@index([user_id, phase, started_at], map: "user_sessions_phase")
 }
 
-model QuestionResult {
-  id            String       @id @default(cuid())
-  userId        String       @map("user_id")
-  questionId    String       @map("question_id")
-  gameSessionId String?      @map("game_session_id")
-  score         Int
-  timeTaken     Int          @map("time_taken")
-  isCorrect     Boolean      @map("is_correct")
-  selfRating    Int?         @map("self_rating")
-  userAnswer    Json?        @map("user_answer")
-  mistakes      Json?
-  createdAt     DateTime     @default(now()) @map("created_at")
-  question      QuestionBank @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+model seat_allocation_events {
+  id             String   @id
+  institution_id String
+  delta          Int
+  reason         String
+  created_at     DateTime @default(now())
 
-  @@index([userId, createdAt])
-  @@index([questionId])
-  @@map("question_results")
+  @@index([institution_id, created_at])
 }
 
-model QuestionAnalytics {
-  id             String       @id @default(cuid())
-  questionId     String       @unique @map("question_id")
-  totalAttempts  Int          @default(0) @map("total_attempts")
-  successRate    Float        @map("success_rate")
-  avgScore       Float        @map("avg_score")
-  avgTime        Int          @map("avg_time")
-  avgSelfRating  Float?       @map("avg_self_rating")
-  commonMistakes Json         @map("common_mistakes")
-  isDifficult    Boolean      @default(false) @map("is_difficult")
-  updatedAt      DateTime     @updatedAt @map("updated_at")
-  question       QuestionBank @relation(fields: [questionId], references: [id], onDelete: Cascade)
+model session_events {
+  id                 String            @id
+  reading_session_id String?
+  eventType          EventType
+  payload_json       Json
+  created_at         DateTime          @default(now())
+  reading_sessions   reading_sessions? @relation(fields: [reading_session_id], references: [id], onDelete: Cascade)
 
-  @@map("question_analytics")
+  @@index([eventType])
+  @@index([reading_session_id])
 }
 
-model ConceptDifficulty {
-  id             String   @id @default(cuid())
-  topic          String
-  subject        String
-  totalAttempts  Int      @default(0) @map("total_attempts")
-  avgScore       Float    @map("avg_score")
-  successRate    Float    @map("success_rate")
-  commonMistakes String[] @map("common_mistakes")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-
-  @@unique([topic, subject])
-  @@map("concept_difficulty")
+model session_outcomes {
+  reading_session_id  String           @id
+  comprehension_score Int              @default(0)
+  production_score    Int              @default(0)
+  frustration_index   Int              @default(0)
+  computed_at         DateTime         @default(now())
+  reading_sessions    reading_sessions @relation(fields: [reading_session_id], references: [id], onDelete: Cascade)
 }
 
-model Annotation {
-  id           String               @id @default(uuid())
-  contentId    String               @map("content_id")
-  userId       String               @map("user_id")
-  type         AnnotationType
-  startOffset  Int                  @map("start_offset")
-  endOffset    Int                  @map("end_offset")
-  selectedText String?              @map("selected_text")
-  text         String?
-  color        String?
-  visibility   AnnotationVisibility
-  groupId      String?              @map("group_id")
-  parentId     String?              @map("parent_id")
-  isFavorite   Boolean              @default(false) @map("is_favorite")
-  createdAt    DateTime             @default(now()) @map("created_at")
-  updatedAt    DateTime             @updatedAt @map("updated_at")
-  content      Content              @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  group        StudyGroup?          @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  parent       Annotation?          @relation("AnnotationReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies      Annotation[]         @relation("AnnotationReplies")
-  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+model shared_cards {
+  id                 String         @id
+  session_id         String
+  round_id           String         @unique
+  created_by_user_id String
+  card_json          Json
+  created_at         DateTime       @default(now())
+  group_rounds       group_rounds   @relation(fields: [round_id], references: [id], onDelete: Cascade)
+  group_sessions     group_sessions @relation(fields: [session_id], references: [id], onDelete: Cascade)
 
-  @@index([contentId])
-  @@index([userId])
-  @@index([groupId])
-  @@map("annotations")
+  @@index([session_id])
 }
 
-model Family {
-  id                String             @id @default(uuid())
-  name              String
-  joinCode          String?            @unique @map("join_code")
-  ownerId           String             @map("owner_id")
-  createdAt         DateTime           @default(now()) @map("created_at")
-  updatedAt         DateTime           @updatedAt @map("updated_at")
-  coReadingSessions CoReadingSession[]
-  contents          Content[]
-  owner             User               @relation("FamilyOwner", fields: [ownerId], references: [id])
-  members           FamilyMember[]
-  policies          FamilyPolicy[]
-  providerUsage     ProviderUsage[]
-  subscriptions     Subscription[]
-
-  @@map("families")
+model sso_configurations {
+  id              String       @id
+  institution_id  String       @unique
+  provider        SSOProvider
+  enabled         Boolean      @default(false)
+  entity_id       String?
+  sso_url         String?
+  certificate     String?
+  client_id       String?
+  client_secret   String?
+  auth_url        String?
+  token_url       String?
+  user_info_url   String?
+  email_attribute String?      @default("email")
+  name_attribute  String?      @default("name")
+  role_attribute  String?
+  role_mapping    Json?
+  created_at      DateTime     @default(now())
+  updated_at      DateTime
+  institutions    institutions @relation(fields: [institution_id], references: [id], onDelete: Cascade)
 }
 
-model FamilyMember {
-  id          String             @id @default(uuid())
-  familyId    String             @map("family_id")
-  userId      String             @map("user_id")
-  role        FamilyRole
-  status      FamilyMemberStatus @default(INVITED)
-  displayName String?            @map("display_name")
-  joinedAt    DateTime           @default(now()) @map("joined_at")
-  family      Family             @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  user        User               @relation(fields: [userId], references: [id])
-
-  @@unique([familyId, userId])
-  @@map("family_members")
+model streaks {
+  user_id            String    @id
+  current_streak     Int       @default(0)
+  best_streak        Int       @default(0)
+  last_goal_met_date DateTime? @db.Date
+  freeze_tokens      Int       @default(1)
+  updated_at         DateTime
+  users              users     @relation(fields: [user_id], references: [id])
 }
 
-model FamilyPolicy {
-  id                   String      @id @default(uuid())
-  familyId             String      @map("family_id")
-  learnerUserId        String      @map("learner_user_id")
-  timeboxDefaultMin    Int         @default(15) @map("timebox_default_min")
-  dailyMinMinutes      Int         @default(15) @map("daily_min_minutes")
-  dailyReviewCap       Int         @default(20) @map("daily_review_cap")
-  coReadingDays        Int[]       @map("co_reading_days")
-  coReadingTime        String?     @map("co_reading_time")
-  toolWordsGateEnabled Boolean     @default(true) @map("tool_words_gate_enabled")
-  privacyMode          PrivacyMode @default(AGGREGATED_ONLY) @map("privacy_mode")
-  createdAt            DateTime    @default(now()) @map("created_at")
-  updatedAt            DateTime    @updatedAt @map("updated_at")
-  family               Family      @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  learner              User        @relation("FamilyPolicies", fields: [learnerUserId], references: [id], onDelete: Cascade)
+model study_group_members {
+  group_id     String
+  user_id      String
+  role         GroupRole
+  status       GroupMemberStatus @default(ACTIVE)
+  joined_at    DateTime          @default(now())
+  study_groups study_groups      @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  users        users             @relation(fields: [user_id], references: [id])
 
-  @@unique([familyId, learnerUserId])
-  @@map("family_policies")
+  @@id([group_id, user_id])
+  @@index([user_id])
 }
 
-model CoReadingSession {
-  id               String          @id @default(uuid())
-  familyId         String          @map("family_id")
-  educatorUserId   String          @map("educator_user_id")
-  learnerUserId    String          @map("learner_user_id")
-  readingSessionId String          @unique @map("reading_session_id")
-  threadIdLearner  String          @map("thread_id_learner")
-  threadIdEducator String          @map("thread_id_educator")
-  type             CoSessionType   @default(CO_READING)
-  timeboxMin       Int             @map("timebox_min")
-  status           CoReadingStatus @default(ACTIVE)
-  startedAt        DateTime        @default(now()) @map("started_at")
-  endedAt          DateTime?       @map("ended_at")
-  educator         User            @relation("EducatorSessions", fields: [educatorUserId], references: [id])
-  family           Family          @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  learner          User            @relation("LearnerSessions", fields: [learnerUserId], references: [id])
-  readingSession   ReadingSession  @relation(fields: [readingSessionId], references: [id], onDelete: Cascade)
-
-  @@map("co_reading_sessions")
-}
-
-model Classroom {
-  id                  String          @id @default(uuid())
-  institutionId       String?         @map("institution_id")
-  ownerEducatorUserId String          @map("owner_educator_id")
+model study_groups {
+  id                  String                @id
+  owner_user_id       String
+  scope_type          ScopeType?
+  scope_id            String?
   name                String
-  gradeLevel          String?         @map("grade_level")
-  createdAt           DateTime        @default(now()) @map("created_at")
-  updatedAt           DateTime        @updatedAt @map("updated_at")
-  weeklyPlans         ClassPlanWeek[]
-  policies            ClassPolicy?
-  owner               User            @relation("ClassroomOwner", fields: [ownerEducatorUserId], references: [id])
-  enrollments         Enrollment[]
+  created_at          DateTime              @default(now())
+  annotations         annotations[]
+  group_contents      group_contents[]
+  group_sessions      group_sessions[]
+  provider_usage      provider_usage[]
+  study_group_members study_group_members[]
+  users               users                 @relation(fields: [owner_user_id], references: [id])
 
-  @@map("classrooms")
+  @@index([owner_user_id])
+  @@index([scope_type, scope_id])
 }
 
-model Enrollment {
-  id            String           @id @default(uuid())
-  classroomId   String           @map("classroom_id")
-  learnerUserId String           @map("learner_user_id")
-  status        EnrollmentStatus @default(ACTIVE)
-  nickname      String?
-  enrolledAt    DateTime         @default(now()) @map("enrolled_at")
-  classroom     Classroom        @relation(fields: [classroomId], references: [id], onDelete: Cascade)
-  learner       User             @relation("StudentEnrollments", fields: [learnerUserId], references: [id])
+model study_sessions {
+  id                String    @id
+  user_id           String
+  start_time        DateTime
+  end_time          DateTime?
+  duration_minutes  Int?
+  net_focus_minutes Int?
+  focus_score       Float?
+  interruptions     Int       @default(0)
+  activity_type     String
+  content_id        String?
+  source_id         String?
+  accuracy_rate     Float?
+  engagement_score  Float?
+  created_at        DateTime  @default(now())
+  users             users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@unique([classroomId, learnerUserId])
-  @@map("enrollments")
+  @@index([user_id, activity_type])
+  @@index([user_id, start_time])
 }
 
-model ClassPolicy {
-  id                   String           @id @default(uuid())
-  classroomId          String           @unique @map("classroom_id")
-  timeboxDefaultMin    Int              @default(15) @map("timebox_default_min")
-  weeklyUnitsTarget    Int              @default(3) @map("weekly_units_target")
-  toolWordsGateEnabled Boolean          @default(true) @map("tool_words_gate_enabled")
-  dailyReviewCap       Int              @default(10) @map("daily_review_cap")
-  privacyMode          ClassPrivacyMode @default(AGGREGATED_ONLY) @map("privacy_mode")
-  interventionMode     InterventionMode @default(PROMPT_COACH) @map("intervention_mode")
-  createdAt            DateTime         @default(now()) @map("created_at")
-  updatedAt            DateTime         @updatedAt @map("updated_at")
-  classroom            Classroom        @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+model subscriptions {
+  id                       String             @id
+  scope_type               ScopeType
+  scope_id                 String
+  plan_id                  String
+  status                   SubscriptionStatus
+  source                   SubscriptionSource
+  current_period_start     DateTime?
+  current_period_end       DateTime?
+  cancel_at_period_end     Boolean            @default(false)
+  provider_code            String?
+  provider_customer_id     String?
+  provider_subscription_id String?            @unique
+  provider_price_id        String?
+  created_at               DateTime           @default(now())
+  updated_at               DateTime
+  canceled_at              DateTime?
+  ended_at                 DateTime?
+  family_id                String?
+  grace_until              DateTime?
+  institution_id           String?
+  metadata                 Json?
+  provider                 PaymentProvider?
+  user_id                  String?
+  families                 families?          @relation(fields: [family_id], references: [id])
+  institutions             institutions?      @relation(fields: [institution_id], references: [id])
+  plans                    plans              @relation(fields: [plan_id], references: [id])
+  users                    users?             @relation(fields: [user_id], references: [id])
 
-  @@map("class_policies")
+  @@unique([scope_type, scope_id, status], map: "subscriptions_scope_status_unique")
+  @@index([family_id])
+  @@index([institution_id])
+  @@index([plan_id])
+  @@index([scope_type, scope_id])
+  @@index([status])
+  @@index([user_id])
 }
 
-model ClassPlanWeek {
-  id                      String    @id @default(uuid())
-  classroomId             String    @map("classroom_id")
-  weekStart               DateTime  @map("week_start")
-  createdByEducatorUserId String    @map("created_by_educator_id")
-  title                   String?
-  notes                   String?
-  itemsJson               Json      @map("items_json")
-  toolWordsJson           Json?     @map("tool_words_json")
-  checkpointsJson         Json?     @map("checkpoints_json")
-  createdAt               DateTime  @default(now()) @map("created_at")
-  updatedAt               DateTime  @updatedAt @map("updated_at")
-  classroom               Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
-  creator                 User      @relation("ClassPlansCreated", fields: [createdByEducatorUserId], references: [id])
+model system_metrics {
+  id        String   @id
+  metric    String
+  value     Float
+  tags      Json?
+  timestamp DateTime @default(now())
+  bucket    String
 
-  @@unique([classroomId, weekStart])
-  @@map("class_plan_weeks")
+  @@index([bucket])
+  @@index([metric, timestamp])
 }
 
-model ContentPedagogicalData {
-  id                String   @id @default(uuid())
-  contentId         String   @unique @map("content_id")
-  vocabularyTriage  Json?    @map("vocabulary_triage")
-  socraticQuestions Json?    @map("socratic_questions")
-  quizQuestions     Json?    @map("quiz_questions")
-  tabooCards        Json?    @map("taboo_cards")
-  bossFightConfig   Json?    @map("boss_fight_config")
-  freeRecallPrompts Json?    @map("free_recall_prompts")
-  processingVersion String   @default("v1.0") @map("processing_version")
-  processedAt       DateTime @default(now()) @map("processed_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
-  content           Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+model teacher_verifications {
+  id             String                    @id
+  user_id        String                    @unique
+  institution_id String
+  status         TeacherVerificationStatus @default(PENDING)
+  verified_by    String?
+  verified_at    DateTime?
+  created_at     DateTime                  @default(now())
+  updated_at     DateTime
 
-  @@index([contentId])
-  @@map("content_pedagogical_data")
+  @@index([institution_id, status])
 }
 
-model GameResult {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  contentId String   @map("content_id")
-  gameType  String
-  score     Float
-  metadata  Json?
-  playedAt  DateTime @default(now()) @map("played_at")
-  content   Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model usage_events {
+  id              String      @id
+  environment     Environment
+  occurred_at     DateTime
+  scope_type      ScopeType
+  scope_id        String
+  provider_code   String?
+  endpoint        String?
+  metric          String
+  quantity        Float
+  approx_cost_usd Float?
+  request_id      String?
+  user_id         String?
+  metadata        Json?
+  created_at      DateTime    @default(now())
+  users           users?      @relation(fields: [user_id], references: [id])
 
-  @@index([userId, contentId])
-  @@index([gameType])
-  @@index([playedAt])
-  @@map("game_results")
+  @@index([metric])
+  @@index([occurred_at])
+  @@index([scope_type, scope_id, metric, occurred_at])
 }
 
-model TeacherVerification {
-  id            String                    @id @default(uuid())
-  userId        String                    @unique @map("user_id")
-  institutionId String                    @map("institution_id")
-  status        TeacherVerificationStatus @default(PENDING)
-  verifiedBy    String?                   @map("verified_by")
-  verifiedAt    DateTime?                 @map("verified_at")
-  createdAt     DateTime                  @default(now()) @map("created_at")
-  updatedAt     DateTime                  @updatedAt @map("updated_at")
+model user_badges {
+  id         String   @id
+  user_id    String
+  badge_id   String
+  awarded_at DateTime @default(now())
+  badges     badges   @relation(fields: [badge_id], references: [id])
+  users      users    @relation(fields: [user_id], references: [id])
 
-  @@index([institutionId, status])
-  @@map("teacher_verifications")
+  @@unique([user_id, badge_id])
 }
 
-model ContentShare {
-  contentId   String           @map("content_id")
-  contextType ShareContextType @map("context_type")
-  contextId   String           @map("context_id")
-  permission  SharePermission  @default(VIEW)
-  createdBy   String?          @map("created_by")
-  createdAt   DateTime         @default(now()) @map("created_at")
-
-  @@id([contentId, contextType, contextId])
-  @@index([contextType, contextId])
-  @@map("content_shares")
+model user_library_items {
+  id                 String            @id
+  user_id            String
+  content_id         String
+  content_version_id String?
+  status             LibraryStatus     @default(SAVED)
+  last_accessed_at   DateTime          @default(now())
+  created_at         DateTime          @default(now())
+  contents           contents          @relation(fields: [content_id], references: [id])
+  content_versions   content_versions? @relation(fields: [content_version_id], references: [id])
+  users              users             @relation(fields: [user_id], references: [id])
 }
 
-model AnnotationShare {
-  annotationId String              @map("annotation_id")
-  contextType  ShareContextType    @map("context_type")
-  contextId    String              @map("context_id")
-  mode         AnnotationShareMode @default(VIEW)
-  createdBy    String?             @map("created_by")
-  createdAt    DateTime            @default(now()) @map("created_at")
+model user_role_assignments {
+  id         String     @id
+  user_id    String
+  role       UserRole
+  scope_type ScopeType?
+  scope_id   String?
+  created_at DateTime   @default(now())
+  created_by String?
+  users      users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@id([annotationId, contextType, contextId])
-  @@index([contextType, contextId])
-  @@map("annotation_shares")
+  @@unique([user_id, role, scope_type, scope_id])
+  @@index([role])
+  @@index([user_id])
 }
 
-model CommentThread {
-  id          String            @id @default(uuid())
-  contextType ShareContextType  @map("context_type")
-  contextId   String            @map("context_id")
-  targetType  CommentTargetType @map("target_type")
-  targetId    String            @map("target_id")
-  createdAt   DateTime          @default(now()) @map("created_at")
-  comments    Comment[]
+model user_topic_mastery {
+  id                  String   @id
+  user_id             String
+  topic               String
+  subject             String
+  mastery_level       Float    @default(0)
+  questions_attempted Int      @default(0)
+  questions_correct   Int      @default(0)
+  streak              Int      @default(0)
+  time_spent          Int      @default(0)
+  last_activity_at    DateTime @default(now())
+  created_at          DateTime @default(now())
+  updated_at          DateTime
+  users               users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@unique([contextType, contextId, targetType, targetId])
-  @@index([contextType, contextId])
-  @@map("comment_threads")
+  @@unique([user_id, topic, subject])
+  @@index([topic])
+  @@index([user_id])
 }
 
-model Comment {
-  id           String        @id @default(uuid())
-  threadId     String        @map("thread_id")
-  authorId     String        @map("author_id")
-  body         String
-  createdAt    DateTime      @default(now()) @map("created_at")
-  deletedAt    DateTime?     @map("deleted_at")
-  deletedBy    String?       @map("deleted_by")
-  deleteReason String?       @map("delete_reason")
-  thread       CommentThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+model user_vocabularies {
+  id              String           @id
+  user_id         String
+  word            String
+  language        Language
+  mastery_score   Int              @default(0)
+  last_seen_at    DateTime         @default(now())
+  srs_stage       SrsStage         @default(NEW)
+  due_at          DateTime         @default(now())
+  lapses_count    Int              @default(0)
+  mastery_form    Int              @default(0)
+  mastery_meaning Int              @default(0)
+  mastery_use     Int              @default(0)
+  content_id      String?
+  meaning_note    String?
+  example_note    String?
+  created_at      DateTime         @default(now())
+  updated_at      DateTime
+  contents        contents?        @relation(fields: [content_id], references: [id])
+  users           users            @relation(fields: [user_id], references: [id])
+  vocab_attempts  vocab_attempts[]
 
-  @@index([threadId, createdAt])
-  @@map("comments")
+  @@unique([user_id, word, language])
+  @@index([srs_stage])
+  @@index([user_id, due_at])
 }
 
-model InstitutionPolicy {
-  id                      String   @id @default(uuid())
-  institutionId           String   @unique @map("institution_id")
-  allowAdvancedAI         Boolean  @default(false) @map("allow_advanced_ai")
-  allowExternalSharing    Boolean  @default(false) @map("allow_external_sharing")
-  allowTextExtraction     Boolean  @default(false) @map("allow_text_extraction")
-  studentUnenrollmentMode String   @default("TEACHER_OR_ADMIN_ONLY") @map("student_unenrollment_mode")
-  createdAt               DateTime @default(now()) @map("created_at")
-  updatedAt               DateTime @updatedAt @map("updated_at")
+model users {
+  id                                                              String                   @id
+  institution_id                                                  String?
+  name                                                            String
+  email                                                           String                   @unique
+  password_hash                                                   String?
+  oauth_provider                                                  String?
+  oauth_id                                                        String?
+  oauth_picture                                                   String?
+  role                                                            UserRole
+  schooling_level                                                 String
+  age                                                             Int?
+  sex                                                             String?
+  preferred_languages                                             Json                     @default("[]")
+  created_at                                                      DateTime                 @default(now())
+  updated_at                                                      DateTime
+  last_login_at                                                   DateTime?
+  status                                                          String                   @default("ACTIVE")
+  avatar_url                                                      String?
+  bio                                                             String?
+  settings                                                        Json?                    @default("{}")
+  sso_provider                                                    String?
+  sso_subject                                                     String?                  @unique
+  password_reset_expires                                          DateTime?
+  password_reset_token                                            String?
+  address                                                         String?
+  birthday                                                        DateTime?
+  active_institution_id                                           String?
+  context_role                                                    ContextRole              @default(OWNER)
+  system_role                                                     SystemRole?
+  annotation_comments                                             annotation_comments[]
+  annotations                                                     annotations[]
+  assessment_attempts                                             assessment_attempts[]
+  class_plan_weeks                                                class_plan_weeks[]
+  class_students                                                  class_students[]
+  classrooms                                                      classrooms[]
+  co_reading_sessions_co_reading_sessions_educator_user_idTousers co_reading_sessions[]    @relation("co_reading_sessions_educator_user_idTousers")
+  co_reading_sessions_co_reading_sessions_learner_user_idTousers  co_reading_sessions[]    @relation("co_reading_sessions_learner_user_idTousers")
+  contents_contents_created_byTousers                             contents[]               @relation("contents_created_byTousers")
+  contents_contents_owner_user_idTousers                          contents[]               @relation("contents_owner_user_idTousers")
+  cornell_notes                                                   cornell_notes[]
+  daily_activities                                                daily_activities[]
+  daily_goals                                                     daily_goals[]
+  enrollments                                                     enrollments[]
+  entitlement_snapshots                                           entitlement_snapshots?
+  extension_device_auth                                           extension_device_auth[]
+  extension_grants                                                extension_grants[]
+  families                                                        families[]
+  family_members                                                  family_members[]
+  family_policies                                                 family_policies[]
+  game_progress                                                   game_progress[]
+  game_results                                                    game_results[]
+  group_chat_messages                                             group_chat_messages[]
+  group_session_members                                           group_session_members[]
+  highlights                                                      highlights[]
+  institution_invites                                             institution_invites[]
+  institution_members                                             institution_members[]
+  layer_eligibility                                               layer_eligibility?
+  learner_profiles                                                learner_profiles?
+  legacy_cornell_notes                                            legacy_cornell_notes[]
+  pending_user_approvals                                          pending_user_approvals[]
+  provider_usage                                                  provider_usage[]
+  question_results                                                question_results[]
+  reading_sessions                                                reading_sessions[]
+  streaks                                                         streaks?
+  study_group_members                                             study_group_members[]
+  study_groups                                                    study_groups[]
+  study_sessions                                                  study_sessions[]
+  subscriptions                                                   subscriptions[]
+  usage_events                                                    usage_events[]
+  user_badges                                                     user_badges[]
+  user_library_items                                              user_library_items[]
+  user_role_assignments                                           user_role_assignments[]
+  user_topic_mastery                                              user_topic_mastery[]
+  user_vocabularies                                               user_vocabularies[]
+  institutions                                                    institutions?            @relation(fields: [institution_id], references: [id])
 
-  @@map("institution_policies")
+  @@unique([oauth_provider, oauth_id])
 }
 
-model GradebookExport {
-  id          String   @id @default(uuid())
-  classroomId String   @map("classroom_id")
-  createdBy   String   @map("created_by")
-  range       Json
-  format      String   @default("CSV")
-  fileRef     String   @map("file_ref")
-  createdAt   DateTime @default(now()) @map("created_at")
+model vocab_attempts {
+  id                String            @id
+  vocab_id          String
+  session_id        String?
+  dimension         VocabDimension
+  result            AttemptResult
+  created_at        DateTime          @default(now())
+  reading_sessions  reading_sessions? @relation(fields: [session_id], references: [id])
+  user_vocabularies user_vocabularies @relation(fields: [vocab_id], references: [id], onDelete: Cascade)
 
-  @@index([classroomId, createdAt])
-  @@map("gradebook_exports")
+  @@index([created_at])
+  @@index([vocab_id])
 }
 
-enum PlanType {
-  FREE
-  INDIVIDUAL_PREMIUM
-  FAMILY
-  INSTITUTION
+enum AnnotationShareMode {
+  VIEW
+  COMMENT
+}
+
+enum AnnotationStatus {
+  ACTIVE
+  DELETED
+}
+
+enum AnnotationType {
+  HIGHLIGHT
+  NOTE
+  COMMENT
+}
+
+enum AnnotationVisibility {
+  PRIVATE
+  GROUP
+  PUBLIC
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AssetLayer {
+  L1
+  L2
+  L3
+}
+
+enum AttemptResult {
+  FAIL
+  HARD
+  OK
+  EASY
 }
 
 enum BillingPeriod {
@@ -1736,30 +1653,94 @@ enum BillingPeriod {
   ANNUAL
 }
 
-enum OrgUserStatus {
-  PROVISIONED
-  ACTIVE_LICENSED
-  SUSPENDED
-  DEPROVISIONED
+enum ClassPrivacyMode {
+  AGGREGATED_ONLY
+  AGGREGATED_PLUS_HELP_REQUESTS
+  AGGREGATED_PLUS_FLAGS
 }
 
-enum PaymentProvider {
-  STRIPE
-  MANUAL_INVOICE
-  OTHER
+enum CoReadingStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
 }
 
-enum SessionPhase {
-  PRE
-  DURING
-  POST
-  FINISHED
+enum CoSessionType {
+  CO_READING
+  TEACH_BACK
 }
 
-enum SessionModality {
-  READING
-  LISTENING
-  WRITING
+enum CommentTargetType {
+  CONTENT
+  ANNOTATION
+  SUBMISSION
+}
+
+enum ConfigType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+  SECRET_REF
+}
+
+enum ContentOwnerType {
+  USER
+  INSTITUTION
+  CLASSROOM
+}
+
+enum ContentType {
+  NEWS
+  ARXIV
+  SCHOOL_MATERIAL
+  PDF
+  IMAGE
+  DOCX
+  ARTICLE
+  WEB_CLIP
+  VIDEO
+  AUDIO
+}
+
+enum ContextRole {
+  OWNER
+  INSTITUTION_EDUCATION_ADMIN
+  TEACHER
+  STUDENT
+  INSTITUTION_ENTERPRISE_ADMIN
+  EMPLOYEE
+}
+
+enum ContextType {
+  INSTITUTION
+  GROUP_STUDY
+  FAMILY
+}
+
+enum DailyGoalType {
+  MINUTES
+  LESSONS
+}
+
+enum EducationLevel {
+  FUNDAMENTAL_1
+  FUNDAMENTAL_2
+  MEDIO
+  SUPERIOR
+  ADULTO_LEIGO
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  PENDING
+  REMOVED
+}
+
+enum Environment {
+  DEV
+  STAGING
+  PROD
 }
 
 enum EventType {
@@ -1783,215 +1764,6 @@ enum EventType {
   PROMPT_RECEIVED
 }
 
-enum EducationLevel {
-  FUNDAMENTAL_1
-  FUNDAMENTAL_2
-  MEDIO
-  SUPERIOR
-  ADULTO_LEIGO
-}
-
-enum UserRole {
-  ADMIN
-  SUPPORT
-  OPS
-  INSTITUTION_ADMIN
-  TEACHER
-  STUDENT
-  COMMON_USER
-  GUARDIAN
-  SCHOOL_ADMIN
-}
-
-enum SystemRole {
-  ADMIN
-  SUPPORT
-  OPS
-}
-
-enum ContextRole {
-  OWNER
-  INSTITUTION_EDUCATION_ADMIN
-  TEACHER
-  STUDENT
-  INSTITUTION_ENTERPRISE_ADMIN
-  EMPLOYEE
-}
-
-enum InstitutionKind {
-  EDUCATION
-  ENTERPRISE
-}
-
-enum InstitutionRole {
-  INSTITUTION_EDUCATION_ADMIN
-  TEACHER
-  STUDENT
-  INSTITUTION_ENTERPRISE_ADMIN
-  EMPLOYEE
-}
-
-enum ContentOwnerType {
-  USER
-  INSTITUTION
-  CLASSROOM
-}
-
-enum TeacherVerificationStatus {
-  PENDING
-  VERIFIED
-  REVOKED
-}
-
-enum ShareContextType {
-  CLASSROOM
-  FAMILY
-  STUDY_GROUP
-}
-
-enum SharePermission {
-  VIEW
-  COMMENT
-  ASSIGN
-}
-
-enum AnnotationShareMode {
-  VIEW
-  COMMENT
-}
-
-enum CommentTargetType {
-  CONTENT
-  ANNOTATION
-  SUBMISSION
-}
-
-enum ScopeType {
-  GLOBAL
-  INSTITUTION
-  USER
-  FAMILY
-}
-
-enum Environment {
-  DEV
-  STAGING
-  PROD
-}
-
-enum InstitutionType {
-  SCHOOL
-  UNIVERSITY
-  COURSE
-  OTHER
-}
-
-enum MemberStatus {
-  ACTIVE
-  SUSPENDED
-  LEFT
-}
-
-enum ApprovalStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-enum SSOProvider {
-  SAML
-  GOOGLE_WORKSPACE
-  MICROSOFT_ENTRA
-  OKTA
-  CUSTOM_OIDC
-}
-
-enum ContentType {
-  NEWS
-  ARXIV
-  SCHOOL_MATERIAL
-  PDF
-  IMAGE
-  DOCX
-  ARTICLE
-  WEB_CLIP
-  VIDEO
-  AUDIO
-}
-
-enum Language {
-  PT_BR
-  EN
-  KO
-}
-
-enum LibraryStatus {
-  SAVED
-  IN_PROGRESS
-  COMPLETED
-}
-
-enum QuestionType {
-  MULTIPLE_CHOICE
-  TRUE_FALSE
-  SHORT_ANSWER
-}
-
-enum LessonStatus {
-  LOCKED
-  AVAILABLE
-  IN_PROGRESS
-  COMPLETED
-}
-
-enum DailyGoalType {
-  MINUTES
-  LESSONS
-}
-
-enum JobStatus {
-  RUNNING
-  COMPLETED
-  FAILED
-}
-
-enum ConfigType {
-  STRING
-  NUMBER
-  BOOLEAN
-  JSON
-  SECRET_REF
-}
-
-enum SubscriptionStatus {
-  ACTIVE
-  INACTIVE
-  TRIALING
-  PAST_DUE
-  CANCELED
-  GRACE_PERIOD
-  EXPIRED
-  SUSPENDED
-}
-
-enum SubscriptionSource {
-  INTERNAL
-  PAYMENT_PROVIDER
-}
-
-enum HighlightKind {
-  TEXT
-  AREA
-}
-
-enum TargetType {
-  PDF
-  IMAGE
-  DOCX
-  VIDEO
-  AUDIO
-}
-
 enum ExtractionStatus {
   PENDING
   RUNNING
@@ -1999,46 +1771,30 @@ enum ExtractionStatus {
   FAILED
 }
 
-enum SrsStage {
-  NEW
-  D1
-  D3
-  D7
-  D14
-  D30
-  D60
-  MASTERED
+enum FamilyMemberStatus {
+  INVITED
+  ACTIVE
+  REMOVED
 }
 
-enum VocabDimension {
-  FORM
-  MEANING
-  USE
-}
-
-enum AttemptResult {
-  FAIL
-  HARD
-  OK
-  EASY
-}
-
-enum AssetLayer {
-  L1
-  L2
-  L3
-}
-
-enum GroupRole {
+enum FamilyRole {
   OWNER
-  MOD
-  MEMBER
+  GUARDIAN
+  CHILD
+  EDUCATOR
+  LEARNER
 }
 
 enum GroupMemberStatus {
   ACTIVE
   INVITED
   REMOVED
+}
+
+enum GroupRole {
+  OWNER
+  MOD
+  MEMBER
 }
 
 enum GroupSessionMode {
@@ -2054,12 +1810,96 @@ enum GroupSessionStatus {
   FINISHED
 }
 
-enum SessionRole {
-  FACILITATOR
-  TIMEKEEPER
-  CLARIFIER
-  CONNECTOR
-  SCRIBE
+enum HighlightKind {
+  TEXT
+  AREA
+}
+
+enum InstitutionKind {
+  EDUCATION
+  ENTERPRISE
+}
+
+enum InstitutionRole {
+  INSTITUTION_EDUCATION_ADMIN
+  TEACHER
+  STUDENT
+  INSTITUTION_ENTERPRISE_ADMIN
+  EMPLOYEE
+}
+
+enum InstitutionType {
+  SCHOOL
+  UNIVERSITY
+  COURSE
+  OTHER
+}
+
+enum InterventionMode {
+  PROMPT_COACH
+  PROMPT_COACH_PLUS_1ON1
+}
+
+enum JobStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum Language {
+  PT_BR
+  EN
+  KO
+}
+
+enum LessonStatus {
+  LOCKED
+  AVAILABLE
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum LibraryStatus {
+  SAVED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum MemberStatus {
+  ACTIVE
+  SUSPENDED
+  LEFT
+}
+
+enum OrgUserStatus {
+  PROVISIONED
+  ACTIVE_LICENSED
+  SUSPENDED
+  DEPROVISIONED
+}
+
+enum PaymentProvider {
+  STRIPE
+  MANUAL_INVOICE
+  OTHER
+}
+
+enum PlanType {
+  FREE
+  INDIVIDUAL_PREMIUM
+  FAMILY
+  INSTITUTION
+}
+
+enum PrivacyMode {
+  AGGREGATED_ONLY
+  AGGREGATED_PLUS_TRIGGERS
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
 }
 
 enum RoundStatus {
@@ -2071,30 +1911,111 @@ enum RoundStatus {
   DONE
 }
 
-enum AnnotationType {
-  HIGHLIGHT
-  NOTE
+enum SSOProvider {
+  SAML
+  GOOGLE_WORKSPACE
+  MICROSOFT_ENTRA
+  OKTA
+  CUSTOM_OIDC
+}
+
+enum ScopeType {
+  GLOBAL
+  INSTITUTION
+  USER
+  FAMILY
+}
+
+enum SessionModality {
+  READING
+  LISTENING
+  WRITING
+}
+
+enum SessionPhase {
+  PRE
+  DURING
+  POST
+  FINISHED
+}
+
+enum SessionRole {
+  FACILITATOR
+  TIMEKEEPER
+  CLARIFIER
+  CONNECTOR
+  SCRIBE
+}
+
+enum ShareContextType {
+  CLASSROOM
+  FAMILY
+  STUDY_GROUP
+}
+
+enum SharePermission {
+  VIEW
   COMMENT
+  ASSIGN
 }
 
-enum AnnotationVisibility {
-  PRIVATE
-  GROUP
-  PUBLIC
+enum SrsStage {
+  NEW
+  D1
+  D3
+  D7
+  D14
+  D30
+  D60
+  MASTERED
 }
 
-enum FamilyRole {
-  OWNER
-  GUARDIAN
-  CHILD
-  EDUCATOR
-  LEARNER
+enum SubscriptionSource {
+  INTERNAL
+  PAYMENT_PROVIDER
 }
 
-enum FamilyMemberStatus {
-  INVITED
+enum SubscriptionStatus {
   ACTIVE
-  REMOVED
+  INACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  GRACE_PERIOD
+  EXPIRED
+  SUSPENDED
+}
+
+enum SystemRole {
+  ADMIN
+  SUPPORT
+  OPS
+}
+
+enum TargetType {
+  PDF
+  IMAGE
+  DOCX
+  VIDEO
+  AUDIO
+}
+
+enum TeacherVerificationStatus {
+  PENDING
+  VERIFIED
+  REVOKED
+}
+
+enum UserRole {
+  ADMIN
+  SUPPORT
+  OPS
+  INSTITUTION_ADMIN
+  TEACHER
+  STUDENT
+  COMMON_USER
+  GUARDIAN
+  SCHOOL_ADMIN
 }
 
 enum VisibilityScope {
@@ -2104,46 +2025,8 @@ enum VisibilityScope {
   GROUP_MEMBERS
 }
 
-enum ContextType {
-  INSTITUTION
-  GROUP_STUDY
-  FAMILY
-}
-
-enum AnnotationStatus {
-  ACTIVE
-  DELETED
-}
-
-enum PrivacyMode {
-  AGGREGATED_ONLY
-  AGGREGATED_PLUS_TRIGGERS
-}
-
-enum ClassPrivacyMode {
-  AGGREGATED_ONLY
-  AGGREGATED_PLUS_HELP_REQUESTS
-  AGGREGATED_PLUS_FLAGS
-}
-
-enum CoReadingStatus {
-  ACTIVE
-  COMPLETED
-  ABANDONED
-}
-
-enum EnrollmentStatus {
-  ACTIVE
-  PENDING
-  REMOVED
-}
-
-enum InterventionMode {
-  PROMPT_COACH
-  PROMPT_COACH_PLUS_1ON1
-}
-
-enum CoSessionType {
-  CO_READING
-  TEACH_BACK
+enum VocabDimension {
+  FORM
+  MEANING
+  USE
 }
