@@ -6,7 +6,10 @@ interface User {
   id: string;
   email: string;
   name: string;
-  role: string;
+  role: string; // Legacy role
+  systemRole?: string; // New: Global system role (ADMIN, USER)
+  contextRole?: string; // New: Context-specific role (TEACHER, STUDENT)
+  activeInstitutionId?: string; // New: Currently active institution
   settings?: {
     primaryFamilyId?: string;
     [key: string]: any;
@@ -15,14 +18,15 @@ interface User {
 
 interface AuthState {
   token: string | null;
-  refreshToken: string | null; // NEW
+  refreshToken: string | null;
   user: User | null;
   _hasHydrated: boolean;
   setHasHydrated: (state: boolean) => void;
-  setAuth: (token: string, refreshToken: string, user: User) => void; // UPDATED
+  setAuth: (token: string, refreshToken: string, user: User) => void;
   logout: () => void;
   refreshUser: () => Promise<void>;
-  refreshAccessToken: () => Promise<boolean>; // NEW
+  refreshAccessToken: () => Promise<boolean>;
+  switchContext: (institutionId: string) => Promise<boolean>; // NEW action
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -42,6 +46,25 @@ export const useAuthStore = create<AuthState>()(
           set({ user: updatedUser });
         } catch (error) {
           console.error('Failed to refresh user:', error);
+        }
+      },
+      switchContext: async (institutionId: string) => {
+        try {
+          console.log('[Auth Store] Switching context to:', institutionId);
+          const response = await api.post('/auth/switch-context', {
+            institutionId,
+          });
+          
+          const { access_token, user } = response.data;
+          // Verify we got the new token and user
+          if (access_token && user) {
+            set({ token: access_token, user }); // Update token and user with new context
+            return true;
+          }
+          return false;
+        } catch (error) {
+           console.error('[Auth Store] Failed to switch context:', error);
+           return false;
         }
       },
       refreshAccessToken: async () => {
