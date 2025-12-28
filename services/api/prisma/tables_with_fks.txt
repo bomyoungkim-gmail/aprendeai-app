@@ -1,6 +1,5 @@
 
-
-// ===== PHASE 1 EXPAND: New Tables =====
+// ===== SUBFASE 2.1: Adding Foreign Keys to New Tables =====
 
 model TeacherVerification {
   id            String                    @id @default(uuid())
@@ -11,6 +10,9 @@ model TeacherVerification {
   verifiedAt    DateTime?                 @map("verified_at")
   createdAt     DateTime                  @default(now()) @map("created_at")
   updatedAt     DateTime                  @updatedAt @map("updated_at")
+
+  user        User        @relation("UserTeacherVerification", fields: [userId], references: [id], onDelete: Cascade)
+  institution Institution @relation("InstitutionTeacherVerifications", fields: [institutionId], references: [id], onDelete: Cascade)
 
   @@index([institutionId, status])
   @@map("teacher_verifications")
@@ -24,6 +26,8 @@ model ContentShare {
   createdBy   String?          @map("created_by")
   createdAt   DateTime         @default(now()) @map("created_at")
 
+  content Content @relation("ContentShares", fields: [contentId], references: [id], onDelete: Cascade)
+
   @@id([contentId, contextType, contextId])
   @@index([contextType, contextId])
   @@map("content_shares")
@@ -36,6 +40,8 @@ model AnnotationShare {
   mode         AnnotationShareMode @default(VIEW)
   createdBy    String?             @map("created_by")
   createdAt    DateTime            @default(now()) @map("created_at")
+
+  annotation Annotation @relation("AnnotationShares", fields: [annotationId], references: [id], onDelete: Cascade)
 
   @@id([annotationId, contextType, contextId])
   @@index([contextType, contextId])
@@ -68,6 +74,7 @@ model Comment {
   deleteReason String?   @map("delete_reason")
 
   thread CommentThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author User          @relation("UserComments", fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([threadId, createdAt])
   @@map("comments")
@@ -85,6 +92,8 @@ model InstitutionPolicy {
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+
+  institution Institution @relation("InstitutionPolicy", fields: [institutionId], references: [id], onDelete: Cascade)
 
   @@map("institution_policies")
 }
