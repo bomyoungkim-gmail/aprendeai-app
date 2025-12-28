@@ -44,7 +44,7 @@ export interface CreateFamilyDto {
   name: string;
 }
 
-export interface InviteMemberDto {
+export interface InviteFamilyMemberDto {
   email: string;
   role: FamilyRole;
   displayName?: string;

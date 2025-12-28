@@ -1,17 +1,23 @@
-'use client';
+import { useState, useMemo } from 'react';
 
 import { TextInputPlayer } from './TextInputPlayer';
+import { GameQuestion } from '@/lib/api/games';
 
 interface AnalogyMakerProps {
   onComplete: (score: number, won: boolean) => void;
+  questions?: GameQuestion[];
 }
 
 /**
  * ANALOGY_MAKER - Create analogy for concept
  * Uses TextInputPlayer template
  */
-export function AnalogyMakerGame({ onComplete }: AnalogyMakerProps) {
-  const concept = "Internet";
+export function AnalogyMakerGame({ onComplete, questions }: AnalogyMakerProps) {
+  // Map Backend Data
+  const concept = useMemo(() => {
+    if (questions && questions.length > 0) return questions[0].text;
+    return "Internet"; // Mock
+  }, [questions]);
 
   const handleSubmit = (text: string) => {
     // Score based on analogy quality

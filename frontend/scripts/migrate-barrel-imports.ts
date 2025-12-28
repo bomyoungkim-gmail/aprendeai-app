@@ -117,7 +117,7 @@ function migrateFile(filePath: string, dryRun: boolean): MigrationResult | null 
   
   // Generate new import statements
   const newImports: string[] = [];
-  for (const [directPath, hooks] of pathGroups) {
+  for (const [directPath, hooks] of Array.from(pathGroups.entries())) {
     if (hooks.length === 1) {
       newImports.push(`import { ${hooks[0]} } from '${directPath}';`);
     } else {

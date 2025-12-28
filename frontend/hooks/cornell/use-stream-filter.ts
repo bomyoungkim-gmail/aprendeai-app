@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { UnifiedStreamItem } from '@/lib/types/unified-stream';
-import type { FilterType } from '@/components/cornell/SearchBar';
+import type { FilterType } from '@/lib/types/ui';
 
 /**
  * Hook to filter and search unified stream items

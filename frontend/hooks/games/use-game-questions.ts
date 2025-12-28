@@ -1,6 +1,12 @@
+/**
+ * Game Questions Hook
+ * 
+ * React Query hooks for fetching and submitting game questions.
+ * Uses questionsService for business logic separation.
+ */
+
 import { useQuery, useMutation } from '@tanstack/react-query';
-import api from '@/lib/api';
-import { GameQuestion } from '@/components/games/types'; // We'll need to define this or import from a shared location
+import { questionsService, type GameQuestion } from '@/services';
 
 interface UseGameQuestionsParams {
   gameId: string;
@@ -12,6 +18,9 @@ interface UseGameQuestionsParams {
   enabled?: boolean;
 }
 
+/**
+ * Fetch questions for a specific game
+ */
 export function useGameQuestions({
   gameId,
   topic = 'General',
@@ -23,35 +32,32 @@ export function useGameQuestions({
 }: UseGameQuestionsParams) {
   return useQuery({
     queryKey: ['game-questions', gameId, topic, subject, educationLevel, language],
-    queryFn: async () => {
-      const { data } = await api.post(`/games/${gameId}/questions`, {
-        gameType: gameId,
-        topic,
-        subject,
-        educationLevel,
-        count,
-        language
-      });
-      return data as GameQuestion[];
-    },
+    queryFn: () => questionsService.fetchQuestions(gameId, {
+      topic,
+      subject,
+      educationLevel,
+      count,
+      language,
+    }),
     enabled: enabled && !!gameId,
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: 1,
   });
 }
 
+/**
+ * Submit game result/answer
+ */
 export function useSubmitGameResult() {
   return useMutation({
-    mutationFn: async (data: { 
+    mutationFn: (data: { 
       questionId: string; 
       score: number; 
       timeTaken: number; 
       isCorrect: boolean;
       mistakes?: any;
       userAnswer?: any;
-    }) => {
-      const { data: result } = await api.post(`/games/questions/${data.questionId}/result`, data);
-      return result;
-    },
+    }) => questionsService.submitResult(data),
   });
 }
+

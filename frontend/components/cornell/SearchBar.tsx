@@ -1,7 +1,9 @@
 import React from 'react';
 import { Search, X, Filter } from 'lucide-react';
+import type { FilterType } from '@/lib/types/ui';
 
-export type FilterType = 'all' | 'annotation' | 'note' | 'ai-suggestion';
+// Re-export for backwards compatibility
+export type { FilterType };
 
 interface SearchBarProps {
   value: string;

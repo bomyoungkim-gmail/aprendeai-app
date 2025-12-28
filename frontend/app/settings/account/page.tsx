@@ -71,7 +71,13 @@ export default function AccountSettingsPage() {
       setIsEditing(false);
     },
     onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || error?.message || 'Erro ao atualizar perfil';
+      let errorMessage = error?.response?.data?.message || error?.message || 'Erro ao atualizar perfil';
+      // Safety check: specific validation errors from backend might be arrays
+      if (Array.isArray(errorMessage)) {
+        errorMessage = errorMessage.join(', ');
+      } else if (typeof errorMessage === 'object') {
+        errorMessage = JSON.stringify(errorMessage);
+      }
       showToast('error', errorMessage);
     },
   });

@@ -6,7 +6,7 @@
 
 export interface QueuedOperation {
   id: string;
-  type: 'CREATE' | 'UPDATE_VISIBILITY' | 'DELETE' | 'COMMENT';
+  type: 'CREATE' | 'UPDATE' | 'UPDATE_VISIBILITY' | 'DELETE' | 'COMMENT';
   contentId: string;
   payload: any;
   timestamp: number;

@@ -12,7 +12,7 @@ import {
   Video,
   Headphones 
 } from 'lucide-react';
-import { useRecommendations } from '@/hooks/use-recommendations';
+import { useRecommendations } from '@/hooks/content/use-recommendations';
 
 const typeIcons = {
   TEXT: FileText,

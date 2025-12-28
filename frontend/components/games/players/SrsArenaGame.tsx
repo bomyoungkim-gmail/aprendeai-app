@@ -1,24 +1,36 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { GameQuestion } from '@/lib/api/games';
 
 interface SrsArenaGameProps {
+  questions?: GameQuestion[];
   onComplete: (score: number, won: boolean) => void;
 }
 
 /**
  * SRS_ARENA - Flashcard-style spaced repetition
+ * Adapter: Uses Backend Questions if provided, falls back to mock if empty.
  */
-export function SrsArenaGame({ onComplete }: SrsArenaGameProps) {
+export function SrsArenaGame({ questions, onComplete }: SrsArenaGameProps) {
   const [currentCard, setCurrentCard] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [results, setResults] = useState<boolean[]>([]);
 
-  const cards = [
-    { front: "O que é mitocôndria?", back: "Organela responsável pela produção de energia (ATP)" },
-    { front: "O que é DNA?", back: "Ácido desoxirribonucleico - material genético" },
-    { front: "O que é fotossíntese?", back: "Processo de produção de alimento usando luz solar" },
-  ];
+  // Use dynamic questions if available, otherwise fallback (Safe Migration)
+  const cards = useMemo(() => {
+    if (questions && questions.length > 0) {
+      return questions.map(q => ({
+        front: q.text,
+        back: q.correctAnswer || q.explanation || 'Resposta não disponível' // Flashcards often use correctAnswer as back
+      }));
+    }
+    return [
+      { front: "O que é mitocôndria?", back: "Organela responsável pela produção de energia (ATP)" },
+      { front: "O que é DNA?", back: "Ácido desoxirribonucleico - material genético" },
+      { front: "O que é fotossíntese?", back: "Processo de produção de alimento usando luz solar" },
+    ];
+  }, [questions]);
 
   const handleRating = (remembered: boolean) => {
     const newResults = [...results, remembered];

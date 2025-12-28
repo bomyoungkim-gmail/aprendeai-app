@@ -1,7 +1,7 @@
 'use client';
 
 import { MessageSquare, Users, Clock } from 'lucide-react';
-import { Activity } from '@/hooks/use-user-profile';
+import { Activity } from '@/hooks/profile/use-user-profile';
 import { formatDistanceToNow } from 'date-fns';
 
 interface RecentActivityProps {

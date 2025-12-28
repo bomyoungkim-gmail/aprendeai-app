@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Send } from 'lucide-react';
-import { useCreateReply } from '@/hooks/use-annotations';
+import { useCreateReply } from '@/hooks/content/use-annotations';
 
 interface ReplyFormProps {
   annotationId: string;

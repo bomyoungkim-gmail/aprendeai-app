@@ -8,7 +8,7 @@
 import React from 'react';
 import { MessageSquare, HelpCircle, Star, Highlighter } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { CornellType } from '@/lib/cornell/type-color-map';
+import type { HighlightType } from '@/lib/cornell/labels';
 import { getColorForCornellType } from '@/lib/cornell/type-color-map';
 
 const CORNELL_TYPES = [
@@ -40,6 +40,15 @@ const CORNELL_TYPES = [
     borderColor: 'border-yellow-300',
   },
   {
+    value: 'SUMMARY' as const,
+    label: 'Síntese',
+    description: 'Síntese parcial',
+    icon: Highlighter, // Using Highlighter as fallback, maybe MessageSquare is better? Or a new icon. Using Highlighter for now.
+    color: 'text-yellow-600',
+    bgColor: 'bg-yellow-50',
+    borderColor: 'border-yellow-300',
+  },
+  {
     value: 'HIGHLIGHT' as const,
     label: 'Destaque',
     description: 'Destaque geral',
@@ -51,8 +60,8 @@ const CORNELL_TYPES = [
 ] as const;
 
 export interface CornellTypeSelectorProps {
-  value: Exclude<CornellType, 'SUMMARY' | 'AI_RESPONSE'>;
-  onChange: (type: Exclude<CornellType, 'SUMMARY' | 'AI_RESPONSE'>) => void;
+  value: Exclude<HighlightType, 'AI_RESPONSE'>;
+  onChange: (type: Exclude<HighlightType, 'AI_RESPONSE'>) => void;
   disabled?: boolean;
   className?: string;
 }

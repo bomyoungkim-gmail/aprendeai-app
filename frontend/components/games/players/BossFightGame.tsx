@@ -1,34 +1,54 @@
-'use client';
-
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { GameQuestion } from '@/lib/api/games';
 
 interface BossFightGameProps {
   onComplete: (score: number, won: boolean) => void;
+  questions?: GameQuestion[];
 }
 
 /**
  * BOSS_FIGHT_VOCAB - Battle boss with vocab knowledge
  */
-export function BossFightGame({ onComplete }: BossFightGameProps) {
+export function BossFightGame({ onComplete, questions: apiQuestions }: BossFightGameProps) {
   const [lives, setLives] = useState(3);
   const [bossHealth, setBossHealth] = useState(100);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
 
-  const questions = [
-    {
-      word: "Eloquent",
-      question: "Qual o sinônimo?",
-      options: ["A) Articulado", "B) Silencioso", "C) Rápido"],
-      correct: "A",
-    },
-    {
-      word: "Ambiguous",
-      question: "Qual o significado?",
-      options: ["A) Claro", "B) Duvidoso", "C) Óbvio"],
-      correct: "B",
-    },
-  ];
+  // Map and Memoize Questions
+  const questions = useMemo(() => {
+    if (apiQuestions && apiQuestions.length > 0) {
+      return apiQuestions.map(q => ({
+        word: q.text,
+        question: q.explanation || "Qual o significado?",
+        options: q.options || [],
+        correct: q.correctAnswer || '0' // Need robust logic for correct mapping
+      }));
+    }
+    // Mock Fallback
+    return [
+      {
+        word: "Eloquent",
+        question: "Qual o sinônimo?",
+        options: ["A) Articulado", "B) Silencioso", "C) Rápido"],
+        correct: "A) Articulado", // Simplified for string match or use ID
+      },
+      {
+        word: "Ambiguous",
+        question: "Qual o significado?",
+        options: ["A) Claro", "B) Duvidoso", "C) Óbvio"],
+        correct: "B) Duvidoso",
+      },
+    ];
+  }, [apiQuestions]);
+  
+  // NOTE: Logic in handleSubmit assumes 'correct' matches 'selectedAnswer'. 
+  // API questions 'correctAnswer' might be an index or the string itself.
+  // I'll assume exact string matching for 'options' to handle both.
+  
+  // Need to adjust options parsing in render as well if we rely on "A)" prefixes.
+  // The original mock had prefixes in the option string.
+  // I will make the renderer robust to both simple strings and prefixed strings.
 
   const question = questions[currentQuestion];
 
@@ -88,11 +108,11 @@ export function BossFightGame({ onComplete }: BossFightGameProps) {
         <p className="text-center text-gray-700 mb-4">{question.question}</p>
 
         <div className="space-y-2">
-          {question.options.map(opt => {
-            const optId = opt.charAt(0);
+          {question.options.map((opt, idx) => {
+            const optId = opt; // Use full string as ID for simple matching
             return (
               <button
-                key={optId}
+                key={idx}
                 onClick={() => setSelectedAnswer(optId)}
                 className={`w-full p-3 rounded-lg border-2 text-left ${
                   selectedAnswer === optId

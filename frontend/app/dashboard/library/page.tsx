@@ -112,7 +112,7 @@ export default function LibraryPage() {
           <div className="flex items-center space-x-3">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Biblioteca</h1>
             <Link 
-              href="/cornell"
+              href="/dashboard/library/upload"
               className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
               title="Fazer Upload"
             >

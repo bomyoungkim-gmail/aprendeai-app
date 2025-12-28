@@ -1,24 +1,48 @@
-'use client';
-
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { GameTimer } from '../shared/GameTimer';
+import { GameQuestion } from '@/lib/api/games';
 
 interface ClozeSprintGameProps {
   onComplete: (score: number, won: boolean) => void;
+  questions?: GameQuestion[];
 }
 
 /**
  * CLOZE_SPRINT - Fill in the blanks quickly
  */
-export function CloseSprintGame({ onComplete }: ClozeSprintGameProps) {
+export function CloseSprintGame({ onComplete, questions }: ClozeSprintGameProps) {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [timeUp, setTimeUp] = useState(false);
 
-  const sentence = "A ___ é o processo pelo qual plantas produzem ___ usando luz solar.";
-  const blanks = [
-    { id: 0, correct: 'fotossíntese', position: 2 },
-    { id: 1, correct: 'alimento', position: 9 },
-  ];
+  // Map Backend Data
+  const gameData = useMemo(() => {
+    if (questions && questions.length > 0) {
+      const q = questions[0];
+      // Assume 'text' is the full sentence with placeholders like ___ or [...]
+      // And 'options' or 'details.blanks' are the correct answers
+      const sentence = q.text; 
+      // Rudimentary parsing: if options provided, map to blanks
+      const blanks = (q.options || []).map((ans, idx) => ({
+        id: idx,
+        correct: ans,
+        position: idx // simplified position logic
+      }));
+      
+      if (blanks.length > 0) {
+        return { sentence, blanks };
+      }
+    }
+    // Fallback Mock Data
+    return {
+      sentence: "A ___ é o processo pelo qual plantas produzem ___ usando luz solar.",
+      blanks: [
+        { id: 0, correct: 'fotossíntese', position: 2 },
+        { id: 1, correct: 'alimento', position: 9 },
+      ]
+    };
+  }, [questions]);
+  
+  const { sentence, blanks } = gameData;
 
   const handleSubmit = () => {
     let correct = 0;

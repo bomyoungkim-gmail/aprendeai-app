@@ -1,18 +1,31 @@
-'use client';
+import { useState, useMemo } from 'react';
 
 import { TextInputPlayer } from './TextInputPlayer';
+import { GameQuestion } from '@/lib/api/games';
 
 interface DebateMasterProps {
   onComplete: (score: number, won: boolean) => void;
+  questions?: GameQuestion[];
 }
 
 /**
  * DEBATE_MASTER - Argue a position
  * Uses TextInputPlayer template
  */
-export function DebateMasterGame({ onComplete }: DebateMasterProps) {
-  const topic = "Redes sociais fazem mais mal do que bem";
-  const position = "A FAVOR";
+export function DebateMasterGame({ onComplete, questions }: DebateMasterProps) {
+  // Map Backend Data
+  const gameData = useMemo(() => {
+    if (questions && questions.length > 0) {
+      return {
+        topic: questions[0].text,
+        position: 'A FAVOR' // Could be dynamic if we have a field or extract it
+      };
+    }
+    return {
+      topic: "Redes sociais fazem mais mal do que bem",
+      position: "A FAVOR"
+    };
+  }, [questions]);
 
   const handleSubmit = (text: string) => {
     // Score based on argument structure
@@ -26,7 +39,7 @@ export function DebateMasterGame({ onComplete }: DebateMasterProps) {
 
   return (
     <TextInputPlayer
-      prompt={`Argumente ${position} da tese: "${topic}"`}
+      prompt={`Argumente ${gameData.position} da tese: "${gameData.topic}"`}
       placeholder="Apresente evidências, exemplos e conclusão..."
       minWords={30}
       maxWords={200}

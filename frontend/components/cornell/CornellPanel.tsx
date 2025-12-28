@@ -14,10 +14,11 @@ import { useOfflineSync } from '@/hooks/cornell/use-offline-sync';
 import { CornellHighlightList } from './CornellHighlightList';
 import { CreateHighlightModal } from './CreateHighlightModal';
 import { cn } from '@/lib/utils';
+import { TargetType } from '@/lib/constants/enums';
 
 export interface CornellPanelProps {
   contentId: string;
-  targetType: 'PDF' | 'IMAGE' | 'VIDEO' | 'AUDIO';
+  targetType: TargetType;
   className?: string;
   onHighlightSelect?: (highlightId: string) => void;
 }

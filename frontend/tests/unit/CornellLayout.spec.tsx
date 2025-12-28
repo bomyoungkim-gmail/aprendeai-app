@@ -59,10 +59,10 @@ describe('CornellLayout Component', () => {
 
     it('should show save status', () => {
       const { rerender } = render(<CornellLayout {...defaultProps} saveStatus="saving" />);
-      expect(screen.getByText(/saving/i)).toBeInTheDocument();
+      expect(screen.getByText(/Salvando/i)).toBeInTheDocument();
 
       rerender(<CornellLayout {...defaultProps} saveStatus="saved" />);
-      expect(screen.getByText(/saved/i)).toBeInTheDocument();
+      expect(screen.getByText(/Salvo/i)).toBeInTheDocument();
     });
   });
 

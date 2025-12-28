@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import { ROUTES_WITH_PARAMS, ROUTE_ERRORS } from '@/lib/config/routes';
 import { API_ENDPOINTS } from '@/lib/config/api';
 import { Message, PromptMessageDto, AgentTurnResponse } from '@/types/session';
+import type { Group } from '@/lib/types/group';
 
 interface Session {
   id: string;
@@ -43,7 +44,7 @@ interface SessionProviderProps {
 
 export function SessionProvider({ sessionId, children }: SessionProviderProps) {
   // Try to get group context, but don't fail if not available (solo mode)
-  let group = null;
+  let group: Group | null = null;
   let isOwner = false;
   try {
     const groupContext = useGroup();
@@ -64,14 +65,19 @@ export function SessionProvider({ sessionId, children }: SessionProviderProps) {
 
   useEffect(() => {
     async function fetchSession() {
+      if (!group) {
+        setIsLoading(false);
+        return;
+      }
 
       try {
         setIsLoading(true);
-        const response = await api.get(`/groups/${group.id}/sessions/${sessionId}`);
+        // Safe access (though we check group above, strict mode might complain)
+        const response = await api.get(`/groups/${group?.id}/sessions/${sessionId}`);
         const sessionData: Session = response.data;
 
         // Verify session belongs to this group
-        if (sessionData.groupId !== group.id) {
+        if (sessionData.groupId !== group?.id) {
           throw new Error('Session does not belong to this group');
         }
 
@@ -82,10 +88,11 @@ export function SessionProvider({ sessionId, children }: SessionProviderProps) {
         setError(err.response?.data?.message || 'Failed to load session');
         
         // Redirect on error
+        const targetGroupId = group?.id || '';
         if (err.response?.status === 404) {
-          router.push(ROUTES_WITH_PARAMS.GROUP_WITH_ERROR(group.id, ROUTE_ERRORS.SESSION_NOT_FOUND));
+          router.push(ROUTES_WITH_PARAMS.GROUP_WITH_ERROR(targetGroupId, ROUTE_ERRORS.SESSION_NOT_FOUND));
         } else {
-          router.push(ROUTES_WITH_PARAMS.GROUP_WITH_ERROR(group.id, ROUTE_ERRORS.SESSION_FORBIDDEN));
+          router.push(ROUTES_WITH_PARAMS.GROUP_WITH_ERROR(targetGroupId, ROUTE_ERRORS.SESSION_FORBIDDEN));
         }
       } finally {
         setIsLoading(false);

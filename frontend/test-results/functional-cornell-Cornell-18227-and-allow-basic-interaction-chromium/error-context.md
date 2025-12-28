@@ -2,7 +2,7 @@
 
 ```yaml
 - generic [active] [ref=e1]:
-  - alert [ref=e2]
+  - alert [ref=e2]: AprendeAI
   - generic [ref=e4]:
     - generic [ref=e5]:
       - heading "AprendeAI" [level=1] [ref=e6]

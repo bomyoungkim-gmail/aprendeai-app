@@ -37,9 +37,10 @@ describe('ModernCornellLayout - Text Selection Integration', () => {
   const mockProps = {
     title: 'Test Document',
     contentId: 'content-123',
-    mode: 'view' as const,
+    mode: 'original' as const,
     onModeToggle: jest.fn(),
     saveStatus: 'saved' as const,
+    targetType: 'PDF' as const,
     viewer: <div data-testid="pdf-viewer">PDF Content with text to select</div>,
     streamItems: [],
     cues: [],

@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { MessageSquare, X } from 'lucide-react';
-import { useCreateAnnotation } from '@/hooks/use-annotations';
-import { useAutoTrackAnnotation } from '@/hooks/use-auto-track';
+import { useCreateHighlight } from '@/hooks/cornell/use-cornell-highlights';
+import { CreateHighlightDto } from '@/lib/types/cornell';
+import { cn } from '@/lib/utils';
+import { TAILWIND_COLORS } from '@/lib/constants/colors';
 
 interface CreateAnnotationFormProps {
   contentId: string;
@@ -12,6 +14,7 @@ interface CreateAnnotationFormProps {
   selectedText: string;
   onSuccess?: () => void;
   onCancel?: () => void;
+  targetType?: 'PDF' | 'IMAGE' | 'DOCX'; // Optional passed prop or default
 }
 
 export function CreateAnnotationForm({
@@ -21,32 +24,39 @@ export function CreateAnnotationForm({
   selectedText,
   onSuccess,
   onCancel,
+  targetType = 'PDF',
 }: CreateAnnotationFormProps) {
   const [note, setNote] = useState('');
   const [color, setColor] = useState('yellow');
   const [type, setType] = useState<'HIGHLIGHT' | 'NOTE'>('HIGHLIGHT');
 
-  const { mutate: createAnnotation, isPending } = useCreateAnnotation(contentId);
-  const trackAnnotation = useAutoTrackAnnotation();
+  const { mutate: createHighlight, isPending } = useCreateHighlight(contentId);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    createAnnotation(
-      {
-        type,
-        startOffset,
-        endOffset,
-        selectedText,
-        text: note || undefined,
-        color,
-        visibility: 'PRIVATE',
-      },
+    const payload: CreateHighlightDto = {
+      kind: 'TEXT', // Default for text selection
+      target_type: targetType,
+      anchor_json: {
+        type: targetType === 'DOCX' ? 'DOCX_TEXT' : 'PDF_TEXT',
+        position: {
+            // Simplified placeholder - real implementation needs actual rects from selection
+            pageNumber: 1, 
+            boundingRect: { x1: 0, y1: 0, x2: 0, y2: 0, width: 0, height: 0 },
+            rects: [] 
+        },
+        quote: selectedText
+      } as any, // Type assertion safely handled by upstream selection logic usually
+      color_key: color,
+      comment_text: note || undefined,
+      tags_json: [type] // Tag as simple HIGHLIGHT or NOTE
+    };
+
+    createHighlight(
+      payload,
       {
         onSuccess: () => {
-          // Track annotation creation
-          trackAnnotation();
-          
           setNote('');
           onSuccess?.();
         },
@@ -55,10 +65,10 @@ export function CreateAnnotationForm({
   };
 
   const colors = [
-    { name: 'yellow', class: 'bg-yellow-300' },
-    { name: 'green', class: 'bg-green-300' },
-    { name: 'blue', class: 'bg-blue-300' },
-    { name: 'pink', class: 'bg-pink-300' },
+    { name: 'yellow', class: TAILWIND_COLORS.yellow.bgColor },
+    { name: 'green', class: TAILWIND_COLORS.green.bgColor },
+    { name: 'blue', class: TAILWIND_COLORS.blue.bgColor },
+    { name: 'pink', class: TAILWIND_COLORS.pink.bgColor },
   ];
 
   return (

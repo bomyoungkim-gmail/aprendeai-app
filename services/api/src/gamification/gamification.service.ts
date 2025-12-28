@@ -86,7 +86,10 @@ export class GamificationService {
       where: { id: activity.id },
       data: {
         minutesSpent: { increment: dto.minutesSpentDelta || 0 },
+        // Sync with Activity metrics
+        minutesStudied: { increment: dto.minutesSpentDelta || 0 },
         lessonsCompleted: { increment: dto.lessonsCompletedDelta || 0 },
+        contentsRead: { increment: dto.lessonsCompletedDelta || 0 },
       },
     });
 

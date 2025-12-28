@@ -146,7 +146,15 @@ export function reactPDFToBackend(
           }
         : { x1: 0, y1: 0, x2: 0, y2: 0, width: 0, height: 0 },
         // CRITICAL FIX: Save actual rects for multi-line support
-        rects: highlight.position?.rects || [],
+        rects: highlight.position?.rects?.map(r => ({
+          x1: r.x1,
+          y1: r.y1,
+          x2: r.x2,
+          y2: r.y2,
+          width: r.width,
+          height: r.height,
+          pageNumber: typeof r.pageIndex === 'number' ? r.pageIndex + 1 : pageIndex + 1,
+        })) || [],
         pageNumber: pageIndex + 1,
       },
       quote: highlight.content?.text || '',

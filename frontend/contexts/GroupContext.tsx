@@ -4,20 +4,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { ROUTES, ROUTES_WITH_PARAMS, ROUTE_ERRORS } from '@/lib/config/routes';
-
-interface Group {
-  id: string;
-  name: string;
-  ownerUserId: string;
-  members: GroupMember[];
-}
-
-interface GroupMember {
-  userId: string;
-  name: string;
-  role: string;
-  joinedAt: string;
-}
+import type { Group, GroupMember } from '@/lib/types/group';
 
 interface GroupContextType {
   group: Group | null;

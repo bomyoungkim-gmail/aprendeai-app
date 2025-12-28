@@ -38,10 +38,8 @@ export function OpsDashboard({ userId }: OpsDashboardProps) {
     <div className="space-y-6">
       {/* Reuse existing DailyGoalCard */}
       <DailyGoalCard
-        goalType="MINUTES"
+        minutesSpent={snapshot.progress.minutesToday}
         goalValue={snapshot.goals.dailyMinutes}
-        progress={snapshot.progress.minutesToday}
-        goalMet={snapshot.progress.goalMet}
       />
 
       {/* What's Next Section */}

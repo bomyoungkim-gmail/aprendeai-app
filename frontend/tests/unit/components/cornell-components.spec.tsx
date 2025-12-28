@@ -3,7 +3,7 @@
  */
 
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import '@testing-library/jest-dom';
 import { CornellTypeSelector } from '@/components/cornell/CornellTypeSelector';
 import { VisibilityControls } from '@/components/cornell/VisibilityControls';
 import {
@@ -14,7 +14,7 @@ import {
 
 describe('CornellTypeSelector', () => {
   it('should render all type options', () => {
-    const onChange = vi.fn();
+    const onChange = jest.fn();
     render(<CornellTypeSelector value="NOTE" onChange={onChange} />);
 
     expect(screen.getByText('Nota')).toBeInTheDocument();
@@ -24,7 +24,7 @@ describe('CornellTypeSelector', () => {
   });
 
   it('should call onChange when type is selected', () => {
-    const onChange = vi.fn();
+    const onChange = jest.fn();
     render(<CornellTypeSelector value="NOTE" onChange={onChange} />);
 
     fireEvent.click(screen.getByText('Questão'));
@@ -32,7 +32,7 @@ describe('CornellTypeSelector', () => {
   });
 
   it('should show selected state', () => {
-    const onChange = vi.fn();
+    const onChange = jest.fn();
     render(<CornellTypeSelector value="STAR" onChange={onChange} />);
 
     const starButton = screen.getByText('Importante').closest('button');
@@ -40,7 +40,7 @@ describe('CornellTypeSelector', () => {
   });
 
   it('should be disabled when disabled prop is true', () => {
-    const onChange = vi.fn();
+    const onChange = jest.fn();
     render(
       <CornellTypeSelector value="NOTE" onChange={onChange} disabled />
     );
@@ -54,7 +54,7 @@ describe('CornellTypeSelector', () => {
 
 describe('VisibilityControls', () => {
   it('should render visibility options', () => {
-    const onChange = vi.fn();
+    const onChange = jest.fn();
     const config = { visibility: AnnotationVisibility.PRIVATE };
 
     render(<VisibilityControls config={config} onChange={onChange} />);
@@ -65,7 +65,7 @@ describe('VisibilityControls', () => {
   });
 
   it('should call onChange when visibility changes', () => {
-    const onChange = vi.fn();
+    const onChange = jest.fn();
     const config = { visibility: AnnotationVisibility.PRIVATE };
 
     render(<VisibilityControls config={config} onChange={onChange} />);
@@ -77,7 +77,7 @@ describe('VisibilityControls', () => {
   });
 
   it('should show GROUP options when GROUP is selected', () => {
-    const onChange = vi.fn();
+    const onChange = jest.fn();
     const config = {
       visibility: AnnotationVisibility.GROUP,
       contextType: ContextType.INSTITUTION,
@@ -104,7 +104,7 @@ describe('VisibilityControls', () => {
   });
 
   it('should show validation error for invalid config', () => {
-    const onChange = vi.fn();
+    const onChange = jest.fn();
     const config = {
       visibility: AnnotationVisibility.GROUP,
       // Missing required fields
@@ -116,7 +116,7 @@ describe('VisibilityControls', () => {
   });
 
   it('should show learner ID input for RESPONSIBLES_OF_LEARNER scope', () => {
-    const onChange = vi.fn();
+    const onChange = jest.fn();
     const config = {
       visibility: AnnotationVisibility.GROUP,
       contextType: ContextType.INSTITUTION,

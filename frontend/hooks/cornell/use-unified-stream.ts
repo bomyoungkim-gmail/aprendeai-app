@@ -38,6 +38,7 @@ export function useUnifiedStream(contentId: string) {
     isLoading: highlightsLoading || notesLoading,
     highlights,
     notes: cornellNotes?.notesJson || [],
+    summary: cornellNotes?.summaryText || '',
     cues: cornellNotes?.cuesJson || [],
   };
 }

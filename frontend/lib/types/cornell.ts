@@ -131,3 +131,16 @@ export type SaveStatus = 'saved' | 'saving' | 'offline' | 'error';
 
 // Re-export color types from centralized location
 export type { ColorKey as HighlightColor } from '@/lib/constants/colors';
+
+export interface CreateHighlightPayload {
+  type: string;
+  target_type: string;
+  page_number?: number;
+  timestamp_ms?: number;
+  anchor_json?: any;
+  comment_text?: string;
+  visibility?: string;
+  visibility_scope?: string;
+  context_type?: string;
+  context_id?: string;
+}

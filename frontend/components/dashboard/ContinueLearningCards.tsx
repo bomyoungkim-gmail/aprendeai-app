@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { PlayCircle, Clock, FileText, Image as ImageIcon, Video, Headphones } from 'lucide-react';
-import { useRecommendations } from '@/hooks/use-recommendations';
+import { useRecommendations } from '@/hooks/content/use-recommendations';
 
 const typeIcons = {
   TEXT: FileText,
@@ -12,6 +12,13 @@ const typeIcons = {
   VIDEO: Video,
   AUDIO: Headphones,
 };
+
+interface ContinueLearningItem {
+  id: string;
+  title: string;
+  type: string;
+  progress?: number;
+}
 
 export function ContinueLearningCards() {
   const { data, isLoading } = useRecommendations();
@@ -32,14 +39,14 @@ export function ContinueLearningCards() {
 
   return (
     <div className="space-y-3">
-      {continueItems.map((item) => (
+      {continueItems.map((item: ContinueLearningItem) => (
         <ContinueLearningCard key={item.id} item={item} />
       ))}
     </div>
   );
 }
 
-function ContinueLearningCard({ item }: { item: any }) {
+function ContinueLearningCard({ item }: { item: ContinueLearningItem }) {
   const TypeIcon = typeIcons[item.type as keyof typeof typeIcons] || FileText;
 
   return (

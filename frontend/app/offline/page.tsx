@@ -1,3 +1,5 @@
+'use client';
+
 // Offline fallback page
 export default function OfflinePage() {
   return (

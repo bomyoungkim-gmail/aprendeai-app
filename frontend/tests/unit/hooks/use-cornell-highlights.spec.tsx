@@ -1,33 +1,35 @@
 /**
  * Tests for Cornell Highlights Hooks
+ * Adapted for Jest
  */
 
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { describe, it, expect, vi } from 'vitest';
+import { ReactNode } from 'react';
 import {
   useGetHighlights,
   useCreateHighlight,
   useUpdateVisibility,
   useDeleteHighlight,
+  useCreateComment,
 } from '@/hooks/cornell/use-cornell-highlights';
 import { AnnotationVisibility } from '@/lib/constants/enums';
 
 // Mock API client
-vi.mock('@/hooks/use-api-client', () => ({
+jest.mock('@/hooks/use-api-client', () => ({
   useApiClient: () => ({
-    get: vi.fn(() => Promise.resolve({ data: [] })),
-    post: vi.fn((url, data) =>
+    get: jest.fn(() => Promise.resolve({ data: [] })),
+    post: jest.fn((url: string, data: any) =>
       Promise.resolve({
         data: { id: 'new-id', ...data },
       })
     ),
-    patch: vi.fn((url, data) =>
+    patch: jest.fn((url: string, data: any) =>
       Promise.resolve({
         data: { id: 'highlight-1', ...data },
       })
     ),
-    delete: vi.fn(() => Promise.resolve()),
+    delete: jest.fn(() => Promise.resolve()),
   }),
 }));
 
@@ -38,7 +40,7 @@ const createWrapper = () => {
       mutations: { retry: false },
     },
   });
-  return ({ children }: { children: React.ReactNode }) => (
+  return ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 };
@@ -80,10 +82,11 @@ describe('useCreateHighlight', () => {
     result.current.mutate(highlightData);
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toMatchObject({
+    // Check match object but handle implementation details
+    expect(result.current.data).toEqual(expect.objectContaining({
       id: 'new-id',
-      ...highlightData,
-    });
+      ...highlightData
+    }));
   });
 });
 
@@ -99,9 +102,9 @@ describe('useUpdateVisibility', () => {
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toMatchObject({
+    expect(result.current.data).toEqual(expect.objectContaining({
       visibility: AnnotationVisibility.PUBLIC,
-    });
+    }));
   });
 });
 
@@ -113,6 +116,19 @@ describe('useDeleteHighlight', () => {
     );
 
     result.current.mutate('highlight-1');
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  });
+});
+
+describe('useCreateComment', () => {
+  it('should create comment', async () => {
+    const { result } = renderHook(
+      () => useCreateComment('highlight-1', 'content-123'),
+      { wrapper: createWrapper() }
+    );
+
+    result.current.mutate('New comment');
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });

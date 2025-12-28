@@ -95,6 +95,7 @@ export class AuthController {
   }
 
   // Google OAuth
+  @Public()
   @Get("google")
   @UseGuards(AuthGuard("google"))
   @ApiOperation({ summary: "Initiate Google OAuth login" })
@@ -102,6 +103,7 @@ export class AuthController {
     // Redirects to Google
   }
 
+  @Public()
   @Get("google/callback")
   @UseGuards(AuthGuard("google"))
   @ApiOperation({ summary: "Google OAuth callback" })
@@ -112,6 +114,7 @@ export class AuthController {
   }
 
   // Microsoft OAuth
+  @Public()
   @Get("microsoft")
   @UseGuards(AuthGuard("microsoft"))
   @ApiOperation({ summary: "Initiate Microsoft OAuth login" })
@@ -119,6 +122,7 @@ export class AuthController {
     // Redirects to Microsoft
   }
 
+  @Public()
   @Get("microsoft/callback")
   @UseGuards(AuthGuard("microsoft"))
   @ApiOperation({ summary: "Microsoft OAuth callback" })

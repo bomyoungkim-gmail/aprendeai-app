@@ -1,17 +1,23 @@
-'use client';
+import { useState, useMemo } from 'react';
 
 import { TextInputPlayer } from './TextInputPlayer';
+import { GameQuestion } from '@/lib/api/games';
 
 interface FeynmanTeacherProps {
   onComplete: (score: number, won: boolean) => void;
+  questions?: GameQuestion[];
 }
 
 /**
  * FEYNMAN_TEACHER - Explain concept in simple terms
  * Uses TextInputPlayer template
  */
-export function FeynmanTeacherGame({ onComplete }: FeynmanTeacherProps) {
-  const concept = "Fotossíntese"; // Mock - would come from API
+export function FeynmanTeacherGame({ onComplete, questions }: FeynmanTeacherProps) {
+  // Map Backend Data
+  const concept = useMemo(() => {
+    if (questions && questions.length > 0) return questions[0].text;
+    return "Fotossíntese"; // Mock
+  }, [questions]);
 
   const handleSubmit = (text: string) => {
     // Simple scoring: word count + simplicity

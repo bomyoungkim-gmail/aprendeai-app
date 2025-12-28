@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import api from '@/lib/api';
 import { API_ENDPOINTS } from '@/lib/config/api';
+import { gamesApi } from '@/lib/api/games';
 import { GamePlayer } from '@/components/games/GamePlayer';
 import { 
   Zap, 
@@ -280,8 +281,22 @@ export default function GamesPage() {
           gameId={selectedGame}
           gameName={games.find(g => g.id === selectedGame)?.name || 'Jogo'}
           onClose={() => setSelectedGame(null)}
-          onComplete={(result) => {
-            console.log('Game completed:', result);
+          onComplete={async (score: number, won: boolean) => {
+            console.log('Game completed:', { score, won });
+            try {
+              // Validar se selectedGame ainda existe
+              if (selectedGame) {
+                 await gamesApi.submitResult(selectedGame, {
+                   score,
+                   totalQuestions: 0, // Indeterminado por enquanto
+                   correctCount: 0,
+                   timeSpentSeconds: 0 
+                 });
+                 console.log('✅ Resultado salvo com sucesso');
+              }
+            } catch (err) {
+              console.error('❌ Erro ao salvar resultado:', err);
+            }
             setSelectedGame(null);
           }}
         />

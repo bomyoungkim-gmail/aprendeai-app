@@ -131,7 +131,7 @@ export interface CreateGroupDto {
   scopeId?: string;
 }
 
-export interface InviteMemberDto {
+export interface InviteStudyMemberDto {
   userId: string;
   role: 'OWNER' | 'MOD' | 'MEMBER';
 }

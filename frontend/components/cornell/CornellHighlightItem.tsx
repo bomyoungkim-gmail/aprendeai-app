@@ -11,6 +11,7 @@ import { MoreVertical, Trash2, Lock, MessageSquare, Clock } from 'lucide-react';
 import { useDeleteHighlight, useCreateComment, type Highlight } from '@/hooks/cornell/use-cornell-highlights';
 import { getColorForCornellType, inferCornellType } from '@/lib/cornell/type-color-map';
 import { CORNELL_TYPE_LABELS } from '@/lib/constants/enums';
+import { TAILWIND_COLORS } from '@/lib/constants/colors';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -34,8 +35,9 @@ export function CornellHighlightItem({
   const createComment = useCreateComment(highlight.id, contentId);
 
   // Infer Cornell type from tags
-  const cornellType = inferCornellType(highlight.tagsJson as string[]);
-  const colorInfo = getColorForCornellType(cornellType);
+  const cornellType = inferCornellType(highlight.colorKey, highlight.tagsJson as string[]);
+  const colorKey = getColorForCornellType(cornellType);
+  const color = TAILWIND_COLORS[colorKey];
 
   const handleDelete = async () => {
     if (confirm('Tem certeza que deseja deletar esta anotação?')) {
@@ -69,7 +71,7 @@ export function CornellHighlightItem({
     <div
       className={cn(
         'p-4 hover:bg-gray-50 transition-colors cursor-pointer',
-        colorInfo.bgColor
+        color.bgColor
       )}
       onClick={onSelect}
     >
@@ -80,9 +82,9 @@ export function CornellHighlightItem({
           <span
             className={cn(
               'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
-              colorInfo.textColor,
+              color.textColor,
               'bg-white border',
-              colorInfo.borderColor
+              color.borderColor
             )}
           >
             {CORNELL_TYPE_LABELS[cornellType] || cornellType}

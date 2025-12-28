@@ -24,7 +24,7 @@ export const CORNELL_TYPE_COLOR_MAP: Record<Exclude<HighlightType, 'AI_RESPONSE'
   NOTE: 'green',        // 🟢💚 Detailed annotations
   STAR: 'yellow',       // 🟡💛 Important/key concepts
   QUESTION: 'red',      // 🔴❤️ Questions/doubts
-  SUMMARY: 'yellow',    // Not used in Highlight (goes to CornellNotes.summaryText)
+  SUMMARY: 'yellow',    // 🟡💛 Anchored partial synthesis
 };
 
 /**

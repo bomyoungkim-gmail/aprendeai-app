@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
-import { StudyGroup, CreateGroupDto, InviteMemberDto } from '@/lib/types/study-groups';
+import { StudyGroup, CreateGroupDto, InviteStudyMemberDto } from '@/lib/types/study-groups';
 
 export function useGroups() {
   return useQuery({
@@ -41,7 +41,7 @@ export function useInviteGroupMember(groupId: string) {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (dto: InviteMemberDto) => {
+    mutationFn: async (dto: InviteStudyMemberDto) => {
       await api.post(`/groups/${groupId}/members/invite`, dto);
     },
     onSuccess: () => {

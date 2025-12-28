@@ -1,18 +1,31 @@
-'use client';
+import { useState, useMemo } from 'react';
 
 import { TextInputPlayer } from './TextInputPlayer';
+import { GameQuestion } from '@/lib/api/games';
 
 interface SocraticDefenseProps {
   onComplete: (score: number, won: boolean) => void;
+  questions?: GameQuestion[];
 }
 
 /**
  * SOCRATIC_DEFENSE - Answer probing questions
  * Uses TextInputPlayer template
  */
-export function SocraticDefenseGame({ onComplete }: SocraticDefenseProps) {
-  const thesis = "Educação é o fator mais importante para o sucesso";
-  const question = "Por que você acredita nisso? Que evidências você tem?";
+export function SocraticDefenseGame({ onComplete, questions }: SocraticDefenseProps) {
+  // Map Backend Data
+  const gameData = useMemo(() => {
+    if (questions && questions.length > 0) {
+      return {
+        thesis: questions[0].text,
+        question: questions[0].explanation || "Por que você acredita nisso? Que evidências você tem?"
+      };
+    }
+    return {
+      thesis: "Educação é o fator mais importante para o sucesso",
+      question: "Por que você acredita nisso? Que evidências você tem?"
+    };
+  }, [questions]);
 
   const handleSubmit = (text: string) => {
     // Score depth of thinking
@@ -26,7 +39,7 @@ export function SocraticDefenseGame({ onComplete }: SocraticDefenseProps) {
 
   return (
     <TextInputPlayer
-      prompt={`Sua tese: "${thesis}"\n\nPergunta Socrática: ${question}`}
+      prompt={`Sua tese: "${gameData.thesis}"\n\nPergunta Socrática: ${gameData.question}`}
       placeholder="Responda com profundidade e exemplos..."
       minWords={25}
       maxWords={150}

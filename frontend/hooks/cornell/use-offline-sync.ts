@@ -1,19 +1,12 @@
-/**
- * Offline Sync Hook
- * 
- * Auto-syncs queued operations when coming back online.
- */
-
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useOnlineStatus } from '../use-online-status';
 import { offlineQueue, type QueuedOperation } from '@/lib/cornell/offline-queue';
-import { useApiClient } from '../use-api-client';
+import { cornellApi } from '@/lib/api/cornell';
 import { cornellKeys } from './use-cornell-highlights';
 
 export function useOfflineSync() {
   const isOnline = useOnlineStatus();
-  const api = useApiClient();
   const queryClient = useQueryClient();
   const isSyncing = useRef(false);
 
@@ -30,24 +23,25 @@ export function useOfflineSync() {
 
         switch (type) {
           case 'CREATE':
-            await api.post(`/cornell/contents/${contentId}/highlights`, payload);
+            await cornellApi.createHighlight(contentId, payload);
             break;
 
           case 'UPDATE_VISIBILITY':
-            await api.patch(
-              `/cornell/highlights/${payload.highlightId}/visibility`,
+            await cornellApi.updateHighlightVisibility(
+              contentId,
+              payload.highlightId,
               payload.data
             );
             break;
 
           case 'DELETE':
-            await api.delete(`/cornell/highlights/${payload.highlightId}`);
+            await cornellApi.deleteHighlight(payload.highlightId);
             break;
 
           case 'COMMENT':
-            await api.post(
-              `/cornell/highlights/${payload.highlightId}/comments`,
-              { text: payload.text }
+            await cornellApi.updateHighlight(
+              payload.highlightId,
+              { comment_text: payload.text }
             );
             break;
 
@@ -69,7 +63,7 @@ export function useOfflineSync() {
       console.error('❌ Offline sync failed:', err);
       isSyncing.current = false;
     });
-  }, [isOnline, api, queryClient]);
+  }, [isOnline, queryClient]);
 
   return {
     isOnline,

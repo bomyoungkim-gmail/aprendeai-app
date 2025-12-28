@@ -180,7 +180,7 @@ test.describe('Family Management (E2E)', () => {
 
   test('member list shows correct roles and statuses', async ({ page }) => {
     await page.goto('/settings/families');
-    await page.click('[data-testid="family-card"]').first();
+    await page.locator('[data-testid="family-card"]').first().click();
     
     // Verify member list is visible
     await expect(page.locator('[data-testid="member-list"]')).toBeVisible();
@@ -212,7 +212,7 @@ test.describe('Family Management (E2E)', () => {
     
     // Navigate to family
     await page.goto('/settings/families');
-    await page.click('[data-testid="family-card"]').first();
+    await page.locator('[data-testid="family-card"]').first().click();
     
     // Verify owner-only buttons are hidden
     await expect(page.locator('[data-testid="invite-member-btn"]')).not.toBeVisible();

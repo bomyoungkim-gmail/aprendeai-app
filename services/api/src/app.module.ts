@@ -44,7 +44,7 @@ import { ContentClassificationModule } from "./content-classification/content-cl
 import { AssessmentModule } from "./assessment/assessment.module";
 import { AuthModule } from "./auth/auth.module";
 import { JwtAuthGuard } from "./auth/jwt-auth.guard";
-import { MiddlewareConsumer, NestModule } from "@nestjs/common";
+import { MiddlewareConsumer, NestModule, RequestMethod } from "@nestjs/common";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
 import { ActionLoggerMiddleware } from "./common/middleware/logger.middleware";
 import { RouteValidationMiddleware } from "./common/middleware/route-validation.middleware";
@@ -146,12 +146,22 @@ import { join } from "path";
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // Apply request ID and logging to ALL routes (runs before guards)
     consumer
-      .apply(
-        RequestIdMiddleware,
-        RouteValidationMiddleware,
-        ActionLoggerMiddleware,
+      .apply(RequestIdMiddleware, ActionLoggerMiddleware)
+      .forRoutes('*');
+
+    // Apply route validation ONLY to non-public routes (runs after auth)
+    // Public routes bypass this validation to avoid blocking before auth check
+    consumer
+      .apply(RouteValidationMiddleware)
+      .exclude(
+        // Exclude all auth-related endpoints
+        { path: 'auth/(.*)', method: RequestMethod.ALL },
+        // Exclude health check
+        { path: 'health', method: RequestMethod.ALL },
+        { path: 'api/v1/health', method: RequestMethod.ALL },
       )
-      .forRoutes("*");
+      .forRoutes('*');
   }
 }

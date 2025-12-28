@@ -34,6 +34,17 @@ export const API_ENDPOINTS = {
   // Health
   HEALTH: '/health',
   
+  // Users
+  USERS: {
+    ME: '/users/me',
+    AVATAR: '/users/me/avatar',
+    STATS: '/users/me/stats',
+    ACTIVITY: '/users/me/activity',
+    SETTINGS: '/users/me/settings',
+    PASSWORD: '/users/me/password',
+    EXPORT: '/users/me/export',
+  },
+
   // Family
   // Family
   FAMILY: {
@@ -50,14 +61,22 @@ export const API_ENDPOINTS = {
   },
   
   // Content
-  CONTENTS: '/contents',
-  MY_CONTENTS: '/contents/my-contents',
-  CONTENT: (id: string) => `/contents/${id}`,
+  CONTENTS: {
+    LIST: '/contents',
+    MY_CONTENTS: '/contents/my-contents',
+    GET: (id: string) => `/contents/${id}`,
+    DELETE: (id: string) => `/contents/${id}`,
+    BULK_DELETE: '/contents/bulk-delete',
+    CREATE_MANUAL: '/contents/create_manual',
+    UPLOAD: '/contents/upload',
+    FILE_VIEW_URL: (fileId: string) => `/files/${fileId}/view-url`,
+  },
   
   // Cornell Notes
   CORNELL_NOTES: (contentId: string) => `/contents/${contentId}/cornell`,
   HIGHLIGHTS: (contentId: string) => `/contents/${contentId}/highlights`,
   HIGHLIGHT: (id: string) => `/highlights/${id}`,
+  HIGHLIGHT_VISIBILITY: (contentId: string, highlightId: string) => `/contents/${contentId}/highlights/${highlightId}/visibility`,
   
   // Study Groups
   STUDY_GROUPS: '/study-groups',
@@ -118,6 +137,8 @@ export const API_ENDPOINTS = {
     GAME_PROGRESS: (gameId: string) => `/games/progress/${gameId}`,
     LEADERBOARD: '/games/leaderboard',
     MY_RANK: '/games/leaderboard/me',
+    QUESTIONS: (gameId: string) => `/games/${gameId}/questions`,
+    SUBMIT: (gameId: string) => `/games/${gameId}/results`,
   },
 } as const;
 

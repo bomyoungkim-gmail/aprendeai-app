@@ -1,6 +1,8 @@
-import React, { useState , useRef } from 'react';
+'use client';
+
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { Menu, X, ChevronRight } from 'lucide-react';
+import { Menu, X, ChevronRight, Plus } from 'lucide-react';
 import type { ViewMode, SaveStatus, CueItem } from '@/lib/types/cornell';
 import type { UnifiedStreamItem } from '@/lib/types/unified-stream';
 import { SaveStatusIndicator } from './SaveStatusIndicator';
@@ -10,11 +12,16 @@ import { useStreamFilter } from '@/hooks/cornell/use-stream-filter';
 import { CORNELL_LABELS } from '@/lib/cornell/labels';
 import { ActionToolbar } from './ActionToolbar';
 import { SuggestionsPanel } from './SuggestionsPanel';
+
+import { CreateHighlightModal } from './CreateHighlightModal';
 import { TextSelectionMenu, type SelectionAction } from './TextSelectionMenu'; 
 import { useContentContext } from '@/hooks/cornell/use-content-context';
 import { useSuggestions } from '@/hooks/cornell/use-suggestions';
 import { useTextSelection } from '@/hooks/ui/use-text-selection';
 import { getColorForKey, getDefaultPalette, DEFAULT_COLOR } from '@/lib/constants/colors';
+import { inferCornellType } from '@/lib/cornell/type-color-map';
+import { filterSynthesisItems } from '@/lib/cornell/helpers';
+import { CORNELL_MODAL_LABELS } from '@/lib/cornell/labels';
 
 
 interface ModernCornellLayoutProps {
@@ -25,6 +32,9 @@ interface ModernCornellLayoutProps {
   saveStatus: SaveStatus;
   lastSaved?: Date | null;
   contentId: string;
+  targetType: 'PDF' | 'IMAGE' | 'VIDEO' | 'AUDIO';
+  currentPage?: number;
+  currentTimestamp?: number;
 
   // Content
   viewer: React.ReactNode;
@@ -46,7 +56,8 @@ interface ModernCornellLayoutProps {
   onSummaryChange: (summary: string) => void;
 
   // Creation
-  onCreateStreamItem?: (type: 'annotation' | 'note' | 'question' | 'star', content: string, context?: any) => void;
+  // Creation
+  onCreateStreamItem?: (type: 'annotation' | 'note' | 'question' | 'star' | 'ai' | 'triage', content: string, context?: any) => void;
 
   // Highlight Controls
   selectedColor?: string;
@@ -63,6 +74,9 @@ export function ModernCornellLayout({
   saveStatus,
   lastSaved,
   contentId,
+  targetType,
+  currentPage,
+  currentTimestamp,
   viewer,
   streamItems,
   onStreamItemClick,
@@ -87,33 +101,9 @@ export function ModernCornellLayout({
   const [contentElement, setContentElement] = useState<HTMLDivElement | null>(null);
   const { selection, clearSelection } = useTextSelection(contentElement);
   const [chatInitialInput, setChatInitialInput] = useState('');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createModalType, setCreateModalType] = useState<'NOTE' | 'QUESTION' | 'STAR' | 'HIGHLIGHT' | 'SUMMARY'>('NOTE');
 
-  // Handle selection actions
-  const handleSelectionAction = (action: SelectionAction, text: string) => {
-    switch (action) {
-      case 'highlight':
-        onCreateStreamItem?.('annotation', text, selection);
-        break;
-      case 'note':
-        onCreateStreamItem?.('note', text, selection);
-        break;
-      case 'question':
-        onCreateStreamItem?.('question', text, selection);
-        break;
-      case 'star':
-        onCreateStreamItem?.('star', text, selection);
-        break;
-      case 'ai':
-        setChatInitialInput(text);
-        // TODO: Open chat panel
-        break;
-    }
-    clearSelection();
-  };
-  
-  // Fetch content context and suggestions
-  const { suggestions, acceptSuggestion, dismissSuggestion, hasUnseenSuggestions } = useSuggestions(contentId);
-  
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
@@ -123,6 +113,38 @@ export function ModernCornellLayout({
     streamItems,
     searchQuery,
     filterType
+  );
+
+  const handleSelectionAction = useCallback((action: SelectionAction, text: string) => {
+    if (!onCreateStreamItem) return;
+
+    switch (action) {
+      case 'highlight':
+        onCreateStreamItem('annotation', text, { color: selectedColor });
+        break;
+      case 'note':
+        onCreateStreamItem('note', text);
+        break;
+      case 'question':
+        onCreateStreamItem('question', text);
+        break;
+      case 'star':
+        onCreateStreamItem('star', text);
+        break;
+      case 'ai':
+        onCreateStreamItem('ai', text);
+        break;
+      case 'triage':
+        onCreateStreamItem('triage', text);
+        break;
+    }
+    clearSelection();
+  }, [onCreateStreamItem, selectedColor, clearSelection]);
+
+  // Memoize synthesis items to avoid repeated filtering
+  const synthesisItems = useMemo(
+    () => filterSynthesisItems(filteredItems),
+    [filteredItems]
   );
 
   return (
@@ -307,12 +329,25 @@ export function ModernCornellLayout({
 
             {activeTab === 'cues' && (
               <div className="p-4 space-y-3">
-                {cues.length === 0 ? (
+                 <SearchBar
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  onClear={() => setSearchQuery('')}
+                  activeFilter={filterType}
+                  onFilterChange={setFilterType}
+                  resultCount={cues.filter(c => c.prompt.toLowerCase().includes(searchQuery.toLowerCase())).length}
+                />
+                
+                {cues.filter(c => c.prompt.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                    Nenhum tópico ainda. Adicione perguntas para estudar.
+                    {searchQuery 
+                      ? 'Nenhuma dúvida encontrada' 
+                      : 'Nenhum tópico ainda. Adicione perguntas para estudar.'}
                   </p>
                 ) : (
-                  cues.map(cue => (
+                  cues
+                    .filter(c => c.prompt.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .map(cue => (
                     <div 
                       key={cue.id} 
                       onClick={() => onCueClick?.(cue)}
@@ -327,17 +362,75 @@ export function ModernCornellLayout({
               </div>
             )}
 
+
             {activeTab === 'synthesis' && (
-              <div className="p-4 h-full flex flex-col">
-                <label className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <span>{CORNELL_LABELS.SYNTHESIS}</span>
-                </label>
-                <textarea
-                  value={summary}
-                  onChange={(e) => onSummaryChange(e.target.value)}
-                  className="flex-1 w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-900 dark:text-gray-100"
-                  placeholder="Resuma os principais pontos aqui..."
+              <div className="p-4 space-y-4">
+                <SearchBar
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  onClear={() => setSearchQuery('')}
+                  activeFilter={filterType}
+                  onFilterChange={setFilterType}
+                  resultCount={filteredItems.filter(i => {
+                      if (i.type === 'annotation') {
+                         return inferCornellType(i.highlight.colorKey, i.highlight.tagsJson) === 'SUMMARY';
+                      }
+                      return false;
+                   }).length}
                 />
+
+                 <div className="flex items-center justify-end">
+                   <button
+                     onClick={() => {
+                       setCreateModalType('SUMMARY');
+                       setIsCreateModalOpen(true);
+                     }}
+                     className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900"
+                     title="Adicionar Síntese"
+                   >
+                     <Plus className="w-5 h-5" />
+                   </button>
+                 </div>
+                
+                <div className="space-y-3">
+                   {filteredItems.filter(i => {
+                      if (i.type === 'annotation') {
+                         return inferCornellType(i.highlight.colorKey, i.highlight.tagsJson) === 'SUMMARY';
+                      }
+                      return false;
+                   }).length === 0 ? (
+                    <div className="text-center py-8">
+                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                         Nenhuma síntese encontrada.
+                       </p>
+                       <button
+                         onClick={() => {
+                           setCreateModalType('SUMMARY');
+                           setIsCreateModalOpen(true);
+                         }}
+                         className="text-sm text-blue-600 hover:underline"
+                       >
+                         Criar primeira síntese
+                       </button>
+                    </div>
+                  ) : (
+                    filteredItems.filter(i => {
+                      if (i.type === 'annotation') {
+                         return inferCornellType(i.highlight.colorKey, i.highlight.tagsJson) === 'SUMMARY';
+                      }
+                      return false;
+                   }).map(item => (
+                      <StreamCard
+                        key={item.id}
+                        item={item}
+                        onClick={() => onStreamItemClick?.(item)}
+                        onEdit={() => onStreamItemEdit?.(item)}
+                        onDelete={() => onStreamItemDelete?.(item)}
+                        onSaveEdit={onStreamItemSaveEdit}
+                      />
+                    ))
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -351,6 +444,16 @@ export function ModernCornellLayout({
           />
         )}
       </div>
+
+       <CreateHighlightModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        contentId={contentId}
+        targetType={targetType as any}
+        initialType={createModalType}
+        initialPage={currentPage}
+        initialTimestamp={currentTimestamp}
+      />
 
       {/* Footer with Title and Status */}
       <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between flex-shrink-0">

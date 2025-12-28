@@ -1,26 +1,43 @@
-'use client';
-
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { GameQuestion } from '@/lib/api/games';
 
 interface RecommendationGameProps {
   onComplete: (score: number, won: boolean) => void;
+  questions?: GameQuestion[];
 }
 
 /**
  * RECOMMENDATION_ENGINE - Suggest content based on criteria
  */
-export function RecommendationGame({ onComplete }: RecommendationGameProps) {
+export function RecommendationGame({ onComplete, questions }: RecommendationGameProps) {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [reasoning, setReasoning] = useState('');
 
-  const userProfile = "Estudante de biologia, nível intermediário, interessado em evolução";
+  // Map Backend Data
+  const gameData = useMemo(() => {
+    if (questions && questions.length > 0) {
+      const q = questions[0];
+      return {
+        userProfile: q.text,
+        contents: (q.options || []).map((opt, idx) => ({
+            id: idx + 1,
+            title: opt,
+            relevance: "unknown" // Backend needs to tell us. Assuming all options provided are 'candidates', validation happens elsewhere or via hidden field.
+        }))
+      };
+    }
+    return {
+      userProfile: "Estudante de biologia, nível intermediário, interessado em evolução",
+      contents: [
+        { id: 1, title: "A Origem das Espécies", relevance: "high" },
+        { id: 2, title: "Física Quântica Para Iniciantes", relevance: "low" },
+        { id: 3, title: "Genética e Evolução Molecular", relevance: "high" },
+        { id: 4, title: "História da Arte Moderna", relevance: "low" },
+      ]
+    };
+  }, [questions]);
   
-  const contents = [
-    { id: 1, title: "A Origem das Espécies", relevance: "high" },
-    { id: 2, title: "Física Quântica Para Iniciantes", relevance: "low" },
-    { id: 3, title: "Genética e Evolução Molecular", relevance: "high" },
-    { id: 4, title: "História da Arte Moderna", relevance: "low" },
-  ];
+  const { userProfile, contents } = gameData;
 
   const toggleContent = (id: number) => {
     setSelectedIds(prev => 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
-import type { Suggestion } from '@/hooks/cornell/useContentContext';
+import type { Suggestion } from '@/hooks/cornell/use-content-context';
 
 interface SuggestionsPanelProps {
   suggestions: Suggestion[];

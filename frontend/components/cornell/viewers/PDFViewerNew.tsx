@@ -34,6 +34,7 @@ interface PDFViewerProps {
   onCreateHighlight?: (highlight: any) => Promise<void>;
   selectedColor?: string;
   onSelectionAction?: (action: 'note' | 'question' | 'ai' | 'star' | 'triage' | 'annotation', text: string, data?: any) => void;
+  onPageChange?: (page: number) => void;
 }
 
 // Internal component to handle menu positioning to keep it in viewport
@@ -208,7 +209,8 @@ export function PDFViewer({
   highlights = [], 
   onCreateHighlight, 
   selectedColor = 'yellow',
-  onSelectionAction 
+  onSelectionAction,
+  onPageChange: onPageChangeProp
 }: PDFViewerProps) {
   const [pdfUrl, setPdfUrl] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -511,7 +513,9 @@ export function PDFViewer({
 
   // Handle page change to update current page
   const handlePageChange = (e: { currentPage: number }) => {
-    setCurrentPage(e.currentPage + 1); // Convert from 0-indexed
+    const newPage = e.currentPage + 1;
+    setCurrentPage(newPage); // Convert from 0-indexed
+    onPageChangeProp?.(newPage);
   };
 
   // Handle document load to get total pages

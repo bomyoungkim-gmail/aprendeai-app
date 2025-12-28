@@ -47,6 +47,44 @@ export const HIGHLIGHT_COLORS = {
   },
 } as const;
 
+export const TAILWIND_COLORS = {
+  yellow: {
+    bgColor: 'bg-yellow-50',
+    textColor: 'text-yellow-700',
+    borderColor: 'border-yellow-200',
+  },
+  green: {
+    bgColor: 'bg-green-50',
+    textColor: 'text-green-700',
+    borderColor: 'border-green-200',
+  },
+  blue: {
+    bgColor: 'bg-blue-50',
+    textColor: 'text-blue-700',
+    borderColor: 'border-blue-200',
+  },
+  red: {
+    bgColor: 'bg-red-50',
+    textColor: 'text-red-700',
+    borderColor: 'border-red-200',
+  },
+  purple: {
+    bgColor: 'bg-purple-50',
+    textColor: 'text-purple-700',
+    borderColor: 'border-purple-200',
+  },
+  pink: {
+    bgColor: 'bg-pink-50',
+    textColor: 'text-pink-700',
+    borderColor: 'border-pink-200',
+  },
+  orange: {
+    bgColor: 'bg-orange-50',
+    textColor: 'text-orange-700',
+    borderColor: 'border-orange-200',
+  },
+} as const;
+
 export type ColorKey = keyof typeof HIGHLIGHT_COLORS;
 
 /**

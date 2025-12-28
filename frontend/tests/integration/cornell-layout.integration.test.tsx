@@ -9,9 +9,10 @@ describe('ModernCornellLayout - Sprint 2 Integration', () => {
   const mockProps = {
     title: 'Test Document',
     contentId: 'content-123',
-    mode: 'view' as const,
+    mode: 'original' as const,
     onModeToggle: jest.fn(),
     saveStatus: 'saved' as const,
+    targetType: 'PDF' as const,
     viewer: <div data-testid="mock-viewer">PDF Viewer</div>,
     streamItems: [],
     cues: [],

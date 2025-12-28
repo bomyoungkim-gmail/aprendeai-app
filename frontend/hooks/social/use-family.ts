@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { familyApi } from '@/lib/api/family';
-import { CreateFamilyDto, InviteMemberDto } from '@/lib/types/family';
+import { CreateFamilyDto, InviteFamilyMemberDto } from '@/lib/types/family';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -44,7 +44,7 @@ export function useCreateFamily() {
 export function useInviteMember() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ familyId, dto }: { familyId: string; dto: InviteMemberDto }) =>
+    mutationFn: ({ familyId, dto }: { familyId: string; dto: InviteFamilyMemberDto }) =>
       familyApi.inviteMember(familyId, dto),
     onSuccess: (_, { familyId }) => {
       queryClient.invalidateQueries({ queryKey: ['families', familyId] });

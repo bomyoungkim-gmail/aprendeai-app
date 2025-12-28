@@ -1,7 +1,7 @@
 'use client';
 
 import { Camera, Edit2 } from 'lucide-react';
-import { UserProfile } from '@/hooks/use-user-profile';
+import { UserProfile } from '@/hooks/profile/use-user-profile';
 import { formatDistanceToNow } from 'date-fns';
 
 interface ProfileHeaderProps {
@@ -13,7 +13,7 @@ interface ProfileHeaderProps {
 export function ProfileHeader({ profile, onEdit, onAvatarClick }: ProfileHeaderProps) {
   const initials = profile.name
     .split(' ')
-    .map(n => n[0])
+    .map((n: string) => n[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);

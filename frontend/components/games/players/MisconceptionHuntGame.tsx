@@ -1,25 +1,37 @@
-'use client';
-
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { GameQuestion } from '@/lib/api/games';
 
 interface MisconceptionHuntGameProps {
   onComplete: (score: number, won: boolean) => void;
+  questions?: GameQuestion[];
 }
 
 /**
  * MISCONCEPTION_HUNT - Find errors in statements
  */
-export function MisconceptionHuntGame({ onComplete }: MisconceptionHuntGameProps) {
+export function MisconceptionHuntGame({ onComplete, questions }: MisconceptionHuntGameProps) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [explanation, setExplanation] = useState('');
 
-  const statements = [
-    { id: 1, text: "Antibióticos são eficazes contra vírus.", wrong: true },
-    { id: 2, text: "A água ferve a 100°C ao nível do mar.", wrong: false },
-    { id: 3, text: "Usamos apenas 10% do nosso cérebro.", wrong: true },
-  ];
+  // Map Backend Data
+  const statements = useMemo(() => {
+    if (questions && questions.length > 0) {
+      // If we receive multiple questions, each is a statement
+      return questions.map((q, idx) => ({
+        id: idx + 1,
+        text: q.text,
+        wrong: q.correctAnswer === 'WRONG' || q.correctAnswer === 'FALSE' // Protocol needed
+      }));
+    }
+    // Fallback Mock Data
+    return [
+      { id: 1, text: "Antibióticos são eficazes contra vírus.", wrong: true },
+      { id: 2, text: "A água ferve a 100°C ao nível do mar.", wrong: false },
+      { id: 3, text: "Usamos apenas 10% do nosso cérebro.", wrong: true },
+    ];
+  }, [questions]);
 
-  const correctWrongId = statements.find(s => s.wrong)?.id || 1;
+  const correctWrongId = statements.find(s => s.wrong)?.id || 1; // Default to 1 or logic needed
 
   const handleSubmit = () => {
     const correctId = selectedId === correctWrongId;

@@ -1,20 +1,34 @@
-'use client';
-
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { GameQuestion } from '@/lib/api/games';
 
 interface ToolWordHuntGameProps {
   onComplete: (score: number, won: boolean) => void;
+  questions?: GameQuestion[];
 }
 
 /**
  * TOOL_WORD_HUNT - Find word in text and justify
  */
-export function ToolWordHuntGame({ onComplete }: ToolWordHuntGameProps) {
+export function ToolWordHuntGame({ onComplete, questions }: ToolWordHuntGameProps) {
   const [selectedQuote, setSelectedQuote] = useState('');
   const [justification, setJustification] = useState('');
 
-  const targetWord = "ironically";
-  const text = "The situation was ironically amusing. Despite all his careful planning, he arrived late anyway. The irony was not lost on anyone present.";
+  // Map Backend Data
+  const gameData = useMemo(() => {
+    if (questions && questions.length > 0) {
+      const q = questions[0];
+      return {
+        targetWord: q.options?.[0] || "ironically", // Protocol: use first option as target word?
+        text: q.text
+      };
+    }
+    return {
+      targetWord: "ironically",
+      text: "The situation was ironically amusing. Despite all his careful planning, he arrived late anyway. The irony was not lost on anyone present."
+    };
+  }, [questions]);
+  
+  const { targetWord, text } = gameData;
 
   const handleSubmit = () => {
     const hasWord = selectedQuote.toLowerCase().includes(targetWord.toLowerCase());

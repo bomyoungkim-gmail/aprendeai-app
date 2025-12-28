@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import ReactPlayer from 'react-player';
 import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward } from 'lucide-react';
-import { useAutoTrackVideo } from '@/hooks/use-auto-track';
+import { useAutoTrackVideo } from '@/hooks/shared/use-auto-track';
 
 interface AudioPlayerWithTrackingProps {
   contentId: string;

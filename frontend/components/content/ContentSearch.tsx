@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Search, X, FileText, Calendar } from 'lucide-react';
-import { useContentSearch } from '@/hooks/use-content-search';
-import { useDebounce } from '@/hooks/use-debounce';
+import { useContentSearch } from '@/hooks/content/use-search';
+import { useDebounce } from '@/hooks/ui/use-debounce';
 import Link from 'next/link';
 
 export function ContentSearch() {

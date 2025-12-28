@@ -6,7 +6,7 @@ import { Loader2, ArrowLeft, Wand2, GraduationCap, Layers, CheckCircle, ChevronL
 import Link from 'next/link';
 import { ROUTES } from '@/lib/config/routes';
 import { Toast, useToast } from '@/components/ui/Toast';
-import { useSocket } from '@/hooks/shared';
+import { useSocket, useAutoTrackReading } from '@/hooks/shared';
 import { API_ENDPOINTS } from '@/lib/config/api';
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
@@ -29,7 +29,7 @@ type Content = {
 };
 
 async function fetchContent(id: string) {
-  const res = await api.get<Content>(API_ENDPOINTS.CONTENT(id));
+  const res = await api.get<Content>(API_ENDPOINTS.CONTENTS.GET(id));
   return res.data;
 }
 
@@ -38,41 +38,22 @@ export default function ContentReaderPage() {
   const router = useRouter();
   const id = params.id as string;
   const [activeTab, setActiveTab] = useState<'original' | string>('original');
-  const [minutesSpent, setMinutesSpent] = useState(0);
-  const lastUpdateRef = useRef(Date.now());
   const { toast, success, error: toastError, info, hide } = useToast();
   const { subscribeToContent, unsubscribeFromContent, on, off } = useSocket();
 
-  // Heartbeat to track time
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const deltaMs = now - lastUpdateRef.current;
-      // If active (user focused?), send update every 1 minute approx
-      if (deltaMs >= 60000) {
-        activityMutation.mutate({ minutesSpentDelta: 1 });
-        lastUpdateRef.current = now;
-      }
-    }, 10000); // Check every 10s
+  // Auto-track reading functionality (Standardized Hook)
+  useAutoTrackReading(id);
 
-    return () => clearInterval(interval);
-  }, []);
+  // Heartbeat to track local session time separately (optional) -> removing to avoid confusion as requested
+  // If we need 'minutesSpent' for UI display, we should pull from API or useFocusTracking logic. 
+  // For now, simpler is better.
 
-  const activityMutation = useMutation({
-    mutationFn: async (data: { minutesSpentDelta?: number; lessonsCompletedDelta?: number }) => {
-      return api.post('/gamification/activity', data);
-    }
-  });
+
 
   const finishReadingMutation = useMutation({
     mutationFn: async () => {
-        // Send final time + completion
-        const now = Date.now();
-        const deltaMs = now - lastUpdateRef.current;
-        const minutes = Math.floor(deltaMs / 60000); // Only full minutes
-        
+        // Send completion only (time is tracked automatically)
         return api.post('/gamification/activity', { 
-            minutesSpentDelta: minutes > 0 ? minutes : 1, // At least 1 min if clicking finish
             lessonsCompletedDelta: 1 
         });
     },
@@ -124,7 +105,7 @@ export default function ContentReaderPage() {
 
   const simplifyMutation = useMutation({
     mutationFn: async () => {
-      return api.post(`${API_ENDPOINTS.CONTENT(id)}/simplify`, {
+      return api.post(`${API_ENDPOINTS.CONTENTS.GET(id)}/simplify`, {
         text: content?.rawText,
         level: '5_EF', // Default for demo
         lang: 'PT_BR'
@@ -140,7 +121,7 @@ export default function ContentReaderPage() {
 
   const assessmentMutation = useMutation({
     mutationFn: async () => {
-      return api.post(`${API_ENDPOINTS.CONTENT(id)}/assessment`, {
+      return api.post(`${API_ENDPOINTS.CONTENTS.GET(id)}/assessment`, {
         text: activeTab === 'original' 
           ? content?.rawText 
           : content?.versions.find(v => v.id === activeTab)?.simplifiedText,

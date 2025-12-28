@@ -2,7 +2,6 @@
  * Tests for Offline Features
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { offlineQueue } from '@/lib/cornell/offline-queue';
 import { useOnlineStatus } from '@/hooks/use-online-status';
@@ -56,7 +55,7 @@ describe('OfflineQueue', () => {
       payload: { type: 'NOTE' },
     });
 
-    const executor = vi.fn().mockResolvedValue(undefined);
+    const executor = jest.fn().mockResolvedValue(undefined);
     
     await offlineQueue.processQueue(executor);
 
@@ -71,7 +70,7 @@ describe('OfflineQueue', () => {
       payload: { type: 'NOTE' },
     });
 
-    const executor = vi.fn().mockRejectedValue(new Error('Network error'));
+    const executor = jest.fn().mockRejectedValue(new Error('Network error'));
     
     await offlineQueue.processQueue(executor);
 
@@ -95,7 +94,7 @@ describe('OfflineQueue', () => {
     const ops = offlineQueue.getAll();
     ops[0].retries = 3;
 
-    const executor = vi.fn().mockRejectedValue(new Error('Permanent error'));
+    const executor = jest.fn().mockRejectedValue(new Error('Permanent error'));
     
     await offlineQueue.processQueue(executor);
 

@@ -190,7 +190,7 @@ function CornellContentsList() {
   const { data: contents, isLoading } = useQuery({
     queryKey: ['cornell-contents', 'my-contents'],
     queryFn: async () => {
-      const res = await api.get(API_ENDPOINTS.MY_CONTENTS);
+      const res = await api.get(API_ENDPOINTS.CONTENTS.MY_CONTENTS);
       return res.data;
     },
   });
@@ -203,7 +203,10 @@ function CornellContentsList() {
     );
   }
 
-  if (!contents || contents.length === 0) {
+  // Normalize contents to always be an array
+  const items = Array.isArray(contents) ? contents : (contents?.items || []);
+
+  if (!items || items.length === 0) {
     return (
       <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-dashed border-gray-300">
         <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -219,7 +222,7 @@ function CornellContentsList() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {contents.map((content: any) => (
+      {items.map((content: any) => (
         <ContentItem key={content.id} content={content} />
       ))}
     </div>

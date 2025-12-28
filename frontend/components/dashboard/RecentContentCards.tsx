@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Clock, FileText, Image as ImageIcon, Video, Headphones } from 'lucide-react';
-import { useRecommendations } from '@/hooks/use-recommendations';
+import { useRecommendations } from '@/hooks/content/use-recommendations';
 
 const typeIcons = {
   TEXT: FileText,
@@ -12,6 +12,12 @@ const typeIcons = {
   VIDEO: Video,
   AUDIO: Headphones,
 };
+
+interface RecentContentItem {
+  id: string;
+  title: string;
+  type: string;
+}
 
 export function RecentContentCards() {
   const { data, isLoading } = useRecommendations();
@@ -32,14 +38,14 @@ export function RecentContentCards() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-      {recentItems.map((item) => (
+      {recentItems.map((item: RecentContentItem) => (
         <RecentContentCard key={item.id} item={item} />
       ))}
     </div>
   );
 }
 
-function RecentContentCard({ item }: { item: any }) {
+function RecentContentCard({ item }: { item: RecentContentItem }) {
   const TypeIcon = typeIcons[item.type as keyof typeof typeIcons] || FileText;
 
   return (

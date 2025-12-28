@@ -19,7 +19,10 @@ export function useAutoTrackReading(contentId: string) {
 
     // Track every 30 seconds
     intervalRef.current = setInterval(() => {
-      trackActivity({ type: 'read', minutes: 1 });
+      // Only track if tab is focused
+      if (!document.hidden && document.hasFocus()) {
+        trackActivity({ type: 'read', minutes: 0.5 }); // 0.5 min = 30s
+      }
     }, 30 * 1000);
 
     return () => {

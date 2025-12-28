@@ -1,0 +1,61 @@
+app/admin/dashboard/page.tsx(108,34): error TS2339: Property 'user_id' does not exist on type 'Student'.
+app/admin/dashboard/page.tsx(110,73): error TS2339: Property 'name' does not exist on type 'Student'.
+app/admin/dashboard/page.tsx(111,69): error TS2339: Property 'email' does not exist on type 'Student'.
+app/admin/dashboard/page.tsx(115,38): error TS2339: Property 'level' does not exist on type 'Student'.
+app/admin/dashboard/page.tsx(119,30): error TS2339: Property 'xp' does not exist on type 'Student'.
+app/admin/dashboard/page.tsx(123,35): error TS2339: Property 'streak' does not exist on type 'Student'.
+app/admin/dashboard/page.tsx(127,69): error TS2339: Property 'avg_score' does not exist on type 'Student'.
+app/admin/dashboard/page.tsx(128,32): error TS2339: Property 'avg_score' does not exist on type 'Student'.
+app/admin/dashboard/page.tsx(132,30): error TS2339: Property 'last_active' does not exist on type 'Student'.
+app/dashboard/library/[id]/page.tsx(32,52): error TS2551: Property 'CONTENT' does not exist on type '{ readonly AUTH: { readonly LOGIN: "/auth/login"; readonly REGISTER: "/auth/register"; readonly PROFILE: "/auth/profile"; readonly GOOGLE: "/auth/google"; readonly MICROSOFT: "/auth/microsoft"; readonly FORGOT_PASSWORD: "/auth/forgot-password"; readonly RESET_PASSWORD: "/auth/reset-password"; }; ... 13 more ...; rea...'. Did you mean 'CONTENTS'?
+app/dashboard/library/[id]/page.tsx(127,40): error TS2551: Property 'CONTENT' does not exist on type '{ readonly AUTH: { readonly LOGIN: "/auth/login"; readonly REGISTER: "/auth/register"; readonly PROFILE: "/auth/profile"; readonly GOOGLE: "/auth/google"; readonly MICROSOFT: "/auth/microsoft"; readonly FORGOT_PASSWORD: "/auth/forgot-password"; readonly RESET_PASSWORD: "/auth/reset-password"; }; ... 13 more ...; rea...'. Did you mean 'CONTENTS'?
+app/dashboard/library/[id]/page.tsx(143,40): error TS2551: Property 'CONTENT' does not exist on type '{ readonly AUTH: { readonly LOGIN: "/auth/login"; readonly REGISTER: "/auth/register"; readonly PROFILE: "/auth/profile"; readonly GOOGLE: "/auth/google"; readonly MICROSOFT: "/auth/microsoft"; readonly FORGOT_PASSWORD: "/auth/forgot-password"; readonly RESET_PASSWORD: "/auth/reset-password"; }; ... 13 more ...; rea...'. Did you mean 'CONTENTS'?
+app/dashboard/library/page.tsx(20,54): error TS2551: Property 'MY_CONTENTS' does not exist on type '{ readonly AUTH: { readonly LOGIN: "/auth/login"; readonly REGISTER: "/auth/register"; readonly PROFILE: "/auth/profile"; readonly GOOGLE: "/auth/google"; readonly MICROSOFT: "/auth/microsoft"; readonly FORGOT_PASSWORD: "/auth/forgot-password"; readonly RESET_PASSWORD: "/auth/reset-password"; }; ... 13 more ...; rea...'. Did you mean 'CONTENTS'?
+app/dashboard/page.tsx(193,47): error TS2551: Property 'MY_CONTENTS' does not exist on type '{ readonly AUTH: { readonly LOGIN: "/auth/login"; readonly REGISTER: "/auth/register"; readonly PROFILE: "/auth/profile"; readonly GOOGLE: "/auth/google"; readonly MICROSOFT: "/auth/microsoft"; readonly FORGOT_PASSWORD: "/auth/forgot-password"; readonly RESET_PASSWORD: "/auth/reset-password"; }; ... 13 more ...; rea...'. Did you mean 'CONTENTS'?
+app/login/page.tsx(44,9): error TS2322: Type '"/admin"' is not assignable to type '"/dashboard"'.
+app/login/page.tsx(46,9): error TS2322: Type '"/institution/dashboard"' is not assignable to type '"/dashboard"'.
+app/login/page.tsx(48,9): error TS2322: Type '"/parent"' is not assignable to type '"/dashboard"'.
+app/reader/[id]/page-with-tracking.tsx(5,37): error TS2307: Cannot find module '@/hooks/use-auto-track' or its corresponding type declarations.
+app/register/invite/page.tsx(107,13): error TS2554: Expected 3 arguments, but got 2.
+app/register/page.tsx(45,9): error TS2554: Expected 3 arguments, but got 2.
+app/register/page.tsx(55,11): error TS2554: Expected 3 arguments, but got 2.
+components/annotations/AnnotationSearch.tsx(5,57): error TS2307: Cannot find module '@/hooks/use-annotations' or its corresponding type declarations.
+components/annotations/AnnotationSearch.tsx(155,24): error TS7006: Parameter 'annotation' implicitly has an 'any' type.
+services/api/content.api.ts(35,50): error TS2551: Property 'MY_CONTENTS' does not exist on type '{ readonly AUTH: { readonly LOGIN: "/auth/login"; readonly REGISTER: "/auth/register"; readonly PROFILE: "/auth/profile"; readonly GOOGLE: "/auth/google"; readonly MICROSOFT: "/auth/microsoft"; readonly FORGOT_PASSWORD: "/auth/forgot-password"; readonly RESET_PASSWORD: "/auth/reset-password"; }; ... 13 more ...; rea...'. Did you mean 'CONTENTS'?
+services/api/content.api.ts(43,50): error TS2551: Property 'CONTENT' does not exist on type '{ readonly AUTH: { readonly LOGIN: "/auth/login"; readonly REGISTER: "/auth/register"; readonly PROFILE: "/auth/profile"; readonly GOOGLE: "/auth/google"; readonly MICROSOFT: "/auth/microsoft"; readonly FORGOT_PASSWORD: "/auth/forgot-password"; readonly RESET_PASSWORD: "/auth/reset-password"; }; ... 13 more ...; rea...'. Did you mean 'CONTENTS'?
+services/api/content.api.ts(51,37): error TS2345: Argument of type '{ readonly LIST: "/contents"; readonly MY_CONTENTS: "/contents/my-contents"; readonly GET: (id: string) => string; readonly DELETE: (id: string) => string; readonly BULK_DELETE: "/contents/bulk-delete"; readonly CREATE_MANUAL: "/contents/create_manual"; readonly UPLOAD: "/contents/upload"; readonly FILE_VIEW_URL: (f...' is not assignable to parameter of type 'string'.
+services/api/content.api.ts(59,52): error TS2551: Property 'CONTENT' does not exist on type '{ readonly AUTH: { readonly LOGIN: "/auth/login"; readonly REGISTER: "/auth/register"; readonly PROFILE: "/auth/profile"; readonly GOOGLE: "/auth/google"; readonly MICROSOFT: "/auth/microsoft"; readonly FORGOT_PASSWORD: "/auth/forgot-password"; readonly RESET_PASSWORD: "/auth/reset-password"; }; ... 13 more ...; rea...'. Did you mean 'CONTENTS'?
+services/api/content.api.ts(67,53): error TS2551: Property 'CONTENT' does not exist on type '{ readonly AUTH: { readonly LOGIN: "/auth/login"; readonly REGISTER: "/auth/register"; readonly PROFILE: "/auth/profile"; readonly GOOGLE: "/auth/google"; readonly MICROSOFT: "/auth/microsoft"; readonly FORGOT_PASSWORD: "/auth/forgot-password"; readonly RESET_PASSWORD: "/auth/reset-password"; }; ... 13 more ...; rea...'. Did you mean 'CONTENTS'?
+services/api/index.ts(9,15): error TS2307: Cannot find module './cornell.api' or its corresponding type declarations.
+services/cornell/highlights.service.ts(8,86): error TS2307: Cannot find module '../api/cornell.api' or its corresponding type declarations.
+tests/e2e/admin-analytics-ai.spec.ts(51,12): error TS18047: 'aiResponse' is possibly 'null'.
+tests/e2e/admin-analytics-ai.spec.ts(78,34): error TS18047: 'totalTokensText' is possibly 'null'.
+tests/e2e/admin-analytics-ai.spec.ts(84,36): error TS18047: 'totalRequestsText' is possibly 'null'.
+tests/e2e/admin-analytics-ai.spec.ts(105,21): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+tests/e2e/admin-analytics-ai.spec.ts(141,21): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+tests/e2e/billing/billing.spec.ts(2,27): error TS2307: Cannot find module './../pages/login-page' or its corresponding type declarations.
+tests/unit/api/cornell.api.spec.ts(1,28): error TS2307: Cannot find module '@/services/api/cornell.api' or its corresponding type declarations.
+tests/unit/components/billing/PlanBadge.test.tsx(3,33): error TS2307: Cannot find module '@/hooks/use-entitlements' or its corresponding type declarations.
+tests/unit/cornell/labels.test.tsx(10,13): error TS2739: Type '{ type: "note"; id: string; body: string; createdAt: string; }' is missing the following properties from type 'NoteStreamItem': note, updatedAt
+tests/unit/cornell/labels.test.tsx(33,13): error TS2739: Type '{ type: "note"; id: string; body: string; createdAt: string; }' is missing the following properties from type 'NoteStreamItem': note, updatedAt
+tests/unit/cornell/layout-labels.test.tsx(22,15): error TS2739: Type '{ title: string; mode: "view"; onModeToggle: () => void; saveStatus: "saved"; viewer: Element; streamItems: never[]; cues: never[]; onCuesChange: () => void; summary: string; onSummaryChange: () => void; }' is missing the following properties from type 'ModernCornellLayoutProps': contentId, targetType
+tests/unit/cornell/layout-labels.test.tsx(29,15): error TS2739: Type '{ title: string; mode: "view"; onModeToggle: () => void; saveStatus: "saved"; viewer: Element; streamItems: never[]; cues: never[]; onCuesChange: () => void; summary: string; onSummaryChange: () => void; }' is missing the following properties from type 'ModernCornellLayoutProps': contentId, targetType
+tests/unit/cornell/layout-labels.test.tsx(38,15): error TS2739: Type '{ title: string; mode: "view"; onModeToggle: () => void; saveStatus: "saved"; viewer: Element; streamItems: never[]; cues: never[]; onCuesChange: () => void; summary: string; onSummaryChange: () => void; }' is missing the following properties from type 'ModernCornellLayoutProps': contentId, targetType
+tests/unit/cornell/layout-labels.test.tsx(47,37): error TS2739: Type '{ title: string; mode: "view"; onModeToggle: () => void; saveStatus: "saved"; viewer: Element; streamItems: never[]; cues: never[]; onCuesChange: () => void; summary: string; onSummaryChange: () => void; }' is missing the following properties from type 'ModernCornellLayoutProps': contentId, targetType
+tests/unit/cornell/layout-labels.test.tsx(60,37): error TS2739: Type '{ title: string; mode: "view"; onModeToggle: () => void; saveStatus: "saved"; viewer: Element; streamItems: never[]; cues: never[]; onCuesChange: () => void; summary: string; onSummaryChange: () => void; }' is missing the following properties from type 'ModernCornellLayoutProps': contentId, targetType
+tests/unit/cornell/layout-labels.test.tsx(71,37): error TS2739: Type '{ title: string; mode: "view"; onModeToggle: () => void; saveStatus: "saved"; viewer: Element; streamItems: never[]; cues: never[]; onCuesChange: () => void; summary: string; onSummaryChange: () => void; }' is missing the following properties from type 'ModernCornellLayoutProps': contentId, targetType
+tests/unit/cornell/SuggestionsPanel.test.tsx(4,33): error TS2307: Cannot find module '@/hooks/cornell/useContentContext' or its corresponding type declarations.
+tests/unit/cornell/useContentContext.test.tsx(4,35): error TS2307: Cannot find module '@/hooks/cornell/useContentContext' or its corresponding type declarations.
+tests/unit/cornell/useSuggestions.test.tsx(3,32): error TS2307: Cannot find module '@/hooks/cornell/useSuggestions' or its corresponding type declarations.
+tests/unit/hooks/cornell/use-stream-filter.spec.ts(55,44): error TS2339: Property 'quote' does not exist on type 'UnifiedStreamItem'.
+  Property 'quote' does not exist on type 'NoteStreamItem'.
+tests/unit/hooks/sessions/group-sessions.test.ts(7,63): error TS2307: Cannot find module '../group/use-sessions' or its corresponding type declarations.
+tests/unit/hooks/sessions/group-sessions.test.ts(8,34): error TS2307: Cannot find module '../group/use-session-events' or its corresponding type declarations.
+tests/unit/hooks/sessions/reading-sessions.test.ts(3,28): error TS2307: Cannot find module '../reading/use-session' or its corresponding type declarations.
+tests/unit/hooks/use-cornell-highlights.spec.tsx(82,27): error TS2345: Argument of type '{ type: "NOTE"; target_type: any; page_number: number; comment_text: string; }' is not assignable to parameter of type 'CreateHighlightDto'.
+  Type '{ type: "NOTE"; target_type: any; page_number: number; comment_text: string; }' is missing the following properties from type 'CreateHighlightDto': kind, anchor_json
+tests/unit/services/highlights.service.spec.ts(9,28): error TS2307: Cannot find module '@/services/api/cornell.api' or its corresponding type declarations.
+tests/unit/services/storage.service.spec.ts(50,20): error TS2349: This expression is not callable.
+  Type 'String' has no call signatures.

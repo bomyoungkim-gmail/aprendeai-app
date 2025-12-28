@@ -1,7 +1,7 @@
 'use client';
 
 import { User, BarChart3, Users, BookOpen } from 'lucide-react';
-import { UserStats } from '@/hooks/use-user-profile';
+import { UserStats } from '@/hooks/profile/use-user-profile';
 
 interface ProfileStatsProps {
   stats: UserStats;

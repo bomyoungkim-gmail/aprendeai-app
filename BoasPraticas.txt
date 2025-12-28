@@ -1,0 +1,18 @@
+vamos planejar uma revisao mais ampla na pasta
+frontend
+ :
+- verificar dependencias circulares que aumentam sustentabilidade dos codigos
+- ha separacao de Lógica Hooks, API, negócio, UI e etc (deveria ser separado)
+- oportunidade de refatoracao
+- respeitando estrutura das pastas com as logicas
+
+ao final atualizar os testes existentes nas pastas centralizadoras de testes (caso necessario)
+
+me apresente o plano
+
+
+
+vamos implementar uma fase por vez. 
+final de cada fase:
+- faca os testes para verificar se esta ok
+- adicionar mais testes caso nao esta cobrindo todos os pontos a ser testado para deixar aplicacao bullet prove

@@ -45,7 +45,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
 
   // Fetch data with unified stream
   const { data: content, isLoading: contentLoading } = useContent(params.contentId);
-  const { streamItems, isLoading: streamLoading, notes, cues, highlights } = useUnifiedStream(params.contentId);
+  const { streamItems, isLoading: streamLoading, notes, cues, highlights, summary } = useUnifiedStream(params.contentId);
 
   // Mutations
   const updateMutation = useUpdateCornellNotes(params.contentId);
@@ -56,12 +56,25 @@ export default function ReaderPage({ params }: ReaderPageProps) {
   // Summary state from Cornell notes (sync with fetch)
   const [summaryText, setSummaryText] = useState('');
   
+  // Sync summary when loaded
+  useEffect(() => {
+    if (summary) {
+      setSummaryText(summary);
+    }
+  }, [summary]);
+
+  // Highlight state
   // Highlight state
   const [selectedColor, setSelectedColor] = useState('red');
+  
+  // Context State (for anchoring)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currentTimestamp, setCurrentTimestamp] = useState(0);
 
   // Autosave
   const { save, status, lastSaved } = useCornellAutosave({
     onSave: async (data) => {
+      console.log('📝 Autosave payload:', JSON.stringify(data, null, 2));
       await updateMutation.mutateAsync(data as UpdateCornellDto);
     },
     delay: 1000,
@@ -247,7 +260,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
           src={videoUrl}
           duration={content.duration}
           onTimeUpdate={(time) => {
-            // TODO: Update annotations based on current timestamp
+            setCurrentTimestamp(Math.floor(time * 1000)); // Convert to ms
           }}
         />
       );
@@ -264,7 +277,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
           src={audioUrl}
           duration={content.duration}
           onTimeUpdate={(time) => {
-            // TODO: Update annotations based on current timestamp
+             setCurrentTimestamp(Math.floor(time * 1000)); // Convert to ms
           }}
         />
       );
@@ -280,6 +293,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
             onCreateHighlight={handleCreateHighlight}
             selectedColor={selectedColor}
             onSelectionAction={handleCreateStreamItem}
+            onPageChange={setCurrentPage}
           />
         );
       case 'IMAGE':
@@ -362,6 +376,9 @@ export default function ReaderPage({ params }: ReaderPageProps) {
       <>
         <ModernCornellLayout
           contentId={params.contentId}
+          targetType={content.contentType as any}
+          currentPage={currentPage}
+          currentTimestamp={currentTimestamp}
           title={content.title}
           mode={mode}
           onModeToggle={handleModeToggle}
