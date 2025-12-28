@@ -29,12 +29,37 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException("User not authenticated");
     }
 
-    const hasRole = requiredRoles.some((role) => user.role === role);
+    // NEW: Check systemRole OR contextRole (if present), else fall back to legacy role
+    const hasAccess =
+      this.hasSystemRole(user, requiredRoles) ||
+      this.hasContextRole(user, requiredRoles) ||
+      this.hasLegacyRole(user, requiredRoles);
 
-    if (!hasRole) {
+    if (!hasAccess) {
       throw new ForbiddenException("Insufficient permissions");
     }
 
     return true;
+  }
+
+  /**
+   * Check if user has required systemRole
+   */
+  private hasSystemRole(user: any, requiredRoles: UserRole[]): boolean {
+    return user.systemRole && requiredRoles.includes(user.systemRole);
+  }
+
+  /**
+   * Check if user has required contextRole
+   */
+  private hasContextRole(user: any, requiredRoles: UserRole[]): boolean {
+    return user.contextRole && requiredRoles.includes(user.contextRole);
+  }
+
+  /**
+   * Check legacy single role field (backward compatibility)
+   */
+  private hasLegacyRole(user: any, requiredRoles: UserRole[]): boolean {
+    return user.role && requiredRoles.includes(user.role);
   }
 }

@@ -31,6 +31,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         email: true,
         name: true,
         role: true,
+        systemRole: true,
+        contextRole: true,
+        activeInstitutionId: true,
         settings: true,
       },
     });
@@ -39,14 +42,24 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       return null; // This causes 401
     }
 
-    // ✅ FIX: Include scopes from JWT payload for ExtensionScopeGuard
-    // Extension tokens have { sub, scopes, clientId }, web app tokens don't
-    const userWithScopes = {
+    // Build user object for request
+    // If payload has new fields (systemRole, contextRole), use them
+    // Otherwise fall back to legacy role field
+    const userWithRoles = {
       ...user,
+      // Preserve JWT payload fields (in case they differ from DB)
+      ...(payload.systemRole && { systemRole: payload.systemRole }),
+      ...(payload.contextRole && { contextRole: payload.contextRole }),
+      ...(payload.activeInstitutionId && { 
+        activeInstitutionId: payload.activeInstitutionId 
+      }),
+      // Legacy role field (for backward compatibility)
+      ...(payload.role && { role: payload.role }),
+      // Extension-specific fields
       ...(payload.scopes && { scopes: payload.scopes }),
       ...(payload.clientId && { clientId: payload.clientId }),
     };
 
-    return userWithScopes;
+    return userWithRoles;
   }
 }

@@ -142,10 +142,29 @@ export class AuthController {
     return { message: "If the email exists, a reset link has been sent." };
   }
 
+
   @Public()
   @Post("reset-password")
   @ApiOperation({ summary: "Reset password using token" })
   async resetPassword(@Body() dto: { token: string; password: string }) {
     return this.authService.resetPassword(dto);
+  }
+
+  @Post("switch-context")
+  @UseGuards(AuthGuard("jwt"))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Switch active institution context" })
+  @ApiResponse({
+    status: 200,
+    description: "Context switched successfully, returns new JWT with updated activeInstitutionId",
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiBody({ schema: { properties: { institutionId: { type: 'string' } } } })
+  async switchContext(
+    @Request() req,
+    @Body() body: { institutionId: string },
+  ) {
+    this.logger.log(`Context switch request: user=${req.user.id}, institution=${body.institutionId}`);
+    return this.authService.switchContext(req.user.id, body.institutionId);
   }
 }
