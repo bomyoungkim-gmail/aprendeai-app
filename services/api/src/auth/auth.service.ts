@@ -40,6 +40,21 @@ export class AuthService {
     return null;
   }
 
+  /**
+   * Switch user context to a different institution
+   * Updates activeInstitutionId and re-issues JWT
+   */
+  async switchContext(userId: string, institutionId: string) {
+    // Update user's active institution
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: { activeInstitutionId: institutionId },
+    });
+
+    // Re-issue JWT with new context
+    return this.login(updatedUser);
+  }
+
   async login(user: any) {
     // Check feature flag for context roles
     const useContextRoles = await this.featureFlagsService.isEnabled(
