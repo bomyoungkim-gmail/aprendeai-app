@@ -53,6 +53,7 @@ import { NotificationsModule } from "./notifications/notifications.module";
 import { AIContentModule } from "./common/services/ai-content.module";
 import { LLMModule } from "./llm/llm.module";
 import { SessionTrackingModule } from "./analytics/session-tracking.module";
+import { FeatureFlagsModule } from "./common/feature-flags.module";
 
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
@@ -130,6 +131,7 @@ import { join } from "path";
     // Real-time Notifications
     NotificationsModule,
     SessionTrackingModule,
+    // Feature Flags Module (Global)\n    FeatureFlagsModule,
   ],
   controllers: [AppController],
   providers: [

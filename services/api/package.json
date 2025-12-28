@@ -35,6 +35,7 @@
     "backfill:content-ownership": "ts-node scripts/backfill-content-ownership.ts",
     "backfill:content-ownership:dry-run": "ts-node scripts/backfill-content-ownership.ts --dry-run",
     "backfill:content-ownership:validate": "ts-node scripts/backfill-content-ownership.ts --validate",
+    "seed:flags": "ts-node scripts/seed-feature-flags.ts",
     "playwright": "playwright test"
   },
   "dependencies": {
