@@ -17,8 +17,9 @@ type Content = {
 };
 
 async function fetchContents() {
-  const res = await api.get<Content[]>(API_ENDPOINTS.MY_CONTENTS);
-  return res.data;
+  const res = await api.get<Content[]>(API_ENDPOINTS.CONTENTS.MY_CONTENTS);
+  // Defensive: ensure we always return an array
+  return Array.isArray(res.data) ? res.data : [];
 }
 
 export default function LibraryPage() {
@@ -27,7 +28,7 @@ export default function LibraryPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   
-  const { data: contents, isLoading, error } = useQuery({
+  const { data: contents = [], isLoading, error } = useQuery({
     queryKey: ['contents'],
     queryFn: fetchContents,
   });
@@ -74,9 +75,7 @@ export default function LibraryPage() {
   };
 
   const selectAll = () => {
-    if (contents) {
-      setSelectedIds(new Set(contents.map(c => c.id)));
-    }
+    setSelectedIds(new Set(contents.map(c => c.id)));
   };
 
   const deselectAll = () => {
@@ -87,7 +86,7 @@ export default function LibraryPage() {
     bulkDeleteMutation.mutate(Array.from(selectedIds));
   };
 
-  const allSelected = contents && selectedIds.size === contents.length && contents.length > 0;
+  const allSelected = selectedIds.size === contents.length && contents.length > 0;
 
   if (isLoading) {
     return (
@@ -123,7 +122,7 @@ export default function LibraryPage() {
               </svg>
             </Link>
           </div>
-          {contents && contents.length > 0 && (
+          {contents.length > 0 && (
             <div className="flex items-center space-x-3">
               <button
                 onClick={allSelected ? deselectAll : selectAll}
@@ -145,7 +144,7 @@ export default function LibraryPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {contents?.map((content) => {
+          {contents.map((content) => {
             const isSelected = selectedIds.has(content.id);
             return (
               <div key={content.id} className="relative">
@@ -204,7 +203,7 @@ export default function LibraryPage() {
             );
           })}
           
-          {contents?.length === 0 && (
+          {contents.length === 0 && (
             <div className="col-span-full py-12 text-center text-gray-500">
               Nenhum conteúdo encontrado na biblioteca.
             </div>

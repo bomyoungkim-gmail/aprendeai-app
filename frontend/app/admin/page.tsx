@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { API_BASE_URL } from '@/lib/config/api';
+import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { SkeletonCard } from '@/components/ui/skeleton';
 
@@ -53,12 +54,9 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/stats`, {
-        headers: { 'Authorization': `Bearer ${getToken()}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setStats(data);
+      const res = await api.get(`${API_BASE_URL}/admin/stats`);
+      if (res.status === 200) {
+        setStats(res.data);
       } else {
         toast.error('Failed to load platform statistics');
       }

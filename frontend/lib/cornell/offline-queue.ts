@@ -25,6 +25,7 @@ class OfflineQueueClass {
 
   private loadQueue() {
     try {
+      if (typeof window === 'undefined') return;
       const stored = localStorage.getItem(QUEUE_KEY);
       if (stored) {
         this.queue = JSON.parse(stored);
@@ -37,6 +38,7 @@ class OfflineQueueClass {
 
   private saveQueue() {
     try {
+      if (typeof window === 'undefined') return;
       localStorage.setItem(QUEUE_KEY, JSON.stringify(this.queue));
     } catch (err) {
       console.error('Failed to save offline queue:', err);

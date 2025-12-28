@@ -12,6 +12,7 @@ model Institution {
   id      String          @id @default(uuid())
   name    String
   type    InstitutionType
+  kind    InstitutionKind @default(EDUCATION) // PHASE 1 EXPAND
   slug    String?         @unique
   city    String?
   state   String?
@@ -245,6 +246,12 @@ model User {
 
   role               UserRole
   schoolingLevel     String    @map("schooling_level")
+  
+  // PHASE 1 EXPAND: New role system fields (nullable/default for backward compat)
+  systemRole             SystemRole?  @map("system_role")
+  contextRole            ContextRole  @default(OWNER) @map("context_role")
+  activeInstitutionId    String?      @map("active_institution_id")
+  
   age                Int?
   sex                String?
   birthday           DateTime? // Date of birth for age calculation and personalization
@@ -1350,6 +1357,71 @@ enum UserRole {
   SCHOOL_ADMIN
 }
 
+// ===== PHASE 1 EXPAND: New Enums =====
+
+enum SystemRole {
+  ADMIN
+  SUPPORT
+  OPS
+}
+
+enum ContextRole {
+  OWNER
+  INSTITUTION_EDUCATION_ADMIN
+  TEACHER
+  STUDENT
+  INSTITUTION_ENTERPRISE_ADMIN
+  EMPLOYEE
+}
+
+enum InstitutionKind {
+  EDUCATION
+  ENTERPRISE
+}
+
+enum InstitutionRole {
+  INSTITUTION_EDUCATION_ADMIN
+  TEACHER
+  STUDENT
+  INSTITUTION_ENTERPRISE_ADMIN
+  EMPLOYEE
+}
+
+enum ContentOwnerType {
+  USER
+  INSTITUTION
+  CLASSROOM
+}
+
+enum TeacherVerificationStatus {
+  PENDING
+  VERIFIED
+  REVOKED
+}
+
+enum ShareContextType {
+  CLASSROOM
+  FAMILY
+  STUDY_GROUP
+}
+
+enum SharePermission {
+  VIEW
+  COMMENT
+  ASSIGN
+}
+
+enum AnnotationShareMode {
+  VIEW
+  COMMENT
+}
+
+enum CommentTargetType {
+  CONTENT
+  ANNOTATION
+  SUBMISSION
+}
+
 enum ScopeType {
   GLOBAL
   INSTITUTION
@@ -2261,4 +2333,107 @@ model GameResult {
   @@index([gameType])
   @@index([playedAt])
   @@map("game_results")
+}
+
+
+// ===== PHASE 1 EXPAND: New Tables =====
+
+model TeacherVerification {
+  id            String                    @id @default(uuid())
+  userId        String                    @unique @map("user_id")
+  institutionId String                    @map("institution_id")
+  status        TeacherVerificationStatus @default(PENDING)
+  verifiedBy    String?                   @map("verified_by")
+  verifiedAt    DateTime?                 @map("verified_at")
+  createdAt     DateTime                  @default(now()) @map("created_at")
+  updatedAt     DateTime                  @updatedAt @map("updated_at")
+
+  @@index([institutionId, status])
+  @@map("teacher_verifications")
+}
+
+model ContentShare {
+  contentId   String           @map("content_id")
+  contextType ShareContextType @map("context_type")
+  contextId   String           @map("context_id")
+  permission  SharePermission  @default(VIEW)
+  createdBy   String?          @map("created_by")
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  @@id([contentId, contextType, contextId])
+  @@index([contextType, contextId])
+  @@map("content_shares")
+}
+
+model AnnotationShare {
+  annotationId String              @map("annotation_id")
+  contextType  ShareContextType    @map("context_type")
+  contextId    String              @map("context_id")
+  mode         AnnotationShareMode @default(VIEW)
+  createdBy    String?             @map("created_by")
+  createdAt    DateTime            @default(now()) @map("created_at")
+
+  @@id([annotationId, contextType, contextId])
+  @@index([contextType, contextId])
+  @@map("annotation_shares")
+}
+
+model CommentThread {
+  id          String            @id @default(uuid())
+  contextType ShareContextType  @map("context_type")
+  contextId   String            @map("context_id")
+  targetType  CommentTargetType @map("target_type")
+  targetId    String            @map("target_id")
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  comments Comment[]
+
+  @@unique([contextType, contextId, targetType, targetId])
+  @@index([contextType, contextId])
+  @@map("comment_threads")
+}
+
+model Comment {
+  id           String    @id @default(uuid())
+  threadId     String    @map("thread_id")
+  authorId     String    @map("author_id")
+  body         String
+  createdAt    DateTime  @default(now()) @map("created_at")
+  deletedAt    DateTime? @map("deleted_at")
+  deletedBy    String?   @map("deleted_by")
+  deleteReason String?   @map("delete_reason")
+
+  thread CommentThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId, createdAt])
+  @@map("comments")
+}
+
+model InstitutionPolicy {
+  id            String  @id @default(uuid())
+  institutionId String  @unique @map("institution_id")
+
+  allowAdvancedAI      Boolean @default(false) @map("allow_advanced_ai")
+  allowExternalSharing Boolean @default(false) @map("allow_external_sharing")
+  allowTextExtraction  Boolean @default(false) @map("allow_text_extraction")
+
+  studentUnenrollmentMode String @default("TEACHER_OR_ADMIN_ONLY") @map("student_unenrollment_mode")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("institution_policies")
+}
+
+model GradebookExport {
+  id          String   @id @default(uuid())
+  classroomId String   @map("classroom_id")
+  createdBy   String   @map("created_by")
+  range       Json
+  format      String   @default("CSV")
+  fileRef     String   @map("file_ref")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([classroomId, createdAt])
+  @@map("gradebook_exports")
 }

@@ -96,6 +96,10 @@ export class GamificationService {
     // 3. Check Goal
     await this.checkGoalCompletion(userId, updatedActivity);
 
+    // 4. Update Study Session (for Hourly Analytics)
+    // Don't wait for this to avoid blocking the main heatamp feedback
+    this.updateSession(userId, dto).catch(e => console.error('Failed to update session:', e));
+
     return updatedActivity;
   }
 
@@ -185,6 +189,63 @@ export class GamificationService {
           },
         });
       }
+    }
+  }
+
+  private async updateSession(userId: string, dto: ActivityProgressDto) {
+    const now = new Date();
+    const threshold = new Date(now.getTime() - 5 * 60 * 1000); // 5 minutes ago
+
+    // 1. Find active session (ended recently)
+    const recentSession = await this.prisma.studySession.findFirst({
+      where: {
+        userId,
+        endTime: { gte: threshold },
+      },
+      orderBy: { endTime: 'desc' },
+    });
+
+    const deltaMinutes = dto.minutesSpentDelta || 0;
+    // Default score 100 for reading (focus mode), or use provided score (games)
+    const newScore = dto.focusScore !== undefined ? dto.focusScore : 100;
+
+    if (recentSession) {
+      // 2. Resume Session
+      // Weighted average for focus score
+      // (oldScore * oldDuration + newScore * newDelta) / (oldDuration + newDelta)
+      const currentDuration = recentSession.durationMinutes || 0; // minutes
+      const totalDuration = currentDuration + deltaMinutes;
+      
+      let avgScore = 100;
+      if (totalDuration > 0) {
+        const currentScore = recentSession.focusScore || 100;
+        avgScore = ((currentScore * currentDuration) + (newScore * deltaMinutes)) / totalDuration;
+      }
+
+      await this.prisma.studySession.update({
+        where: { id: recentSession.id },
+        data: {
+          endTime: now,
+          durationMinutes: { increment: deltaMinutes },
+          netFocusMinutes: { increment: deltaMinutes }, // Assuming only focused time is sent
+          focusScore: avgScore,
+          // accuracyRate: update if provided? For now, simplistic.
+        },
+      });
+    } else {
+      // 3. New Session
+      await this.prisma.studySession.create({
+        data: {
+          userId,
+          startTime: now,
+          endTime: now,
+          durationMinutes: deltaMinutes,
+          netFocusMinutes: deltaMinutes,
+          focusScore: newScore,
+          activityType: dto.activityType || 'reading',
+          // interactionCount: dto.lessonsCompletedDelta || 0, // Not in schema yet
+        },
+      });
     }
   }
 }

@@ -21,6 +21,12 @@ export class JwtAuthGuard extends AuthGuard("jwt") {
     const request = context.switchToHttp().getRequest();
     const route = `${request.method} ${request.url}`;
 
+    // Allow public access to uploads (Static Assets)
+    if (request.url.startsWith('/api/uploads/')) {
+       this.logger.log(`[PUBLIC_ASSET] Bypassing auth for: ${route}`);
+       return true;
+    }
+
     if (isPublic) {
       this.logger.log(`[PUBLIC] Bypassing auth for: ${route}`);
       return true; // Allow access without authentication

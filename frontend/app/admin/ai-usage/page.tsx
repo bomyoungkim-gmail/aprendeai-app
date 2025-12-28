@@ -1,7 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '@/lib/config/api';
+import api from '@/lib/api';
+import toast from 'react-hot-toast';
 
 interface TokenUsageOverview {
   totalRequests: number;
@@ -62,38 +65,29 @@ export default function AIUsageAnalyticsPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      if (!token) {
-        router.push('/login');
-        return;
-      }
+      
+      const queryParams = {
+        from: fromDate,
+        to: toDate,
+      };
 
-      const headers = { 'Authorization': `Bearer ${token}` };
-      const params = `from=${fromDate}&to=${toDate}`;
-
-      // Fetch all data concurrently
+      // Fetch all data concurrently using api client
       const [overviewRes, evolutionRes, distributionRes, consumersRes] = await Promise.all([
-        fetch(`/api/v1/admin/ai/overview?${params}`, { headers }),
-        fetch(`/api/v1/admin/ai/evolution?${params}&interval=${interval}`, { headers }),
-        fetch(`/api/v1/admin/ai/distribution?${params}&dimension=${dimension}`, { headers }),
-        fetch(`/api/v1/admin/ai/top-consumers?${params}&entity=${entity}&limit=10`, { headers }),
+        api.get('/admin/ai/overview', { params: queryParams }),
+        api.get('/admin/ai/evolution', { params: { ...queryParams, interval } }),
+        api.get('/admin/ai/distribution', { params: { ...queryParams, dimension } }),
+        api.get('/admin/ai/top-consumers', { params: { ...queryParams, entity, limit: 10 } }),
       ]);
 
-      if (!overviewRes.ok) throw new Error('Failed to fetch overview');
-      
-      const overviewData = await overviewRes.json();
-      const evolutionData = await evolutionRes.json();
-      const distributionData = await distributionRes.json();
-      const consumersData = await consumersRes.json();
-
-      setOverview(overviewData);
-      setEvolution(evolutionData);
-      setDistribution(distributionData);
-      setTopConsumers(consumersData);
+      setOverview(overviewRes.data);
+      setEvolution(evolutionRes.data);
+      setDistribution(distributionRes.data);
+      setTopConsumers(consumersRes.data);
       setError(null);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Failed to fetch AI analytics');
       console.error('Failed to fetch AI usage analytics:', err);
+      toast.error('Failed to load analytics');
     } finally {
       setLoading(false);
     }

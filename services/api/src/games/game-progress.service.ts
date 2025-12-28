@@ -5,12 +5,16 @@ import {
   UpdateGameProgressDto,
   GameProgressSummary,
 } from "./dto/game-progress.dto";
+import { GamificationService } from "../gamification/gamification.service";
 
 @Injectable()
 export class GameProgressService {
   private readonly logger = new Logger(GameProgressService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly gamificationService: GamificationService,
+  ) {}
 
   /**
    * Get user's progress for all games
@@ -97,6 +101,19 @@ export class GameProgressService {
     this.logger.log(
       `Progress updated for user ${userId}, game ${gameId}: score=${update.score}, stars=${newStars}, streak=${newStreak}`,
     );
+
+    // Sync with Central Analytics (Heatmap/Hourly)
+    const timeSpent = 5; // Default 5 mins per game session if not tracked
+    const qualityScore = Math.min((newStars / 3) * 100, 100); // Normalize stars to 0-100
+
+    this.gamificationService.registerActivity(userId, {
+      minutesSpentDelta: timeSpent,
+      focusScore: qualityScore,
+      activityType: 'game',
+      // Game scores don't map directly to 'contentsRead' or 'lessonsCompleted' 
+      // but we can map 'won' to lesson completion if desired.
+      lessonsCompletedDelta: update.won ? 1 : 0
+    }).catch(e => this.logger.error(`Failed to register game activity: ${e.message}`));
 
     return this.mapToDto(updated);
   }

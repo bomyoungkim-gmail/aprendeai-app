@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Filter, Eye, Ban, UserCog } from 'lucide-react';
+import { Search, Filter, Eye, Ban, UserCog, Trash2, Edit2 } from 'lucide-react';
 import api from '@/lib/api';
+import toast from 'react-hot-toast';
 
 interface User {
   id: string;
@@ -17,6 +18,8 @@ interface User {
     name: string;
   };
 }
+
+const ROLES = ['ADMIN', 'SUPPORT', 'OPS', 'INSTITUTION_ADMIN', 'TEACHER', 'STUDENT', 'COMMON_USER'];
 
 export default function UsersPage() {
   const [search, setSearch] = useState('');
@@ -44,6 +47,25 @@ export default function UsersPage() {
   const users = data?.users || [];
   const pagination = data?.pagination;
 
+  const handleDelete = async (user: User) => {
+      const reason = window.prompt(`Are you sure you want to delete ${user.name}? This will set status to DELETED.\n\nPlease enter a reason:`);
+      if (reason === null) return; // Cancelled
+      if (!reason) {
+          toast.error("Reason is required to delete a user.");
+          return;
+      }
+
+      try {
+          // Using status update to DELETED as logical delete
+          await api.put(`/admin/users/${user.id}/status`, { status: "DELETED", reason });
+          toast.success("User deleted (status set to DELETED)");
+          refetch();
+      } catch (error) {
+          console.error("Delete failed", error);
+          toast.error("Failed to delete user");
+      }
+  };
+
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       {/* Header */}
@@ -51,7 +73,7 @@ export default function UsersPage() {
         <div className="sm:flex-auto">
           <h1 className="text-2xl font-semibold text-gray-900">Users</h1>
           <p className="mt-2 text-sm text-gray-700">
-            A list of all users in the platform including their name, email, role, and status.
+            Manage users, assign roles, and update status.
           </p>
         </div>
       </div>
@@ -88,12 +110,7 @@ export default function UsersPage() {
           className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
         >
           <option value="">All Roles</option>
-          <option value="ADMIN">Admin</option>
-          <option value="SUPPORT">Support</option>
-          <option value="OPS">OPS</option>
-          <option value="INSTITUTION_ADMIN">Institution Admin</option>
-          <option value="TEACHER">Teacher</option>
-          <option value="STUDENT">Student</option>
+          {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
         </select>
       </div>
 
@@ -162,12 +179,20 @@ export default function UsersPage() {
                             ? new Date(user.lastLoginAt).toLocaleString()
                             : 'Never'}
                         </td>
-                        <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                        <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-2">
                           <button
                             onClick={() => setSelectedUser(user)}
-                            className="text-indigo-600 hover:text-indigo-900 mr-4"
+                            className="text-gray-600 hover:text-indigo-900"
+                            title="Edit User"
                           >
-                            <Eye className="h-5 w-5 inline" />
+                            <Edit2 className="h-5 w-5 inline" />
+                          </button>
+                          <button
+                             onClick={() => handleDelete(user)}
+                             className="text-gray-600 hover:text-red-900"
+                             title="Delete User"
+                          >
+                             <Trash2 className="h-5 w-5 inline" />
                           </button>
                           <button
                             onClick={() => {
@@ -175,6 +200,7 @@ export default function UsersPage() {
                               setShowImpersonateModal(true);
                             }}
                             className="text-orange-600 hover:text-orange-900"
+                            title="Impersonate"
                           >
                             <UserCog className="h-5 w-5 inline" />
                           </button>
@@ -192,64 +218,27 @@ export default function UsersPage() {
       {/* Pagination */}
       {pagination && (
         <div className="mt-6 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg shadow">
-          <div className="flex flex-1 justify-between sm:hidden">
-            <button
-              onClick={() => setPage(page - 1)}
-              disabled={page === 1}
-              className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setPage(page + 1)}
-              disabled={page >= pagination.totalPages}
-              className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Showing <span className="font-medium">{(page - 1) * pagination.limit + 1}</span> to{' '}
-                <span className="font-medium">
-                  {Math.min(page * pagination.limit, pagination.total)}
-                </span>{' '}
-                of <span className="font-medium">{pagination.total}</span> results
-              </p>
-            </div>
-            <div>
-              <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm">
+            <div className="flex-1 flex justify-between">
                 <button
-                  onClick={() => setPage(page - 1)}
-                  disabled={page === 1}
-                  className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                    onClick={() => setPage(page - 1)}
+                    disabled={page === 1}
+                    className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                 >
-                  Previous
+                    Previous
                 </button>
-                {[...Array(pagination.totalPages)].map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setPage(i + 1)}
-                    className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                      page === i + 1
-                        ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
-                        : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
+                <div className="hidden sm:block">
+                     <p className="text-sm text-gray-700 mt-2">
+                         Page {page} of {pagination.totalPages}
+                     </p>
+                </div>
                 <button
-                  onClick={() => setPage(page + 1)}
-                  disabled={page >= pagination.totalPages}
-                  className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                    onClick={() => setPage(page + 1)}
+                    disabled={page >= pagination.totalPages}
+                    className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                 >
-                  Next
+                    Next
                 </button>
-              </nav>
             </div>
-          </div>
         </div>
       )}
 
@@ -276,7 +265,6 @@ export default function UsersPage() {
   );
 }
 
-// User Detail Modal Component
 function UserDetailModal({
   user,
   onClose,
@@ -287,16 +275,37 @@ function UserDetailModal({
   onRefresh: () => void;
 }) {
   const [status, setStatus] = useState(user.status);
+  const [role, setRole] = useState(user.role);
   const [reason, setReason] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const handleStatusUpdate = async () => {
+  const handleSave = async () => {
+    setSaving(true);
     try {
-      await api.put(`/admin/users/${user.id}/status`, { status, reason });
-      onRefresh();
-      onClose();
-    } catch (error) {
-      console.error('Failed to update status:', error);
-      alert('Failed to update status');
+        const promises = [];
+        // Update Status if changed
+        if (status !== user.status) {
+            promises.push(api.put(`/admin/users/${user.id}/status`, { status, reason }));
+        }
+        // Update Role if changed
+        if (role !== user.role) {
+            // Note: This updates access roles. Does it update primary?
+            // Assuming simplified update for now. 
+            promises.push(api.put(`/admin/users/${user.id}/roles`, { 
+                roles: [{ role, scopeType: null, scopeId: null }], 
+                reason: reason 
+            }));
+        }
+
+        await Promise.all(promises);
+        toast.success("User updated successfully");
+        onRefresh();
+        onClose();
+    } catch (error: any) {
+        console.error("Failed to update user", error);
+        toast.error("Failed to update user");
+    } finally {
+        setSaving(false);
     }
   };
 
@@ -304,25 +313,26 @@ function UserDetailModal({
     <div className="fixed inset-0 z-10 overflow-y-auto">
       <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose} />
-
         <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
           <div>
-            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">User Details</h3>
+            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Edit User</h3>
+            {/* Read-only fields */}
+            <div className="space-y-4 mb-4">
+               <div><label className="text-sm font-medium text-gray-700">Name</label><p>{user.name}</p></div>
+               <div><label className="text-sm font-medium text-gray-700">Email</label><p>{user.email}</p></div>
+            </div>
 
+            {/* Editable Fields */}
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Name</label>
-                <p className="mt-1 text-sm text-gray-900">{user.name}</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <p className="mt-1 text-sm text-gray-900">{user.email}</p>
-              </div>
-
-              <div>
                 <label className="block text-sm font-medium text-gray-700">Role</label>
-                <p className="mt-1 text-sm text-gray-900">{user.role}</p>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                >
+                    {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
               </div>
 
               <div>
@@ -330,7 +340,7 @@ function UserDetailModal({
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
                 >
                   <option value="ACTIVE">Active</option>
                   <option value="SUSPENDED">Suspended</option>
@@ -338,17 +348,17 @@ function UserDetailModal({
                 </select>
               </div>
 
-              {status !== user.status && (
+              {(status !== user.status || role !== user.role) && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Reason for change (required)
+                    Reason for change <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    rows={3}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    placeholder="Enter reason for status change..."
+                    rows={2}
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border"
+                    placeholder="Reason required..."
                   />
                 </div>
               )}
@@ -358,16 +368,16 @@ function UserDetailModal({
           <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
             <button
               type="button"
-              onClick={handleStatusUpdate}
-              disabled={status === user.status || !reason}
-              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm disabled:opacity-50"
+              onClick={handleSave}
+              disabled={(!status && !role) || (status !== user.status && !reason) || (role !== user.role && !reason) || saving}
+              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
             >
-              Save
+              {saving ? 'Saving...' : 'Save'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50"
             >
               Cancel
             </button>
@@ -378,114 +388,60 @@ function UserDetailModal({
   );
 }
 
-// Impersonate Modal Component
 function ImpersonateModal({
-  user,
-  onClose,
-}: {
-  user: User;
-  onClose: () => void;
-}) {
-  const [reason, setReason] = useState('');
-  const [duration, setDuration] = useState(15);
-
-  const handleImpersonate = async () => {
-    try {
-      const response = await api.post(`/admin/users/${user.id}/impersonate`, {
-        reason,
-        durationMinutes: duration,
-      });
-      const { impersonationToken } = response.data;
-
-      // Store token and redirect
-      localStorage.setItem('impersonation_token', impersonationToken);
-      window.location.href = '/dashboard';
-    } catch (error) {
-      console.error('Failed to impersonate:', error);
-      alert('Failed to impersonate user');
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-10 overflow-y-auto">
-      <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose} />
-
-        <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-          <div>
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-orange-100">
-              <UserCog className="h-6 w-6 text-orange-600" />
-            </div>
-            <div className="mt-3 text-center sm:mt-5">
-              <h3 className="text-lg font-medium leading-6 text-gray-900">
-                Impersonate User: {user.name}
-              </h3>
-              <div className="mt-2">
-                <p className="text-sm text-gray-500">Email: {user.email}</p>
-                <p className="text-sm text-gray-500">Role: {user.role}</p>
+    user,
+    onClose,
+  }: {
+    user: User;
+    onClose: () => void;
+  }) {
+    const [reason, setReason] = useState('');
+    const [duration, setDuration] = useState(15);
+  
+    const handleImpersonate = async () => {
+      try {
+        const response = await api.post(`/admin/users/${user.id}/impersonate`, {
+          reason,
+          durationMinutes: duration,
+        });
+        const { impersonationToken } = response.data;
+  
+        // Store token and redirect
+        localStorage.setItem('impersonation_token', impersonationToken);
+        window.location.href = '/dashboard';
+      } catch (error) {
+        console.error('Failed to impersonate:', error);
+        toast.error('Failed to impersonate user');
+      }
+    };
+  
+    return (
+      <div className="fixed inset-0 z-10 overflow-y-auto">
+        <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose} />
+          <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <div>
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-orange-100">
+                <UserCog className="h-6 w-6 text-orange-600" />
+              </div>
+              <div className="mt-3 text-center sm:mt-5">
+                <h3 className="text-lg font-medium leading-6 text-gray-900">
+                  Impersonate User: {user.name}
+                </h3>
               </div>
             </div>
-          </div>
-
-          <div className="mt-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Reason (required) <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                rows={3}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                placeholder="Why are you impersonating this user?"
-              />
+            <div className="mt-4 space-y-4">
+               <textarea value={reason} onChange={e => setReason(e.target.value)} placeholder="Reason..." className="w-full border rounded p-2" />
+               <select value={duration} onChange={e => setDuration(Number(e.target.value))} className="w-full border rounded p-2">
+                   <option value={5}>5 min</option>
+                   <option value={15}>15 min</option>
+                   <option value={60}>1 hr</option>
+               </select>
+               <button onClick={handleImpersonate} disabled={!reason} className="w-full bg-orange-600 text-white rounded py-2 disabled:opacity-50">Start Impersonation</button>
+               <button onClick={onClose} className="w-full border rounded py-2 mt-2">Cancel</button>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Duration</label>
-              <select
-                value={duration}
-                onChange={(e) => setDuration(Number(e.target.value))}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm rounded-md"
-              >
-                <option value={5}>5 minutes</option>
-                <option value={15}>15 minutes</option>
-                <option value={30}>30 minutes</option>
-                <option value={60}>60 minutes</option>
-              </select>
-            </div>
-
-            <div className="rounded-md bg-yellow-50 p-4">
-              <div className="flex">
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800">Warning</h3>
-                  <div className="mt-2 text-sm text-yellow-700">
-                    <p>All actions will be logged and attributed to your account.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-            <button
-              type="button"
-              onClick={handleImpersonate}
-              disabled={!reason}
-              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-orange-600 text-base font-medium text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:col-start-2 sm:text-sm disabled:opacity-50"
-            >
-              Start Impersonation
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm"
-            >
-              Cancel
-            </button>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }

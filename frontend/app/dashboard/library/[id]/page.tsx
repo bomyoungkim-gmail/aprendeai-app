@@ -209,6 +209,14 @@ export default function ContentReaderPage() {
             <CheckCircle size={16} />
             <span>Concluir Leitura</span>
         </button>
+
+        <Link 
+            href={`/reader/${id}`}
+            className="flex items-center space-x-2 px-4 py-1.5 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 shadow-sm"
+        >
+            <FileText size={16} />
+            <span>Abrir Leitor Cornell</span>
+        </Link>
       </div>
 
       {/* Reader Area */}

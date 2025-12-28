@@ -52,7 +52,7 @@
     "react-hook-form": "^7.68.0",
     "react-hot-toast": "^2.6.0",
     "react-konva": "^18.2.10",
-    "react-player": "^3.4.0",
+    "react-player": "^2.16.0",
     "recharts": "^3.6.0",
     "socket.io-client": "^4.8.3",
     "sonner": "^2.0.7",

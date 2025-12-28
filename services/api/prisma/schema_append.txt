@@ -1,0 +1,103 @@
+
+
+// ===== PHASE 1 EXPAND: New Tables =====
+
+model TeacherVerification {
+  id            String                    @id @default(uuid())
+  userId        String                    @unique @map("user_id")
+  institutionId String                    @map("institution_id")
+  status        TeacherVerificationStatus @default(PENDING)
+  verifiedBy    String?                   @map("verified_by")
+  verifiedAt    DateTime?                 @map("verified_at")
+  createdAt     DateTime                  @default(now()) @map("created_at")
+  updatedAt     DateTime                  @updatedAt @map("updated_at")
+
+  @@index([institutionId, status])
+  @@map("teacher_verifications")
+}
+
+model ContentShare {
+  contentId   String           @map("content_id")
+  contextType ShareContextType @map("context_type")
+  contextId   String           @map("context_id")
+  permission  SharePermission  @default(VIEW)
+  createdBy   String?          @map("created_by")
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  @@id([contentId, contextType, contextId])
+  @@index([contextType, contextId])
+  @@map("content_shares")
+}
+
+model AnnotationShare {
+  annotationId String              @map("annotation_id")
+  contextType  ShareContextType    @map("context_type")
+  contextId    String              @map("context_id")
+  mode         AnnotationShareMode @default(VIEW)
+  createdBy    String?             @map("created_by")
+  createdAt    DateTime            @default(now()) @map("created_at")
+
+  @@id([annotationId, contextType, contextId])
+  @@index([contextType, contextId])
+  @@map("annotation_shares")
+}
+
+model CommentThread {
+  id          String            @id @default(uuid())
+  contextType ShareContextType  @map("context_type")
+  contextId   String            @map("context_id")
+  targetType  CommentTargetType @map("target_type")
+  targetId    String            @map("target_id")
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  comments Comment[]
+
+  @@unique([contextType, contextId, targetType, targetId])
+  @@index([contextType, contextId])
+  @@map("comment_threads")
+}
+
+model Comment {
+  id           String    @id @default(uuid())
+  threadId     String    @map("thread_id")
+  authorId     String    @map("author_id")
+  body         String
+  createdAt    DateTime  @default(now()) @map("created_at")
+  deletedAt    DateTime? @map("deleted_at")
+  deletedBy    String?   @map("deleted_by")
+  deleteReason String?   @map("delete_reason")
+
+  thread CommentThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId, createdAt])
+  @@map("comments")
+}
+
+model InstitutionPolicy {
+  id            String  @id @default(uuid())
+  institutionId String  @unique @map("institution_id")
+
+  allowAdvancedAI      Boolean @default(false) @map("allow_advanced_ai")
+  allowExternalSharing Boolean @default(false) @map("allow_external_sharing")
+  allowTextExtraction  Boolean @default(false) @map("allow_text_extraction")
+
+  studentUnenrollmentMode String @default("TEACHER_OR_ADMIN_ONLY") @map("student_unenrollment_mode")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("institution_policies")
+}
+
+model GradebookExport {
+  id          String   @id @default(uuid())
+  classroomId String   @map("classroom_id")
+  createdBy   String   @map("created_by")
+  range       Json
+  format      String   @default("CSV")
+  fileRef     String   @map("file_ref")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([classroomId, createdAt])
+  @@map("gradebook_exports")
+}

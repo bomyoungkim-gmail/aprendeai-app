@@ -1,7 +1,6 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
-import ReactPlayer from 'react-player';
 import { 
   Play, 
   Pause, 
@@ -14,12 +13,15 @@ import {
 } from 'lucide-react';
 import { AnnotationTimeline } from '@/components/annotations/AnnotationTimeline';
 import { TranscriptViewer } from './TranscriptViewer';
+import ReactPlayer from 'react-player';
+
+// Cast to any to avoid strict prop validation/ref issues
+const Player = ReactPlayer as any;
 
 interface Annotation {
   id: string;
   type: 'HIGHLIGHT' | 'NOTE';
-  timestamp?: number;
-  endTimestamp?: number;
+  timestamp: number;
   text?: string;
   color?: string;
 }
@@ -36,33 +38,69 @@ interface VideoPlayerProps {
   duration?: number;
   onTimeUpdate?: (time: number) => void;
   annotations?: Annotation[];
-  transcription?: {
-    segments: TranscriptSegment[];
-  };
-  onCreateAnnotation?: (timestamp: number) => void;
+  transcript?: TranscriptSegment[];
   className?: string;
 }
 
 export function VideoPlayer({ 
   src, 
-  duration,
+  duration: initialDuration = 0, 
   onTimeUpdate,
   annotations = [],
-  transcription,
-  onCreateAnnotation,
-  className = ''
+  transcript = [],
+  className = '' 
 }: VideoPlayerProps) {
+  const [isMounted, setIsMounted] = useState(false);
   const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const Player = ReactPlayer as any;
   
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [volume, setVolume] = useState(0.8);
+  const [duration, setInternalDuration] = useState(initialDuration);
+  const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
+  const [showControls, setShowControls] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
-  const [showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Helper to toggle internal playing state
+  const togglePlay = () => setPlaying(!playing);
+
+  // Handle progress
+  const handleProgress = (state: { playedSeconds: number }) => {
+    setCurrentTime(state.playedSeconds);
+    onTimeUpdate?.(state.playedSeconds);
+  };
+
+  // Handle duration
+  const handleDuration = (d: number) => {
+    console.log('✅ Duration loaded:', d);
+    setInternalDuration(d);
+  };
+
+  // Handle seek
+  const handleSeek = (time: number) => {
+    playerRef.current?.seekTo(time, 'seconds');
+  };
+
+  // Toggle fullscreen
+  const toggleFullscreen = () => {
+    if (!containerRef.current) return;
+
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
 
   // Format time as HH:MM:SS or MM:SS
   const formatTime = (seconds: number) => {
@@ -76,71 +114,25 @@ export function VideoPlayer({
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  // Handle progress
-  const handleProgress = (state: { playedSeconds: number }) => {
-    setCurrentTime(state.playedSeconds);
-    onTimeUpdate?.(state.playedSeconds);
-  };
+  // Prevent SSR render
+  if (!isMounted) return null;
 
-  // Handle seek
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const seekPercent = (e.clientX - rect.left) / rect.width;
-    const seek = seekPercent * (duration || playerRef.current?.getDuration() || 0);
-    playerRef.current?.seekTo(seek, 'seconds');
-  };
-
-  // Toggle fullscreen
-  const toggleFullscreen = () => {
-    if (!containerRef.current) return;
-
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
-  };
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === ' ') {
-        e.preventDefault();
-        setPlaying(p => !p);
-      } else if (e.key === 'f') {
-        toggleFullscreen();
-      } else if (e.key === 'm') {
-        setMuted(m => !m);
-      } else if (e.key === 'ArrowLeft') {
-        playerRef.current?.seekTo(currentTime - 5, 'seconds');
-      } else if (e.key === 'ArrowRight') {
-        playerRef.current?.seekTo(currentTime + 5, 'seconds');
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentTime]);
-
-  const videoDuration = duration || playerRef.current?.getDuration() || 0;
-  const progress = videoDuration > 0 ? (currentTime / videoDuration) * 100 : 0;
-
-  // Seek handler for timeline and transcript
-  const handleSeekTo = (time: number) => {
-    playerRef.current?.seekTo(time, 'seconds');
-  };
+  if (!src) {
+    return (
+      <div className={`flex items-center justify-center bg-black rounded-lg aspect-video ${className}`}>
+        <p className="text-white">Vídeo não disponível</p>
+      </div>
+    );
+  }
 
   return (
-    <div className={className}>
-      <div 
-        ref={containerRef}
-        className="relative bg-black rounded-lg overflow-hidden"
-        onMouseEnter={() => setShowControls(true)}
-        onMouseLeave={() => setShowControls(false)}
-      >
-        <Player
+    <div 
+      ref={containerRef}
+      className={`relative group bg-black rounded-lg overflow-hidden aspect-video w-full ${className}`}
+      onMouseEnter={() => setShowControls(true)}
+      onMouseLeave={() => setShowControls(false)}
+    >
+      <Player
           ref={playerRef}
           url={src}
           playing={playing}
@@ -148,121 +140,137 @@ export function VideoPlayer({
           muted={muted}
           playbackRate={playbackRate}
           onProgress={handleProgress}
+          onDuration={handleDuration}
           width="100%"
           height="100%"
           style={{ aspectRatio: '16/9' }}
         />
 
       {/* Controls Overlay */}
-      {showControls && (
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-          {/* Progress Bar */}
-          <div 
-            className="w-full h-1 bg-white/30 rounded-full cursor-pointer mb-4"
-            onClick={handleSeek}
-          >
-            <div 
-              className="h-full bg-blue-500 rounded-full transition-all"
-              style={{ width: `${progress}%` }}
-            />
+      <div className={`
+        absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent
+        transition-opacity duration-300
+        ${showControls || !playing ? 'opacity-100' : 'opacity-0'}
+      `}>
+        {/* Progress Bar */}
+        <div className="mb-4">
+          <input
+            type="range"
+            min={0}
+            max={duration || 100}
+            value={currentTime}
+            onChange={(e) => {
+              const time = parseFloat(e.target.value);
+              setCurrentTime(time);
+              playerRef.current?.seekTo(time, 'seconds');
+            }}
+            className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-blue-500 [&::-webkit-slider-thumb]:rounded-full"
+          />
+          <div className="flex justify-between text-xs text-gray-300 mt-1">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(duration || 0)}</span>
           </div>
+        </div>
 
-          <div className="flex items-center gap-4 text-white">
-            {/* Play/Pause */}
-            <button
-              onClick={() => setPlaying(!playing)}
-              className="hover:scale-110 transition-transform"
+        {/* Annotations Timeline */}
+        <AnnotationTimeline
+           annotations={annotations}
+           duration={duration}
+           currentTime={currentTime}
+           onSeek={handleSeek}
+         />
+
+        {/* Buttons */}
+        <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={togglePlay}
+              className="p-2 text-white hover:bg-white/20 rounded-full transition-colors"
             >
               {playing ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
             </button>
 
-            {/* Skip Backward */}
-            <button
-              onClick={() => playerRef.current?.seekTo(currentTime - 10, 'seconds')}
-              className="hover:scale-110 transition-transform"
+            <button 
+              onClick={() => {
+                const newTime = Math.max(0, currentTime - 10);
+                playerRef.current?.seekTo(newTime, 'seconds');
+              }}
+              className="p-2 text-white hover:bg-white/20 rounded-full transition-colors"
+              title="-10s"
             >
               <SkipBack className="w-5 h-5" />
             </button>
 
-            {/* Skip Forward */}
-            <button
-              onClick={() => playerRef.current?.seekTo(currentTime + 10, 'seconds')}
-              className="hover:scale-110 transition-transform"
+            <button 
+              onClick={() => {
+                const newTime = Math.min(duration, currentTime + 10);
+                playerRef.current?.seekTo(newTime, 'seconds');
+              }}
+              className="p-2 text-white hover:bg-white/20 rounded-full transition-colors"
+              title="+10s"
             >
               <SkipForward className="w-5 h-5" />
             </button>
 
-            {/* Volume */}
-            <div className="flex items-center gap-2">
-              <button
+            <div className="flex items-center gap-2 group/volume relative">
+              <button 
                 onClick={() => setMuted(!muted)}
-                className="hover:scale-110 transition-transform"
+                className="p-2 text-white hover:bg-white/20 rounded-full transition-colors"
               >
-                {muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                {muted || volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
               </button>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={volume}
-                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="w-20"
-              />
+              <div className="w-0 overflow-hidden group-hover/volume:w-24 transition-all duration-300">
+                 <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.1}
+                  value={muted ? 0 : volume}
+                  onChange={(e) => {
+                    setVolume(parseFloat(e.target.value));
+                    setMuted(false);
+                  }}
+                  className="w-20 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
+                />
+              </div>
             </div>
+          </div>
 
-            {/* Time Display */}
-            <span className="text-sm">
-              {formatTime(currentTime)} / {formatTime(videoDuration)}
-            </span>
-
-            <div className="flex-1" />
-
-            {/* Playback Speed */}
+          <div className="flex items-center gap-2">
             <select
               value={playbackRate}
               onChange={(e) => setPlaybackRate(parseFloat(e.target.value))}
-              className="bg-white/20 rounded px-2 py-1 text-sm"
+              className="bg-black/50 text-white text-sm border border-gray-600 rounded px-2 py-1 outline-none"
             >
-              <option value="0.5">0.5x</option>
-              <option value="0.75">0.75x</option>
-              <option value="1">1x</option>
-              <option value="1.25">1.25x</option>
-              <option value="1.5">1.5x</option>
-              <option value="2">2x</option>
+              <option value={0.5}>0.5x</option>
+              <option value={1}>1x</option>
+              <option value={1.25}>1.25x</option>
+              <option value={1.5}>1.5x</option>
+              <option value={2}>2x</option>
             </select>
 
-            {/* Fullscreen */}
-            <button
+            <button className="p-2 text-white hover:bg-white/20 rounded-full transition-colors">
+              <Settings className="w-5 h-5" />
+            </button>
+            <button 
               onClick={toggleFullscreen}
-              className="hover:scale-110 transition-transform"
+              className="p-2 text-white hover:bg-white/20 rounded-full transition-colors"
             >
               <Maximize className="w-5 h-5" />
             </button>
           </div>
         </div>
-      )}
       </div>
-
-      {/* Annotation Timeline */}
-      {annotations.length > 0 && videoDuration > 0 && (
-        <AnnotationTimeline
-          annotations={annotations}
-          duration={videoDuration}
-          currentTime={currentTime}
-          onSeek={handleSeekTo}
-          onCreateAnnotation={onCreateAnnotation}
-        />
-      )}
-
-      {/* Transcript Viewer */}
-      {transcription?.segments && transcription.segments.length > 0 && (
-        <div className="mt-4">
-          <TranscriptViewer
-            segments={transcription.segments}
-            currentTime={currentTime}
-            onSeek={handleSeekTo}
-          />
+      
+      {/* Sidebar: Transcript */}
+      {transcript.length > 0 && (
+        <div className="absolute right-4 top-4 bottom-20 w-80 z-20 hidden md:block opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto">
+           <TranscriptViewer
+             segments={transcript}
+             currentTime={currentTime}
+             onSeek={handleSeek}
+             className="h-full shadow-lg"
+           />
         </div>
       )}
     </div>

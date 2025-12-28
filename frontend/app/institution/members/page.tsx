@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE_URL, API_ENDPOINTS } from '@/lib/config/api';
+import api from '@/lib/api';
 
 interface Invite {
   id: string;
@@ -33,19 +34,15 @@ export default function MembersPage() {
 
   const fetchData = async () => {
     try {
-      const instRes = await fetch(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.MY_INSTITUTION}`, {
-        headers: { 'Authorization': `Bearer ${getToken()}` },
-      });
-      if (instRes.ok) {
-        const instData = await instRes.json();
+      const instRes = await api.get(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.MY_INSTITUTION}`);
+      if (instRes.status === 200) {
+        const instData = instRes.data;
         setInstitution(instData);
 
         // Fetch invites for this institution
-        const invitesRes = await fetch(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.INVITES(instData.id)}`, {
-          headers: { 'Authorization': `Bearer ${getToken()}` },
-        });
-        if (invitesRes.ok) {
-          setInvites(await invitesRes.json());
+        const invitesRes = await api.get(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.INVITES(instData.id)}`);
+        if (invitesRes.status === 200) {
+          setInvites(invitesRes.data);
         }
       }
     } catch (error) {
@@ -59,22 +56,18 @@ export default function MembersPage() {
     if (!institution) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.CREATE_INVITE(institution.id)}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, role, expiresInDays: 7 }),
+      const res = await api.post(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.CREATE_INVITE(institution.id)}`, {
+        email, 
+        role, 
+        expiresInDays: 7
       });
 
-      if (res.ok) {
+      if (res.status === 201) {
         setShowInviteModal(false);
         fetchData();
         alert('Invite sent successfully!');
       } else {
-        const error = await res.json();
-        alert(`Failed: ${error.message || 'Unknown error'}`);
+        alert(`Failed: ${res.data.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Failed to create invite:', error);
@@ -86,12 +79,9 @@ export default function MembersPage() {
     if (!institution || !confirm('Cancel this invite?')) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.CANCEL_INVITE(institution.id, inviteId)}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${getToken()}` },
-      });
+      const res = await api.delete(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.CANCEL_INVITE(institution.id, inviteId)}`);
 
-      if (res.ok) {
+      if (res.status === 200) {
         fetchData();
         alert('Invite cancelled');
       }

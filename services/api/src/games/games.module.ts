@@ -11,9 +11,10 @@ import { PrismaModule } from "../prisma/prisma.module";
 import { LLMModule } from "../llm/llm.module";
 
 import { TopicMasteryModule } from "../analytics/topic-mastery.module";
+import { GamificationModule } from "../gamification/gamification.module";
 
 @Module({
-  imports: [HttpModule, PrismaModule, TopicMasteryModule, LLMModule],
+  imports: [HttpModule, PrismaModule, TopicMasteryModule, LLMModule, GamificationModule],
   controllers: [GamesController],
   providers: [GamesService, GameProgressService, GameLeaderboardService, QuestionAnalyticsService, QuestionSelectionService, AIQuestionGeneratorService],
   exports: [GamesService, GameProgressService, GameLeaderboardService],

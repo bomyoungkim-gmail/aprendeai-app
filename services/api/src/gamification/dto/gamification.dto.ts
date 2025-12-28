@@ -31,5 +31,15 @@ export class ActivityProgressDto {
   @IsInt({ message: "Lessons completed must be an integer" })
   @Min(0, { message: "Lessons completed cannot be negative" })
   @Max(100, { message: "Lessons completed delta seems unreasonably high" })
+  @Max(100, { message: "Lessons completed delta seems unreasonably high" })
   lessonsCompletedDelta?: number;
+
+  @IsOptional()
+  focusScore?: number; // 0-100 score for this chunk/session
+
+  @IsOptional()
+  accuracyRate?: number; // 0-100 accuracy
+
+  @IsOptional()
+  activityType?: string; // 'reading', 'game', etc.
 }

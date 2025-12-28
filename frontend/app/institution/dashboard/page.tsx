@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE_URL, API_ENDPOINTS } from '@/lib/config/api';
+import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { SkeletonCard } from '@/components/ui/skeleton';
 import { StatsCard } from '@/components/dashboard/StatsCard';
@@ -32,12 +33,9 @@ export default function InstitutionDashboard() {
 
   const fetchInstitutionData = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.MY_INSTITUTION}`, {
-        headers: { 'Authorization': `Bearer ${getToken()}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setInstitution(data);
+      const res = await api.get(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.MY_INSTITUTION}`);
+      if (res.status === 200) {
+        setInstitution(res.data);
       } else {
         console.error('Failed to fetch institution data');
         toast.error('Failed to load institution data');

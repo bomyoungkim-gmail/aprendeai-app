@@ -118,7 +118,7 @@ export class InstitutionsController {
   // ==================== Invites ====================
 
   @Post(":id/invites")
-  @Roles(UserRole.INSTITUTION_ADMIN)
+  @Roles(UserRole.INSTITUTION_ADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: "Create an institution invite" })
   createInvite(
     @Param("id") institutionId: string,
@@ -133,14 +133,14 @@ export class InstitutionsController {
   }
 
   @Get(":id/invites")
-  @Roles(UserRole.INSTITUTION_ADMIN)
+  @Roles(UserRole.INSTITUTION_ADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: "Get all invites for an institution" })
   getInvites(@Param("id") institutionId: string) {
     return this.inviteService.findByInstitution(institutionId);
   }
 
   @Delete(":id/invites/:inviteId")
-  @Roles(UserRole.INSTITUTION_ADMIN)
+  @Roles(UserRole.INSTITUTION_ADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: "Cancel an invite" })
   cancelInvite(@Param("inviteId") inviteId: string, @Request() req) {
     return this.inviteService.delete(inviteId, req.user.id);
