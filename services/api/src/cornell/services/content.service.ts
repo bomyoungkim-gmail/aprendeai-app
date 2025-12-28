@@ -572,6 +572,47 @@ export class ContentService {
   }
 
   /**
+   * Check if user can access content based on ownerType/ownerId
+   * Supports USER, FAMILY, and INSTITUTION ownership
+   */
+  async canAccessContent(contentId: string, userId: string): Promise<boolean> {
+    const content = await this.prisma.content.findUnique({
+      where: { id: contentId },
+      select: { ownerType: true, ownerId: true, ownerUserId: true },
+    });
+
+    if (!content) return false;
+
+    // NEW: Check ownerType/ownerId first (if present)
+    if (content.ownerType && content.ownerId) {
+      switch (content.ownerType) {
+        case 'USER':
+          return content.ownerId === userId;
+
+        case 'FAMILY':
+          // Check if user is family member
+          const familyMember = await this.prisma.familyMember.findFirst({
+            where: { familyId: content.ownerId, userId: userId },
+          });
+          return !!familyMember;
+
+        case 'INSTITUTION':
+          // Check if user is institution member
+          const institutionMember = await this.prisma.institutionMember.findFirst({
+            where: { institutionId: content.ownerId, userId: userId },
+          });
+          return !!institutionMember;
+
+        default:
+          return false;
+      }
+    }
+
+    // LEGACY: Fall back to ownerUserId check (backward compat)
+    return content.ownerUserId === userId;
+  }
+
+  /**
    * Escape special regex characters
    */
   private escapeRegex(str: string): string {
