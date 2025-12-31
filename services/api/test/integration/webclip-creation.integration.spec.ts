@@ -6,6 +6,7 @@ import * as request from "supertest";
 import { TestAuthHelper, createTestUser } from "../helpers/auth.helper";
 import { JwtService } from "@nestjs/jwt";
 import { ROUTES, apiUrl } from "../../src/common/constants/routes.constants";
+import { v4 as uuidv4 } from "uuid";
 
 describe("WebClip Creation Integration Tests", () => {
   let app: INestApplication;
@@ -38,14 +39,15 @@ describe("WebClip Creation Integration Tests", () => {
     const userData = createTestUser();
     userData.email = `webclip_test_${Date.now()}@example.com`;
 
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
+        id: uuidv4(),
         email: userData.email,
         name: userData.name,
-        passwordHash: "hash",
-        role: "COMMON_USER",
+        password_hash: "hash",
         status: "ACTIVE",
-        schoolingLevel: "HIGHER_EDUCATION",
+        schooling_level: "HIGHER_EDUCATION",
+        updated_at: new Date(),
       },
     });
 
@@ -67,30 +69,30 @@ describe("WebClip Creation Integration Tests", () => {
   afterAll(async () => {
     if (userId) {
       // Must delete dependencies first
-      await prisma.readingSession.deleteMany({ where: { userId } });
+      await prisma.reading_sessions.deleteMany({ where: { user_id: userId } });
       // Delete interactions/logs if any?
       // ContentVersion might exist?
       // Since we don't have direct link from user to contentVersion easily without join,
       // we assume clean up deletion of content handles it IF we delete versions first.
       // But we can delete by contentId via findMany.
 
-      const contents = await prisma.content.findMany({
-        where: { createdBy: userId },
+      const contents = await prisma.contents.findMany({
+        where: { owner_user_id: userId },
         select: { id: true },
       });
       const contentIds = contents.map((c) => c.id);
 
       if (contentIds.length > 0) {
-        await prisma.contentVersion.deleteMany({
-          where: { contentId: { in: contentIds } },
+        await prisma.content_versions.deleteMany({
+          where: { content_id: { in: contentIds } },
         });
-        await prisma.userLibraryItem.deleteMany({
-          where: { contentId: { in: contentIds } },
+        await prisma.user_library_items.deleteMany({
+          where: { content_id: { in: contentIds } },
         });
       }
 
-      await prisma.content.deleteMany({ where: { createdBy: userId } });
-      await prisma.user.delete({ where: { id: userId } });
+      await prisma.contents.deleteMany({ where: { owner_user_id: userId } });
+      await prisma.users.delete({ where: { id: userId } });
     }
     await prisma.$disconnect();
     await app.close();
@@ -112,17 +114,17 @@ describe("WebClip Creation Integration Tests", () => {
         });
 
       expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty("contentId");
+      expect(response.body).toHaveProperty("content_id");
 
       // Verify content details
-      const contentId = response.body.contentId;
+      const contentId = response.body.content_id;
       const verifyResponse = await request(app.getHttpServer())
         .get(apiUrl(ROUTES.WEBCLIP.BASE + "/" + contentId))
         .set("Authorization", `Bearer ${userToken}`);
 
       expect(verifyResponse.status).toBe(200);
       expect(verifyResponse.body.type).toBe("WEB_CLIP");
-      expect(verifyResponse.body.metadata.sourceUrl).toBe(
+      expect(verifyResponse.body.metadata.source_url).toBe(
         "https://example.com/article",
       );
     });
@@ -157,14 +159,17 @@ describe("WebClip Creation Integration Tests", () => {
 
     beforeAll(async () => {
       // Create content first
-      const content = await prisma.content.create({
+      const content = await prisma.contents.create({
         data: {
+          id: uuidv4(),
           type: "WEB_CLIP",
           title: "Session Content",
-          creator: { connect: { id: userId } },
-          scopeType: "USER",
-          originalLanguage: "PT_BR",
-          rawText: "Test content for session",
+          users_owner: { connect: { id: userId } },
+          users_created_by: { connect: { id: userId } },
+          scope_type: "USER",
+          original_language: "PT_BR",
+          raw_text: "Test content for session",
+          updated_at: new Date(),
         },
       });
       contentId = content.id;
@@ -180,9 +185,9 @@ describe("WebClip Creation Integration Tests", () => {
         });
 
       expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty("sessionId");
+      expect(response.body).toHaveProperty("session_id");
       // Verifying a prompt is returned, specific content depends on LLM mock
-      const prompt = response.body.nextPrompt || response.body.initialPrompt;
+      const prompt = response.body.next_prompt || response.body.initial_prompt;
       expect(prompt).toBeTruthy();
       expect(typeof prompt).toBe("string");
     });

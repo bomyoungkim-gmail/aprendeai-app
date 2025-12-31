@@ -86,7 +86,7 @@ export class GroupSessionsController {
       sessionId,
       parseInt(roundIndex),
       req.user.id,
-      dto.toStatus,
+      dto.to_status,
     );
   }
 
@@ -102,9 +102,9 @@ export class GroupSessionsController {
   @Get(":sessionId/events")
   async getEvents(
     @Param("sessionId") sessionId: string,
-    @Query("roundIndex") roundIndex?: string,
+    @Query("round_index") round_index?: string,
   ) {
-    const index = roundIndex ? parseInt(roundIndex) : undefined;
+    const index = round_index ? parseInt(round_index) : undefined;
     return this.groupRoundsService.getEvents(sessionId, index);
   }
 

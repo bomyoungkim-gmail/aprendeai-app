@@ -5,6 +5,7 @@ import {
   Body,
   Param,
   Delete,
+  Req,
   UseGuards,
 } from "@nestjs/common";
 import { FamilyService } from "./family.service";
@@ -13,14 +14,15 @@ import { CoReadingService } from "./services/co-reading.service";
 import { TeachBackService } from "./services/teachback.service";
 import { FamilyDashboardService } from "./services/family-dashboard.service";
 import { OpsCoachService } from "./services/ops-coach.service";
+import { FamilyMapper } from "../mappers/family.mapper";
 import { CreateFamilyDto } from "./dto/create-family.dto";
 import { InviteMemberDto } from "./dto/invite-member.dto";
 import { CreateFamilyPolicyDto } from "./dto/family-policy.dto";
 import { StartCoSessionDto, StartTeachBackDto } from "./dto/co-session.dto";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard"; // Adjust import if needed
+import { JwtAuthGuard } from "../auth/infrastructure/jwt-auth.guard";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
-import { CurrentUser } from "../auth/current-user.decorator";
-import { User } from "@prisma/client";
+import { CurrentUser } from "../auth/presentation/decorators/current-user.decorator";
+import { users } from "@prisma/client";
 
 @ApiTags("Family")
 @ApiBearerAuth()
@@ -38,25 +40,29 @@ export class FamilyController {
 
   @Post()
   @ApiOperation({ summary: "Create a new family" })
-  create(@CurrentUser() user: User, @Body() createFamilyDto: CreateFamilyDto) {
-    return this.familyService.create(user.id, createFamilyDto);
+  async create(@Body() dto: CreateFamilyDto, @Req() req: any) {
+    const family = await this.familyService.create(req.user.id, dto);
+    return FamilyMapper.toDto(family as any);
   }
 
   @Get()
   @ApiOperation({ summary: "List my families" })
-  findAll(@CurrentUser() user: User) {
-    return this.familyService.findAllForUser(user.id);
+  async findAll(@CurrentUser() user: users) {
+    const families = await this.familyService.findAllForUser(user.id);
+    return FamilyMapper.toCollectionDto(families);
   }
 
   @Get("my-family")
   @ApiOperation({ summary: "Get primary family for dashboard" })
-  getMyFamily(@CurrentUser() user: User) {
-    return this.familyService.getFamilyForOwner(user.id);
+  async getMyFamily(@Req() req: any) {
+    const family = await this.familyService.getFamilyForOwner(req.user.id);
+    if (!family) return {};
+    return FamilyMapper.toDto(family as any);
   }
 
   @Get(":id")
   @ApiOperation({ summary: "Get family details" })
-  findOne(@Param("id") id: string, @CurrentUser() user: User) {
+  findOne(@Param("id") id: string, @CurrentUser() user: users) {
     return this.familyService.findOne(id, user.id);
   }
 
@@ -64,7 +70,7 @@ export class FamilyController {
   @ApiOperation({ summary: "Invite a member to the family" })
   invite(
     @Param("id") id: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: users,
     @Body() inviteDto: InviteMemberDto,
   ) {
     return this.familyService.inviteMember(id, user.id, inviteDto);
@@ -72,13 +78,13 @@ export class FamilyController {
 
   @Post(":id/accept")
   @ApiOperation({ summary: "Accept invitation to join family" })
-  acceptInvite(@Param("id") id: string, @CurrentUser() user: User) {
+  acceptInvite(@Param("id") id: string, @CurrentUser() user: users) {
     return this.familyService.acceptInvite(id, user.id);
   }
 
   @Get(":id/usage")
   @ApiOperation({ summary: "Get family usage analytics" })
-  getUsage(@Param("id") id: string, @CurrentUser() user: User) {
+  getUsage(@Param("id") id: string, @CurrentUser() user: users) {
     return this.familyService.getAnalytics(id, user.id);
   }
 
@@ -87,7 +93,7 @@ export class FamilyController {
   removeMember(
     @Param("id") id: string,
     @Param("memberUserId") memberUserId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: users,
   ) {
     return this.familyService.removeMember(id, user.id, memberUserId);
   }
@@ -96,7 +102,7 @@ export class FamilyController {
   @ApiOperation({ summary: "Transfer family ownership" })
   transferOwnership(
     @Param("id") id: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: users,
     @Body("newOwnerId") newOwnerId: string,
   ) {
     return this.familyService.transferOwnership(id, user.id, newOwnerId);
@@ -104,13 +110,13 @@ export class FamilyController {
 
   @Post(":id/primary")
   @ApiOperation({ summary: "Set family as primary context" })
-  setPrimary(@Param("id") id: string, @CurrentUser() user: User) {
+  setPrimary(@Param("id") id: string, @CurrentUser() user: users) {
     return this.familyService.setPrimaryFamily(user.id, id);
   }
 
   @Delete(":id")
   @ApiOperation({ summary: "Delete a family" })
-  deleteFamily(@Param("id") id: string, @CurrentUser() user: User) {
+  deleteFamily(@Param("id") id: string, @CurrentUser() user: users) {
     return this.familyService.deleteFamily(id, user.id);
   }
 
@@ -120,7 +126,7 @@ export class FamilyController {
 
   @Post("policy")
   @ApiOperation({ summary: "Create family policy" })
-  createPolicy(@Body() dto: CreateFamilyPolicyDto) {
+  async createPolicy(@Body() dto: CreateFamilyPolicyDto) {
     return this.policyService.create(dto);
   }
 

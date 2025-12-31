@@ -22,20 +22,23 @@ export class UsageTrackingService {
     userId?: string;
     metadata?: any;
   }) {
-    return this.prisma.usageEvent.create({
+    // Import uuid
+    const { v4: uuidv4 } = require("uuid");
+    return this.prisma.usage_events.create({
       data: {
-        scopeType: data.scopeType,
-        scopeId: data.scopeId,
+        id: uuidv4(),
+        scope_type: data.scopeType,
+        scope_id: data.scopeId,
         metric: data.metric,
         quantity: data.quantity,
         environment: data.environment,
-        providerCode: data.providerCode,
+        provider_code: data.providerCode,
         endpoint: data.endpoint,
-        approxCostUsd: data.approxCostUsd,
-        requestId: data.requestId,
-        userId: data.userId,
+        approx_cost_usd: data.approxCostUsd,
+        request_id: data.requestId,
+        user_id: data.userId,
         metadata: data.metadata,
-        occurredAt: new Date(),
+        occurred_at: new Date(),
       },
     });
   }
@@ -67,18 +70,18 @@ export class UsageTrackingService {
         break;
     }
 
-    const result = await this.prisma.usageEvent.aggregate({
+    const result = await this.prisma.usage_events.aggregate({
       where: {
-        scopeType,
-        scopeId,
+        scope_type: scopeType,
+        scope_id: scopeId,
         metric,
-        occurredAt: {
+        occurred_at: {
           gte: startDate,
         },
       },
       _sum: {
         quantity: true,
-        approxCostUsd: true,
+        approx_cost_usd: true,
       },
       _count: true,
     });
@@ -87,7 +90,7 @@ export class UsageTrackingService {
       metric,
       range,
       totalQuantity: result._sum.quantity || 0,
-      totalCost: result._sum.approxCostUsd || 0,
+      totalCost: result._sum.approx_cost_usd || 0,
       eventCount: result._count,
     };
   }
@@ -118,16 +121,16 @@ export class UsageTrackingService {
         break;
     }
 
-    const events = await this.prisma.usageEvent.findMany({
+    const events = await this.prisma.usage_events.findMany({
       where: {
-        scopeType,
-        scopeId,
-        occurredAt: {
+        scope_type: scopeType,
+        scope_id: scopeId,
+        occurred_at: {
           gte: startDate,
         },
       },
       orderBy: {
-        occurredAt: "desc",
+        occurred_at: "desc",
       },
       take: 100, // Latest 100 events
     });
@@ -147,7 +150,7 @@ export class UsageTrackingService {
         byMetric[event.metric] = { quantity: 0, cost: 0, count: 0 };
       }
       byMetric[event.metric].quantity += event.quantity;
-      byMetric[event.metric].cost += event.approxCostUsd || 0;
+      byMetric[event.metric].cost += event.approx_cost_usd || 0;
       byMetric[event.metric].count++;
     });
 
@@ -155,7 +158,7 @@ export class UsageTrackingService {
       range,
       metrics: byMetric,
       recentEvents: events.slice(0, 10), // Latest 10
-      totalCost: events.reduce((sum, e) => sum + (e.approxCostUsd || 0), 0),
+      totalCost: events.reduce((sum, e) => sum + (e.approx_cost_usd || 0), 0),
     };
   }
 
@@ -185,29 +188,29 @@ export class UsageTrackingService {
         break;
     }
 
-    const events = await this.prisma.usageEvent.groupBy({
-      by: ["providerCode"],
+    const events = await this.prisma.usage_events.groupBy({
+      by: ["provider_code"],
       where: {
-        scopeType,
-        scopeId,
-        occurredAt: {
+        scope_type: scopeType,
+        scope_id: scopeId,
+        occurred_at: {
           gte: startDate,
         },
-        providerCode: {
+        provider_code: {
           not: null,
         },
       },
       _sum: {
         quantity: true,
-        approxCostUsd: true,
+        approx_cost_usd: true,
       },
       _count: true,
     });
 
     return events.map((e) => ({
-      provider: e.providerCode,
+      provider: e.provider_code,
       totalQuantity: e._sum.quantity || 0,
-      totalCost: e._sum.approxCostUsd || 0,
+      totalCost: e._sum.approx_cost_usd || 0,
       callCount: e._count,
     }));
   }

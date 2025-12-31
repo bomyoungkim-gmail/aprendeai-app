@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { ClassroomEventService } from "../../events/classroom-event.service";
 import { PromptLibraryService } from "../../prompts/prompt-library.service";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class ClassPlanService {
@@ -28,13 +29,15 @@ export class ClassPlanService {
     );
     normalizedWeekStart.setHours(0, 0, 0, 0);
 
-    const plan = await this.prisma.classPlanWeek.create({
+    const plan = await this.prisma.class_plan_weeks.create({
       data: {
-        classroom: { connect: { id: classroomId } },
-        creator: { connect: { id: educatorUserId } },
-        weekStart: normalizedWeekStart,
-        itemsJson: items, // Required Json field
-        toolWordsJson: toolWords || null, // Optional Json field
+        classrooms: { connect: { id: classroomId } },
+        users: { connect: { id: educatorUserId } },
+        week_start: normalizedWeekStart,
+        items_json: items,
+        tool_words_json: toolWords || null,
+        id: uuidv4(),
+        updated_at: new Date(),
       },
     });
 
@@ -66,11 +69,11 @@ export class ClassPlanService {
     weekStart.setDate(now.getDate() - now.getDay()); // Sunday
     weekStart.setHours(0, 0, 0, 0);
 
-    return this.prisma.classPlanWeek.findUnique({
+    return this.prisma.class_plan_weeks.findUnique({
       where: {
-        classroomId_weekStart: {
-          classroomId,
-          weekStart,
+        classroom_id_week_start: {
+          classroom_id: classroomId,
+          week_start: weekStart,
         },
       },
     });
@@ -82,6 +85,15 @@ export class ClassPlanService {
   getWeeklyPlanPrompt(unitsTarget: number) {
     return this.promptLibrary.getPrompt("CLASS_WEEKLY_PLAN", {
       UNITS: unitsTarget,
+    });
+  }
+  /**
+   * Get all plans for classroom
+   */
+  async getPlans(classroomId: string) {
+    return this.prisma.class_plan_weeks.findMany({
+      where: { classroom_id: classroomId },
+      orderBy: { week_start: "desc" },
     });
   }
 }

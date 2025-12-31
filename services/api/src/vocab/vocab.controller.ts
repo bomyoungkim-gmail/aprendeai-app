@@ -22,13 +22,13 @@ export class VocabController {
     const userId = req.user?.id || "test-user-id";
 
     // Verify session ownership
-    const session = await this.vocabService["prisma"].readingSession.findUnique(
-      {
-        where: { id: sessionId },
-      },
-    );
+    const session = await this.vocabService[
+      "prisma"
+    ].reading_sessions.findUnique({
+      where: { id: sessionId },
+    });
 
-    if (!session || session.userId !== userId) {
+    if (!session || session.user_id !== userId) {
       throw new Error("Forbidden");
     }
 

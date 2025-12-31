@@ -70,6 +70,7 @@ export const API_ENDPOINTS = {
     CREATE_MANUAL: '/contents/create_manual',
     UPLOAD: '/contents/upload',
     FILE_VIEW_URL: (fileId: string) => `/files/${fileId}/view-url`,
+    SHARES: (contentId: string) => `/contents/${contentId}/shares`,
   },
   
   // Cornell Notes

@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { Menu, X, ChevronRight, Plus } from 'lucide-react';
+import { Menu, X, ChevronRight, Plus, Share2, Check as CheckIcon } from 'lucide-react';
 import type { ViewMode, SaveStatus, CueItem } from '@/lib/types/cornell';
 import type { UnifiedStreamItem } from '@/lib/types/unified-stream';
 import { SaveStatusIndicator } from './SaveStatusIndicator';
@@ -12,11 +12,19 @@ import { useStreamFilter } from '@/hooks/cornell/use-stream-filter';
 import { CORNELL_LABELS } from '@/lib/cornell/labels';
 import { ActionToolbar } from './ActionToolbar';
 import { SuggestionsPanel } from './SuggestionsPanel';
+import { ThreadPanel } from '../sharing/ThreadPanel';
+import { ShareModal } from '../sharing/ShareModal';
+import { PremiumFeatureBlock } from '../billing/PremiumFeatureBlock';
+import { useAuthStore } from '@/stores/auth-store';
+import { ShareContextType, CommentTargetType } from '@/lib/types/sharing';
+import { useFinishSession } from '@/hooks/sessions/reading/use-reading-session';
+import { useSuggestions } from '@/hooks/cornell/use-suggestions';
+import { useEntitlements } from '@/hooks/billing/use-entitlements';
+import { toast } from 'sonner';
 
 import { CreateHighlightModal } from './CreateHighlightModal';
 import { TextSelectionMenu, type SelectionAction } from './TextSelectionMenu'; 
 import { useContentContext } from '@/hooks/cornell/use-content-context';
-import { useSuggestions } from '@/hooks/cornell/use-suggestions';
 import { useTextSelection } from '@/hooks/ui/use-text-selection';
 import { getColorForKey, getDefaultPalette, DEFAULT_COLOR } from '@/lib/constants/colors';
 import { inferCornellType } from '@/lib/cornell/type-color-map';
@@ -63,9 +71,13 @@ interface ModernCornellLayoutProps {
   selectedColor?: string;
   onColorChange?: (color: string) => void;
   disableSelectionMenu?: boolean;
+  
+  // Session / Phase 5
+  sessionId?: string;
+  onFinishSession?: () => void;
 }
 
-type SidebarTab = 'stream' | 'cues' | 'synthesis';
+type SidebarTab = 'stream' | 'cues' | 'synthesis' | 'conversations';
 
 export function ModernCornellLayout({
   title,
@@ -92,10 +104,40 @@ export function ModernCornellLayout({
   selectedColor = DEFAULT_COLOR,
   onColorChange,
   disableSelectionMenu = false,
+  sessionId,
+  onFinishSession,
 }: ModernCornellLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<SidebarTab>('stream');
   const [activeAction, setActiveAction] = useState<'highlight' | 'note' | 'question' | 'ai' | null>(null);
+  const user = useAuthStore((state) => state.user);
+
+  // Phase 5 State
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const finishSession = useFinishSession(sessionId || '');
+
+  const handleFinish = async () => {
+    if (!sessionId) return;
+    try {
+      await finishSession.mutateAsync(undefined);
+      toast.success('Tarefa finalizada com sucesso!');
+      onFinishSession?.();
+    } catch (error) {
+      toast.error('Erro ao finalizar tarefa.');
+    }
+  };
+
+  // Determine context for threads
+  const threadContext = useMemo(() => {
+    if (user?.activeInstitutionId) {
+      return { type: ShareContextType.CLASSROOM, id: user.activeInstitutionId };
+    }
+    if (user?.settings?.primaryFamilyId) {
+      return { type: ShareContextType.FAMILY, id: user.settings.primaryFamilyId };
+    }
+    // Fallback or Individual - UI should really provide this if in a Study Group
+    return { type: ShareContextType.STUDY_GROUP, id: contentId }; 
+  }, [user, contentId]);
   
   // Selection State
   const [contentElement, setContentElement] = useState<HTMLDivElement | null>(null);
@@ -103,6 +145,11 @@ export function ModernCornellLayout({
   const [chatInitialInput, setChatInitialInput] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createModalType, setCreateModalType] = useState<'NOTE' | 'QUESTION' | 'STAR' | 'HIGHLIGHT' | 'SUMMARY'>('NOTE');
+
+  // AI Suggestions & Entitlements
+  const { suggestions, acceptSuggestion, dismissSuggestion } = useSuggestions(contentId);
+  const { hasFeature } = useEntitlements();
+  const hasAIAssistant = hasFeature('aiAssistant');
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -183,6 +230,26 @@ export function ModernCornellLayout({
 
            {/* Action Buttons */}
            <div className="flex items-center gap-2 shrink-0">
+              <button 
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                onClick={() => setIsShareModalOpen(true)}
+                title="Compartilhar"
+              >
+                <Share2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Compartilhar</span>
+              </button>
+
+              {sessionId && (
+                <button 
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg transition-colors shadow-sm"
+                  onClick={handleFinish}
+                  disabled={finishSession.isPending}
+                >
+                  <CheckIcon className="w-4 h-4" />
+                  <span>{finishSession.isPending ? 'Finalizando...' : 'Entregar'}</span>
+                </button>
+              )}
+
               <button 
                 className={`flex items-center gap-1.5 px-2 md:px-3 py-1.5 text-sm font-medium rounded-lg transition-colors
                   ${activeAction === 'ai'
@@ -288,6 +355,18 @@ export function ModernCornellLayout({
               `}
             >
               {CORNELL_LABELS.SYNTHESIS}
+            </button>
+            <button
+              onClick={() => setActiveTab('conversations')}
+              className={`
+                flex-1 px-4 py-3 text-sm font-medium transition-colors
+                ${activeTab === 'conversations' 
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' 
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }
+              `}
+            >
+              Conversas
             </button>
           </div>
 
@@ -433,6 +512,17 @@ export function ModernCornellLayout({
                 </div>
               </div>
             )}
+
+            {activeTab === 'conversations' && (
+              <ThreadPanel 
+                query={{
+                  contextType: threadContext.type,
+                  contextId: threadContext.id,
+                  targetType: CommentTargetType.CONTENT,
+                  targetId: contentId
+                }}
+              />
+            )}
           </div>
         </aside>
 
@@ -476,6 +566,38 @@ export function ModernCornellLayout({
           )}
         </div>
       </footer>
+      <ShareModal 
+        isOpen={isShareModalOpen} 
+        onClose={() => setIsShareModalOpen(false)} 
+        contentId={contentId} 
+        title={title} 
+      />
+
+      {activeAction === 'ai' && (
+        hasAIAssistant ? (
+          <SuggestionsPanel 
+            suggestions={suggestions} 
+            onAccept={acceptSuggestion} 
+            onDismiss={dismissSuggestion} 
+          />
+        ) : (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-all animate-in fade-in duration-300">
+            <div className="relative w-full max-w-md">
+              <button 
+                onClick={() => setActiveAction(null)} 
+                className="absolute -top-12 right-0 p-2 bg-white/20 hover:bg-white/40 rounded-full text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <PremiumFeatureBlock 
+                featureName="IA Assistente Educator" 
+                description="Receba sugestões inteligentes, resumos automáticos e tire dúvidas sobre o conteúdo em tempo real com nossa IA avançada."
+                className="shadow-2xl"
+              />
+            </div>
+          </div>
+        )
+      )}
     </div>
   );
 }

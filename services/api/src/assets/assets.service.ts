@@ -38,8 +38,8 @@ export class AssetsService {
     // await this.checkUsageLimits(userId, ent.limits);
 
     // 3. Verify chunks exist
-    const chunksCount = await this.prisma.contentChunk.count({
-      where: { contentId },
+    const chunksCount = await this.prisma.content_chunks.count({
+      where: { content_id: contentId },
     });
 
     if (chunksCount === 0) {
@@ -52,14 +52,14 @@ export class AssetsService {
     const cacheHash = this.calculateCacheHash(contentId, dto);
 
     // 5. Check cache - return existing asset if available
-    const cached = await this.prisma.learningAsset.findFirst({
+    const cached = await this.prisma.learning_assets.findFirst({
       where: {
-        contentId,
+        content_id: contentId,
         layer: dto.layer,
         modality: dto.modality,
-        promptVersion: dto.promptVersion || "v1.0",
+        prompt_version: dto.promptVersion || "v1.0",
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
     });
 
     if (cached) {
@@ -92,13 +92,13 @@ export class AssetsService {
   }
 
   async getAssets(contentId: string, filters: any) {
-    return this.prisma.learningAsset.findMany({
+    return this.prisma.learning_assets.findMany({
       where: {
-        contentId,
+        content_id: contentId,
         ...(filters.layer && { layer: filters.layer }),
-        ...(filters.promptVersion && { promptVersion: filters.promptVersion }),
+        ...(filters.promptVersion && { prompt_version: filters.promptVersion }),
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
     });
   }
 

@@ -14,7 +14,7 @@ import { AuthGuard } from "@nestjs/passport";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { RolesGuard } from "./guards/roles.guard";
 import { Roles } from "./decorators/roles.decorator";
-import { UserRole } from "@prisma/client";
+import { SystemRole } from "@prisma/client";
 import { ConfigService } from "./services/config.service";
 import { AdminService } from "./admin.service";
 import {
@@ -38,7 +38,7 @@ export class ConfigController {
   // ========================================
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.OPS)
+  @Roles(SystemRole.ADMIN, SystemRole.OPS)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get all configs (SECRET_REF values masked)" })
   async getConfigs(@Query() filters: ConfigFilterDto) {
@@ -46,7 +46,7 @@ export class ConfigController {
   }
 
   @Get(":id")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get config by ID (optionally resolve secrets)" })
   async getConfig(
@@ -58,7 +58,7 @@ export class ConfigController {
   }
 
   @Post()
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create new config" })
   async createConfig(@Body() dto: CreateConfigDto, @Request() req) {
@@ -67,7 +67,7 @@ export class ConfigController {
     // Audit log
     await this.adminService.createAuditLog({
       actorUserId: req.user.userId,
-      actorRole: req.user.role,
+      actorRole: req.user.systemRole,
       action: "CONFIG_CREATED",
       resourceType: "CONFIG",
       resourceId: config.id,
@@ -82,7 +82,7 @@ export class ConfigController {
   }
 
   @Put(":id")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update config" })
   async updateConfig(
@@ -100,7 +100,7 @@ export class ConfigController {
     // Audit log
     await this.adminService.createAuditLog({
       actorUserId: req.user.userId,
-      actorRole: req.user.role,
+      actorRole: req.user.systemRole,
       action: "CONFIG_UPDATED",
       resourceType: "CONFIG",
       resourceId: config.id,
@@ -112,7 +112,7 @@ export class ConfigController {
   }
 
   @Delete(":id")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete config" })
   async deleteConfig(@Param("id") id: string, @Request() req) {
@@ -122,7 +122,7 @@ export class ConfigController {
     // Audit log
     await this.adminService.createAuditLog({
       actorUserId: req.user.userId,
-      actorRole: req.user.role,
+      actorRole: req.user.systemRole,
       action: "CONFIG_DELETED",
       resourceType: "CONFIG",
       resourceId: id,
@@ -140,7 +140,7 @@ export class ConfigController {
   // ========================================
 
   @Post("validate/:provider")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Validate provider configuration" })
   async validateProvider(
@@ -155,7 +155,7 @@ export class ConfigController {
   // ========================================
 
   @Get("category/:category")
-  @Roles(UserRole.ADMIN, UserRole.OPS)
+  @Roles(SystemRole.ADMIN, SystemRole.OPS)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get configs by category" })
   async getConfigsByCategory(
@@ -173,19 +173,21 @@ export class ConfigController {
   // ========================================
 
   @Post("llm/cache/clear")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Clear LLM config cache for immediate config refresh" })
+  @ApiOperation({
+    summary: "Clear LLM config cache for immediate config refresh",
+  })
   async clearLLMCache(@Query("provider") provider?: string) {
     // Access LLMConfigService through ConfigService
     const cleared = await this.configService.clearLLMCache(provider);
-    
+
     return {
       success: true,
-      message: provider 
-        ? `Cache cleared for ${provider}` 
-        : 'All LLM cache cleared',
-      provider: provider || 'all',
+      message: provider
+        ? `Cache cleared for ${provider}`
+        : "All LLM cache cleared",
+      provider: provider || "all",
     };
   }
 }

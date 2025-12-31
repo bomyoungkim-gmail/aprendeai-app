@@ -1,5 +1,8 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { EntitlementsService, FREE_LIMITS } from "../../../src/billing/entitlements.service";
+import {
+  EntitlementsService,
+  FREE_LIMITS,
+} from "../../../src/billing/entitlements.service";
 import { SubscriptionService } from "../../../src/billing/subscription.service";
 import { PrismaService } from "../../../src/prisma/prisma.service";
 
@@ -8,16 +11,17 @@ describe("EntitlementsService (Unit)", () => {
   let prisma: PrismaService;
 
   const mockPrisma = {
-    user: {
+    users: {
       findUnique: jest.fn(),
     },
-    entitlementSnapshot: {
+    entitlement_snapshots: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       upsert: jest.fn(),
     },
-    plan: {
+    plans: {
       findUnique: jest.fn(),
-    }
+    },
   };
 
   const mockSubscriptionService = {
@@ -43,16 +47,16 @@ describe("EntitlementsService (Unit)", () => {
 
   describe("computeEntitlements", () => {
     it("should return FREE limits if no subscriptions found", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockPrisma.users.findUnique.mockResolvedValue({
         id: "user-free",
-        institutionMemberships: [],
-        memberships: [], // Family
-        subscriptions: [], // Individual
+        institution_members: null,
+        family_members: [],
+        subscriptions: [],
       });
       // Mock Plan lookup for fallback
-      mockPrisma.plan.findUnique.mockResolvedValue({
+      mockPrisma.plans.findUnique.mockResolvedValue({
         code: "FREE",
-        entitlements: { limits: FREE_LIMITS }
+        entitlements: { limits: FREE_LIMITS },
       });
 
       const result = await service.computeEntitlements("user-free");
@@ -62,25 +66,26 @@ describe("EntitlementsService (Unit)", () => {
     });
 
     it("should return ORG limits if user has active institution subscription", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockPrisma.users.findUnique.mockResolvedValue({
         id: "user-org",
-        institutionMemberships: [
-          {
-            status: "ACTIVE",
-            institution: {
-              subscriptions: [
-                {
-                  status: "ACTIVE",
-                  plan: {
-                    type: "INSTITUTION",
-                    entitlements: { limits: { seats: 100 }, features: { sso: true } },
+        institution_members: {
+          status: "ACTIVE",
+          institutions: {
+            subscriptions: [
+              {
+                status: "ACTIVE",
+                plans: {
+                  type: "INSTITUTION",
+                  entitlements: {
+                    limits: { seats: 100 },
+                    features: { sso: true },
                   },
                 },
-              ],
-            },
+              },
+            ],
           },
-        ],
-        memberships: [],
+        },
+        family_members: [],
         subscriptions: [],
       });
 
@@ -92,19 +97,22 @@ describe("EntitlementsService (Unit)", () => {
     });
 
     it("should return FAMILY limits if no Org but active Family subscription", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockPrisma.users.findUnique.mockResolvedValue({
         id: "user-family",
-        institutionMemberships: [],
-        memberships: [
+        institution_members: null,
+        family_members: [
           {
             status: "ACTIVE",
-            family: {
+            families: {
               subscriptions: [
                 {
                   status: "ACTIVE",
-                  plan: {
+                  plans: {
                     type: "FAMILY",
-                    entitlements: { limits: { members: 5 }, features: { kidsFields: true } },
+                    entitlements: {
+                      limits: { members: 5 },
+                      features: { kidsFields: true },
+                    },
                   },
                 },
               ],

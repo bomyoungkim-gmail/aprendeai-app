@@ -1,4 +1,4 @@
-import type { CacheModuleOptions } from '@nestjs/cache-manager';
+import type { CacheModuleOptions } from "@nestjs/cache-manager";
 
 export const cacheConfig: CacheModuleOptions = {
   ttl: 5 * 60 * 1000, // 5 minutes default

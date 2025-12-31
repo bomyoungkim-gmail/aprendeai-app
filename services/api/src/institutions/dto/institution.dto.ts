@@ -8,7 +8,7 @@ import {
   Min,
   IsBoolean,
 } from "class-validator";
-import { InstitutionType, UserRole } from "@prisma/client";
+import { InstitutionType, ContextRole } from "@prisma/client";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class CreateInstitutionDto {
@@ -108,9 +108,9 @@ export class CreateInviteDto {
   @IsEmail()
   email!: string;
 
-  @ApiProperty({ enum: UserRole })
-  @IsEnum(UserRole)
-  role!: UserRole;
+  @ApiProperty({ enum: ContextRole })
+  @IsEnum(ContextRole)
+  role!: ContextRole;
 
   @ApiPropertyOptional({ default: 7 })
   @IsOptional()
@@ -143,9 +143,9 @@ export class AddDomainDto {
   @IsBoolean()
   autoApprove!: boolean;
 
-  @ApiProperty({ enum: UserRole })
-  @IsEnum(UserRole)
-  defaultRole!: UserRole;
+  @ApiProperty({ enum: ContextRole })
+  @IsEnum(ContextRole)
+  defaultRole!: ContextRole;
 }
 
 // Approval DTOs

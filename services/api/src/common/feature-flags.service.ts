@@ -1,10 +1,10 @@
 // @ts-nocheck
 // Note: ts-nocheck required due to Prisma Client type mismatches after db pull
 
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 
-export type ScopeType = 'GLOBAL' | 'USER' | 'INSTITUTION' | 'DEV' | 'STAGING';
+export type ScopeType = "GLOBAL" | "USER" | "INSTITUTION" | "FAMILY";
 
 @Injectable()
 export class FeatureFlagsService {
@@ -24,7 +24,7 @@ export class FeatureFlagsService {
       const userFlag = await this.prisma.feature_flags.findFirst({
         where: {
           key: flagKey,
-          scope_type: 'USER',
+          scope_type: "USER",
           scope_id: userId,
           enabled: true,
         },
@@ -37,7 +37,7 @@ export class FeatureFlagsService {
       const institutionFlag = await this.prisma.feature_flags.findFirst({
         where: {
           key: flagKey,
-          scope_type: 'INSTITUTION',
+          scope_type: "INSTITUTION",
           scope_id: institutionId,
           enabled: true,
         },
@@ -45,35 +45,11 @@ export class FeatureFlagsService {
       if (institutionFlag) return true;
     }
 
-    // 3. Check DEV/STAGING environment flags
-    const env = process.env.NODE_ENV || 'development';
-    if (env === 'development') {
-      const devFlag = await this.prisma.feature_flags.findFirst({
-        where: {
-          key: flagKey,
-          scope_type: 'DEV',
-          enabled: true,
-        },
-      });
-      if (devFlag) return true;
-    }
-
-    if (env === 'staging') {
-      const stagingFlag = await this.prisma.feature_flags.findFirst({
-        where: {
-          key: flagKey,
-          scope_type: 'STAGING',
-          enabled: true,
-        },
-      });
-      if (stagingFlag) return true;
-    }
-
-    // 4. Check global flag (default)
+    // 3. Check global flag (default)
     const globalFlag = await this.prisma.feature_flags.findFirst({
       where: {
         key: flagKey,
-        scope_type: 'GLOBAL',
+        scope_type: "GLOBAL",
         enabled: true,
       },
     });
@@ -102,12 +78,12 @@ export class FeatureFlagsService {
       where: {
         enabled: true,
         OR: [
-          { scope_type: 'GLOBAL' },
-          { scope_type: 'DEV' },
-          { scope_type: 'STAGING' },
-          ...(userId ? [{ scope_type: 'USER' as const, scope_id: userId }] : []),
+          { scope_type: "GLOBAL" },
+          ...(userId
+            ? [{ scope_type: "USER" as const, scope_id: userId }]
+            : []),
           ...(institutionId
-            ? [{ scope_type: 'INSTITUTION' as const, scope_id: institutionId }]
+            ? [{ scope_type: "INSTITUTION" as const, scope_id: institutionId }]
             : []),
         ],
       },
@@ -122,7 +98,7 @@ export class FeatureFlagsService {
    */
   async enableFlag(
     flagKey: string,
-    scopeType: ScopeType = 'GLOBAL',
+    scopeType: ScopeType = "GLOBAL",
     scopeId?: string,
   ): Promise<void> {
     await this.prisma.feature_flags.upsert({
@@ -130,7 +106,7 @@ export class FeatureFlagsService {
         key_scope_type_scope_id: {
           key: flagKey,
           scope_type: scopeType,
-          scope_id: scopeId || '',
+          scope_id: scopeId || "",
         },
       },
       update: {
@@ -142,7 +118,7 @@ export class FeatureFlagsService {
         key: flagKey,
         enabled: true,
         scope_type: scopeType,
-        scope_id: scopeId || '',
+        scope_id: scopeId || "",
         created_at: new Date(),
         updated_at: new Date(),
       },
@@ -154,14 +130,14 @@ export class FeatureFlagsService {
    */
   async disableFlag(
     flagKey: string,
-    scopeType: ScopeType = 'GLOBAL',
+    scopeType: ScopeType = "GLOBAL",
     scopeId?: string,
   ): Promise<void> {
     await this.prisma.feature_flags.updateMany({
       where: {
         key: flagKey,
         scope_type: scopeType,
-        scope_id: scopeId || '',
+        scope_id: scopeId || "",
       },
       data: {
         enabled: false,

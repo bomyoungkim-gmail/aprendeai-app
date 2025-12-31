@@ -1,11 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import Anthropic from "@anthropic-ai/sdk";
-import {
-  LLMProvider,
-  LLMOptions,
-  LLMResponse,
-} from "./llm-provider.interface";
+import { LLMProvider, LLMOptions, LLMResponse } from "./llm-provider.interface";
 import { LLMConfigService } from "../llm-config.service";
 
 /**
@@ -49,8 +45,8 @@ export class AnthropicProvider implements LLMProvider {
 
     // Get model from DB config, fallback to options, then default
     const modelConfig = await this.llmConfig.getModelConfig(
-      'anthropic',
-      'claude-3-sonnet-20240229'
+      "anthropic",
+      "claude-3-sonnet-20240229",
     );
     const model = options?.model || modelConfig.model;
     const temperature = options?.temperature ?? 0.7;
@@ -79,7 +75,8 @@ export class AnthropicProvider implements LLMProvider {
         usage: {
           promptTokens: response.usage.input_tokens,
           completionTokens: response.usage.output_tokens,
-          totalTokens: response.usage.input_tokens + response.usage.output_tokens,
+          totalTokens:
+            response.usage.input_tokens + response.usage.output_tokens,
         },
         provider: this.name,
         model: response.model,

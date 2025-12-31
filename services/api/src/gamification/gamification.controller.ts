@@ -20,7 +20,7 @@ export class GamificationController {
     return this.gamificationService.getDashboard(req.user.id);
   }
 
-  @Get('goal-achievements')
+  @Get("goal-achievements")
   getGoalAchievements(@Request() req: any) {
     return this.gamificationService.getGoalAchievements(req.user.id);
   }

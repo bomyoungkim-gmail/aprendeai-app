@@ -1,22 +1,27 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { addDays } from "date-fns";
+import * as crypto from "crypto";
+import { GetVocabListUseCase } from "./application/use-cases/get-vocab-list.use-case";
+import { AddVocabListUseCase } from "./application/use-cases/add-vocab-list.use-case";
 
 @Injectable()
 export class VocabService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly getVocabListUseCase: GetVocabListUseCase,
+    private readonly addVocabListUseCase: AddVocabListUseCase
+  ) {}
 
   /**
    * Normalize word for consistent storage
-   * DECISION 5: Lowercase + NFD normalization
+   * @deprecated logic moved to AddVocabListUseCase, kept for reference or legacy direct formatting
    */
   normalizeWord(word: string): string {
     return word
       .toLowerCase()
       .normalize("NFD") // Decompose accents
       .replace(/[\u0300-\u036f]/g, ""); // Remove diacritics
-    // "Café" → "cafe"
-    // "naïve" → "naive"
   }
 
   /**
@@ -24,70 +29,41 @@ export class VocabService {
    * DECISION 6: Detect language from content
    */
   async createFromTargetWords(sessionId: string) {
-    const session = await this.prisma.readingSession.findUnique({
+    const session = await this.prisma.reading_sessions.findUnique({
       where: { id: sessionId },
       select: {
-        userId: true,
-        contentId: true,
-        targetWordsJson: true,
-        content: {
-          select: { originalLanguage: true },
+        user_id: true,
+        content_id: true,
+        target_words_json: true,
+        contents: {
+          select: { original_language: true },
         },
       },
     });
 
-    if (!session || !session.targetWordsJson) {
+    if (!session || !session.target_words_json) {
       return { created: 0, updated: 0, vocabItems: [] };
     }
 
-    const words = session.targetWordsJson as string[];
-    const language = session.content.originalLanguage;
-    const created: string[] = [];
-    const updated: string[] = [];
+    const words = session.target_words_json as string[];
+    const language = session.contents.original_language;
 
-    for (const word of words) {
-      const normalized = this.normalizeWord(word);
+    const items = words.map((word) => ({
+      word,
+      language: language,
+      contentId: session.content_id,
+      exampleNote: word, // Original word as example
+    }));
 
-      const result = await this.prisma.userVocabulary.upsert({
-        where: {
-          userId_word_language: {
-            userId: session.userId,
-            word: normalized,
-            language: language,
-          },
-        },
-        create: {
-          userId: session.userId,
-          word: normalized,
-          language: language,
-          contentId: session.contentId,
-          srsStage: "NEW",
-          dueAt: addDays(new Date(), 1), // Due tomorrow
-          exampleNote: word, // Store original with accents
-        },
-        update: {
-          lastSeenAt: new Date(),
-          // If already exists, just update lastSeenAt
-        },
-      });
-
-      if (result.createdAt.getTime() === new Date().getTime()) {
-        created.push(result.id);
-      } else {
-        updated.push(result.id);
-      }
-    }
-
-    const vocabItems = await this.prisma.userVocabulary.findMany({
-      where: {
-        id: { in: [...created, ...updated] },
-      },
-    });
+    const result = await this.addVocabListUseCase.execute(
+      session.user_id,
+      items
+    );
 
     return {
-      created: created.length,
-      updated: updated.length,
-      vocabItems,
+      created: result.createdCount,
+      updated: result.updatedCount,
+      vocabItems: result.items,
     };
   }
 
@@ -95,67 +71,51 @@ export class VocabService {
    * Create vocabulary from unknown words marked during session
    */
   async createFromUnknownWords(sessionId: string) {
-    const events = await this.prisma.sessionEvent.findMany({
+    const events = await this.prisma.session_events.findMany({
       where: {
-        readingSessionId: sessionId,
-        eventType: "MARK_UNKNOWN_WORD",
+        reading_session_id: sessionId,
+        event_type: "MARK_UNKNOWN_WORD",
       },
       select: {
-        payloadJson: true,
+        payload_json: true,
       },
     });
 
-    const session = await this.prisma.readingSession.findUnique({
+    const session = await this.prisma.reading_sessions.findUnique({
       where: { id: sessionId },
       select: {
-        userId: true,
-        contentId: true,
-        content: { select: { originalLanguage: true } },
+        user_id: true,
+        content_id: true,
+        contents: { select: { original_language: true } },
       },
     });
 
     if (!session) return { created: 0, vocabItems: [] };
 
-    const created: string[] = [];
+    const items = events
+      .map((event) => {
+        const payload = event.payload_json as any;
+        const term = payload.term;
+        if (!term) return null;
 
-    for (const event of events) {
-      const payload = event.payloadJson as any;
-      const term = payload.term;
+        return {
+          word: term,
+          language: session.contents.original_language,
+          contentId: session.content_id,
+          exampleNote: payload.context || term, // Use context if available
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
 
-      if (!term) continue;
+    const result = await this.addVocabListUseCase.execute(
+      session.user_id,
+      items
+    );
 
-      const normalized = this.normalizeWord(term);
-
-      const vocab = await this.prisma.userVocabulary.upsert({
-        where: {
-          userId_word_language: {
-            userId: session.userId,
-            word: normalized,
-            language: session.content.originalLanguage,
-          },
-        },
-        create: {
-          userId: session.userId,
-          word: normalized,
-          language: session.content.originalLanguage,
-          contentId: session.contentId,
-          srsStage: "NEW",
-          dueAt: addDays(new Date(), 1),
-          exampleNote: payload.context || term,
-        },
-        update: {
-          lastSeenAt: new Date(),
-        },
-      });
-
-      created.push(vocab.id);
-    }
-
-    const vocabItems = await this.prisma.userVocabulary.findMany({
-      where: { id: { in: created } },
-    });
-
-    return { created: created.length, vocabItems };
+    return {
+      created: result.createdCount,
+      vocabItems: result.items,
+    };
   }
 
   /**
@@ -167,21 +127,13 @@ export class VocabService {
       language?: string;
       srsStage?: string;
       dueOnly?: boolean;
-    },
+    }
   ) {
-    return this.prisma.userVocabulary.findMany({
-      where: {
-        userId,
-        ...(filters?.language && { language: filters.language as any }),
-        ...(filters?.srsStage && { srsStage: filters.srsStage as any }),
-        ...(filters?.dueOnly && { dueAt: { lte: new Date() } }),
-      },
-      include: {
-        content: {
-          select: { id: true, title: true },
-        },
-      },
-      orderBy: [{ dueAt: "asc" }, { lapsesCount: "desc" }],
+    return this.getVocabListUseCase.execute({
+      userId,
+      language: filters?.language,
+      srsStage: filters?.srsStage,
+      dueOnly: filters?.dueOnly,
     });
   }
 }

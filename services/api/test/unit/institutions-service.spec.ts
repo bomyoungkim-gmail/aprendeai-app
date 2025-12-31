@@ -7,17 +7,17 @@ describe("InstitutionsService - getInstitutionForAdmin", () => {
   let prisma: PrismaService;
 
   const mockPrisma = {
-    institutionMember: {
+    institution_members: {
       findFirst: jest.fn(),
       count: jest.fn(),
     },
-    institutionInvite: {
+    institution_invites: {
       count: jest.fn(),
     },
-    pendingUserApproval: {
+    pending_user_approvals: {
       count: jest.fn(),
     },
-    institutionDomain: {
+    institution_domains: {
       findMany: jest.fn(),
     },
   };
@@ -51,11 +51,11 @@ describe("InstitutionsService - getInstitutionForAdmin", () => {
       const institutionId = "inst-456";
 
       const mockInstitutionMember = {
-        userId,
-        institutionId,
-        role: "INSTITUTION_ADMIN",
+        user_id: userId,
+        institution_id: institutionId,
+        role: "INSTITUTION_EDUCATION_ADMIN",
         status: "ACTIVE",
-        institution: {
+        institutions: {
           id: institutionId,
           name: "Test School",
           type: "SCHOOL",
@@ -64,13 +64,13 @@ describe("InstitutionsService - getInstitutionForAdmin", () => {
         },
       };
 
-      mockPrisma.institutionMember.findFirst.mockResolvedValue(
+      mockPrisma.institution_members.findFirst.mockResolvedValue(
         mockInstitutionMember,
       );
-      mockPrisma.institutionMember.count.mockResolvedValue(45);
-      mockPrisma.institutionInvite.count.mockResolvedValue(3);
-      mockPrisma.pendingUserApproval.count.mockResolvedValue(2);
-      mockPrisma.institutionDomain.findMany.mockResolvedValue([
+      mockPrisma.institution_members.count.mockResolvedValue(45);
+      mockPrisma.institution_invites.count.mockResolvedValue(3);
+      mockPrisma.pending_user_approvals.count.mockResolvedValue(2);
+      mockPrisma.institution_domains.findMany.mockResolvedValue([
         { domain: "@school.edu" },
         { domain: "@test.school.edu" },
       ]);
@@ -89,35 +89,35 @@ describe("InstitutionsService - getInstitutionForAdmin", () => {
         domains: ["@school.edu", "@test.school.edu"],
       });
 
-      expect(mockPrisma.institutionMember.findFirst).toHaveBeenCalledWith({
+      expect(mockPrisma.institution_members.findFirst).toHaveBeenCalledWith({
         where: {
-          userId,
-          role: "INSTITUTION_ADMIN",
+          user_id: userId,
+          role: "INSTITUTION_EDUCATION_ADMIN",
           status: "ACTIVE",
         },
         include: {
-          institution: true,
+          institutions: true,
         },
       });
 
-      expect(mockPrisma.institutionMember.count).toHaveBeenCalledWith({
-        where: { institutionId, status: "ACTIVE" },
+      expect(mockPrisma.institution_members.count).toHaveBeenCalledWith({
+        where: { institution_id: institutionId, status: "ACTIVE" },
       });
 
-      expect(mockPrisma.institutionInvite.count).toHaveBeenCalledWith({
+      expect(mockPrisma.institution_invites.count).toHaveBeenCalledWith({
         where: {
-          institutionId,
-          usedAt: null,
-          expiresAt: { gt: expect.any(Date) },
+          institution_id: institutionId,
+          used_at: null,
+          expires_at: { gt: expect.any(Date) },
         },
       });
 
-      expect(mockPrisma.pendingUserApproval.count).toHaveBeenCalledWith({
-        where: { institutionId, status: "PENDING" },
+      expect(mockPrisma.pending_user_approvals.count).toHaveBeenCalledWith({
+        where: { institution_id: institutionId, status: "PENDING" },
       });
 
-      expect(mockPrisma.institutionDomain.findMany).toHaveBeenCalledWith({
-        where: { institutionId },
+      expect(mockPrisma.institution_domains.findMany).toHaveBeenCalledWith({
+        where: { institution_id: institutionId },
         select: { domain: true },
       });
     });
@@ -125,20 +125,20 @@ describe("InstitutionsService - getInstitutionForAdmin", () => {
     it("should throw error if user is not an institution admin", async () => {
       const userId = "user-123";
 
-      mockPrisma.institutionMember.findFirst.mockResolvedValue(null);
+      mockPrisma.institution_members.findFirst.mockResolvedValue(null);
 
       await expect(service.getInstitutionForAdmin(userId)).rejects.toThrow(
         "Insufficient permissions",
       );
 
-      expect(mockPrisma.institutionMember.findFirst).toHaveBeenCalledWith({
+      expect(mockPrisma.institution_members.findFirst).toHaveBeenCalledWith({
         where: {
-          userId,
-          role: "INSTITUTION_ADMIN",
+          user_id: userId,
+          role: "INSTITUTION_EDUCATION_ADMIN",
           status: "ACTIVE",
         },
         include: {
-          institution: true,
+          institutions: true,
         },
       });
     });
@@ -148,24 +148,24 @@ describe("InstitutionsService - getInstitutionForAdmin", () => {
       const institutionId = "inst-456";
 
       const mockInstitutionMember = {
-        userId,
-        institutionId,
-        role: "INSTITUTION_ADMIN",
+        user_id: userId,
+        institution_id: institutionId,
+        role: "INSTITUTION_EDUCATION_ADMIN",
         status: "ACTIVE",
-        institution: {
+        institutions: {
           id: institutionId,
           name: "Empty School",
           type: "SCHOOL",
         },
       };
 
-      mockPrisma.institutionMember.findFirst.mockResolvedValue(
+      mockPrisma.institution_members.findFirst.mockResolvedValue(
         mockInstitutionMember,
       );
-      mockPrisma.institutionMember.count.mockResolvedValue(0);
-      mockPrisma.institutionInvite.count.mockResolvedValue(0);
-      mockPrisma.pendingUserApproval.count.mockResolvedValue(0);
-      mockPrisma.institutionDomain.findMany.mockResolvedValue([]);
+      mockPrisma.institution_members.count.mockResolvedValue(0);
+      mockPrisma.institution_invites.count.mockResolvedValue(0);
+      mockPrisma.pending_user_approvals.count.mockResolvedValue(0);
+      mockPrisma.institution_domains.findMany.mockResolvedValue([]);
 
       const result = await service.getInstitutionForAdmin(userId);
 

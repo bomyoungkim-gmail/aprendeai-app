@@ -1,10 +1,10 @@
 import { Controller, Post, Body, Param, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 import { ContentClassificationService } from "./content-classification.service";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { JwtAuthGuard } from "../auth/infrastructure/jwt-auth.guard";
 import { RolesGuard } from "../admin/guards/roles.guard";
 import { Roles } from "../admin/decorators/roles.decorator";
-import { UserRole } from "@prisma/client";
+import { SystemRole, ContextRole } from "@prisma/client";
 
 @ApiTags("content-classification")
 @Controller("content-classification")
@@ -13,7 +13,11 @@ export class ContentClassificationController {
   constructor(private classificationService: ContentClassificationService) {}
 
   @Post("classify")
-  @Roles(UserRole.ADMIN, UserRole.INSTITUTION_ADMIN, UserRole.TEACHER)
+  @Roles(
+    SystemRole.ADMIN,
+    ContextRole.INSTITUTION_EDUCATION_ADMIN,
+    ContextRole.TEACHER,
+  )
   @ApiBearerAuth()
   @ApiOperation({ summary: "AI-classify content for age appropriateness" })
   async classifyContent(
@@ -29,7 +33,7 @@ export class ContentClassificationController {
   }
 
   @Post("suggest/:contentId")
-  @Roles(UserRole.ADMIN, UserRole.INSTITUTION_ADMIN)
+  @Roles(SystemRole.ADMIN, ContextRole.INSTITUTION_EDUCATION_ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get AI classification suggestion for content" })
   async suggestClassification(

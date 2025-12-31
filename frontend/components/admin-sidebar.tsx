@@ -38,12 +38,16 @@ interface AdminSidebarProps {
   onClose: () => void;
 }
 
+import { useAuthStore } from '@/stores/auth-store';
+
 export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const logout = useAuthStore((state) => state.logout);
 
   const handleLogout = () => {
-    localStorage.removeItem('admin_token');
+    logout();
+    // Redirect handled by auth guard typically, but explicit here
     window.location.href = '/login';
   };
 

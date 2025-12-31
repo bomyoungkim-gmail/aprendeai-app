@@ -42,14 +42,16 @@ describe("Extension E2E Journey", () => {
     const userData = createTestUser();
     userData.email = `e2e_ext_${Date.now()}@example.com`;
 
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
+        id: `user-e2e-ext-${Date.now()}`,
         email: userData.email,
         name: userData.name,
-        passwordHash: "hash",
-        role: "COMMON_USER",
+        password_hash: "hash",
+        last_context_role: "STUDENT",
         status: "ACTIVE",
-        schoolingLevel: "HIGHER_EDUCATION",
+        schooling_level: "HIGHER_EDUCATION",
+        updated_at: new Date(),
       },
     });
 
@@ -59,22 +61,24 @@ describe("Extension E2E Journey", () => {
 
   afterAll(async () => {
     if (userId) {
-      await prisma.extensionDeviceAuth.deleteMany({ where: { userId } });
-      await prisma.extensionGrant.deleteMany({ where: { userId } });
-      await prisma.readingSession.deleteMany({ where: { userId } });
+      await prisma.extension_device_auth.deleteMany({
+        where: { user_id: userId },
+      });
+      await prisma.extension_grants.deleteMany({ where: { user_id: userId } });
+      await prisma.reading_sessions.deleteMany({ where: { user_id: userId } });
 
-      // Delete ContentVersion before Content (foreign key constraint)
-      const userContent = await prisma.content.findMany({
-        where: { createdBy: userId },
+      // Delete content_versions before contents (foreign key constraint)
+      const userContent = await prisma.contents.findMany({
+        where: { created_by: userId },
         select: { id: true },
       });
       const contentIds = userContent.map((c) => c.id);
-      await prisma.contentVersion.deleteMany({
-        where: { contentId: { in: contentIds } },
+      await prisma.content_versions.deleteMany({
+        where: { content_id: { in: contentIds } },
       });
 
-      await prisma.content.deleteMany({ where: { createdBy: userId } });
-      await prisma.user.delete({ where: { id: userId } });
+      await prisma.contents.deleteMany({ where: { created_by: userId } });
+      await prisma.users.delete({ where: { id: userId } }).catch(() => {});
     }
     await prisma.$disconnect();
     await app.close();
@@ -157,14 +161,14 @@ describe("Extension E2E Journey", () => {
     // Note: ReadingSessionsController doesn't have GET /sessions endpoint
     // The session creation already validates the flow is working correctly
     // If needed, could query directly via Prisma:
-    const createdSession = await prisma.readingSession.findUnique({
+    const createdSession = await prisma.reading_sessions.findUnique({
       where: { id: sessionId },
-      include: { content: true },
+      include: { contents: true },
     });
 
     expect(createdSession).toBeDefined();
-    expect(createdSession.userId).toBe(userId);
-    expect(createdSession.contentId).toBe(contentId);
+    expect(createdSession.user_id).toBe(userId);
+    expect(createdSession.content_id).toBe(contentId);
     expect(createdSession.phase).toBe("PRE"); // Session starts in PRE phase
   });
 });

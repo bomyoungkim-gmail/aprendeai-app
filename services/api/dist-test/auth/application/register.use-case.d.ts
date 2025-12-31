@@ -1,0 +1,54 @@
+import { PrismaService } from "../../prisma/prisma.service";
+import { IUsersRepository } from "../../users/domain/users.repository.interface";
+import { InstitutionInviteService } from "../../institutions/institution-invite.service";
+import { InstitutionDomainService } from "../../institutions/institution-domain.service";
+import { ApprovalService } from "../../institutions/approval.service";
+import { EmailService } from "../../email/email.service";
+import { SubscriptionService } from "../../billing/subscription.service";
+import { RegisterDto } from "../dto/auth.dto";
+export declare class RegisterUseCase {
+    private readonly prisma;
+    private readonly usersRepository;
+    private readonly inviteService;
+    private readonly domainService;
+    private readonly approvalService;
+    private readonly emailService;
+    private readonly subscriptionService;
+    constructor(prisma: PrismaService, usersRepository: IUsersRepository, inviteService: InstitutionInviteService, domainService: InstitutionDomainService, approvalService: ApprovalService, emailService: EmailService, subscriptionService: SubscriptionService);
+    execute(registerDto: RegisterDto, inviteToken?: string): Promise<{
+        id: string;
+        created_at: Date;
+        updated_at: Date;
+        name: string;
+        email: string;
+        bio: string | null;
+        address: string | null;
+        sex: string | null;
+        birthday: Date | null;
+        age: number | null;
+        password_hash: string | null;
+        system_role: import(".prisma/client").$Enums.SystemRole | null;
+        last_context_role: import(".prisma/client").$Enums.ContextRole;
+        last_institution_id: string | null;
+        oauth_provider: string | null;
+        oauth_id: string | null;
+        oauth_picture: string | null;
+        schooling_level: string | null;
+        preferred_languages: import("@prisma/client/runtime/library").JsonValue;
+        last_login_at: Date | null;
+        status: string;
+        avatar_url: string | null;
+        settings: import("@prisma/client/runtime/library").JsonValue | null;
+        sso_provider: string | null;
+        sso_subject: string | null;
+        password_reset_token: string | null;
+        password_reset_expires: Date | null;
+    } | {
+        status: string;
+        approvalId: string;
+    }>;
+    private registerWithInvite;
+    private registerWithInstitution;
+    private registerNormalUser;
+    private sendWelcomeEmail;
+}

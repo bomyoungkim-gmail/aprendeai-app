@@ -37,12 +37,12 @@ describe("Family + Classroom E2E Tests", () => {
     prisma = app.get<PrismaService>(PrismaService);
 
     // 1. Create Parent (Educator)
-    const parent = await prisma.user.create({
+    const parent = await prisma.users.create({
       data: {
         email: `parent_e2e_${Date.now()}@test.com`,
         name: "Parent User",
-        role: "COMMON_USER",
-        schoolingLevel: "HIGHER_EDUCATION",
+        last_context_role: "STUDENT", // Simplified for E2E, usually PARENT in business logic but DB uses STUDENT/TEACHER/OWNER
+        schooling_level: "HIGHER_EDUCATION",
       },
     });
     userId = parent.id;
@@ -52,46 +52,69 @@ describe("Family + Classroom E2E Tests", () => {
       name: parent.name,
     });
 
+    // Verify parent as teacher (for Classroom E2E)
+    const institutionId = `inst_e2e_${Date.now()}`;
+    await prisma.institutions.create({
+      data: {
+        id: institutionId,
+        name: "E2E School",
+        type: "SCHOOL",
+        updated_at: new Date(),
+      },
+    });
+
+    await prisma.teacher_verifications.create({
+      data: {
+        users: { connect: { id: userId } },
+        institutions: { connect: { id: institutionId } },
+        status: "VERIFIED",
+        id: `verification_${Date.now()}`,
+        updated_at: new Date(),
+      },
+    });
+
     // 2. Create Child (Learner)
-    const child = await prisma.user.create({
+    const child = await prisma.users.create({
       data: {
         email: `child_e2e_${Date.now()}@test.com`,
         name: "Child User",
-        role: "COMMON_USER",
-        schoolingLevel: "K12_LOWER",
+        last_context_role: "STUDENT",
+        schooling_level: "K12_LOWER",
       },
     });
     childId = child.id;
 
     // 3. Create Family
-    const family = await prisma.family.create({
+    const family = await prisma.families.create({
       data: {
         name: "E2E Family",
-        ownerId: userId,
-        members: {
-          create: { userId: childId, role: "CHILD" },
+        owner_user_id: userId,
+        family_members: {
+          create: { user_id: childId, role: "CHILD" },
         },
       },
     });
     familyId = family.id;
 
     // 4. Create Content (for Co-Reading)
-    const content = await prisma.content.create({
+    const content = await prisma.contents.create({
       data: {
+        id: `content_${Date.now()}`,
         title: "E2E Content",
         type: "ARTICLE",
-        rawText: "Content",
-        originalLanguage: "EN",
-        createdBy: userId,
+        raw_text: "Content",
+        original_language: "EN",
+        created_by: userId,
+        updated_at: new Date(),
       },
     });
     contentId = content.id;
 
     // 5. Create Reading Session (Pre-requisite for Co-Reading)
-    const rs = await prisma.readingSession.create({
+    const rs = await prisma.reading_sessions.create({
       data: {
-        userId: childId,
-        contentId: contentId,
+        user_id: childId,
+        content_id: contentId,
         phase: "PRE",
         modality: "READING",
       },
@@ -237,12 +260,12 @@ describe("Family + Classroom E2E Tests", () => {
         .expect(201);
 
       // Need a second student for activeStudents check
-      const student2 = await prisma.user.create({
+      const student2 = await prisma.users.create({
         data: {
           email: `s2_${Date.now()}@test.com`,
           name: "S2",
-          role: "COMMON_USER",
-          schoolingLevel: "K12_LOWER",
+          last_context_role: "STUDENT",
+          schooling_level: "K12_LOWER",
         },
       });
       await request(app.getHttpServer())
@@ -273,19 +296,20 @@ describe("Family + Classroom E2E Tests", () => {
       const classroomId = "class_intervention_test"; // This assumes classroom exists, which it doesn't.
       // We should use the classroom created in previous step, OR create a new one.
       // Re-using 'classroomId' variable from previous test is tricky due to scope.
-      // Let's create a quick classroom for this test.
-      const interventionClass = await prisma.classroom.create({
+      const interventionClass = await prisma.classrooms.create({
         data: {
+          id: `class_int_${Date.now()}`,
           name: "Intervention Class",
-          owner: { connect: { id: userId } },
+          users: { connect: { id: userId } },
+          updated_at: new Date(),
         },
       });
-      const interventionLearner = await prisma.user.create({
+      const interventionLearner = await prisma.users.create({
         data: {
           email: `int_learn_${Date.now()}@test.com`,
           name: "Struggling Student",
-          role: "COMMON_USER",
-          schoolingLevel: "K12_LOWER",
+          last_context_role: "STUDENT",
+          schooling_level: "K12_LOWER",
         },
       });
 

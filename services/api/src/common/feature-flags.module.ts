@@ -1,6 +1,6 @@
-import { Module, Global } from '@nestjs/common';
-import { FeatureFlagsService } from './feature-flags.service';
-import { PrismaModule } from '../prisma/prisma.module';
+import { Module, Global } from "@nestjs/common";
+import { FeatureFlagsService } from "./feature-flags.service";
+import { PrismaModule } from "../prisma/prisma.module";
 
 @Global()
 @Module({

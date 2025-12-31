@@ -5,10 +5,8 @@ import {
   MinLength,
   MaxLength,
   IsOptional,
-  IsEnum,
   IsUUID,
 } from "class-validator";
-import { UserRole } from "@prisma/client";
 
 export class RegisterDto {
   @IsNotEmpty({ message: "Name is required" })
@@ -26,10 +24,6 @@ export class RegisterDto {
   })
   @MaxLength(100, { message: "Password is too long" })
   password!: string;
-
-  @IsOptional()
-  @IsEnum(UserRole, { message: "Invalid user role" })
-  role?: UserRole; // Default should be COMMON_USER if not provided
 
   @IsOptional()
   @IsUUID("4", { message: "Institution ID must be a valid UUID" })

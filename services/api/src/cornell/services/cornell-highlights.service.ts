@@ -1,6 +1,6 @@
 /**
  * Cornell Highlights Service
- * 
+ *
  * Handles CRUD operations for Cornell Notes highlights with granular authorization.
  * Supports multiple content types (PDF, Image, Video, Audio) and sharing contexts.
  */
@@ -10,23 +10,27 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
-} from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { fromEvent } from 'rxjs';
-import { map, filter } from 'rxjs/operators';
-import { PrismaService } from '../../prisma/prisma.service';
+} from "@nestjs/common";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { fromEvent } from "rxjs";
+import { map, filter } from "rxjs/operators";
+import * as crypto from "crypto";
+import { PrismaService } from "../../prisma/prisma.service";
 import {
   CreateCornellHighlightDto,
   UpdateHighlightVisibilityDto,
   CreateAnnotationCommentDto,
-} from '../dto/create-cornell-highlight.dto';
+} from "../dto/create-cornell-highlight.dto";
 import {
   AnnotationVisibility,
   AnnotationStatus,
   VisibilityScope,
   ContextType,
-} from '../../common/constants/enums';
-import { CornellEvent, type CornellEventPayload } from '../events/cornell.events';
+} from "../../common/constants/enums";
+import {
+  CornellEvent,
+  type CornellEventPayload,
+} from "../events/cornell.events";
 
 @Injectable()
 export class CornellHighlightsService {
@@ -54,28 +58,29 @@ export class CornellHighlightsService {
       );
     }
 
-    const highlight = await this.prisma.highlight.create({
+    const highlight = await this.prisma.highlights.create({
       data: {
-        contentId,
-        userId,
+        id: crypto.randomUUID(),
+        content_id: contentId,
+        user_id: userId,
         kind: this.getHighlightKind(dto.target_type),
-        targetType: dto.target_type,
-        pageNumber: dto.page_number,
-        anchorJson: (dto.anchor_json || {}) as any,
-        timestampMs: dto.timestamp_ms,
-        durationMs: dto.duration_ms,
-        colorKey: dto.color_key,
-        tagsJson: dto.tags_json as any,
-        commentText: dto.comment_text,
+        target_type: dto.target_type,
+        page_number: dto.page_number,
+        anchor_json: (dto.anchor_json || {}) as any,
+        timestamp_ms: dto.timestamp_ms,
+        duration_ms: dto.duration_ms,
+        color_key: dto.color_key,
+        tags_json: dto.tags_json as any,
+        comment_text: dto.comment_text,
         visibility: dto.visibility || AnnotationVisibility.PRIVATE,
-        visibilityScope: dto.visibility_scope,
-        contextType: dto.context_type,
-        contextId: dto.context_id,
-        learnerId: dto.learner_id,
+        visibility_scope: dto.visibility_scope,
+        context_type: dto.context_type,
+        context_id: dto.context_id,
+        learner_id: dto.learner_id,
         status: AnnotationStatus.ACTIVE,
       },
       include: {
-        user: { select: { id: true, name: true, email: true } },
+        users: { select: { id: true, name: true, email: true } },
       },
     });
 
@@ -96,22 +101,22 @@ export class CornellHighlightsService {
    * Get highlights for a content (with permission filtering)
    */
   async getHighlights(contentId: string, userId: string) {
-    const highlights = await this.prisma.highlight.findMany({
+    const highlights = await this.prisma.highlights.findMany({
       where: {
-        contentId,
+        content_id: contentId,
         status: AnnotationStatus.ACTIVE,
       },
       include: {
-        user: { select: { id: true, name: true, email: true } },
-        comments: {
+        users: { select: { id: true, name: true, email: true } },
+        annotation_comments: {
           where: { status: AnnotationStatus.ACTIVE },
           include: {
-            user: { select: { id: true, name: true } },
+            users: { select: { id: true, name: true } },
           },
-          orderBy: { createdAt: 'asc' },
+          orderBy: { created_at: "asc" },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: "desc" },
     });
 
     // Filter based on permissions
@@ -133,17 +138,17 @@ export class CornellHighlightsService {
     userId: string,
     dto: UpdateHighlightVisibilityDto,
   ) {
-    const highlight = await this.prisma.highlight.findUnique({
+    const highlight = await this.prisma.highlights.findUnique({
       where: { id: highlightId },
     });
 
     if (!highlight) {
-      throw new NotFoundException('Highlight not found');
+      throw new NotFoundException("Highlight not found");
     }
 
     // Only owner can change visibility
-    if (highlight.userId !== userId) {
-      throw new ForbiddenException('Only owner can change visibility');
+    if (highlight.user_id !== userId) {
+      throw new ForbiddenException("Only owner can change visibility");
     }
 
     // Validate new context if GROUP
@@ -157,20 +162,20 @@ export class CornellHighlightsService {
       );
     }
 
-    const updated = await this.prisma.highlight.update({
+    const updated = await this.prisma.highlights.update({
       where: { id: highlightId },
       data: {
         visibility: dto.visibility,
-        visibilityScope: dto.visibility_scope,
-        contextType: dto.context_type,
-        contextId: dto.context_id,
-        learnerId: dto.learner_id,
+        visibility_scope: dto.visibility_scope,
+        context_type: dto.context_type,
+        context_id: dto.context_id,
+        learner_id: dto.learner_id,
       },
     });
 
     // Emit event
     this.eventEmitter.emit(CornellEvent.HIGHLIGHT_UPDATED, {
-      contentId: highlight.contentId,
+      contentId: highlight.content_id,
       highlightId,
       userId,
       action: CornellEvent.HIGHLIGHT_UPDATED,
@@ -185,29 +190,29 @@ export class CornellHighlightsService {
    * Delete highlight (soft delete)
    */
   async deleteHighlight(highlightId: string, userId: string) {
-    const highlight = await this.prisma.highlight.findUnique({
+    const highlight = await this.prisma.highlights.findUnique({
       where: { id: highlightId },
     });
 
     if (!highlight) {
-      throw new NotFoundException('Highlight not found');
+      throw new NotFoundException("Highlight not found");
     }
 
-    if (highlight.userId !== userId) {
-      throw new ForbiddenException('Only owner can delete');
+    if (highlight.user_id !== userId) {
+      throw new ForbiddenException("Only owner can delete");
     }
 
-    const deleted = await this.prisma.highlight.update({
+    const deleted = await this.prisma.highlights.update({
       where: { id: highlightId },
       data: {
         status: AnnotationStatus.DELETED,
-        deletedAt: new Date(),
+        deleted_at: new Date(),
       },
     });
 
     // Emit event
     this.eventEmitter.emit(CornellEvent.HIGHLIGHT_DELETED, {
-      contentId: highlight.contentId,
+      contentId: highlight.content_id,
       highlightId,
       userId,
       action: CornellEvent.HIGHLIGHT_DELETED,
@@ -225,34 +230,36 @@ export class CornellHighlightsService {
     userId: string,
     dto: CreateAnnotationCommentDto,
   ) {
-    const highlight = await this.prisma.highlight.findUnique({
+    const highlight = await this.prisma.highlights.findUnique({
       where: { id: highlightId },
     });
 
     if (!highlight) {
-      throw new NotFoundException('Highlight not found');
+      throw new NotFoundException("Highlight not found");
     }
 
     // Check read permission
     if (!(await this.canReadHighlight(userId, highlight))) {
-      throw new ForbiddenException('Cannot comment on this highlight');
+      throw new ForbiddenException("Cannot comment on this highlight");
     }
 
-    const comment = await this.prisma.annotationComment.create({
+    const comment = await this.prisma.annotation_comments.create({
       data: {
-        highlightId,
-        userId,
+        id: crypto.randomUUID(),
+        highlight_id: highlightId,
+        user_id: userId,
         text: dto.text,
         status: AnnotationStatus.ACTIVE,
+        updated_at: new Date(), // Mandatory field
       },
       include: {
-        user: { select: { id: true, name: true } },
+        users: { select: { id: true, name: true } },
       },
     });
 
     // Emit event
     this.eventEmitter.emit(CornellEvent.COMMENT_ADDED, {
-      contentId: highlight.contentId,
+      contentId: highlight.content_id,
       highlightId,
       userId,
       action: CornellEvent.COMMENT_ADDED,
@@ -279,13 +286,18 @@ export class CornellHighlightsService {
   ) {
     if (!contextType || !contextId) {
       throw new BadRequestException(
-        'context_type and context_id required for GROUP visibility',
+        "context_type and context_id required for GROUP visibility",
       );
     }
 
     switch (contextType) {
       case ContextType.INSTITUTION:
-        await this.validateInstitutionAccess(userId, contextId, scope, learnerId);
+        await this.validateInstitutionAccess(
+          userId,
+          contextId,
+          scope,
+          learnerId,
+        );
         break;
       case ContextType.GROUP_STUDY:
         await this.validateGroupAccess(userId, contextId);
@@ -302,76 +314,80 @@ export class CornellHighlightsService {
     scope: VisibilityScope,
     learnerId?: string,
   ) {
-    const member = await this.prisma.institutionMember.findUnique({
+    const member = await this.prisma.institution_members.findFirst({
       where: {
-        institutionId_userId: { institutionId, userId },
+        institution_id: institutionId,
+        user_id: userId,
       },
     });
 
-    if (!member || member.status !== 'ACTIVE') {
-      throw new ForbiddenException('Not a member of this institution');
+    if (!member || member.status !== "ACTIVE") {
+      throw new ForbiddenException("Not a member of this institution");
     }
 
-    if (scope === VisibilityScope.ONLY_EDUCATORS && member.role !== 'TEACHER') {
-      throw new ForbiddenException('Only educators can use this scope');
+    if (scope === VisibilityScope.ONLY_EDUCATORS && member.role !== "TEACHER") {
+      throw new ForbiddenException("Only educators can use this scope");
     }
 
     if (scope === VisibilityScope.RESPONSIBLES_OF_LEARNER) {
       if (!learnerId) {
-        throw new BadRequestException('learner_id required for this scope');
+        throw new BadRequestException("learner_id required for this scope");
       }
       await this.validateIsResponsible(userId, learnerId);
     }
   }
 
   private async validateGroupAccess(userId: string, groupId: string) {
-    const member = await this.prisma.studyGroupMember.findUnique({
-      where: { groupId_userId: { groupId, userId } },
+    const member = await this.prisma.study_group_members.findUnique({
+      where: { group_id_user_id: { group_id: groupId, user_id: userId } },
     });
 
-    if (!member || member.status !== 'ACTIVE') {
-      throw new ForbiddenException('Not a member of this group');
+    if (!member || member.status !== "ACTIVE") {
+      throw new ForbiddenException("Not a member of this group");
     }
   }
 
   private async validateFamilyAccess(userId: string, familyId: string) {
-    const member = await this.prisma.familyMember.findUnique({
-      where: { familyId_userId: { familyId, userId } },
+    const member = await this.prisma.family_members.findUnique({
+      where: { family_id_user_id: { family_id: familyId, user_id: userId } },
     });
 
-    if (!member || member.status !== 'ACTIVE') {
-      throw new ForbiddenException('Not a member of this family');
+    if (!member || member.status !== "ACTIVE") {
+      throw new ForbiddenException("Not a member of this family");
     }
   }
 
   private async validateIsResponsible(userId: string, learnerId: string) {
-    const relationship = await this.prisma.familyMember.findFirst({
+    const relationship = await this.prisma.family_members.findFirst({
       where: {
-        userId,
-        family: {
-          members: {
+        user_id: userId,
+        families: {
+          family_members: {
             some: {
-              userId: learnerId,
-              status: 'ACTIVE',
+              user_id: learnerId,
+              status: "ACTIVE",
             },
           },
         },
-        role: { in: ['GUARDIAN', 'EDUCATOR'] },
-        status: 'ACTIVE',
+        role: { in: ["GUARDIAN"] },
+        status: "ACTIVE",
       },
     });
 
     if (!relationship) {
-      throw new ForbiddenException('Not a responsible for this learner');
+      throw new ForbiddenException("Not a responsible for this learner");
     }
   }
 
   /**
    * Check if user can read a highlight
    */
-  private async canReadHighlight(userId: string, highlight: any): Promise<boolean> {
+  private async canReadHighlight(
+    userId: string,
+    highlight: any,
+  ): Promise<boolean> {
     // Owner can always read
-    if (highlight.userId === userId) return true;
+    if (highlight.user_id === userId) return true;
 
     // PUBLIC is readable by anyone
     if (highlight.visibility === AnnotationVisibility.PUBLIC) return true;
@@ -390,7 +406,10 @@ export class CornellHighlightsService {
     return false;
   }
 
-  private async checkContextMembership(userId: string, highlight: any): Promise<boolean> {
+  private async checkContextMembership(
+    userId: string,
+    highlight: any,
+  ): Promise<boolean> {
     try {
       await this.validateContextAccess(
         userId,
@@ -408,8 +427,8 @@ export class CornellHighlightsService {
   /**
    * Get highlight kind based on target type
    */
-  private getHighlightKind(targetType: string): 'TEXT' | 'AREA' {
-    return targetType === 'VIDEO' || targetType === 'AUDIO' ? 'TEXT' : 'AREA';
+  private getHighlightKind(targetType: string): "TEXT" | "AREA" {
+    return targetType === "VIDEO" || targetType === "AUDIO" ? "TEXT" : "AREA";
   }
 
   /**
@@ -417,7 +436,7 @@ export class CornellHighlightsService {
    * Returns an Observable for SSE
    */
   subscribeToEvents(contentId: string) {
-    return fromEvent(this.eventEmitter, 'cornell.*').pipe(
+    return fromEvent(this.eventEmitter, "cornell.*").pipe(
       filter((payload: any) => payload.contentId === contentId),
       map((payload: any) => ({
         data: payload,

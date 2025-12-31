@@ -1,6 +1,4 @@
-
-import { IsObject, IsOptional, IsString } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsObject, IsOptional, IsString } from "class-validator";
 
 export class CreateContentPedagogicalDataDto {
   @IsObject()

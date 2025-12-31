@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole, InstitutionType, MemberStatus } from '@prisma/client';
+import { PrismaClient, ContextRole, InstitutionRole, SystemRole, InstitutionType, MemberStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -10,22 +10,23 @@ async function main() {
 
   // 1. Create System Admin
   console.log('👤 Creating System Admin...');
-  const systemAdmin = await prisma.user.upsert({
+  const systemAdmin = await prisma.users.upsert({
     where: { email: 'admin@aprendeai.com' },
     update: {},
     create: {
       name: 'System Admin',
       email: 'admin@aprendeai.com',
-      passwordHash: hashedPassword,
-      role: UserRole.ADMIN,
-      schoolingLevel: 'university',
+      password_hash: hashedPassword,
+      system_role: SystemRole.ADMIN,
+      last_context_role: ContextRole.OWNER,
+      schooling_level: 'university',
     },
   });
   console.log(`✅ Created System Admin: ${systemAdmin.email}`);
 
   // 2. Create Institution
   console.log('🏫 Creating Institution...');
-  const institution = await prisma.institution.upsert({
+  const institution = await prisma.institutions.upsert({
     where: { slug: 'institute-test' },
     update: {},
     create: {
@@ -40,33 +41,30 @@ async function main() {
 
   // 3. Create Tenant Admin
   console.log('👤 Creating Tenant Admin...');
-  const tenantAdmin = await prisma.user.upsert({
+  const tenantAdmin = await prisma.users.upsert({
     where: { email: 'tenant@institute.com' },
     update: {},
     create: {
       name: 'Tenant Admin',
       email: 'tenant@institute.com',
-      passwordHash: hashedPassword,
-      role: UserRole.INSTITUTION_ADMIN,
-      schoolingLevel: 'university',
-      institutionId: institution.id,
+      password_hash: hashedPassword,
+      last_context_role: ContextRole.INSTITUTION_EDUCATION_ADMIN,
+      schooling_level: 'university',
+      last_institution_id: institution.id,
     },
   });
 
   // 4. Link Tenant Admin as Member
   console.log('🔗 Linking Tenant Admin to Institution...');
-  await prisma.institutionMember.upsert({
+  await prisma.institution_members.upsert({
     where: {
-      institutionId_userId: {
-        institutionId: institution.id,
-        userId: tenantAdmin.id,
-      },
+      user_id: tenantAdmin.id,
     },
     update: {},
     create: {
-      institutionId: institution.id,
-      userId: tenantAdmin.id,
-      role: UserRole.INSTITUTION_ADMIN,
+      institution_id: institution.id,
+      user_id: tenantAdmin.id,
+      role: InstitutionRole.INSTITUTION_EDUCATION_ADMIN,
       status: MemberStatus.ACTIVE,
     },
   });

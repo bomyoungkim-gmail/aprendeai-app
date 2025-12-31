@@ -50,7 +50,6 @@ async function backfillContentOwnership(dryRun: boolean = false): Promise<Backfi
         id: true,
         title: true,
         owner_user_id: true,
-        family_id: true,
         institution_id: true,
         owner_type: true,
         owner_id: true,
@@ -60,7 +59,7 @@ async function backfillContentOwnership(dryRun: boolean = false): Promise<Backfi
     // Filter contents that need migration
     const contentsToMigrate = allContents.filter((content) => {
       // Has legacy owner but missing new owner fields
-      const hasLegacyOwner = content.owner_user_id || content.family_id || content.institution_id;
+      const hasLegacyOwner = content.owner_user_id || (content as any).family_id || content.institution_id;
       const missingNewOwner = !content.owner_type || !content.owner_id;
       return hasLegacyOwner && missingNewOwner;
     });
@@ -84,9 +83,9 @@ async function backfillContentOwnership(dryRun: boolean = false): Promise<Backfi
         if (content.owner_user_id) {
           ownerType = ContentOwnerType.USER;
           ownerId = content.owner_user_id;
-        } else if (content.family_id) {
+        } else if ((content as any).family_id) {
           ownerType = ContentOwnerType.FAMILY;
-          ownerId = content.family_id;
+          ownerId = (content as any).family_id;
         } else if (content.institution_id) {
           ownerType = ContentOwnerType.INSTITUTION;
           ownerId = content.institution_id;
@@ -161,7 +160,6 @@ async function validateBackfill(): Promise<boolean> {
         {
           OR: [
             { owner_user_id: { not: null } },
-            { family_id: { not: null } },
             { institution_id: { not: null } },
           ],
         },

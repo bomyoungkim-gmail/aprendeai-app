@@ -9,7 +9,14 @@ import { PrismaModule } from "../prisma/prisma.module";
 
 @Module({
   imports: [PrismaModule],
-  providers: [LLMService, LLMConfigService, OpenAIProvider, GeminiProvider, AnthropicProvider, DegradedModeProvider],
+  providers: [
+    LLMService,
+    LLMConfigService,
+    OpenAIProvider,
+    GeminiProvider,
+    AnthropicProvider,
+    DegradedModeProvider,
+  ],
   exports: [LLMService, LLMConfigService],
 })
 export class LLMModule {}

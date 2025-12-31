@@ -15,7 +15,7 @@ import { AdminService } from "./admin.service";
 import { SecretService } from "./services/secret.service";
 import { Roles } from "./decorators/roles.decorator";
 import { RolesGuard } from "./guards/roles.guard";
-import { UserRole } from "@prisma/client";
+import { SystemRole, ContextRole } from "@prisma/client";
 import {
   ApiTags,
   ApiOperation,
@@ -51,10 +51,10 @@ export class AdminController {
 
   @Get("me")
   @Roles(
-    UserRole.ADMIN,
-    UserRole.SUPPORT,
-    UserRole.OPS,
-    UserRole.INSTITUTION_ADMIN,
+    SystemRole.ADMIN,
+    SystemRole.SUPPORT,
+    SystemRole.OPS,
+    ContextRole.INSTITUTION_EDUCATION_ADMIN,
   )
   @ApiBearerAuth()
   @ApiOperation({
@@ -72,12 +72,17 @@ export class AdminController {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
+        system_role: user.system_role,
+        context_role: user.last_context_role,
         status: user.status,
-        lastLoginAt: user.lastLoginAt,
+        lastLoginAt: user.last_login_at,
       },
-      roles: user.roleAssignments,
-      permissions: this.getPermissionsForRole(user.role),
+      institution_members: user.institution_members,
+      family_members: user.family_members,
+
+      permissions: this.getPermissionsForRole(
+        user.system_role || user.last_context_role,
+      ),
     };
   }
 
@@ -86,7 +91,7 @@ export class AdminController {
   // ========================================
 
   @Get("stats")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get platform-wide statistics for admin dashboard" })
   @ApiResponse({ status: 200, description: "Returns platform statistics" })
@@ -95,7 +100,7 @@ export class AdminController {
   }
 
   @Get("institutions")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "List all institutions with pagination" })
   async listInstitutions(
@@ -115,7 +120,7 @@ export class AdminController {
   // ========================================
 
   @Get("users")
-  @Roles(UserRole.ADMIN, UserRole.SUPPORT, UserRole.OPS)
+  @Roles(SystemRole.ADMIN, SystemRole.SUPPORT, SystemRole.OPS)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Search and list users with pagination" })
   async searchUsers(@Query() searchDto: UserSearchDto) {
@@ -124,7 +129,7 @@ export class AdminController {
   }
 
   @Get("users/:id")
-  @Roles(UserRole.ADMIN, UserRole.SUPPORT, UserRole.OPS)
+  @Roles(SystemRole.ADMIN, SystemRole.SUPPORT, SystemRole.OPS)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get detailed user information" })
   async getUserDetail(@Param("id") id: string) {
@@ -132,7 +137,7 @@ export class AdminController {
   }
 
   @Put("users/:id/status")
-  @Roles(UserRole.ADMIN, UserRole.SUPPORT)
+  @Roles(SystemRole.ADMIN, SystemRole.SUPPORT)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update user status" })
   async updateUserStatus(
@@ -145,12 +150,12 @@ export class AdminController {
       dto.status,
       dto.reason,
       req.user.userId,
-      req.user.role,
+      req.user.systemRole, // TODO: Update Service to accept SystemRole/string
     );
   }
 
   @Put("users/:id/roles")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Update user role assignments (ADMIN only)" })
   async updateUserRoles(
@@ -163,12 +168,12 @@ export class AdminController {
       dto.roles,
       dto.reason,
       req.user.userId,
-      req.user.role,
+      req.user.systemRole,
     );
   }
 
   @Post("users/:id/impersonate")
-  @Roles(UserRole.ADMIN, UserRole.SUPPORT)
+  @Roles(SystemRole.ADMIN, SystemRole.SUPPORT)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Generate impersonation token for user" })
   async impersonateUser(
@@ -179,7 +184,7 @@ export class AdminController {
     return this.adminService.createImpersonationToken(
       id,
       req.user.userId,
-      req.user.role,
+      req.user.systemRole,
       dto.reason,
       dto.durationMinutes || 15,
     );
@@ -190,7 +195,7 @@ export class AdminController {
   // ========================================
 
   @Get("feature-flags")
-  @Roles(UserRole.ADMIN, UserRole.OPS)
+  @Roles(SystemRole.ADMIN, SystemRole.OPS)
   @ApiBearerAuth()
   @ApiOperation({ summary: "List all feature flags" })
   @ApiResponse({ status: 200, description: "Returns list of feature flags" })
@@ -206,7 +211,7 @@ export class AdminController {
   }
 
   @Get("feature-flags/:id")
-  @Roles(UserRole.ADMIN, UserRole.OPS)
+  @Roles(SystemRole.ADMIN, SystemRole.OPS)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get feature flag details" })
   async getFeatureFlag(@Param("id") id: string) {
@@ -214,19 +219,19 @@ export class AdminController {
   }
 
   @Post("feature-flags")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create new feature flag (ADMIN only)" })
   async createFeatureFlag(@Body() dto: CreateFeatureFlagDto, @Request() req) {
     return this.adminService.createFeatureFlag(
       dto,
       req.user.userId,
-      req.user.role,
+      req.user.systemRole,
     );
   }
 
   @Put("feature-flags/:id")
-  @Roles(UserRole.ADMIN, UserRole.OPS)
+  @Roles(SystemRole.ADMIN, SystemRole.OPS)
   @ApiBearerAuth()
   @ApiOperation({
     summary: "Update feature flag (OPS can only toggle enabled)",
@@ -238,7 +243,7 @@ export class AdminController {
   ) {
     // OPS can only toggle enabled field
     if (
-      req.user.role === UserRole.OPS &&
+      req.user.systemRole === SystemRole.OPS &&
       Object.keys(dto).some((k) => k !== "enabled")
     ) {
       throw new Error("OPS role can only toggle enabled field");
@@ -248,12 +253,12 @@ export class AdminController {
       id,
       dto,
       req.user.userId,
-      req.user.role,
+      req.user.systemRole,
     );
   }
 
   @Post("feature-flags/:id/toggle")
-  @Roles(UserRole.ADMIN, UserRole.OPS)
+  @Roles(SystemRole.ADMIN, SystemRole.OPS)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Quick toggle feature flag on/off" })
   async toggleFeatureFlag(
@@ -266,12 +271,12 @@ export class AdminController {
       dto.enabled,
       dto.reason,
       req.user.userId,
-      req.user.role,
+      req.user.systemRole,
     );
   }
 
   @Delete("feature-flags/:id")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete feature flag (ADMIN only)" })
   async deleteFeatureFlag(
@@ -283,7 +288,7 @@ export class AdminController {
       id,
       dto.reason,
       req.user.userId,
-      req.user.role,
+      req.user.systemRole,
     );
   }
 
@@ -292,7 +297,7 @@ export class AdminController {
   // ========================================
 
   @Get("secrets")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "List secrets (metadata only, ADMIN only)" })
   async listSecrets(@Query() filter: any) {
@@ -300,7 +305,7 @@ export class AdminController {
   }
 
   @Get("secrets/:id")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get secret with decrypted value (ADMIN only)" })
   async getSecret(@Param("id") id: string, @Request() req) {
@@ -308,7 +313,7 @@ export class AdminController {
     const secret = await this.secretService.getSecret(id);
     await this.adminService.createAuditLog({
       actorUserId: req.user.userId,
-      actorRole: req.user.role,
+      actorRole: req.user.systemRole,
       action: "SECRET_VIEWED",
       resourceType: "SECRET",
       resourceId: id,
@@ -318,14 +323,14 @@ export class AdminController {
   }
 
   @Post("secrets")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Create encrypted secret (ADMIN only)" })
   async createSecret(@Body() dto: any, @Request() req) {
     const result = await this.secretService.createSecret(dto, req.user.userId);
     await this.adminService.createAuditLog({
       actorUserId: req.user.userId,
-      actorRole: req.user.role,
+      actorRole: req.user.systemRole,
       action: "SECRET_CREATED",
       resourceType: "SECRET",
       resourceId: result.id,
@@ -335,7 +340,7 @@ export class AdminController {
   }
 
   @Put("secrets/:id")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Rotate/update secret (ADMIN only)" })
   async updateSecret(
@@ -348,13 +353,13 @@ export class AdminController {
       dto.value,
       dto.reason,
       req.user.userId,
-      req.user.role,
+      req.user.systemRole,
       (data) => this.adminService.createAuditLog(data),
     );
   }
 
   @Delete("secrets/:id")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Delete secret (ADMIN only)" })
   async deleteSecret(
@@ -366,7 +371,7 @@ export class AdminController {
       id,
       dto.reason,
       req.user.userId,
-      req.user.role,
+      req.user.systemRole,
       (data) => this.adminService.createAuditLog(data),
     );
   }
@@ -376,7 +381,7 @@ export class AdminController {
   // ========================================
 
   @Get("audit-logs")
-  @Roles(UserRole.ADMIN, UserRole.SUPPORT)
+  @Roles(SystemRole.ADMIN, SystemRole.SUPPORT)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get audit logs with filters" })
   async getAuditLogs(
@@ -421,7 +426,7 @@ export class AdminController {
   // ========================================
 
   @Get("ai/metrics")
-  @Roles(UserRole.ADMIN, UserRole.OPS)
+  @Roles(SystemRole.ADMIN, SystemRole.OPS)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get AI service optimization metrics" })
   @ApiResponse({
@@ -460,9 +465,9 @@ export class AdminController {
   // Helpers
   // ========================================
 
-  private getPermissionsForRole(role: UserRole): string[] {
-    const permissions: Record<UserRole, string[]> = {
-      [UserRole.ADMIN]: [
+  private getPermissionsForRole(role: string): string[] {
+    const permissions: Record<string, string[]> = {
+      [SystemRole.ADMIN]: [
         "view_dashboard",
         "manage_users",
         "manage_integrations",
@@ -473,28 +478,23 @@ export class AdminController {
         "manage_queues",
         "impersonate_users",
       ],
-      [UserRole.SUPPORT]: [
+      [SystemRole.SUPPORT]: [
         "view_dashboard",
         "view_users",
         "view_audit_logs",
         "impersonate_users",
         "reprocess_jobs",
       ],
-      [UserRole.OPS]: [
+      [SystemRole.OPS]: [
         "view_dashboard",
         "manage_flags",
         "manage_limits",
         "manage_queues",
       ],
-      [UserRole.INSTITUTION_ADMIN]: [
+      [ContextRole.INSTITUTION_EDUCATION_ADMIN]: [
         "view_own_institution",
         "manage_own_classes",
       ],
-      [UserRole.TEACHER]: [],
-      [UserRole.STUDENT]: [],
-      [UserRole.COMMON_USER]: [],
-      [UserRole.GUARDIAN]: [], // Added for schema compatibility
-      [UserRole.SCHOOL_ADMIN]: [], // Added for schema compatibility
     };
 
     return permissions[role] || [];

@@ -1,9 +1,9 @@
 /**
  * DTO for creating Cornell Notes highlights
- * 
+ *
  * Supports multiple media types (PDF, Image, Video, Audio) with conditional anchoring.
  * Uses centralized enums for type safety.
- * 
+ *
  * @module cornell/dto
  */
 
@@ -15,19 +15,19 @@ import {
   IsObject,
   ValidateIf,
   Min,
-} from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+} from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   AnnotationVisibility,
   TargetType,
   VisibilityScope,
   ContextType,
-} from '../../common/constants/enums';
+} from "../../common/constants/enums";
 import {
   CornellType,
   getColorForType,
   getTagsForType,
-} from '../constants/cornell-type-map';
+} from "../constants/cornell-type-map";
 
 /**
  * Geometry for area-based highlights (PDF, Image)
@@ -44,22 +44,22 @@ export interface AnchorGeometry {
  */
 export class CreateCornellHighlightDto {
   @ApiProperty({
-    enum: ['HIGHLIGHT', 'NOTE', 'STAR', 'QUESTION'],
-    description: 'Cornell annotation type',
-    example: 'NOTE',
+    enum: ["HIGHLIGHT", "NOTE", "STAR", "QUESTION"],
+    description: "Cornell annotation type",
+    example: "NOTE",
   })
-  @IsEnum(['HIGHLIGHT', 'NOTE', 'STAR', 'QUESTION'], {
-    message: 'Type must be one of: HIGHLIGHT, NOTE, STAR, QUESTION',
+  @IsEnum(["HIGHLIGHT", "NOTE", "STAR", "QUESTION"], {
+    message: "Type must be one of: HIGHLIGHT, NOTE, STAR, QUESTION",
   })
-  type: Exclude<CornellType, 'SUMMARY' | 'AI_RESPONSE'>;
+  type: Exclude<CornellType, "SUMMARY" | "AI_RESPONSE">;
 
   @ApiProperty({
     enum: TargetType,
-    description: 'Media type being annotated',
-    example: 'PDF',
+    description: "Media type being annotated",
+    example: "PDF",
   })
   @IsEnum(TargetType, {
-    message: 'Target type must be PDF, IMAGE, DOCX, VIDEO, or AUDIO',
+    message: "Target type must be PDF, IMAGE, DOCX, VIDEO, or AUDIO",
   })
   target_type: TargetType;
 
@@ -68,39 +68,51 @@ export class CreateCornellHighlightDto {
   // ========================================
 
   @ApiPropertyOptional({
-    description: 'Page number (required for PDF/DOCX)',
+    description: "Page number (required for PDF/DOCX)",
     example: 1,
     minimum: 1,
   })
-  @ValidateIf((o) => o.target_type === TargetType.PDF || o.target_type === TargetType.DOCX)
+  @ValidateIf(
+    (o) =>
+      o.target_type === TargetType.PDF || o.target_type === TargetType.DOCX,
+  )
   @IsInt()
   @Min(1)
   page_number?: number;
 
   @ApiPropertyOptional({
-    description: 'Anchor geometry (required for PDF/IMAGE)',
+    description: "Anchor geometry (required for PDF/IMAGE)",
     example: { x: 100, y: 200, width: 150, height: 50 },
   })
-  @ValidateIf((o) => o.target_type === TargetType.PDF || o.target_type === TargetType.IMAGE)
+  @ValidateIf(
+    (o) =>
+      o.target_type === TargetType.PDF || o.target_type === TargetType.IMAGE,
+  )
   @IsObject()
   anchor_json?: AnchorGeometry;
 
   @ApiPropertyOptional({
-    description: 'Timestamp in milliseconds (required for VIDEO/AUDIO)',
+    description: "Timestamp in milliseconds (required for VIDEO/AUDIO)",
     example: 30000,
     minimum: 0,
   })
-  @ValidateIf((o) => o.target_type === TargetType.VIDEO || o.target_type === TargetType.AUDIO)
+  @ValidateIf(
+    (o) =>
+      o.target_type === TargetType.VIDEO || o.target_type === TargetType.AUDIO,
+  )
   @IsInt()
   @Min(0)
   timestamp_ms?: number;
 
   @ApiPropertyOptional({
-    description: 'Duration in milliseconds (optional for VIDEO/AUDIO)',
+    description: "Duration in milliseconds (optional for VIDEO/AUDIO)",
     example: 5000,
     minimum: 0,
   })
-  @ValidateIf((o) => o.target_type === TargetType.VIDEO || o.target_type === TargetType.AUDIO)
+  @ValidateIf(
+    (o) =>
+      o.target_type === TargetType.VIDEO || o.target_type === TargetType.AUDIO,
+  )
   @IsOptional()
   @IsInt()
   @Min(0)
@@ -111,8 +123,8 @@ export class CreateCornellHighlightDto {
   // ========================================
 
   @ApiPropertyOptional({
-    description: 'Comment/note text',
-    example: 'This is an important concept about photosynthesis',
+    description: "Comment/note text",
+    example: "This is an important concept about photosynthesis",
   })
   @IsOptional()
   @IsString()
@@ -124,7 +136,7 @@ export class CreateCornellHighlightDto {
 
   @ApiPropertyOptional({
     enum: AnnotationVisibility,
-    description: 'Visibility level',
+    description: "Visibility level",
     default: AnnotationVisibility.PRIVATE,
   })
   @IsOptional()
@@ -133,7 +145,7 @@ export class CreateCornellHighlightDto {
 
   @ApiPropertyOptional({
     enum: VisibilityScope,
-    description: 'Granular scope (required if visibility is GROUP)',
+    description: "Granular scope (required if visibility is GROUP)",
   })
   @ValidateIf((o) => o.visibility === AnnotationVisibility.GROUP)
   @IsEnum(VisibilityScope)
@@ -141,25 +153,27 @@ export class CreateCornellHighlightDto {
 
   @ApiPropertyOptional({
     enum: ContextType,
-    description: 'Context type (required if visibility is GROUP)',
+    description: "Context type (required if visibility is GROUP)",
   })
   @ValidateIf((o) => o.visibility === AnnotationVisibility.GROUP)
   @IsEnum(ContextType)
   context_type?: ContextType;
 
   @ApiPropertyOptional({
-    description: 'Context ID (required if visibility is GROUP)',
-    example: 'institution-123',
+    description: "Context ID (required if visibility is GROUP)",
+    example: "institution-123",
   })
   @ValidateIf((o) => o.visibility === AnnotationVisibility.GROUP)
   @IsString()
   context_id?: string;
 
   @ApiPropertyOptional({
-    description: 'Learner ID (required for RESPONSIBLES_OF_LEARNER scope)',
-    example: 'user-456',
+    description: "Learner ID (required for RESPONSIBLES_OF_LEARNER scope)",
+    example: "user-456",
   })
-  @ValidateIf((o) => o.visibility_scope === VisibilityScope.RESPONSIBLES_OF_LEARNER)
+  @ValidateIf(
+    (o) => o.visibility_scope === VisibilityScope.RESPONSIBLES_OF_LEARNER,
+  )
   @IsString()
   learner_id?: string;
 
@@ -218,8 +232,8 @@ export class UpdateHighlightVisibilityDto {
  */
 export class CreateAnnotationCommentDto {
   @ApiProperty({
-    description: 'Comment text',
-    example: 'I agree with this point',
+    description: "Comment text",
+    example: "I agree with this point",
   })
   @IsString()
   text: string;

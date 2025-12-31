@@ -34,42 +34,44 @@ describe("Institutional Registration (Integration)", () => {
     prisma = app.get<PrismaService>(PrismaService);
 
     // Clean up test data
-    await prisma.institutionMember.deleteMany({});
-    await prisma.institutionInvite.deleteMany({});
-    await prisma.institutionDomain.deleteMany({});
-    await prisma.pendingUserApproval.deleteMany({});
-    await prisma.institution.deleteMany({
+    await prisma.institution_members.deleteMany({});
+    await prisma.institution_invites.deleteMany({});
+    await prisma.institution_domains.deleteMany({});
+    await prisma.pending_user_approvals.deleteMany({});
+    await prisma.institutions.deleteMany({
       where: { name: { contains: "Test Institution" } },
     });
-    await prisma.user.deleteMany({
+    await prisma.users.deleteMany({
       where: { email: { contains: "@inst-test.com" } },
     });
 
     // Ensure FREE plan exists
-    await prisma.plan.upsert({
+    await prisma.plans.upsert({
       where: { code: "FREE" },
       update: {},
       create: {
+        id: "FREE_PLAN", // Added id as it likely requires one
         code: "FREE",
         name: "Free Plan",
         description: "Basic access",
         entitlements: {},
-        monthlyPrice: 0,
-        yearlyPrice: 0,
-        isActive: true,
+        monthly_price: 0,
+        yearly_price: 0,
+        is_active: true,
+        updated_at: new Date(),
       },
     });
   });
 
   afterAll(async () => {
-    await prisma.institutionMember.deleteMany({});
-    await prisma.institutionInvite.deleteMany({});
-    await prisma.institutionDomain.deleteMany({});
-    await prisma.pendingUserApproval.deleteMany({});
-    await prisma.institution.deleteMany({
+    await prisma.institution_members.deleteMany({});
+    await prisma.institution_invites.deleteMany({});
+    await prisma.institution_domains.deleteMany({});
+    await prisma.pending_user_approvals.deleteMany({});
+    await prisma.institutions.deleteMany({
       where: { name: { contains: "Test Institution" } },
     });
-    await prisma.user.deleteMany({
+    await prisma.users.deleteMany({
       where: { email: { contains: "@inst-test.com" } },
     });
 
@@ -79,16 +81,16 @@ describe("Institutional Registration (Integration)", () => {
   describe("Setup: Create Admin User and Institution", () => {
     /**
      * IMPORTANT: This test uses TWO separate users with different roles:
-     * 
+     *
      * 1. GLOBAL ADMIN (global-admin@test.com, role: ADMIN)
      *    - Can create institutions
      *    - Cannot manage individual institutions
-     * 
+     *
      * 2. INSTITUTION ADMIN (admin@inst-test.com, role: INSTITUTION_ADMIN)
      *    - Cannot create institutions
      *    - Can manage their institution (invites, domains, etc.)
      *    - Must be added as institutionMember
-     * 
+     *
      * Email/Name/Role MUST be coherent:
      * - Email domain suggests scope (global vs institution)
      * - Name reflects the user's role
@@ -97,11 +99,20 @@ describe("Institutional Registration (Integration)", () => {
 
     it("should create institution using global admin", async () => {
       // Clean up existing users + their owned institutions/memberships
-      await prisma.institution.deleteMany({
+      await prisma.institutions.deleteMany({
         where: { name: "Test Institution" },
       });
-      await prisma.user.deleteMany({
-        where: { email: { in: ["global-admin@test.com", "admin@inst-test.com", "teacher@inst-test.com", "student@inst-test.com"] } },
+      await prisma.users.deleteMany({
+        where: {
+          email: {
+            in: [
+              "global-admin@test.com",
+              "admin@inst-test.com",
+              "teacher@inst-test.com",
+              "student@inst-test.com",
+            ],
+          },
+        },
       });
 
       // Register GLOBAL ADMIN
@@ -167,13 +178,13 @@ describe("Institutional Registration (Integration)", () => {
       adminToken = instAdminLogin.body.access_token;
       adminUserId = instAdminLogin.body.user.id;
 
-      // CRITICAL: Add INSTITUTION_ADMIN as member of the institution
+      // CRITICAL: Add INSTITUTION_EDUCATION_ADMIN as member of the institution
       // Without this, they won't have permission to manage invites/domains
-      await prisma.institutionMember.create({
+      await prisma.institution_members.create({
         data: {
-          userId: adminUserId,
-          institutionId,
-          role: "INSTITUTION_ADMIN",
+          user_id: adminUserId,
+          institution_id: institutionId,
+          role: "INSTITUTION_EDUCATION_ADMIN",
           status: "ACTIVE",
         },
       });
@@ -218,10 +229,10 @@ describe("Institutional Registration (Integration)", () => {
       expect(registerResponse.body.email).toBe("teacher@inst-test.com");
 
       // Verify InstitutionMember was created
-      const member = await prisma.institutionMember.findFirst({
+      const member = await prisma.institution_members.findFirst({
         where: {
-          userId: registerResponse.body.id,
-          institutionId,
+          user_id: registerResponse.body.id,
+          institution_id: institutionId,
         },
       });
 
@@ -231,11 +242,11 @@ describe("Institutional Registration (Integration)", () => {
     });
 
     it("should mark invite as used", async () => {
-      const invite = await prisma.institutionInvite.findUnique({
+      const invite = await prisma.institution_invites.findUnique({
         where: { token: inviteToken },
       });
 
-      expect(invite.usedAt).not.toBeNull();
+      expect(invite.used_at).not.toBeNull();
     });
   });
 
@@ -252,7 +263,7 @@ describe("Institutional Registration (Integration)", () => {
         .expect(201);
 
       expect(response.body.domain).toBe("@inst-test.com");
-      expect(response.body.autoApprove).toBe(true);
+      expect(response.body.auto_approve).toBe(true);
     });
 
     it("should auto-approve registration for domain email", async () => {
@@ -268,10 +279,10 @@ describe("Institutional Registration (Integration)", () => {
       expect(response.body.email).toBe("student@inst-test.com");
 
       // Verify InstitutionMember was created with default role
-      const member = await prisma.institutionMember.findFirst({
+      const member = await prisma.institution_members.findFirst({
         where: {
-          userId: response.body.id,
-          institutionId,
+          user_id: response.body.id,
+          institution_id: institutionId,
         },
       });
 
@@ -286,15 +297,15 @@ describe("Institutional Registration (Integration)", () => {
 
     beforeAll(async () => {
       // Update institution to require approval
-      await prisma.institution.update({
+      await prisma.institutions.update({
         where: { id: institutionId },
-        data: { requiresApproval: true },
+        data: { requires_approval: true },
       });
 
       // Update domain to NOT auto-approve
-      await prisma.institutionDomain.update({
+      await prisma.institution_domains.update({
         where: { domain: "@inst-test.com" },
-        data: { autoApprove: false },
+        data: { auto_approve: false },
       });
     });
 
@@ -314,7 +325,7 @@ describe("Institutional Registration (Integration)", () => {
       pendingApprovalId = response.body.approvalId;
 
       // Verify PendingUserApproval was created
-      const pending = await prisma.pendingUserApproval.findUnique({
+      const pending = await prisma.pending_user_approvals.findUnique({
         where: { id: pendingApprovalId },
       });
 
@@ -351,7 +362,7 @@ describe("Institutional Registration (Integration)", () => {
         .expect(200);
 
       // Verify User was created
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { email: "pending@inst-test.com" },
       });
 
@@ -359,10 +370,10 @@ describe("Institutional Registration (Integration)", () => {
       expect(user.status).toBe("ACTIVE");
 
       // Verify InstitutionMember was created
-      const member = await prisma.institutionMember.findFirst({
+      const member = await prisma.institution_members.findFirst({
         where: {
-          userId: user.id,
-          institutionId,
+          user_id: user.id,
+          institution_id: institutionId,
         },
       });
 
@@ -370,12 +381,12 @@ describe("Institutional Registration (Integration)", () => {
       expect(member.status).toBe("ACTIVE");
 
       // Verify approval status updated
-      const approval = await prisma.pendingUserApproval.findUnique({
+      const approval = await prisma.pending_user_approvals.findUnique({
         where: { id: pendingApprovalId },
       });
 
       expect(approval.status).toBe("APPROVED");
-      expect(approval.reviewedBy).toBe(adminUserId);
+      expect(approval.reviewed_by).toBe(adminUserId);
     });
   });
 
@@ -407,7 +418,7 @@ describe("Institutional Registration (Integration)", () => {
         .expect(200);
 
       // Verify invite was deleted
-      const invite = await prisma.institutionInvite.findUnique({
+      const invite = await prisma.institution_invites.findUnique({
         where: { id: cancelInviteId },
       });
 
@@ -428,7 +439,7 @@ describe("Institutional Registration (Integration)", () => {
         (i) => i.email === "teacher@inst-test.com",
       );
       expect(teacherInvite).toBeDefined();
-      expect(teacherInvite.usedAt).not.toBeNull();
+      expect(teacherInvite.used_at).not.toBeNull();
     });
   });
 

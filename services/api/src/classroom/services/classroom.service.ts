@@ -1,110 +1,58 @@
-import { Injectable, BadRequestException } from "@nestjs/common";
-import { PrismaService } from "../../prisma/prisma.service";
-import { ClassroomEventService } from "../../events/classroom-event.service";
+import { Injectable } from "@nestjs/common";
 import { CreateClassroomDto, UpdateClassroomDto } from "../dto/classroom.dto";
+import { CreateClassroomUseCase } from "../application/use-cases/create-classroom.use-case";
+import { GetClassroomUseCase } from "../application/use-cases/get-classroom.use-case";
+import { UpdateClassroomUseCase } from "../application/use-cases/update-classroom.use-case";
+import { DeleteClassroomUseCase } from "../application/use-cases/delete-classroom.use-case";
+import { GetEducatorClassroomsUseCase } from "../application/use-cases/get-educator-classrooms.use-case";
 
 @Injectable()
 export class ClassroomService {
   constructor(
-    private prisma: PrismaService,
-    private classroomEventService: ClassroomEventService,
+    private readonly createUseCase: CreateClassroomUseCase,
+    private readonly getUseCase: GetClassroomUseCase,
+    private readonly updateUseCase: UpdateClassroomUseCase,
+    private readonly deleteUseCase: DeleteClassroomUseCase,
+    private readonly getEducatorClassroomsUseCase: GetEducatorClassroomsUseCase,
   ) {}
 
   /**
    * Create a new classroom
    */
   async create(dto: CreateClassroomDto) {
-    const classroom = await this.prisma.classroom.create({
-      data: {
-        ownerEducatorUserId: dto.ownerEducatorUserId,
-        name: dto.name,
-        institutionId: dto.institutionId,
-        gradeLevel: dto.gradeLevel,
-      },
+    return this.createUseCase.execute({
+      name: dto.name,
+      ownerEducatorId: dto.ownerEducatorUserId,
+      institutionId: dto.institutionId as string,
+      gradeLevel: dto.gradeLevel,
     });
-
-    return classroom;
   }
 
   /**
-   * Get classroom by ID with enrollments
+   * Get classroom by ID
    */
   async getById(classroomId: string) {
-    return this.prisma.classroom.findUnique({
-      where: { id: classroomId },
-      include: {
-        owner: true,
-        enrollments: {
-          include: {
-            learner: true,
-          },
-        },
-        weeklyPlans: true,
-      },
-    });
+    return this.getUseCase.execute(classroomId);
   }
 
   /**
-   * Get all classrooms for an educator (optimized for browser extension)
+   * Get all classrooms for an educator
    */
   async getByEducator(educatorUserId: string) {
-    const classrooms = await this.prisma.classroom.findMany({
-      where: {
-        ownerEducatorUserId: educatorUserId,
-      },
-      select: {
-        id: true,
-        name: true,
-        gradeLevel: true,
-        _count: {
-          select: {
-            enrollments: true,
-          },
-        },
-      },
-    });
-
-    return {
-      classrooms: classrooms.map((c) => ({
-        classroomId: c.id,
-        name: c.name,
-        gradeLevel: c.gradeLevel || "N/A",
-        enrollmentCount: c._count.enrollments,
-      })),
-    };
+    return this.getEducatorClassroomsUseCase.execute(educatorUserId);
   }
 
   /**
    * Update classroom
    */
   async update(classroomId: string, dto: UpdateClassroomDto) {
-    return this.prisma.classroom.update({
-      where: { id: classroomId },
-      data: dto,
-    });
+    return this.updateUseCase.execute(classroomId, dto);
   }
 
   /**
    * Delete classroom
-   * @throws BadRequestException if classroom has active enrollments
    */
   async delete(classroomId: string) {
-    try {
-      return await this.prisma.classroom.delete({
-        where: { id: classroomId },
-      });
-    } catch (error) {
-      // Prisma error code P2003: Foreign key constraint failed
-      if (error.code === "P2003") {
-        throw new BadRequestException(
-          "Cannot delete classroom with active enrollments. Remove all students first.",
-        );
-      }
-      // Prisma error code P2025: Record not found
-      if (error.code === "P2025") {
-        throw new BadRequestException(`Classroom ${classroomId} not found`);
-      }
-      throw error;
-    }
+    return this.deleteUseCase.execute(classroomId);
   }
 }

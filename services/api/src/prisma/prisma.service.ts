@@ -25,14 +25,14 @@ export class PrismaService
    * Add model names as they get institution_id column
    */
   private readonly TENANT_MODELS = [
-    "ReadingSession",
-    "SessionEvent",
-    "UserVocabulary",
-    "CornellNote",
-    "Highlight",
-    "DailyGoal",
-    "Streak",
-    "UserBadge",
+    "reading_sessions",
+    "session_events",
+    "user_vocabularies",
+    "cornell_notes",
+    "highlights",
+    "daily_goals",
+    "streaks",
+    "user_badges",
   ];
 
   async onModuleInit() {
@@ -66,7 +66,7 @@ export class PrismaService
       if (this.isReadOperation(params.action)) {
         params.args.where = {
           ...params.args.where,
-          institutionId: user.institutionId,
+          institution_id: user.institutionId,
         };
       }
 
@@ -74,7 +74,7 @@ export class PrismaService
       if (params.action === "create") {
         params.args.data = {
           ...params.args.data,
-          institutionId: user.institutionId,
+          institution_id: user.institutionId,
         };
       }
 
@@ -83,7 +83,7 @@ export class PrismaService
         if (Array.isArray(params.args.data)) {
           params.args.data = params.args.data.map((item) => ({
             ...item,
-            institutionId: user.institutionId,
+            institution_id: user.institutionId,
           }));
         }
       }
@@ -92,7 +92,7 @@ export class PrismaService
       if (this.isWriteOperation(params.action)) {
         params.args.where = {
           ...params.args.where,
-          institutionId: user.institutionId,
+          institution_id: user.institutionId,
         };
       }
 

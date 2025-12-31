@@ -7,6 +7,8 @@ import {
   UpdateFamilyPolicyDto,
 } from "../dto/family-policy.dto";
 import { FAMILY_CONFIG } from "../../config/family-classroom.config";
+import { FamilyPolicyMapper } from "../../mappers/family-policy.mapper";
+import * as crypto from "crypto";
 
 @Injectable()
 export class FamilyPolicyService {
@@ -34,25 +36,27 @@ export class FamilyPolicyService {
    * ```
    */
   async create(dto: CreateFamilyPolicyDto) {
-    const policy = await this.prisma.familyPolicy.create({
+    const policy = await this.prisma.family_policies.create({
       data: {
-        familyId: dto.familyId,
-        learnerUserId: dto.learnerUserId,
-        timeboxDefaultMin:
+        id: crypto.randomUUID(),
+        family_id: dto.familyId,
+        learner_user_id: dto.learnerUserId,
+        timebox_default_min:
           dto.timeboxDefaultMin ?? FAMILY_CONFIG.POLICY.DEFAULT_TIMEBOX_MIN,
-        dailyMinMinutes:
+        daily_min_minutes:
           dto.dailyMinMinutes ?? FAMILY_CONFIG.POLICY.DEFAULT_DAILY_MIN_MINUTES,
-        dailyReviewCap:
+        daily_review_cap:
           dto.dailyReviewCap ?? FAMILY_CONFIG.POLICY.DEFAULT_DAILY_REVIEW_CAP,
-        coReadingDays: dto.coReadingDays ?? [],
-        coReadingTime: dto.coReadingTime,
-        toolWordsGateEnabled: dto.toolWordsGateEnabled ?? true,
-        privacyMode:
+        co_reading_days: dto.coReadingDays ?? [],
+        co_reading_time: dto.coReadingTime,
+        tool_words_gate_enabled: dto.toolWordsGateEnabled ?? true,
+        privacy_mode:
           dto.privacyMode ?? FAMILY_CONFIG.POLICY.DEFAULT_PRIVACY_MODE,
+        updated_at: new Date(),
       },
       include: {
-        family: true,
-        learner: true,
+        families: true,
+        users: true,
       },
     });
 
@@ -67,19 +71,19 @@ export class FamilyPolicyService {
           householdId: dto.familyId,
           learnerUserId: dto.learnerUserId,
           policy: {
-            timeboxDefaultMin: policy.timeboxDefaultMin,
-            coReadingDays: policy.coReadingDays,
-            coReadingTime: policy.coReadingTime || "",
-            toolWordsGateEnabled: policy.toolWordsGateEnabled,
-            dailyMinMinutes: policy.dailyMinMinutes,
-            dailyReviewCap: policy.dailyReviewCap,
-            privacyMode: policy.privacyMode,
+            timeboxDefaultMin: policy.timebox_default_min,
+            coReadingDays: policy.co_reading_days,
+            coReadingTime: policy.co_reading_time || "",
+            toolWordsGateEnabled: policy.tool_words_gate_enabled,
+            dailyMinMinutes: policy.daily_min_minutes,
+            dailyReviewCap: policy.daily_review_cap,
+            privacyMode: policy.privacy_mode,
           },
         },
       },
     );
 
-    return policy;
+    return FamilyPolicyMapper.toDto(policy);
   }
 
   /**
@@ -91,16 +95,16 @@ export class FamilyPolicyService {
    * @throws {NotFoundException} If policy doesn't exist for this family/learner combination
    */
   async getByFamilyAndLearner(familyId: string, learnerUserId: string) {
-    const policy = await this.prisma.familyPolicy.findUnique({
+    const policy = await this.prisma.family_policies.findUnique({
       where: {
-        familyId_learnerUserId: {
-          familyId,
-          learnerUserId,
+        family_id_learner_user_id: {
+          family_id: familyId,
+          learner_user_id: learnerUserId,
         },
       },
       include: {
-        family: true,
-        learner: true,
+        families: true,
+        users: true,
       },
     });
 
@@ -110,7 +114,7 @@ export class FamilyPolicyService {
       );
     }
 
-    return policy;
+    return FamilyPolicyMapper.toDto(policy);
   }
 
   /**
@@ -129,14 +133,23 @@ export class FamilyPolicyService {
     learnerUserId: string,
     dto: UpdateFamilyPolicyDto,
   ) {
-    const policy = await this.prisma.familyPolicy.update({
+    const policy = await this.prisma.family_policies.update({
       where: {
-        familyId_learnerUserId: {
-          familyId,
-          learnerUserId,
+        family_id_learner_user_id: {
+          family_id: familyId,
+          learner_user_id: learnerUserId,
         },
       },
-      data: dto,
+      data: {
+        timebox_default_min: dto.timeboxDefaultMin,
+        daily_min_minutes: dto.dailyMinMinutes,
+        daily_review_cap: dto.dailyReviewCap,
+        co_reading_days: dto.coReadingDays,
+        co_reading_time: dto.coReadingTime,
+        tool_words_gate_enabled: dto.toolWordsGateEnabled,
+        privacy_mode: dto.privacyMode,
+        updated_at: new Date(),
+      },
     });
 
     // Log update event
@@ -150,19 +163,19 @@ export class FamilyPolicyService {
           householdId: familyId,
           learnerUserId,
           policy: {
-            timeboxDefaultMin: policy.timeboxDefaultMin,
-            coReadingDays: policy.coReadingDays,
-            coReadingTime: policy.coReadingTime || "",
-            toolWordsGateEnabled: policy.toolWordsGateEnabled,
-            dailyMinMinutes: policy.dailyMinMinutes,
-            dailyReviewCap: policy.dailyReviewCap,
-            privacyMode: policy.privacyMode,
+            timeboxDefaultMin: policy.timebox_default_min,
+            coReadingDays: policy.co_reading_days,
+            coReadingTime: policy.co_reading_time || "",
+            toolWordsGateEnabled: policy.tool_words_gate_enabled,
+            dailyMinMinutes: policy.daily_min_minutes,
+            dailyReviewCap: policy.daily_review_cap,
+            privacyMode: policy.privacy_mode,
           },
         },
       },
     );
 
-    return policy;
+    return FamilyPolicyMapper.toDto(policy);
   }
 
   /**
@@ -173,7 +186,7 @@ export class FamilyPolicyService {
    * @throws {NotFoundException} If policy doesn't exist
    */
   async getConfirmationPrompt(policyId: string) {
-    const policy = await this.prisma.familyPolicy.findUnique({
+    const policy = await this.prisma.family_policies.findUnique({
       where: { id: policyId },
     });
 
@@ -182,7 +195,7 @@ export class FamilyPolicyService {
     }
 
     return this.promptLibrary.getPrompt("FAM_CONTRACT_CONFIRM", {
-      MIN: policy.timeboxDefaultMin,
+      MIN: policy.timebox_default_min,
     });
   }
 

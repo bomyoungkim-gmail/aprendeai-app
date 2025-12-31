@@ -57,15 +57,15 @@ export class AnnotationExportService {
               .font("Helvetica")
               .fillColor("#666")
               .text(
-                `${index + 1}. ${new Date(annotation.createdAt).toLocaleDateString()}`,
+                `${index + 1}. ${new Date(annotation.created_at).toLocaleDateString()}`,
               );
 
-            if (annotation.selectedText) {
+            if (annotation.selected_text) {
               doc
                 .fontSize(11)
                 .font("Helvetica-Oblique")
                 .fillColor("#444")
-                .text(`"${annotation.selectedText}"`, { indent: 20 });
+                .text(`"${annotation.selected_text}"`, { indent: 20 });
             }
 
             if (annotation.text) {
@@ -105,10 +105,10 @@ export class AnnotationExportService {
         markdown += `## ${contentTitle}\n\n`;
 
         annots.forEach((annotation, index) => {
-          markdown += `### ${index + 1}. ${new Date(annotation.createdAt).toLocaleDateString()}\n\n`;
+          markdown += `### ${index + 1}. ${new Date(annotation.created_at).toLocaleDateString()}\n\n`;
 
-          if (annotation.selectedText) {
-            markdown += `> ${annotation.selectedText}\n\n`;
+          if (annotation.selected_text) {
+            markdown += `> ${annotation.selected_text}\n\n`;
           }
 
           if (annotation.text) {
@@ -131,17 +131,17 @@ export class AnnotationExportService {
    * Get annotations for export
    */
   private async getAnnotationsForExport(userId: string) {
-    return this.prisma.annotation.findMany({
-      where: { userId },
+    return this.prisma.annotations.findMany({
+      where: { user_id: userId },
       include: {
-        content: {
+        contents: {
           select: { title: true },
         },
-        user: {
+        users: {
           select: { name: true },
         },
       },
-      orderBy: [{ content: { title: "asc" } }, { createdAt: "asc" }],
+      orderBy: [{ contents: { title: "asc" } }, { created_at: "asc" }],
     });
   }
 
@@ -150,7 +150,7 @@ export class AnnotationExportService {
    */
   private groupByContent(annotations: any[]): Record<string, any[]> {
     return annotations.reduce((acc, annotation) => {
-      const title = annotation.content.title;
+      const title = annotation.contents.title;
       if (!acc[title]) {
         acc[title] = [];
       }

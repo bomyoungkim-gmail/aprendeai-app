@@ -27,19 +27,26 @@ import {
   UpdateSettingsDto,
   ChangePasswordDto,
 } from "./dto/user.dto";
+import { UserMapper } from "./infrastructure/user.mapper";
+import { GetProfileUseCase } from "./application/get-profile.use-case";
+import { UpdateProfileUseCase } from "./application/update-profile.use-case";
 
 @ApiTags("users")
 @Controller("users")
 @UseGuards(AuthGuard("jwt"))
 @ApiBearerAuth()
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(
+    private usersService: UsersService,
+    private getProfileUseCase: GetProfileUseCase,
+    private updateProfileUseCase: UpdateProfileUseCase,
+  ) {}
 
   @Get("me")
   @ApiOperation({ summary: "Get current user profile" })
   @ApiResponse({ status: 200, description: "Returns user profile" })
   async getCurrentUser(@Request() req) {
-    return this.usersService.findById(req.user.id);
+    return this.getProfileUseCase.execute(req.user.id);
   }
 
   @Get("me/context")
@@ -56,7 +63,7 @@ export class UsersController {
   @ApiOperation({ summary: "Update user profile" })
   @ApiResponse({ status: 200, description: "Profile updated successfully" })
   async updateProfile(@Request() req, @Body() updateDto: UpdateProfileDto) {
-    return this.usersService.updateProfile(req.user.id, updateDto);
+    return this.updateProfileUseCase.execute(req.user.id, updateDto);
   }
 
   @Post("me/avatar")
@@ -88,7 +95,8 @@ export class UsersController {
     // For now, we'll use a local path (in production, use S3)
     const avatarUrl = `/uploads/avatars/${req.user.id}-${Date.now()}.${file.mimetype.split("/")[1]}`;
 
-    return this.usersService.updateAvatar(req.user.id, avatarUrl);
+    const user = await this.usersService.updateAvatar(req.user.id, avatarUrl);
+    return UserMapper.toDto(user);
   }
 
   @Get("me/stats")
@@ -112,17 +120,17 @@ export class UsersController {
     return this.usersService.getSettings(req.user.id);
   }
 
-  @Get('me/entitlements')
-  @ApiOperation({ summary: 'Get user entitlements' })
-  @ApiResponse({ status: 200, description: 'Returns user entitlements' })
+  @Get("me/entitlements")
+  @ApiOperation({ summary: "Get user entitlements" })
+  @ApiResponse({ status: 200, description: "Returns user entitlements" })
   async getEntitlements(@Request() req) {
     // Import EntitlementsService if not already imported
     // For now, return a basic FREE plan entitlement
     return {
-      id: 'default',
+      id: "default",
       userId: req.user.id,
-      source: 'DIRECT',
-      planType: 'FREE',
+      source: "DIRECT",
+      planType: "FREE",
       limits: {
         maxContentsPerMonth: 10,
         maxStorageMB: 100,
@@ -141,7 +149,11 @@ export class UsersController {
   @ApiOperation({ summary: "Update user settings" })
   @ApiResponse({ status: 200, description: "Settings updated successfully" })
   async updateSettings(@Request() req, @Body() settingsDto: UpdateSettingsDto) {
-    return this.usersService.updateSettings(req.user.id, settingsDto);
+    const user = await this.usersService.updateSettings(
+      req.user.id,
+      settingsDto,
+    );
+    return UserMapper.toDto(user);
   }
 
   @Put("me/password")

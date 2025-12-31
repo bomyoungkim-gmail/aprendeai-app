@@ -39,14 +39,16 @@ describe("Extension Auth Integration Tests (e2e)", () => {
     // Ensure unique email
     userData.email = `ext_test_${Date.now()}@example.com`;
 
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
+        id: `user-ext-${Date.now()}`,
         email: userData.email,
         name: userData.name,
-        passwordHash: "hash", // Mock hash
-        role: "COMMON_USER",
+        password_hash: "hash", // Mock hash
+        last_context_role: "STUDENT",
         status: "ACTIVE",
-        schoolingLevel: "HIGHER_EDUCATION",
+        schooling_level: "HIGHER_EDUCATION",
+        updated_at: new Date(),
       },
     });
 
@@ -58,9 +60,11 @@ describe("Extension Auth Integration Tests (e2e)", () => {
   afterAll(async () => {
     // Cleanup
     if (userId) {
-      await prisma.extensionDeviceAuth.deleteMany({ where: { userId } });
-      await prisma.extensionGrant.deleteMany({ where: { userId } });
-      await prisma.user.delete({ where: { id: userId } });
+      await prisma.extension_device_auth.deleteMany({
+        where: { user_id: userId },
+      });
+      await prisma.extension_grants.deleteMany({ where: { user_id: userId } });
+      await prisma.users.delete({ where: { id: userId } }).catch(() => {});
     }
 
     await prisma.$disconnect();

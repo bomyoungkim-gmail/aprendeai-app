@@ -7,9 +7,10 @@ import {
 } from "./annotation.controller";
 import { PrismaModule } from "../prisma/prisma.module";
 import { WebSocketModule } from "../websocket/websocket.module";
+import { SharingModule } from "../sharing/sharing.module";
 
 @Module({
-  imports: [PrismaModule, WebSocketModule],
+  imports: [PrismaModule, WebSocketModule, SharingModule],
   controllers: [AnnotationController, AnnotationSearchController],
   providers: [AnnotationService, AnnotationExportService],
   exports: [AnnotationService],

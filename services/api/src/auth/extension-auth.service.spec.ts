@@ -22,7 +22,7 @@ describe("ExtensionAuthService", () => {
       findFirst: jest.fn(),
       update: jest.fn(),
     },
-    user: {
+    users: {
       findUnique: jest.fn(),
     },
   };
@@ -112,6 +112,13 @@ describe("ExtensionAuthService", () => {
       mockPrisma.extensionDeviceAuth.findUnique.mockResolvedValue(mockAuth);
       mockPrisma.extensionDeviceAuth.delete.mockResolvedValue({});
       mockPrisma.extensionGrant.create.mockResolvedValue({});
+      mockPrisma.users.findUnique.mockResolvedValue({
+        id: "user-1",
+        email: "test@test.com",
+        system_role: "USER",
+        context_role: "OWNER",
+        institution_id: null,
+      });
       mockJwtService.sign.mockReturnValue("mock_token");
       mockJwtService.decode.mockReturnValue({ jti: "mock_jti" });
 
@@ -160,6 +167,13 @@ describe("ExtensionAuthService", () => {
         userId: "u1",
         scopes: [],
         clientId: "c1",
+      });
+      mockPrisma.users.findUnique.mockResolvedValue({
+        id: "u1",
+        email: "test@test.com",
+        system_role: "USER",
+        context_role: "OWNER",
+        institution_id: null,
       });
       mockJwtService.sign.mockReturnValue("new_token");
 

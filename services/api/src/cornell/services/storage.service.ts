@@ -16,7 +16,7 @@ export class StorageService {
   async getFileViewUrl(
     fileId: string,
   ): Promise<{ url: string; expiresAt: string }> {
-    const file = await this.prisma.file.findUnique({ where: { id: fileId } });
+    const file = await this.prisma.files.findUnique({ where: { id: fileId } });
     if (!file) throw new NotFoundException("File not found");
 
     const provider = this.config.get("STORAGE_PROVIDER", "LOCAL");
@@ -58,7 +58,7 @@ export class StorageService {
 
   async streamFile(fileId: string, res: Response) {
     console.log(`[StorageService] Streaming file: ${fileId}`);
-    const file = await this.prisma.file.findUnique({ where: { id: fileId } });
+    const file = await this.prisma.files.findUnique({ where: { id: fileId } });
     if (!file) {
       console.error(`[StorageService] File record not found in DB: ${fileId}`);
       throw new NotFoundException("File not found");
@@ -71,7 +71,7 @@ export class StorageService {
 
     const uploadPath = this.config.get("STORAGE_LOCAL_PATH", "./uploads");
     const filePath = path.join(uploadPath, safeKey);
-    
+
     console.log(`[StorageService] Resolved path: ${filePath}`);
     console.log(`[StorageService] Absolute path: ${path.resolve(filePath)}`);
 

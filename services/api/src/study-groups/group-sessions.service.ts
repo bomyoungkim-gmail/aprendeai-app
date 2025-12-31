@@ -2,9 +2,10 @@ import { Injectable, BadRequestException, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { StudyGroupsService } from "./study-groups.service";
 import { CreateSessionDto } from "./dto/create-session.dto";
-import { GroupSession, SessionRole } from "@prisma/client";
+import { group_sessions as GroupSession, SessionRole } from "@prisma/client";
 import { StudyGroupsWebSocketGateway } from "../websocket/study-groups-ws.gateway";
 import { StudyGroupEvent } from "../websocket/events";
+import * as crypto from "crypto";
 
 @Injectable()
 export class GroupSessionsService {
@@ -17,16 +18,16 @@ export class GroupSessionsService {
   ) {}
 
   async createSession(
-    groupId: string,
-    userId: string,
+    group_id: string,
+    user_id: string,
     dto: CreateSessionDto,
   ): Promise<GroupSession> {
     // Verify user is active member
-    await this.studyGroupsService.assertMembership(groupId, userId);
+    await this.studyGroupsService.assertMembership(group_id, user_id);
 
     // Verify content exists
-    const content = await this.prisma.content.findUnique({
-      where: { id: dto.contentId },
+    const content = await this.prisma.contents.findUnique({
+      where: { id: dto.content_id },
     });
 
     if (!content) {
@@ -34,7 +35,7 @@ export class GroupSessionsService {
     }
 
     // Get active members
-    const members = await this.studyGroupsService.getActiveMembers(groupId);
+    const members = await this.studyGroupsService.getActiveMembers(group_id);
 
     if (members.length < 2) {
       throw new BadRequestException(
@@ -45,10 +46,11 @@ export class GroupSessionsService {
     // Create session with rounds and role assignments in transaction
     const newSession = await this.prisma.$transaction(async (tx) => {
       // 1. Create session
-      const session = await tx.groupSession.create({
+      const session = await tx.group_sessions.create({
         data: {
-          groupId,
-          contentId: dto.contentId,
+          id: crypto.randomUUID(),
+          study_groups: { connect: { id: group_id } },
+          contents: { connect: { id: dto.content_id } },
           mode: dto.mode || "PI_SPRINT",
           layer: dto.layer || "L1",
           status: "CREATED",
@@ -56,56 +58,57 @@ export class GroupSessionsService {
       });
 
       // 2. Assign roles (deterministic rotation)
-      await this.assignRoles(tx, session.id, groupId, members);
+      await this.assignRoles(tx, session.id, group_id, members);
 
       // 3. Create rounds
       const timers = this.getDefaultTimers(dto.layer || "L1");
       const roundsData = [];
 
-      for (let i = 1; i <= dto.roundsCount; i++) {
+      for (let i = 1; i <= dto.rounds_count; i++) {
         roundsData.push({
-          sessionId: session.id,
-          roundIndex: i,
-          roundType: "PI",
-          promptJson: { prompt_text: "", options: null },
-          timingJson: timers,
+          id: crypto.randomUUID(),
+          session_id: session.id,
+          round_index: i,
+          round_type: "PI",
+          prompt_json: { prompt_text: "", options: null },
+          timing_json: timers,
           status: "CREATED",
         });
       }
 
-      await tx.groupRound.createMany({ data: roundsData });
+      await tx.group_rounds.createMany({ data: roundsData });
 
       this.logger.log(
-        `Created session ${session.id} with ${dto.roundsCount} rounds for group ${groupId}`,
+        `Created session ${session.id} with ${dto.rounds_count} rounds for group ${group_id}`,
       );
 
       return session;
     });
 
-    return this.getSession(newSession.id, userId);
+    return this.getSession(newSession.id, user_id);
   }
 
-  async getSession(sessionId: string, userId: string) {
-    const session = await this.prisma.groupSession.findUnique({
+  async getSession(sessionId: string, user_id: string) {
+    const session = await this.prisma.group_sessions.findUnique({
       where: { id: sessionId },
       include: {
-        group: {
+        study_groups: {
           include: {
-            members: true, // Eager load for permission checks
+            study_group_members: true, // Eager load for permission checks
           },
         },
-        content: {
+        contents: {
           select: { id: true, title: true, type: true },
         },
-        members: {
+        group_session_members: {
           include: {
-            user: {
+            users: {
               select: { id: true, name: true, email: true },
             },
           },
         },
-        rounds: {
-          orderBy: { roundIndex: "asc" },
+        group_rounds: {
+          orderBy: { round_index: "asc" },
         },
       },
     });
@@ -115,23 +118,23 @@ export class GroupSessionsService {
     }
 
     // Verify user is member
-    await this.studyGroupsService.assertMembership(session.groupId, userId);
+    await this.studyGroupsService.assertMembership(session.group_id, user_id);
 
     return session;
   }
 
-  async startSession(sessionId: string, userId: string): Promise<void> {
-    const session = await this.getSession(sessionId, userId);
+  async startSession(sessionId: string, user_id: string): Promise<void> {
+    const session = await this.getSession(sessionId, user_id);
 
     if (session.status !== "CREATED") {
       throw new BadRequestException("Session already started");
     }
 
-    await this.prisma.groupSession.update({
+    await this.prisma.group_sessions.update({
       where: { id: sessionId },
       data: {
         status: "RUNNING",
-        startsAt: new Date(),
+        starts_at: new Date(),
       },
     });
 
@@ -139,7 +142,7 @@ export class GroupSessionsService {
     this.wsGateway.emitToSession(sessionId, StudyGroupEvent.SESSION_STARTED, {
       sessionId,
       status: "RUNNING",
-      startedBy: userId,
+      startedBy: user_id,
     });
 
     this.logger.log(`Started session ${sessionId}`);
@@ -147,22 +150,22 @@ export class GroupSessionsService {
 
   async updateSessionStatus(
     sessionId: string,
-    userId: string,
+    user_id: string,
     status: string,
   ): Promise<void> {
-    const session = await this.getSession(sessionId, userId);
+    const session = await this.getSession(sessionId, user_id);
 
     // Only FACILITATOR or OWNER/MOD can update status
-    const member = await this.prisma.groupSessionMember.findUnique({
-      where: { sessionId_userId: { sessionId, userId } },
+    const member = await this.prisma.group_session_members.findUnique({
+      where: { session_id_user_id: { session_id: sessionId, user_id } },
     });
 
-    const groupMember = await this.prisma.studyGroupMember.findUnique({
-      where: { groupId_userId: { groupId: session.groupId, userId } },
+    const groupMember = await this.prisma.study_group_members.findUnique({
+      where: { group_id_user_id: { group_id: session.group_id, user_id } },
     });
 
     const canUpdate =
-      member?.assignedRole === "FACILITATOR" ||
+      member?.assigned_role === "FACILITATOR" ||
       ["OWNER", "MOD"].includes(groupMember?.role);
 
     if (!canUpdate) {
@@ -173,24 +176,24 @@ export class GroupSessionsService {
 
     const updates: any = { status };
     if (status === "FINISHED") {
-      updates.endsAt = new Date();
+      updates.ends_at = new Date();
     }
 
-    await this.prisma.groupSession.update({
+    await this.prisma.group_sessions.update({
       where: { id: sessionId },
       data: updates,
     });
   }
 
-  async getGroupSessions(groupId: string) {
-    return this.prisma.groupSession.findMany({
-      where: { groupId },
+  async getGroupSessions(group_id: string) {
+    return this.prisma.group_sessions.findMany({
+      where: { group_id },
       include: {
         _count: {
-          select: { rounds: true },
+          select: { group_rounds: true },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
     });
   }
 
@@ -198,18 +201,18 @@ export class GroupSessionsService {
   private async assignRoles(
     tx: any,
     sessionId: string,
-    groupId: string,
+    group_id: string,
     members: any[],
   ) {
-    // Stable sort by userId (alphabetical)
+    // Stable sort by user_id
     const sorted = [...members].sort((a, b) =>
-      a.userId.localeCompare(b.userId),
+      a.user_id.localeCompare(b.user_id),
     );
 
     // Get number of completed sessions for rotation offset
-    const completedCount = await tx.groupSession.count({
+    const completedCount = await tx.group_sessions.count({
       where: {
-        groupId,
+        group_id,
         status: { in: ["FINISHED"] },
       },
     });
@@ -231,14 +234,14 @@ export class GroupSessionsService {
       const role = roles[i];
 
       assignments.push({
-        sessionId,
-        userId: sorted[memberIndex].userId,
-        assignedRole: role,
-        attendanceStatus: "JOINED",
+        session_id: sessionId,
+        user_id: sorted[memberIndex].user_id,
+        assigned_role: role,
+        attendance_status: "JOINED",
       });
     }
 
-    await tx.groupSessionMember.createMany({ data: assignments });
+    await tx.group_session_members.createMany({ data: assignments });
 
     this.logger.log(
       `Assigned ${assignments.length} roles for session ${sessionId}, offset=${offset}`,

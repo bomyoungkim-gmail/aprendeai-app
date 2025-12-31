@@ -19,7 +19,7 @@ export class ExtractionService {
 
   async requestExtraction(contentId: string, userId: string) {
     // 1. Check if content exists and user has access
-    const content = await this.prisma.content.findUnique({
+    const content = await this.prisma.contents.findUnique({
       where: { id: contentId },
     });
 
@@ -28,7 +28,7 @@ export class ExtractionService {
     }
 
     // Simple ownership check (can be expanded later)
-    if (content.ownerUserId !== userId && content.createdBy !== userId) {
+    if (content.owner_user_id !== userId && content.created_by !== userId) {
       throw new ForbiddenException("No access to this content");
     }
 
@@ -52,14 +52,14 @@ export class ExtractionService {
     }
 
     // 3. Get or create extraction record
-    let extraction = await this.prisma.contentExtraction.findUnique({
-      where: { contentId },
+    let extraction = await this.prisma.content_extractions.findUnique({
+      where: { content_id: contentId },
     });
 
     if (!extraction) {
-      extraction = await this.prisma.contentExtraction.create({
+      extraction = await this.prisma.content_extractions.create({
         data: {
-          contentId,
+          content_id: contentId,
           status: "PENDING",
         },
       });
@@ -73,9 +73,9 @@ export class ExtractionService {
 
     // 4. Update status to PENDING (if was FAILED before)
     if (extraction.status === "FAILED") {
-      extraction = await this.prisma.contentExtraction.update({
+      extraction = await this.prisma.content_extractions.update({
         where: { id: extraction.id },
-        data: { status: "PENDING", updatedAt: new Date() },
+        data: { status: "PENDING", updated_at: new Date() },
       });
     }
 
@@ -95,10 +95,11 @@ export class ExtractionService {
   }
 
   async getExtractionStatus(contentId: string) {
-    const extraction = await this.prisma.contentExtraction.findUnique({
-      where: { contentId },
+    const extraction = await this.prisma.content_extractions.findUnique({
+      where: { content_id: contentId },
       include: {
-        content: {
+        contents: {
+          // Changed from content to contents
           select: {
             title: true,
             type: true,
@@ -118,20 +119,20 @@ export class ExtractionService {
     const where: any = { contentId };
 
     if (page !== undefined) {
-      where.pageNumber = page;
+      where.page_number = page;
     }
 
     if (range) {
       const [start, end] = range.split("-").map(Number);
-      where.chunkIndex = {
+      where.chunk_index = {
         gte: start,
         lte: end,
       };
     }
 
-    const chunks = await this.prisma.contentChunk.findMany({
+    const chunks = await this.prisma.content_chunks.findMany({
       where,
-      orderBy: { chunkIndex: "asc" },
+      orderBy: { chunk_index: "asc" },
       take: 50, // Max 50 chunks per request
     });
 

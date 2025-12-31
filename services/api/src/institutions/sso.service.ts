@@ -6,6 +6,7 @@ import {
 import { PrismaService } from "../prisma/prisma.service";
 import { AdminService } from "../admin/admin.service";
 import { SSOProvider } from "@prisma/client";
+import { randomUUID } from "crypto";
 
 interface CreateSSOConfigDto {
   institutionId: string;
@@ -40,7 +41,7 @@ export class SSOService {
    */
   async createConfig(dto: CreateSSOConfigDto, createdBy: string) {
     // Validate institution exists
-    const institution = await this.prisma.institution.findUnique({
+    const institution = await this.prisma.institutions.findUnique({
       where: { id: dto.institutionId },
     });
 
@@ -49,8 +50,8 @@ export class SSOService {
     }
 
     // Check if SSO already configured
-    const existing = await this.prisma.sSOConfiguration.findFirst({
-      where: { institutionId: dto.institutionId },
+    const existing = await this.prisma.sso_configurations.findFirst({
+      where: { institution_id: dto.institutionId },
     });
 
     if (existing) {
@@ -62,24 +63,26 @@ export class SSOService {
     // Validate provider-specific fields
     this.validateProviderConfig(dto.provider, dto);
 
-    const config = await this.prisma.sSOConfiguration.create({
+    const config = await this.prisma.sso_configurations.create({
       data: {
-        institutionId: dto.institutionId,
+        id: randomUUID(),
+        institution_id: dto.institutionId,
         provider: dto.provider,
         enabled: false, // Disabled by default until tested
-        entityId: dto.entityId,
-        ssoUrl: dto.ssoUrl,
+        entity_id: dto.entityId,
+        sso_url: dto.ssoUrl,
         certificate: dto.certificate,
-        clientId: dto.clientId,
-        clientSecret: dto.clientSecret,
-        roleMapping: dto.roleMapping || {},
+        client_id: dto.clientId,
+        client_secret: dto.clientSecret,
+        role_mapping: dto.roleMapping || {},
+        updated_at: new Date(),
       },
     });
 
     // Update institution ssoEnabled flag
-    await this.prisma.institution.update({
+    await this.prisma.institutions.update({
       where: { id: dto.institutionId },
-      data: { ssoEnabled: true },
+      data: { sso_enabled: true, updated_at: new Date() },
     });
 
     // Audit log
@@ -98,10 +101,10 @@ export class SSOService {
    * Get SSO configuration for institution
    */
   async getConfig(institutionId: string) {
-    const config = await this.prisma.sSOConfiguration.findFirst({
-      where: { institutionId },
+    const config = await this.prisma.sso_configurations.findFirst({
+      where: { institution_id: institutionId },
       include: {
-        institution: {
+        institutions: {
           select: { id: true, name: true },
         },
       },
@@ -114,7 +117,7 @@ export class SSOService {
     // Mask sensitive data
     return {
       ...config,
-      clientSecret: config.clientSecret ? "••••••••" : null,
+      clientSecret: config.client_secret ? "••••••••" : null,
       certificate: config.certificate ? "••••••••" : null,
     };
   }
@@ -127,8 +130,8 @@ export class SSOService {
     dto: UpdateSSOConfigDto,
     updatedBy: string,
   ) {
-    const config = await this.prisma.sSOConfiguration.findFirst({
-      where: { institutionId },
+    const config = await this.prisma.sso_configurations.findFirst({
+      where: { institution_id: institutionId },
     });
 
     if (!config) {
@@ -137,16 +140,17 @@ export class SSOService {
 
     const before = { ...config };
 
-    const updated = await this.prisma.sSOConfiguration.update({
+    const updated = await this.prisma.sso_configurations.update({
       where: { id: config.id },
       data: {
         enabled: dto.enabled !== undefined ? dto.enabled : config.enabled,
-        entityId: dto.entityId || config.entityId,
-        ssoUrl: dto.ssoUrl || config.ssoUrl,
+        entity_id: dto.entityId || config.entity_id,
+        sso_url: dto.ssoUrl || config.sso_url,
         certificate: dto.certificate || config.certificate,
-        clientId: dto.clientId || config.clientId,
-        clientSecret: dto.clientSecret || config.clientSecret,
-        roleMapping: dto.roleMapping || config.roleMapping,
+        client_id: dto.clientId || config.client_id,
+        client_secret: dto.clientSecret || config.client_secret,
+        role_mapping: dto.roleMapping || config.role_mapping,
+        updated_at: new Date(),
       },
     });
 
@@ -167,22 +171,22 @@ export class SSOService {
    * Delete SSO configuration
    */
   async deleteConfig(institutionId: string, deletedBy: string) {
-    const config = await this.prisma.sSOConfiguration.findFirst({
-      where: { institutionId },
+    const config = await this.prisma.sso_configurations.findFirst({
+      where: { institution_id: institutionId },
     });
 
     if (!config) {
       throw new NotFoundException("SSO not configured");
     }
 
-    await this.prisma.sSOConfiguration.delete({
+    await this.prisma.sso_configurations.delete({
       where: { id: config.id },
     });
 
     // Update institution flag
-    await this.prisma.institution.update({
+    await this.prisma.institutions.update({
       where: { id: institutionId },
-      data: { ssoEnabled: false },
+      data: { sso_enabled: false, updated_at: new Date() },
     });
 
     // Audit log
@@ -201,8 +205,8 @@ export class SSOService {
    * Test SSO configuration (placeholder for future SAML validation)
    */
   async testConfig(institutionId: string) {
-    const config = await this.prisma.sSOConfiguration.findFirst({
-      where: { institutionId },
+    const config = await this.prisma.sso_configurations.findFirst({
+      where: { institution_id: institutionId },
     });
 
     if (!config) {

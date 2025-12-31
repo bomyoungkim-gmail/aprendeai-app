@@ -10,7 +10,7 @@ describe("Semantic Cache Hits", () => {
   const AI_SERVICE_URL = process.env.AI_SERVICE_URL || "http://localhost:8001";
 
   beforeAll(async () => {
-    const redisUrl = process.env.REDIS_URL || "redis://localhost:6379/0";
+    const redisUrl = process.env.REDIS_URL || "redis://127.0.0.1:6379/0";
     redis = new Redis(redisUrl);
 
     const ping = await redis.ping();

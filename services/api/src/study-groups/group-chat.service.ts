@@ -2,6 +2,7 @@ import { Injectable, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { GroupSessionsService } from "./group-sessions.service";
 import { SendChatMessageDto } from "./dto/send-chat-message.dto";
+import * as crypto from "crypto";
 
 @Injectable()
 export class GroupChatService {
@@ -22,7 +23,9 @@ export class GroupChatService {
     );
 
     // Get the round
-    const round = session.rounds?.find((r) => r.roundIndex === dto.roundIndex);
+    const round = (session as any).group_rounds?.find(
+      (r: any) => r.round_index === dto.round_index,
+    );
     if (!round) {
       throw new BadRequestException("Round not found");
     }
@@ -40,15 +43,16 @@ export class GroupChatService {
     }
 
     // Create chat message
-    const chatMessage = await this.prisma.groupChatMessage.create({
+    const chatMessage = await this.prisma.group_chat_messages.create({
       data: {
-        sessionId,
-        roundId: round.id,
-        userId,
+        id: crypto.randomUUID(),
+        session_id: sessionId,
+        round_id: round.id,
+        user_id: userId,
         message: sanitizedMessage,
       },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             name: true,
@@ -58,11 +62,13 @@ export class GroupChatService {
     });
 
     // Get user's role in session
-    const sessionMember = session.members?.find((m) => m.userId === userId);
+    const sessionMember = (session as any).group_session_members?.find(
+      (m: any) => m.user_id === userId,
+    );
 
     return {
       ...chatMessage,
-      userRole: sessionMember?.assignedRole || null,
+      userRole: sessionMember?.assigned_role || null,
     };
   }
 
@@ -74,19 +80,21 @@ export class GroupChatService {
     );
 
     // Get the round
-    const round = session.rounds?.find((r) => r.roundIndex === roundIndex);
+    const round = (session as any).group_rounds?.find(
+      (r: any) => r.round_index === roundIndex,
+    );
     if (!round) {
       throw new BadRequestException("Round not found");
     }
 
     // Fetch messages for this round
-    const messages = await this.prisma.groupChatMessage.findMany({
+    const messages = await this.prisma.group_chat_messages.findMany({
       where: {
-        sessionId,
-        roundId: round.id,
+        session_id: sessionId,
+        round_id: round.id,
       },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             name: true,
@@ -94,18 +102,18 @@ export class GroupChatService {
         },
       },
       orderBy: {
-        createdAt: "asc",
+        created_at: "asc",
       },
     });
 
     // Add role information
     const messagesWithRoles = messages.map((msg) => {
-      const sessionMember = session.members?.find(
-        (m) => m.userId === msg.userId,
+      const sessionMember = (session as any).group_session_members?.find(
+        (m: any) => m.user_id === msg.user_id,
       );
       return {
         ...msg,
-        userRole: sessionMember?.assignedRole || null,
+        userRole: sessionMember?.assigned_role || null,
       };
     });
 

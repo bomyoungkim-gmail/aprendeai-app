@@ -2,7 +2,7 @@ import { Controller, Get, Put, Query, Param, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { RolesGuard } from "./guards/roles.guard";
 import { Roles } from "./decorators/roles.decorator";
-import { UserRole } from "@prisma/client";
+import { SystemRole } from "@prisma/client";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { MetricsService } from "../observability/metrics.service";
 import { ErrorTrackingService } from "../observability/error-tracking.service";
@@ -29,7 +29,7 @@ export class DashboardController {
   // ========================================
 
   @Get("overview")
-  @Roles(UserRole.ADMIN, UserRole.OPS, UserRole.SUPPORT)
+  @Roles(SystemRole.ADMIN, SystemRole.OPS, SystemRole.SUPPORT)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get dashboard overview (last 24h by default)" })
   async getOverview(@Query() query: OverviewQueryDto) {
@@ -70,7 +70,7 @@ export class DashboardController {
   // ========================================
 
   @Get("metrics")
-  @Roles(UserRole.ADMIN, UserRole.OPS)
+  @Roles(SystemRole.ADMIN, SystemRole.OPS)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get time-series metrics" })
   async getMetrics(@Query() query: MetricsQueryDto) {
@@ -86,7 +86,7 @@ export class DashboardController {
   }
 
   @Get("metrics/stats")
-  @Roles(UserRole.ADMIN, UserRole.OPS)
+  @Roles(SystemRole.ADMIN, SystemRole.OPS)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get aggregated metric stats" })
   async getMetricStats(
@@ -102,7 +102,7 @@ export class DashboardController {
   // ========================================
 
   @Get("errors")
-  @Roles(UserRole.ADMIN, UserRole.SUPPORT)
+  @Roles(SystemRole.ADMIN, SystemRole.SUPPORT)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get error logs" })
   async getErrors(@Query() query: ErrorQueryDto) {
@@ -118,7 +118,7 @@ export class DashboardController {
   }
 
   @Get("errors/:id")
-  @Roles(UserRole.ADMIN, UserRole.SUPPORT)
+  @Roles(SystemRole.ADMIN, SystemRole.SUPPORT)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get error details" })
   async getErrorDetails(@Param("id") id: string) {
@@ -126,7 +126,7 @@ export class DashboardController {
   }
 
   @Get("errors/by-endpoint")
-  @Roles(UserRole.ADMIN, UserRole.SUPPORT)
+  @Roles(SystemRole.ADMIN, SystemRole.SUPPORT)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get errors grouped by endpoint" })
   async getErrorsByEndpoint(
@@ -137,7 +137,7 @@ export class DashboardController {
   }
 
   @Put("errors/:id/resolve")
-  @Roles(UserRole.ADMIN, UserRole.SUPPORT)
+  @Roles(SystemRole.ADMIN, SystemRole.SUPPORT)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Mark error as resolved" })
   async markErrorResolved(@Param("id") id: string) {
@@ -149,7 +149,7 @@ export class DashboardController {
   // ========================================
 
   @Get("usage")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get provider usage stats" })
   async getUsage(@Query() query: UsageQueryDto) {
@@ -161,7 +161,7 @@ export class DashboardController {
   }
 
   @Get("usage/by-provider")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get usage breakdown by provider" })
   async getUsageByProvider(
@@ -172,7 +172,7 @@ export class DashboardController {
   }
 
   @Get("usage/recent")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get recent provider calls" })
   async getRecentCalls(

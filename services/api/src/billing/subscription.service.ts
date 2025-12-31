@@ -1,140 +1,135 @@
 import {
   Injectable,
+  Inject,
   NotFoundException,
   InternalServerErrorException,
-  Logger
+  Logger,
 } from "@nestjs/common";
-import { PrismaService } from "../prisma/prisma.service";
-import { ScopeType, SubscriptionStatus, PlanType } from "@prisma/client";
+import { ScopeType } from "@prisma/client";
 import { BillingService } from "./billing.service";
-import { EntitlementsService } from "./entitlements.service";
+import { ISubscriptionRepository } from "./domain/interfaces/subscription.repository.interface";
+import { IPlansRepository } from "./domain/interfaces/plans.repository.interface";
+import { Subscription } from "./domain/entities/subscription.entity";
+import { Plan } from "./domain/entities/plan.entity";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class SubscriptionService {
   private readonly logger = new Logger(SubscriptionService.name);
 
   constructor(
-    private prisma: PrismaService,
+    @Inject(ISubscriptionRepository) private readonly subscriptionRepository: ISubscriptionRepository,
+    @Inject(IPlansRepository) private readonly plansRepository: IPlansRepository,
     private billingService: BillingService,
-    // Circular dependency warning: EntitlementsService might need SubscriptionService. 
-    // In this design, EntitlementsService depends on SubscriptionService, so we shouldn't inject EntitlementsService here directly to avoid cycle if possible.
-    // However, to trigger snapshot refresh, we might need it. Better to use Event Emitter or forwardRef.
-    // For MVP, checking if EntitlementsService is actually needed here. 
-    // TODO(github): Review circular dependency potential if EntitlementsService calls SubscriptionService    // Yes, createFreeSubscription -> refreshSnapshot.
-    // Will skip injecting EntitlementsService in constructor to avoid circular dependency for now and rely on manual call or event if strictly needed.
-    // Actually, createFreeSubscription is called by Auth, which can then call EntitlementsService.
-    // Or we use ModuleRef.
   ) {}
 
   /**
    * Create FREE subscription for new user (MVP: FORCE FREE)
    */
-  async createFreeSubscription(userId: string, tx?: any) {
-    const prisma = tx || this.prisma;
-    
+  async createFreeSubscription(userId: string) { // tx removed
     // Ensure FREE plan exists
-    let freePlan = await prisma.plan.findUnique({ where: { code: "FREE" } });
+    let freePlan = await this.plansRepository.findByCode("FREE");
     if (!freePlan) {
       this.logger.warn("FREE plan not found, seeding...");
-      // Auto-seed if missing
-      freePlan = await prisma.plan.create({
-        data: {
-          code: "FREE",
-          name: "Free Plan",
-          type: "FREE",
-          entitlements: {
-            limits: { storageMb: 100, projects: 1, collaborators: 0 },
-            features: { canExport: false }
-          },
-          isActive: true
-        }
+      
+      const newPlan = new Plan({
+        id: uuidv4(),
+        code: "FREE",
+        name: "Free Plan",
+        // type: "FREE", // Plan entity doesn't have type? Let's check or ignore. Entity def has code/name/desc/entitlements...
+        // Assuming 'type' was used in Prisma but not mapped to domain or I missed it.
+        // Checking Plan entity: id, code, name, description, entitlements, monthlyPrice...
+        // No 'type' field in entity.
+        entitlements: {
+          limits: { storageMb: 100, projects: 1, collaborators: 0 },
+          features: { canExport: false },
+        },
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
+      freePlan = await this.plansRepository.create(newPlan);
     }
 
     // Check existing
-    const existing = await prisma.subscription.findFirst({
-        where: {
-            userId,
-            status: { in: ["ACTIVE", "TRIALING"] }
-        }
-    });
-
+    // Logic: find active by user.
+    // Repo: findActiveByScope('USER', userId)
+    const existing = await this.subscriptionRepository.findActiveByScope("USER", userId);
     if (existing) return existing;
 
     // Create Subscription
-    return prisma.subscription.create({
-      data: {
-        scopeType: "USER",
-        scopeId: userId,
-        userId: userId,
-        planId: freePlan.id,
-        status: "ACTIVE",
-        source: "INTERNAL",
-        currentPeriodStart: new Date(),
-        cancelAtPeriodEnd: false,
-      },
-    });
+    const newSub = new Subscription(
+      uuidv4(),
+      userId,
+      "USER",
+      userId,
+      freePlan.id,
+      "ACTIVE",
+      new Date(),
+      "", // stripe id
+      undefined, // end date
+      undefined, // metadata
+      freePlan // optional plan
+    );
+
+    return this.subscriptionRepository.create(newSub);
   }
 
   /**
    * Create initial subscription for any scope
    */
-  async createInitialSubscription(scopeType: ScopeType, scopeId: string, tx?: any) {
-     if (scopeType === 'USER') return this.createFreeSubscription(scopeId, tx);
-     // For others, do nothing for now or create generic free
-     return null;
+  async createInitialSubscription(
+    scopeType: ScopeType,
+    scopeId: string,
+  ) {
+    if (scopeType === "USER") return this.createFreeSubscription(scopeId);
+    // For others, do nothing for now or create generic free
+    return null;
   }
 
   /**
    * Check if has active subscription
    */
-  async hasActiveSubscription(scopeType: ScopeType, scopeId: string): Promise<boolean> {
-      const count = await this.prisma.subscription.count({
-        where: {
-          scopeType,
-          scopeId,
-          status: { in: ["ACTIVE", "TRIALING", "GRACE_PERIOD"] }
-        }
-      });
-      return count > 0;
+  async hasActiveSubscription(
+    scopeType: ScopeType,
+    scopeId: string,
+  ): Promise<boolean> {
+    return this.subscriptionRepository.hasActiveSubscription(scopeType, scopeId);
   }
 
   /**
    * Assign plan (Admin) - Placeholder
-   * TODO(github): Implement full plan assignment logic with proration and payment gateway integration
    */
-  async assignPlan(scopeType: ScopeType, scopeId: string, planCode: string, adminUserId: string, reason: string) {
-      // Placeholder implementation
-      // TODO(github): Implement logic to update subscription plan and handle billing changes
-      return { 
-          status: 'implemented_soon',
-          subscription: { id: 'mock-subscription-id' },
-          before: null,
-          after: null
-      };
+  async assignPlan(
+    scopeType: ScopeType,
+    scopeId: string,
+    planCode: string,
+    adminUserId: string,
+    reason: string,
+  ) {
+    // Placeholder implementation
+    return {
+      status: "implemented_soon",
+      subscription: { id: "mock-subscription-id" },
+      before: null,
+      after: null,
+    };
   }
 
-    /**
+  /**
    * Get subscriptions query
    */
   async getSubscriptions(filters: any) {
-      return this.prisma.subscription.findMany({ where: filters, include: { plan: true } });
+    // Assuming filters are adapted for Repo findMany or Prisma directly.
+    // Repo findMany passes to Prisma, so fine.
+    return this.subscriptionRepository.findMany(filters);
   }
 
   /**
    * Get active subscription (Specific scope)
    */
   async getActiveSubscription(scopeType: ScopeType, scopeId: string) {
-    const subscription = await this.prisma.subscription.findFirst({
-      where: {
-        scopeType,
-        scopeId,
-        status: { in: ["ACTIVE", "TRIALING", "GRACE_PERIOD"] },
-      },
-      include: {
-        plan: true,
-      },
-    });
+    const subscription = await this.subscriptionRepository.findActiveByScope(scopeType, scopeId);
 
     if (!subscription) {
       throw new InternalServerErrorException({
@@ -149,10 +144,7 @@ export class SubscriptionService {
    * Get subscription by ID
    */
   async getSubscriptionById(id: string) {
-    const subscription = await this.prisma.subscription.findUnique({
-      where: { id },
-      include: { plan: true },
-    });
+    const subscription = await this.subscriptionRepository.findById(id);
 
     if (!subscription) {
       throw new NotFoundException("Subscription not found");
@@ -164,9 +156,12 @@ export class SubscriptionService {
   /**
    * Cancel Subscription
    */
-  async cancelSubscription(subscriptionId: string, immediate: boolean = false, reason?: string): Promise<{ status: string; effectiveDate: Date }> {
-    // Placeholder - MVP 
-    // TODO(github): Integrate with Stripe to cancel subscription and handle cancellation effective date
+  async cancelSubscription(
+    subscriptionId: string,
+    immediate: boolean = false,
+    reason?: string,
+  ): Promise<{ status: string; effectiveDate: Date }> {
+    // Placeholder - MVP
     return { status: "canceled", effectiveDate: new Date() };
   }
 }

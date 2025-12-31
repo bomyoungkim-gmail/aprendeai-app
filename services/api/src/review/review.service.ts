@@ -1,145 +1,45 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../prisma/prisma.service";
-import { ProfileService } from "../profiles/profile.service";
-import { SrsService, AttemptResult } from "../srs/srs.service";
-
-export type VocabDimension = "FORM" | "MEANING" | "USE";
+import { GetReviewQueueUseCase } from "./application/use-cases/get-review-queue.use-case";
+import { SubmitReviewUseCase } from "./application/use-cases/submit-review.use-case";
+import { AttemptResult } from "../srs/srs.service";
+import { VocabDimension } from "@prisma/client";
 
 @Injectable()
 export class ReviewService {
   constructor(
-    private prisma: PrismaService,
-    private profileService: ProfileService,
-    private srsService: SrsService,
+    private readonly getReviewQueueUseCase: GetReviewQueueUseCase,
+    private readonly submitReviewUseCase: SubmitReviewUseCase,
   ) {}
 
   /**
    * Get review queue for user
-   * Respects daily cap and returns vocab + cue cards
    */
   async getReviewQueue(userId: string, limit?: number) {
-    const profile = await this.profileService.get(userId);
-    const cap = limit || profile?.dailyReviewCap || 20;
-
-    // Get vocab items due for review
-    const vocabItems = await this.prisma.userVocabulary.findMany({
-      where: {
-        userId,
-        dueAt: { lte: new Date() },
-      },
-      orderBy: [
-        { dueAt: "asc" }, // Oldest first
-        { lapsesCount: "desc" }, // Struggled items priority
-      ],
-      take: cap,
-      include: {
-        content: {
-          select: { id: true, title: true },
-        },
-      },
-    });
-
-    // DECISION 3: Skip cue cards in V4, implement in V5
-    const cues: any[] = [];
-
-    // Count total due items
-    const totalDue = await this.prisma.userVocabulary.count({
-      where: {
-        userId,
-        dueAt: { lte: new Date() },
-      },
-    });
-
-    return {
-      vocab: vocabItems,
-      cues,
-      stats: {
-        totalDue,
-        cap,
-        vocabCount: vocabItems.length,
-        cuesCount: 0,
-      },
-    };
+    return this.getReviewQueueUseCase.execute(userId, limit);
   }
 
   /**
    * Record vocab attempt and update SRS
-   * DECISION 2: Use transactions for race condition safety
    */
   async recordVocabAttempt(
+    userId: string,
     vocabId: string,
     dimension: VocabDimension,
     result: AttemptResult,
     sessionId?: string,
   ) {
-    const vocab = await this.prisma.userVocabulary.findUnique({
-      where: { id: vocabId },
-    });
-
-    if (!vocab) {
-      throw new Error("Vocabulary item not found");
-    }
-
-    const { newStage, dueDate, lapseIncrement } =
-      this.srsService.calculateNextDue(vocab.srsStage as any, result);
-
-    const masteryDelta = this.srsService.calculateMasteryDelta(result);
-
-    // DECISION 2: ATOMIC TRANSACTION
-    await this.prisma.$transaction([
-      // Record attempt
-      this.prisma.vocabAttempt.create({
-        data: {
-          vocabId,
-          sessionId,
-          dimension: dimension as any,
-          result: result as any,
-        },
-      }),
-
-      // Update vocab item
-      this.prisma.userVocabulary.update({
-        where: { id: vocabId },
-        data: {
-          srsStage: newStage as any,
-          dueAt: dueDate,
-          lapsesCount: { increment: lapseIncrement },
-          lastSeenAt: new Date(),
-          // Update dimension-specific mastery
-          ...(dimension === "FORM" && {
-            masteryForm: Math.max(
-              0,
-              Math.min(100, vocab.masteryForm + masteryDelta),
-            ),
-          }),
-          ...(dimension === "MEANING" && {
-            masteryMeaning: Math.max(
-              0,
-              Math.min(100, vocab.masteryMeaning + masteryDelta),
-            ),
-          }),
-          ...(dimension === "USE" && {
-            masteryUse: Math.max(
-              0,
-              Math.min(100, vocab.masteryUse + masteryDelta),
-            ),
-          }),
-        },
-      }),
-    ]);
-
-    // Return updated vocab
-    return this.prisma.userVocabulary.findUnique({
-      where: { id: vocabId },
+    return this.submitReviewUseCase.execute(userId, {
+        vocabId,
+        dimension,
+        result,
+        sessionId
     });
   }
 
   /**
    * Get cue cards from Cornell Notes
-   * DECISION 3: Deferred to V5
    */
   async getCueCards(userId: string) {
-    // Placeholder for V5 implementation
     return [];
   }
 }

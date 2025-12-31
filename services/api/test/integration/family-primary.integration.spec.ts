@@ -20,17 +20,17 @@ describe("Primary Family Logic (Integration)", () => {
     prisma = app.get<PrismaService>(PrismaService);
 
     // Clean up test data
-    await prisma.familyMember.deleteMany({});
-    await prisma.family.deleteMany({});
-    await prisma.user.deleteMany({
+    await prisma.family_members.deleteMany({});
+    await prisma.families.deleteMany({});
+    await prisma.users.deleteMany({
       where: { email: { contains: "@primary-test.com" } },
     });
   });
 
   afterAll(async () => {
-    await prisma.familyMember.deleteMany({});
-    await prisma.family.deleteMany({});
-    await prisma.user.deleteMany({
+    await prisma.family_members.deleteMany({});
+    await prisma.families.deleteMany({});
+    await prisma.users.deleteMany({
       where: { email: { contains: "@primary-test.com" } },
     });
     await app.close();
@@ -83,7 +83,7 @@ describe("Primary Family Logic (Integration)", () => {
       const familyId = res.body.id;
 
       // Verify DB
-      const user = await prisma.user.findUnique({ where: { id: userId } });
+      const user = await prisma.users.findUnique({ where: { id: userId } });
       const settings = user.settings as any;
       expect(settings.primaryFamilyId).toBe(familyId);
     });
@@ -103,7 +103,7 @@ describe("Primary Family Logic (Integration)", () => {
       const familyAId = resA.body.id;
 
       // Verify A is Primary
-      let user = await prisma.user.findUnique({ where: { id: userId } });
+      let user = await prisma.users.findUnique({ where: { id: userId } });
       expect((user.settings as any).primaryFamilyId).toBe(familyAId);
 
       // Create Family B
@@ -115,7 +115,7 @@ describe("Primary Family Logic (Integration)", () => {
       const familyBId = resB.body.id;
 
       // Verify B is NOW Primary (overwrote A)
-      user = await prisma.user.findUnique({ where: { id: userId } });
+      user = await prisma.users.findUnique({ where: { id: userId } });
       expect((user.settings as any).primaryFamilyId).toBe(familyBId);
     });
   });
@@ -169,7 +169,9 @@ describe("Primary Family Logic (Integration)", () => {
         .expect(201);
 
       // 4. Verify primaryFamilyId set for dependent
-      const user = await prisma.user.findUnique({ where: { id: dependentId } });
+      const user = await prisma.users.findUnique({
+        where: { id: dependentId },
+      });
       const settings = user.settings as any;
       expect(settings.primaryFamilyId).toBe(familyId);
     });
@@ -194,7 +196,7 @@ describe("Primary Family Logic (Integration)", () => {
         .expect(201);
 
       // Verify A is Primary
-      let user = await prisma.user.findUnique({ where: { id: dependentId } });
+      let user = await prisma.users.findUnique({ where: { id: dependentId } });
       expect((user.settings as any).primaryFamilyId).toBe(familyAId);
 
       // Create Family B
@@ -218,7 +220,7 @@ describe("Primary Family Logic (Integration)", () => {
         .expect(201);
 
       // Verify Primary is STILL Family A (not B)
-      user = await prisma.user.findUnique({ where: { id: dependentId } });
+      user = await prisma.users.findUnique({ where: { id: dependentId } });
       expect((user.settings as any).primaryFamilyId).toBe(familyAId);
       expect((user.settings as any).primaryFamilyId).not.toBe(familyBId);
     });

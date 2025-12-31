@@ -4,42 +4,50 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Prisma, User } from "@prisma/client";
+import { Prisma, users } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 import { UpdateProfileDto, UpdateSettingsDto } from "./dto/user.dto";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async findOne(email: string): Promise<User | null> {
-    return this.prisma.user.findUnique({ where: { email } });
+  async findOne(email: string): Promise<users | null> {
+    return this.prisma.users.findUnique({
+      where: { email },
+      include: {
+        institution_members: {
+          include: { institutions: true },
+        },
+      },
+    });
   }
 
-  async findById(id: string): Promise<User | null> {
-    return this.prisma.user.findUnique({ where: { id } });
+  async findById(id: string): Promise<users | null> {
+    return this.prisma.users.findUnique({ where: { id } });
   }
 
   async getUserContext(userId: string) {
-    const user = (await this.prisma.user.findUnique({
+    const user = (await this.prisma.users.findUnique({
       where: { id: userId },
       select: {
         id: true,
-        role: true,
-        institutionMemberships: {
+        last_context_role: true, // Replaces legacy role
+        institution_members: {
           select: {
-            institutionId: true,
+            institution_id: true,
             role: true,
           },
           where: { status: "ACTIVE" },
         },
-        memberships: {
+        family_members: {
           select: {
-            familyId: true,
+            family_id: true,
             role: true,
-            family: {
+            families: {
               select: {
-                members: true,
+                family_members: true,
               },
             },
           },
@@ -51,11 +59,11 @@ export class UsersService {
 
     return {
       userId: user.id,
-      role: user.role,
-      institutionId: user.institutionMemberships[0]?.institutionId,
-      institutionRole: user.institutionMemberships[0]?.role,
-      familyId: user.memberships[0]?.familyId,
-      familyRole: user.memberships[0]?.role,
+      role: user.last_context_role, // Mapping context_role to legacy role response if needed by frontend
+      institutionId: user.institution_members[0]?.institution_id,
+      institutionRole: user.institution_members[0]?.role,
+      familyId: user.family_members[0]?.family_id,
+      familyRole: user.family_members[0]?.role,
       contentFilters: {
         minAge: 3,
         maxAge: 18,
@@ -64,14 +72,16 @@ export class UsersService {
     };
   }
 
-  async createUser(data: Prisma.UserCreateInput): Promise<User> {
+  async createUser(data: Prisma.usersCreateInput): Promise<users> {
     const salt = await bcrypt.genSalt();
-    const passwordHash = await bcrypt.hash(data.passwordHash, salt);
+    const password_hash = await bcrypt.hash(data.password_hash, salt);
 
-    return this.prisma.user.create({
+    return this.prisma.users.create({
       data: {
+        id: uuidv4(),
         ...data,
-        passwordHash,
+        password_hash,
+        updated_at: new Date(),
       },
     });
   }
@@ -79,43 +89,44 @@ export class UsersService {
   async updateProfile(
     userId: string,
     updateDto: UpdateProfileDto,
-  ): Promise<User> {
+  ): Promise<users> {
     const user = await this.findById(userId);
     if (!user) {
       throw new NotFoundException("User not found");
     }
 
-    return this.prisma.user.update({
+    return this.prisma.users.update({
       where: { id: userId },
       data: {
         ...updateDto,
+        updated_at: new Date(),
       },
     });
   }
 
-  async updateAvatar(userId: string, avatarUrl: string): Promise<User> {
-    return this.prisma.user.update({
+  async updateAvatar(userId: string, avatarUrl: string): Promise<users> {
+    return this.prisma.users.update({
       where: { id: userId },
-      data: { avatarUrl },
+      data: { avatar_url: avatarUrl },
     });
   }
 
   async getStats(userId: string) {
     const [contentsCount, annotationsCount, groupsCount] = await Promise.all([
-      this.prisma.content.count({ where: { ownerUserId: userId } }),
-      this.prisma.annotation.count({ where: { userId } }),
-      this.prisma.studyGroupMember.count({ where: { userId } }),
+      this.prisma.contents.count({ where: { owner_user_id: userId } }),
+      this.prisma.annotations.count({ where: { user_id: userId } }),
+      this.prisma.study_group_members.count({ where: { user_id: userId } }),
     ]);
 
     // Sessions count - count via group memberships
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.users.findUnique({
       where: { id: userId },
       include: {
-        groupMemberships: {
+        study_group_members: {
           include: {
-            group: {
+            study_groups: {
               include: {
-                sessions: true,
+                group_sessions: true,
               },
             },
           },
@@ -124,7 +135,8 @@ export class UsersService {
     });
 
     const sessionsCount =
-      user?.groupMemberships.flatMap((m) => m.group.sessions).length || 0;
+      user?.study_group_members.flatMap((m) => m.study_groups.group_sessions)
+        .length || 0;
 
     return {
       contentsRead: contentsCount,
@@ -137,24 +149,24 @@ export class UsersService {
 
   async getActivity(userId: string, limit = 10) {
     // Get recent annotations
-    const recentAnnotations = await this.prisma.annotation.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
+    const recentAnnotations = await this.prisma.annotations.findMany({
+      where: { user_id: userId },
+      orderBy: { created_at: "desc" },
       take: limit,
       include: {
-        content: {
+        contents: {
           select: { title: true },
         },
       },
     });
 
     // Get recent group joins
-    const recentGroups = await this.prisma.studyGroupMember.findMany({
-      where: { userId },
-      orderBy: { joinedAt: "desc" },
+    const recentGroups = await this.prisma.study_group_members.findMany({
+      where: { user_id: userId },
+      orderBy: { joined_at: "desc" },
       take: limit,
       include: {
-        group: {
+        study_groups: {
           select: { name: true },
         },
       },
@@ -164,13 +176,13 @@ export class UsersService {
     const activities = [
       ...recentAnnotations.map((a) => ({
         type: "annotation" as const,
-        description: `Annotated "${a.content.title}"`,
-        timestamp: a.createdAt,
+        description: `Annotated "${a.contents.title}"`,
+        timestamp: a.created_at,
       })),
       ...recentGroups.map((g) => ({
         type: "group_join" as const,
-        description: `Joined "${g.group.name}"`,
-        timestamp: g.joinedAt,
+        description: `Joined "${g.study_groups.name}"`,
+        timestamp: g.joined_at,
       })),
     ]
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
@@ -219,9 +231,13 @@ export class UsersService {
       },
     };
 
-    return this.prisma.user.update({
+    return this.prisma.users.update({
       where: { id: userId },
       data: { settings: updatedSettings },
+      // updated_at will be auto-updated if @updatedAt or handled by DB,
+      // but if I need to manual update:
+      // updated_at: new Date()
+      // Schema likely has it. I'll add it to be safe as I've been doing.
     });
   }
 
@@ -238,7 +254,7 @@ export class UsersService {
     // Verify current password
     const isPasswordValid = await bcrypt.compare(
       currentPassword,
-      user.passwordHash,
+      user.password_hash,
     );
     if (!isPasswordValid) {
       throw new UnauthorizedException("Current password is incorrect");
@@ -249,9 +265,12 @@ export class UsersService {
     const newPasswordHash = await bcrypt.hash(newPassword, salt);
 
     // Update password
-    await this.prisma.user.update({
+    await this.prisma.users.update({
       where: { id: userId },
-      data: { passwordHash: newPasswordHash },
+      data: {
+        password_hash: newPasswordHash,
+        updated_at: new Date(),
+      },
     });
 
     return { message: "Password changed successfully" };
@@ -264,13 +283,13 @@ export class UsersService {
     }
 
     // Verify password before deletion
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
       throw new UnauthorizedException("Password is incorrect");
     }
 
     // Delete user (cascade will handle related records)
-    await this.prisma.user.delete({
+    await this.prisma.users.delete({
       where: { id: userId },
     });
 

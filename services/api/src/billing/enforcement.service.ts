@@ -144,13 +144,13 @@ export class EnforcementService {
       startDate = new Date(0);
     }
 
-    const result = await this.prisma.usageEvent.aggregate({
+    const result = await this.prisma.usage_events.aggregate({
       where: {
-        scopeType,
-        scopeId,
+        scope_type: scopeType,
+        scope_id: scopeId,
         metric: metric.replace("_per_day", "").replace("_per_month", ""),
         environment,
-        occurredAt: {
+        occurred_at: {
           gte: startDate,
         },
       },

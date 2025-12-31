@@ -12,6 +12,7 @@ import { SubmitEventDto } from "./dto/submit-event.dto";
 import { RoundStatus } from "@prisma/client";
 import { StudyGroupsWebSocketGateway } from "../websocket/study-groups-ws.gateway";
 import { StudyGroupEvent } from "../websocket/events";
+import * as crypto from "crypto";
 
 @Injectable()
 export class GroupRoundsService {
@@ -26,32 +27,32 @@ export class GroupRoundsService {
   async updatePrompt(
     sessionId: string,
     roundIndex: number,
-    userId: string,
+    user_id: string,
     dto: UpdatePromptDto,
   ) {
     const session = await this.groupSessionsService.getSession(
       sessionId,
-      userId,
+      user_id,
     );
 
     // Check permissions using loaded session data (no extra queries)
-    this.assertFacilitatorPermission(session, userId);
+    this.assertFacilitatorPermission(session, user_id);
 
-    const round = await this.prisma.groupRound.findFirst({
-      where: { sessionId, roundIndex },
+    const round = await this.prisma.group_rounds.findFirst({
+      where: { session_id: sessionId, round_index: roundIndex },
     });
 
     if (!round) {
       throw new BadRequestException("Round not found");
     }
 
-    const updatedRound = await this.prisma.groupRound.update({
+    const updatedRound = await this.prisma.group_rounds.update({
       where: { id: round.id },
       data: {
-        promptJson: {
-          prompt_text: dto.promptText,
+        prompt_json: {
+          prompt_text: dto.prompt_text,
           options: dto.options || null,
-          linked_highlight_ids: dto.linkedHighlightIds || [],
+          linked_highlight_ids: dto.linked_highlight_ids || [],
         },
       },
     });
@@ -61,7 +62,7 @@ export class GroupRoundsService {
       sessionId,
       roundId: round.id,
       roundIndex,
-      prompt: dto.promptText,
+      prompt: dto.prompt_text,
     });
 
     return updatedRound;
@@ -70,19 +71,19 @@ export class GroupRoundsService {
   async advanceRound(
     sessionId: string,
     roundIndex: number,
-    userId: string,
+    user_id: string,
     toStatus: RoundStatus,
   ) {
     const session = await this.groupSessionsService.getSession(
       sessionId,
-      userId,
+      user_id,
     );
 
     // Check permissions using loaded session data (no extra queries)
-    this.assertFacilitatorPermission(session, userId);
+    this.assertFacilitatorPermission(session, user_id);
 
-    const round = await this.prisma.groupRound.findFirst({
-      where: { sessionId, roundIndex },
+    const round = await this.prisma.group_rounds.findFirst({
+      where: { session_id: sessionId, round_index: roundIndex },
     });
 
     if (!round) {
@@ -92,7 +93,7 @@ export class GroupRoundsService {
     // Validate transition with accountability gates
     await this.validateTransition(sessionId, round.id, toStatus);
 
-    const updatedRound = await this.prisma.groupRound.update({
+    const updatedRound = await this.prisma.group_rounds.update({
       where: { id: round.id },
       data: { status: toStatus },
     });
@@ -112,22 +113,24 @@ export class GroupRoundsService {
     return updatedRound;
   }
 
-  async submitEvent(sessionId: string, userId: string, dto: SubmitEventDto) {
+  async submitEvent(sessionId: string, user_id: string, dto: SubmitEventDto) {
     const session = await this.groupSessionsService.getSession(
       sessionId,
-      userId,
+      user_id,
     );
 
     // Find member in already-loaded session members
-    const member = session.members.find((m: any) => m.userId === userId);
+    const member = (session as any).group_session_members.find(
+      (m: any) => m.user_id === user_id,
+    );
 
-    if (!member || member.attendanceStatus !== "JOINED") {
+    if (!member || member.attendance_status !== "JOINED") {
       throw new ForbiddenException("Must be a joined session member");
     }
 
     // Get round
-    const round = await this.prisma.groupRound.findFirst({
-      where: { sessionId, roundIndex: dto.roundIndex },
+    const round = await this.prisma.group_rounds.findFirst({
+      where: { session_id: sessionId, round_index: dto.round_index },
     });
 
     if (!round) {
@@ -135,8 +138,8 @@ export class GroupRoundsService {
     }
 
     // Validate event type permissions
-    if (dto.eventType === "GROUP_EXPLANATION_SUBMIT") {
-      if (member.assignedRole !== "SCRIBE") {
+    if (dto.event_type === "GROUP_EXPLANATION_SUBMIT") {
+      if (member.assigned_role !== "SCRIBE") {
         throw new ForbiddenException(
           "Only SCRIBE can submit group explanation",
         );
@@ -144,35 +147,36 @@ export class GroupRoundsService {
     }
 
     // Record event
-    const event = await this.prisma.groupEvent.create({
+    const event = await this.prisma.group_events.create({
       data: {
-        sessionId,
-        roundId: round.id,
-        userId,
-        eventType: dto.eventType,
-        payloadJson: dto.payload,
+        id: crypto.randomUUID(),
+        session_id: sessionId,
+        round_id: round.id,
+        user_id,
+        event_type: dto.event_type,
+        payload_json: dto.payload,
       },
     });
 
     // Emit WebSocket event for real-time update
     const wsEventType =
-      dto.eventType === "PI_VOTE_SUBMIT"
+      dto.event_type === "PI_VOTE_SUBMIT"
         ? StudyGroupEvent.VOTE_SUBMITTED
-        : dto.eventType === "PI_REVOTE_SUBMIT"
+        : dto.event_type === "PI_REVOTE_SUBMIT"
           ? StudyGroupEvent.REVOTE_SUBMITTED
           : StudyGroupEvent.SESSION_UPDATED;
 
     this.wsGateway.emitToSession(sessionId, wsEventType, {
       sessionId,
       roundId: round.id,
-      roundIndex: dto.roundIndex,
-      userId,
-      eventType: dto.eventType,
+      roundIndex: dto.round_index,
+      user_id,
+      eventType: dto.event_type,
     });
 
     // Special handling for GROUP_EXPLANATION_SUBMIT
-    if (dto.eventType === "GROUP_EXPLANATION_SUBMIT") {
-      await this.createSharedCard(sessionId, round.id, userId, dto.payload);
+    if (dto.event_type === "GROUP_EXPLANATION_SUBMIT") {
+      await this.createSharedCard(sessionId, round.id, user_id, dto.payload);
 
       // Emit shared card created event
       this.wsGateway.emitToSession(
@@ -181,50 +185,50 @@ export class GroupRoundsService {
         {
           sessionId,
           roundId: round.id,
-          roundIndex: dto.roundIndex,
+          roundIndex: dto.round_index,
         },
       );
     }
 
     this.logger.log(
-      `Event ${dto.eventType} submitted for round ${round.id} by user ${userId}`,
+      `Event ${dto.event_type} submitted for round ${round.id} by user ${user_id}`,
     );
 
     return event;
   }
 
   async getEvents(sessionId: string, roundIndex?: number) {
-    const where: any = { sessionId };
+    const where: any = { session_id: sessionId };
 
     if (roundIndex !== undefined) {
-      const round = await this.prisma.groupRound.findFirst({
-        where: { sessionId, roundIndex },
+      const round = await this.prisma.group_rounds.findFirst({
+        where: { session_id: sessionId, round_index: roundIndex },
       });
       if (round) {
-        where.roundId = round.id;
+        where.round_id = round.id;
       }
     }
 
-    return this.prisma.groupEvent.findMany({
+    return this.prisma.group_events.findMany({
       where,
-      orderBy: { createdAt: "asc" },
+      orderBy: { created_at: "asc" },
       include: {
-        round: {
-          select: { roundIndex: true },
+        group_rounds: {
+          select: { round_index: true },
         },
       },
     });
   }
 
   async getSharedCards(sessionId: string) {
-    return this.prisma.sharedCard.findMany({
-      where: { sessionId },
+    return this.prisma.shared_cards.findMany({
+      where: { session_id: sessionId },
       include: {
-        round: {
-          select: { roundIndex: true, status: true },
+        group_rounds: {
+          select: { round_index: true, status: true },
         },
       },
-      orderBy: { createdAt: "asc" },
+      orderBy: { created_at: "asc" },
     });
   }
 
@@ -253,14 +257,14 @@ export class GroupRoundsService {
     eventType: string,
   ) {
     // Count joined members
-    const joinedCount = await this.prisma.groupSessionMember.count({
-      where: { sessionId, attendanceStatus: "JOINED" },
+    const joinedCount = await this.prisma.group_session_members.count({
+      where: { session_id: sessionId, attendance_status: "JOINED" },
     });
 
     // Count unique voters
-    const votes = await this.prisma.groupEvent.groupBy({
-      by: ["userId"],
-      where: { roundId, eventType },
+    const votes = await this.prisma.group_events.groupBy({
+      by: ["user_id"],
+      where: { round_id: roundId, event_type: eventType },
     });
 
     const votedCount = votes.length;
@@ -282,8 +286,8 @@ export class GroupRoundsService {
   }
 
   private async assertExplanationPresent(roundId: string) {
-    const explanation = await this.prisma.groupEvent.findFirst({
-      where: { roundId, eventType: "GROUP_EXPLANATION_SUBMIT" },
+    const explanation = await this.prisma.group_events.findFirst({
+      where: { round_id: roundId, event_type: "GROUP_EXPLANATION_SUBMIT" },
     });
 
     if (!explanation) {
@@ -303,17 +307,17 @@ export class GroupRoundsService {
     payload: any,
   ) {
     // Check if card already exists (idempotent)
-    const existing = await this.prisma.sharedCard.findUnique({
-      where: { roundId },
+    const existing = await this.prisma.shared_cards.findUnique({
+      where: { round_id: roundId },
     });
 
     if (existing) {
       // Update existing card
-      return this.prisma.sharedCard.update({
-        where: { roundId },
+      return this.prisma.shared_cards.update({
+        where: { round_id: roundId },
         data: {
-          cardJson: {
-            prompt: payload.prompt || existing.cardJson["prompt"],
+          card_json: {
+            prompt: payload.prompt || (existing.card_json as any)["prompt"],
             groupAnswer: payload.group_choice || payload.groupAnswer,
             explanation: payload.explanation,
             linkedHighlightIds: payload.linked_highlight_ids || [],
@@ -324,12 +328,13 @@ export class GroupRoundsService {
     }
 
     // Create new card
-    return this.prisma.sharedCard.create({
+    return this.prisma.shared_cards.create({
       data: {
-        sessionId,
-        roundId,
-        createdByUserId: userId,
-        cardJson: {
+        id: crypto.randomUUID(),
+        session_id: sessionId,
+        round_id: roundId,
+        created_by_user_id: userId,
+        card_json: {
           prompt: payload.prompt || "",
           groupAnswer: payload.group_choice || payload.groupAnswer,
           explanation: payload.explanation,
@@ -342,19 +347,19 @@ export class GroupRoundsService {
 
   // Helper: Check if user has facilitator-level permissions
   // Uses session data loaded by getSession to avoid extra queries
-  private assertFacilitatorPermission(session: any, userId: string): void {
+  private assertFacilitatorPermission(session: any, user_id: string): void {
     // Find member in already-loaded session members
-    const sessionMember = session.members?.find(
-      (m: any) => m.userId === userId,
+    const sessionMember = session.group_session_members?.find(
+      (m: any) => m.user_id === user_id,
     );
 
     // Find group member in already-loaded group members
-    const groupMember = session.group?.members?.find(
-      (m: any) => m.userId === userId,
+    const groupMember = session.study_groups?.study_group_members?.find(
+      (m: any) => m.user_id === user_id,
     );
 
     const canPerform =
-      sessionMember?.assignedRole === "FACILITATOR" ||
+      sessionMember?.assigned_role === "FACILITATOR" ||
       ["OWNER", "MOD"].includes(groupMember?.role);
 
     if (!canPerform) {

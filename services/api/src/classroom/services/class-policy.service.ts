@@ -3,6 +3,7 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { ClassroomEventService } from "../../events/classroom-event.service";
 import { PromptLibraryService } from "../../prompts/prompt-library.service";
 import { CreateClassPolicyDto } from "../dto/classroom.dto";
+import * as crypto from "crypto";
 
 @Injectable()
 export class ClassPolicyService {
@@ -16,29 +17,32 @@ export class ClassPolicyService {
    * Create or update classroom policy
    */
   async upsert(dto: CreateClassPolicyDto) {
-    const policy = await this.prisma.classPolicy.upsert({
-      where: { classroomId: dto.classroomId },
+    const policy = await this.prisma.class_policies.upsert({
+      where: { classroom_id: dto.classroomId },
       create: {
-        classroomId: dto.classroomId,
-        weeklyUnitsTarget: dto.weeklyUnitsTarget ?? 3,
-        timeboxDefaultMin: dto.timeboxDefaultMin ?? 20,
-        dailyReviewCap: dto.dailyReviewCap ?? 30,
-        toolWordsGateEnabled: true,
-        privacyMode: dto.privacyMode ?? "AGGREGATED_ONLY",
-        interventionMode: dto.interventionMode ?? "PROMPT_COACH",
+        id: crypto.randomUUID(),
+        classrooms: { connect: { id: dto.classroomId } },
+        weekly_units_target: dto.weeklyUnitsTarget ?? 3,
+        timebox_default_min: dto.timeboxDefaultMin ?? 20,
+        daily_review_cap: dto.dailyReviewCap ?? 30,
+        tool_words_gate_enabled: true,
+        privacy_mode: dto.privacyMode ?? "AGGREGATED_ONLY",
+        intervention_mode: dto.interventionMode ?? "PROMPT_COACH",
+        updated_at: new Date(),
       },
       update: {
-        weeklyUnitsTarget: dto.weeklyUnitsTarget,
-        timeboxDefaultMin: dto.timeboxDefaultMin,
-        dailyReviewCap: dto.dailyReviewCap,
-        privacyMode: dto.privacyMode,
-        interventionMode: dto.interventionMode,
+        weekly_units_target: dto.weeklyUnitsTarget,
+        timebox_default_min: dto.timeboxDefaultMin,
+        daily_review_cap: dto.dailyReviewCap,
+        privacy_mode: dto.privacyMode,
+        intervention_mode: dto.interventionMode,
+        updated_at: new Date(),
       },
     });
 
     // Log CLASS_POLICY_SET event
     await this.classroomEventService.logPolicySet(
-      `policy_${policy.classroomId}`,
+      `policy_${policy.classroom_id}`,
       dto.classroomId, // Using classroomId as userId for now
       {
         domain: "CLASS",
@@ -46,12 +50,12 @@ export class ClassPolicyService {
         data: {
           classroomId: dto.classroomId,
           policy: {
-            weeklyUnitsTarget: policy.weeklyUnitsTarget,
-            timeboxDefaultMin: policy.timeboxDefaultMin,
-            toolWordsGateEnabled: policy.toolWordsGateEnabled,
-            dailyReviewCap: policy.dailyReviewCap,
-            privacyMode: policy.privacyMode,
-            interventionMode: policy.interventionMode,
+            weeklyUnitsTarget: policy.weekly_units_target,
+            timeboxDefaultMin: policy.timebox_default_min,
+            toolWordsGateEnabled: policy.tool_words_gate_enabled,
+            dailyReviewCap: policy.daily_review_cap,
+            privacyMode: policy.privacy_mode,
+            interventionMode: policy.intervention_mode,
           },
         },
       },
@@ -64,8 +68,8 @@ export class ClassPolicyService {
    * Get policy for classroom
    */
   async getByClassroom(classroomId: string) {
-    return this.prisma.classPolicy.findUnique({
-      where: { classroomId },
+    return this.prisma.class_policies.findUnique({
+      where: { classroom_id: classroomId },
     });
   }
 

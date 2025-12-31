@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { UserRole } from "@prisma/client";
+import { SystemRole, ContextRole } from "@prisma/client";
 
 export const ROLES_KEY = "roles";
 
@@ -14,10 +14,9 @@ export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
-      ROLES_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const requiredRoles = this.reflector.getAllAndOverride<
+      (SystemRole | ContextRole | string)[]
+    >(ROLES_KEY, [context.getHandler(), context.getClass()]);
 
     if (!requiredRoles) {
       return true;
@@ -29,11 +28,10 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException("User not authenticated");
     }
 
-    // NEW: Check systemRole OR contextRole (if present), else fall back to legacy role
+    // Check systemRole OR contextRole (dual-role system)
     const hasAccess =
       this.hasSystemRole(user, requiredRoles) ||
-      this.hasContextRole(user, requiredRoles) ||
-      this.hasLegacyRole(user, requiredRoles);
+      this.hasContextRole(user, requiredRoles);
 
     if (!hasAccess) {
       throw new ForbiddenException("Insufficient permissions");
@@ -45,21 +43,20 @@ export class RolesGuard implements CanActivate {
   /**
    * Check if user has required systemRole
    */
-  private hasSystemRole(user: any, requiredRoles: UserRole[]): boolean {
+  private hasSystemRole(
+    user: any,
+    requiredRoles: (SystemRole | ContextRole | string)[],
+  ): boolean {
     return user.systemRole && requiredRoles.includes(user.systemRole);
   }
 
   /**
    * Check if user has required contextRole
    */
-  private hasContextRole(user: any, requiredRoles: UserRole[]): boolean {
+  private hasContextRole(
+    user: any,
+    requiredRoles: (SystemRole | ContextRole | string)[],
+  ): boolean {
     return user.contextRole && requiredRoles.includes(user.contextRole);
-  }
-
-  /**
-   * Check legacy single role field (backward compatibility)
-   */
-  private hasLegacyRole(user: any, requiredRoles: UserRole[]): boolean {
-    return user.role && requiredRoles.includes(user.role);
   }
 }

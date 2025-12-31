@@ -6,7 +6,10 @@ interface AdminUser {
   id: string;
   email: string;
   name: string;
-  role: string;
+  // Dual-role system
+  systemRole?: string;
+  contextRole?: string;
+  activeInstitutionId?: string;
   permissions: string[];
 }
 
@@ -45,7 +48,10 @@ export function useAdmin() {
   };
 
   const isRole = (...roles: string[]) => {
-    return user ? roles.includes(user.role) : false;
+    if (!user) return false;
+    // Check systemRole OR contextRole (dual-role system)
+    return (user.systemRole && roles.includes(user.systemRole)) || 
+           (user.contextRole && roles.includes(user.contextRole));
   };
 
   return {

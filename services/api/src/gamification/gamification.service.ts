@@ -13,41 +13,41 @@ export class GamificationService {
 
     // Fetch in parallel
     const [dailyActivity, dailyGoal, streak, badges] = await Promise.all([
-      this.prisma.dailyActivity.findUnique({
-        where: { userId_date: { userId, date: today } },
+      this.prisma.daily_activities.findUnique({
+        where: { user_id_date: { user_id: userId, date: today } },
       }),
-      this.prisma.dailyGoal.findFirst({
-        where: { userId },
-        orderBy: { createdAt: "desc" },
+      this.prisma.daily_goals.findFirst({
+        where: { user_id: userId },
+        orderBy: { created_at: "desc" },
       }),
-      this.prisma.streak.findUnique({
-        where: { userId },
+      this.prisma.streaks.findUnique({
+        where: { user_id: userId },
       }),
-      this.prisma.userBadge.findMany({
-        where: { userId },
-        include: { badge: true },
-        orderBy: { awardedAt: "desc" },
+      this.prisma.user_badges.findMany({
+        where: { user_id: userId },
+        include: { badges: true },
+        orderBy: { awarded_at: "desc" },
         take: 3,
       }),
     ]);
 
     return {
       dailyActivity: dailyActivity || {
-        minutesSpent: 0,
-        lessonsCompleted: 0,
-        goalMet: false,
+        minutes_spent: 0,
+        lessons_completed: 0,
+        goal_met: false,
       },
-      dailyGoal: dailyGoal || { goalType: "MINUTES", goalValue: 90 }, // Default goal: 90 minutes
-      streak: streak || { currentStreak: 0, bestStreak: 0, freezeTokens: 0 },
+      dailyGoal: dailyGoal || { goal_type: "MINUTES", goal_value: 90 }, // Default goal: 90 minutes
+      streak: streak || { current_streak: 0, best_streak: 0, freeze_tokens: 0 },
       recentBadges: badges,
     };
   }
 
   async getGoalAchievements(userId: string) {
-    const totalAchievements = await this.prisma.dailyActivity.count({
+    const totalAchievements = await this.prisma.daily_activities.count({
       where: {
-        userId,
-        goalMet: true,
+        user_id: userId,
+        goal_met: true,
       },
     });
 
@@ -57,11 +57,13 @@ export class GamificationService {
   async setDailyGoal(userId: string, dto: SetDailyGoalDto) {
     // Upsert not directly supported for goals history, usually we just create new or update active.
     // Simplifying to create a new record which acts as current.
-    return this.prisma.dailyGoal.create({
+    return this.prisma.daily_goals.create({
       data: {
-        userId,
-        goalType: dto.goalType,
-        goalValue: dto.goalValue,
+        id: crypto.randomUUID(), // Need to import crypto or use uuid if available, schema seems to use string ID
+        user_id: userId,
+        goal_type: dto.goalType,
+        goal_value: dto.goalValue,
+        updated_at: new Date(),
       },
     });
   }
@@ -71,25 +73,29 @@ export class GamificationService {
     today.setHours(0, 0, 0, 0);
 
     // 1. Get or Create Daily Activity
-    let activity = await this.prisma.dailyActivity.findUnique({
-      where: { userId_date: { userId, date: today } },
+    let activity = await this.prisma.daily_activities.findUnique({
+      where: { user_id_date: { user_id: userId, date: today } },
     });
 
     if (!activity) {
-      activity = await this.prisma.dailyActivity.create({
-        data: { userId, date: today },
+      activity = await this.prisma.daily_activities.create({
+        data: {
+          id: crypto.randomUUID(),
+          user_id: userId,
+          date: today,
+        },
       });
     }
 
     // 2. Update Stats
-    const updatedActivity = await this.prisma.dailyActivity.update({
+    const updatedActivity = await this.prisma.daily_activities.update({
       where: { id: activity.id },
       data: {
-        minutesSpent: { increment: dto.minutesSpentDelta || 0 },
+        minutes_spent: { increment: dto.minutesSpentDelta || 0 },
         // Sync with Activity metrics
-        minutesStudied: { increment: dto.minutesSpentDelta || 0 },
-        lessonsCompleted: { increment: dto.lessonsCompletedDelta || 0 },
-        contentsRead: { increment: dto.lessonsCompletedDelta || 0 },
+        minutes_studied: { increment: dto.minutesSpentDelta || 0 },
+        lessons_completed: { increment: dto.lessonsCompletedDelta || 0 },
+        contents_read: { increment: dto.lessonsCompletedDelta || 0 },
       },
     });
 
@@ -98,37 +104,39 @@ export class GamificationService {
 
     // 4. Update Study Session (for Hourly Analytics)
     // Don't wait for this to avoid blocking the main heatamp feedback
-    this.updateSession(userId, dto).catch(e => console.error('Failed to update session:', e));
+    this.updateSession(userId, dto).catch((e) =>
+      console.error("Failed to update session:", e),
+    );
 
     return updatedActivity;
   }
 
   private async checkGoalCompletion(userId: string, activity: any) {
-    if (activity.goalMet) return; // Already met
+    if (activity.goal_met) return; // Already met
 
-    const goal = (await this.prisma.dailyGoal.findFirst({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-    })) || { goalType: DailyGoalType.MINUTES, goalValue: 90 }; // Default: 90 minutes
+    const goal = (await this.prisma.daily_goals.findFirst({
+      where: { user_id: userId },
+      orderBy: { created_at: "desc" },
+    })) || { goal_type: DailyGoalType.MINUTES, goal_value: 90 }; // Default: 90 minutes
 
     let met = false;
     if (
-      goal.goalType === DailyGoalType.MINUTES &&
-      activity.minutesSpent >= goal.goalValue
+      goal.goal_type === DailyGoalType.MINUTES &&
+      activity.minutes_spent >= goal.goal_value
     ) {
       met = true;
     } else if (
-      goal.goalType === DailyGoalType.LESSONS &&
-      activity.lessonsCompleted >= goal.goalValue
+      goal.goal_type === DailyGoalType.LESSONS &&
+      activity.lessons_completed >= goal.goal_value
     ) {
       met = true;
     }
 
     if (met) {
       // Mark as met
-      await this.prisma.dailyActivity.update({
+      await this.prisma.daily_activities.update({
         where: { id: activity.id },
-        data: { goalMet: true },
+        data: { goal_met: true },
       });
 
       // Update Streak
@@ -137,25 +145,32 @@ export class GamificationService {
   }
 
   private async updateStreak(userId: string, activityDate: Date) {
-    let streak = await this.prisma.streak.findUnique({ where: { userId } });
+    let streak = await this.prisma.streaks.findUnique({
+      where: { user_id: userId },
+    });
     if (!streak) {
-      streak = await this.prisma.streak.create({ data: { userId } });
+      streak = await this.prisma.streaks.create({
+        data: {
+          user_id: userId,
+          updated_at: new Date(),
+        },
+      });
     }
 
-    const lastMet = streak.lastGoalMetDate
-      ? new Date(streak.lastGoalMetDate)
+    const lastMet = streak.last_goal_met_date
+      ? new Date(streak.last_goal_met_date)
       : null;
     const oneDay = 24 * 60 * 60 * 1000;
 
     // Check if consecutive
     if (!lastMet) {
       // First time
-      await this.prisma.streak.update({
-        where: { userId },
+      await this.prisma.streaks.update({
+        where: { user_id: userId },
         data: {
-          currentStreak: 1,
-          bestStreak: 1,
-          lastGoalMetDate: activityDate,
+          current_streak: 1,
+          best_streak: 1,
+          last_goal_met_date: activityDate,
         },
       });
     } else {
@@ -166,13 +181,13 @@ export class GamificationService {
         // Same day, do nothing
       } else if (diffDays === 1) {
         // Consecutive
-        const newCurrent = streak.currentStreak + 1;
-        await this.prisma.streak.update({
-          where: { userId },
+        const newCurrent = streak.current_streak + 1;
+        await this.prisma.streaks.update({
+          where: { user_id: userId },
           data: {
-            currentStreak: newCurrent,
-            bestStreak: Math.max(newCurrent, streak.bestStreak),
-            lastGoalMetDate: activityDate,
+            current_streak: newCurrent,
+            best_streak: Math.max(newCurrent, streak.best_streak),
+            last_goal_met_date: activityDate,
           },
         });
       } else if (diffDays > 1) {
@@ -181,11 +196,11 @@ export class GamificationService {
         const newCurrent = 1;
         // if (streak.freezeTokens > 0) ...
 
-        await this.prisma.streak.update({
-          where: { userId },
+        await this.prisma.streaks.update({
+          where: { user_id: userId },
           data: {
-            currentStreak: newCurrent,
-            lastGoalMetDate: activityDate,
+            current_streak: newCurrent,
+            last_goal_met_date: activityDate,
           },
         });
       }
@@ -197,12 +212,12 @@ export class GamificationService {
     const threshold = new Date(now.getTime() - 5 * 60 * 1000); // 5 minutes ago
 
     // 1. Find active session (ended recently)
-    const recentSession = await this.prisma.studySession.findFirst({
+    const recentSession = await this.prisma.study_sessions.findFirst({
       where: {
-        userId,
-        endTime: { gte: threshold },
+        user_id: userId,
+        end_time: { gte: threshold },
       },
-      orderBy: { endTime: 'desc' },
+      orderBy: { end_time: "desc" },
     });
 
     const deltaMinutes = dto.minutesSpentDelta || 0;
@@ -213,36 +228,39 @@ export class GamificationService {
       // 2. Resume Session
       // Weighted average for focus score
       // (oldScore * oldDuration + newScore * newDelta) / (oldDuration + newDelta)
-      const currentDuration = recentSession.durationMinutes || 0; // minutes
+      const currentDuration = recentSession.duration_minutes || 0; // minutes
       const totalDuration = currentDuration + deltaMinutes;
-      
+
       let avgScore = 100;
       if (totalDuration > 0) {
-        const currentScore = recentSession.focusScore || 100;
-        avgScore = ((currentScore * currentDuration) + (newScore * deltaMinutes)) / totalDuration;
+        const currentScore = recentSession.focus_score || 100;
+        avgScore =
+          (currentScore * currentDuration + newScore * deltaMinutes) /
+          totalDuration;
       }
 
-      await this.prisma.studySession.update({
+      await this.prisma.study_sessions.update({
         where: { id: recentSession.id },
         data: {
-          endTime: now,
-          durationMinutes: { increment: deltaMinutes },
-          netFocusMinutes: { increment: deltaMinutes }, // Assuming only focused time is sent
-          focusScore: avgScore,
+          end_time: now,
+          duration_minutes: { increment: deltaMinutes },
+          net_focus_minutes: { increment: deltaMinutes }, // Assuming only focused time is sent
+          focus_score: avgScore,
           // accuracyRate: update if provided? For now, simplistic.
         },
       });
     } else {
       // 3. New Session
-      await this.prisma.studySession.create({
+      await this.prisma.study_sessions.create({
         data: {
-          userId,
-          startTime: now,
-          endTime: now,
-          durationMinutes: deltaMinutes,
-          netFocusMinutes: deltaMinutes,
-          focusScore: newScore,
-          activityType: dto.activityType || 'reading',
+          id: crypto.randomUUID(),
+          user_id: userId,
+          start_time: now,
+          end_time: now,
+          duration_minutes: deltaMinutes,
+          net_focus_minutes: deltaMinutes,
+          focus_score: newScore,
+          activity_type: dto.activityType || "reading",
           // interactionCount: dto.lessonsCompletedDelta || 0, // Not in schema yet
         },
       });

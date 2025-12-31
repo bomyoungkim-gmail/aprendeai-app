@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { ContentClassificationService } from "./content-classification.service";
 import { HttpService } from "@nestjs/axios";
 import { ConfigService } from "@nestjs/config";
-import { of, throwError } from "rxjs";
+import { throwError } from "rxjs";
 
 describe("ContentClassificationService", () => {
   let service: ContentClassificationService;
@@ -14,9 +14,11 @@ describe("ContentClassificationService", () => {
         {
           provide: HttpService,
           useValue: {
-            post: jest.fn().mockReturnValue(
-              throwError(() => new Error("AI Service mocked error")),
-            ),
+            post: jest
+              .fn()
+              .mockReturnValue(
+                throwError(() => new Error("AI Service mocked error")),
+              ),
           },
         },
         {

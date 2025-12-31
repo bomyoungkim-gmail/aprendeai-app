@@ -39,15 +39,15 @@ export class PlanLimitsService {
     // Get user's active subscription
     // Note: Subscription schema uses planId but doesn't have explicit relation
     // We'll just use planId to fetch the plan separately
-    const subscription = await this.prisma.subscription.findFirst({
+    const subscription = await this.prisma.subscriptions.findFirst({
       where: {
-        scopeType: "USER",
-        scopeId: userId,
+        scope_type: "USER",
+        scope_id: userId,
         status: "ACTIVE",
       },
     });
 
-    if (subscription?.planId) {
+    if (subscription?.plan_id) {
       // TODO (Issue #11): Re-enable when billingPlan model exists in schema
       /*
       const plan = await this.prisma.billingPlan.findUnique({
@@ -91,26 +91,26 @@ export class PlanLimitsService {
     // Map metric to database table
     switch (metric) {
       case "highlights":
-        return this.prisma.highlight.count({
+        return this.prisma.highlights.count({
           where: {
-            userId,
-            createdAt: { gte: startDate },
+            user_id: userId,
+            created_at: { gte: startDate },
           },
         });
 
       case "cornellNotes":
-        return this.prisma.cornellNotes.count({
+        return this.prisma.cornell_notes.count({
           where: {
-            userId,
-            createdAt: { gte: startDate },
+            user_id: userId,
+            created_at: { gte: startDate },
           },
         });
 
       case "contents":
-        return this.prisma.content.count({
+        return this.prisma.contents.count({
           where: {
-            ownerUserId: userId,
-            createdAt: { gte: startDate },
+            owner_user_id: userId,
+            created_at: { gte: startDate },
           },
         });
 

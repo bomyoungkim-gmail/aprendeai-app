@@ -32,13 +32,13 @@ async function setupTestDatabase() {
     });
 
     // Create FREE plan
-    const freePlan = await prisma.plan.upsert({
+    const freePlan = await prisma.plans.upsert({
       where: { code: 'FREE' },
       create: {
         code: 'FREE',
         name: 'Free Plan',
         description: 'Free tier with basic features',
-        isActive: true,
+        is_active: true,
         entitlements: {
           features: {
             maxUsers: 1,
@@ -49,8 +49,10 @@ async function setupTestDatabase() {
             storageGB: 1,
           },
         },
-        monthlyPrice: 0,
-        yearlyPrice: 0,
+        monthly_price: 0,
+        yearly_price: 0,
+        id: 'plan_free',
+        updated_at: new Date(),
       },
       update: {},
     });
@@ -58,13 +60,13 @@ async function setupTestDatabase() {
     console.log('✅ Created FREE plan:', freePlan.code);
 
     // Create PRO plan
-    const proPlan = await prisma.plan.upsert({
+    const proPlan = await prisma.plans.upsert({
       where: { code: 'PRO' },
       create: {
         code: 'PRO',
         name: 'Pro Plan',
         description: 'Professional tier',
-        isActive: true,
+        is_active: true,
         entitlements: {
           features: {
             maxUsers: 5,
@@ -75,8 +77,10 @@ async function setupTestDatabase() {
             storageGB: 10,
           },
         },
-        monthlyPrice: 9.99,
-        yearlyPrice: 99.99,
+        monthly_price: 9.99,
+        yearly_price: 99.99,
+        id: 'plan_pro',
+        updated_at: new Date(),
       },
       update: {},
     });

@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { LLMService } from '../../llm/llm.service';
-import { GenerateQuestionsDto } from '../dto/generate-questions.dto';
+import { Injectable, Logger } from "@nestjs/common";
+import { LLMService } from "../../llm/llm.service";
+import { GenerateQuestionsDto } from "../dto/generate-questions.dto";
 import {
   TabooQuestion,
   TabooAnswer,
@@ -8,7 +8,7 @@ import {
   SRSAnswer,
   FreeRecallQuestion,
   FreeRecallAnswer,
-} from '../types/game-question-types';
+} from "../types/game-question-types";
 
 @Injectable()
 export class AIQuestionGeneratorService {
@@ -17,15 +17,15 @@ export class AIQuestionGeneratorService {
   constructor(private llmService: LLMService) {}
 
   async generate(params: GenerateQuestionsDto) {
-    const language = params.language || 'pt-BR';
-    
+    const language = params.language || "pt-BR";
+
     try {
       switch (params.gameType) {
-        case 'CONCEPT_LINKING':
+        case "CONCEPT_LINKING":
           return await this.generateTabooQuestions(params, language);
-        case 'SRS_ARENA':
+        case "SRS_ARENA":
           return await this.generateSRSQuestions(params, language);
-        case 'FREE_RECALL_SCORE':
+        case "FREE_RECALL_SCORE":
           return await this.generateFreeRecallQuestions(params, language);
         default:
           throw new Error(`Unsupported game type: ${params.gameType}`);
@@ -36,7 +36,10 @@ export class AIQuestionGeneratorService {
     }
   }
 
-  private async generateTabooQuestions(params: GenerateQuestionsDto, language: string) {
+  private async generateTabooQuestions(
+    params: GenerateQuestionsDto,
+    language: string,
+  ) {
     const prompt = `Generate ${params.count} Taboo-style questions about "${params.topic}" (${params.subject}) 
 for ${params.educationLevel} education level in ${language}.
 
@@ -50,7 +53,7 @@ Return JSON: { questions: [{ targetWord, forbiddenWords, requiredKeywords, valid
 
     const result = await this.llmService.generateText(prompt, {
       temperature: 0.8,
-      model: 'gpt-4',
+      model: "gpt-4",
     });
 
     const data = JSON.parse(result.text);
@@ -60,7 +63,7 @@ Return JSON: { questions: [{ targetWord, forbiddenWords, requiredKeywords, valid
         forbiddenWords: q.forbiddenWords,
       } as TabooQuestion,
       answer: {
-        type: 'criteria',
+        type: "criteria",
         requiredKeywords: q.requiredKeywords || [],
         forbiddenKeywords: q.forbiddenWords,
         minWords: 5,
@@ -76,7 +79,10 @@ Return JSON: { questions: [{ targetWord, forbiddenWords, requiredKeywords, valid
     }));
   }
 
-  private async generateSRSQuestions(params: GenerateQuestionsDto, language: string) {
+  private async generateSRSQuestions(
+    params: GenerateQuestionsDto,
+    language: string,
+  ) {
     const prompt = `Generate ${params.count} flashcard questions about "${params.topic}" (${params.subject})
 for ${params.educationLevel} education level in ${language}.
 
@@ -90,7 +96,7 @@ Return JSON: { questions: [{ question, correct, acceptableVariations, keywords }
 
     const result = await this.llmService.generateText(prompt, {
       temperature: 0.7,
-      model: 'gpt-4',
+      model: "gpt-4",
     });
 
     const data = JSON.parse(result.text);
@@ -99,7 +105,7 @@ Return JSON: { questions: [{ question, correct, acceptableVariations, keywords }
         question: q.question,
       } as SRSQuestion,
       answer: {
-        type: 'exact',
+        type: "exact",
         correct: q.correct,
         acceptableVariations: q.acceptableVariations || [],
         keywords: q.keywords || [],
@@ -112,7 +118,10 @@ Return JSON: { questions: [{ question, correct, acceptableVariations, keywords }
     }));
   }
 
-  private async generateFreeRecallQuestions(params: GenerateQuestionsDto, language: string) {
+  private async generateFreeRecallQuestions(
+    params: GenerateQuestionsDto,
+    language: string,
+  ) {
     const prompt = `Generate ${params.count} free recall prompts about "${params.topic}" (${params.subject})
 for ${params.educationLevel} education level in ${language}.
 
@@ -126,7 +135,7 @@ Return JSON: { questions: [{ topic, prompt, mustMentionConcepts, exampleAnswer }
 
     const result = await this.llmService.generateText(prompt, {
       temperature: 0.7,
-      model: 'gpt-4',
+      model: "gpt-4",
     });
 
     const data = JSON.parse(result.text);
@@ -136,7 +145,7 @@ Return JSON: { questions: [{ topic, prompt, mustMentionConcepts, exampleAnswer }
         prompt: q.prompt,
       } as FreeRecallQuestion,
       answer: {
-        type: 'self-assessed',
+        type: "self-assessed",
         topic: q.topic,
         mustMentionConcepts: q.mustMentionConcepts || [],
         optionalConcepts: [],
@@ -144,17 +153,17 @@ Return JSON: { questions: [{ topic, prompt, mustMentionConcepts, exampleAnswer }
         exampleAnswer: q.exampleAnswer,
         rubric: {
           excellent: {
-            description: 'Menciona 5+ conceitos essenciais',
+            description: "Menciona 5+ conceitos essenciais",
             minConcepts: 5,
             minWords: 30,
           },
           good: {
-            description: 'Menciona 3-4 conceitos',
+            description: "Menciona 3-4 conceitos",
             minConcepts: 3,
             minWords: 20,
           },
           needs_improvement: {
-            description: 'Menciona <3 conceitos',
+            description: "Menciona <3 conceitos",
             minConcepts: 0,
             minWords: 10,
           },

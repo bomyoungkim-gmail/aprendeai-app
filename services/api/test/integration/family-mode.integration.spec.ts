@@ -46,12 +46,11 @@ describe("Family Mode Integration Tests (e2e)", () => {
     // Create Educator (Owner)
     const educatorData = createTestUser();
     educatorData.email = `educator_fam_${Date.now()}@example.com`;
-    const educator = await prisma.user.create({
+    const educator = await prisma.users.create({
       data: {
         email: educatorData.email,
         name: educatorData.name,
-        role: "COMMON_USER",
-        schoolingLevel: "HIGHER_EDUCATION",
+        schooling_level: "HIGHER_EDUCATION",
       },
     });
     userId = educator.id; // Educator is the main authenticated user for tests
@@ -63,42 +62,43 @@ describe("Family Mode Integration Tests (e2e)", () => {
     // Create Learner
     const learnerData = createTestUser();
     learnerData.email = `learner_fam_${Date.now()}@example.com`;
-    const learner = await prisma.user.create({
+    const learner = await prisma.users.create({
       data: {
         email: learnerData.email,
         name: "Learner Child",
-        role: "COMMON_USER",
-        schoolingLevel: "K12_LOWER",
+        schooling_level: "K12_LOWER",
       },
     });
     learnerId = learner.id;
 
     // Create Family
-    const family = await prisma.family.create({
+    const family = await prisma.families.create({
       data: {
         name: "Test Family",
-        ownerId: educator.id,
+        owner_user_id: educator.id,
       },
     });
     familyId = family.id;
 
     // Create Content
-    const content = await prisma.content.create({
+    const content = await prisma.contents.create({
       data: {
+        id: `content-${Date.now()}`,
         title: "Test Content",
         type: "ARTICLE",
-        rawText: "Some text content",
-        originalLanguage: "EN",
-        createdBy: educator.id,
+        raw_text: "Some text content",
+        original_language: "EN",
+        created_by: educator.id,
       },
     });
     contentId = content.id;
 
     // Create ReadingSession
-    const rs = await prisma.readingSession.create({
+    const rs = await prisma.reading_sessions.create({
       data: {
-        userId: learnerId,
-        contentId: content.id,
+        id: `rs-${Date.now()}`,
+        user_id: learnerId,
+        content_id: content.id,
         phase: "PRE",
         modality: "READING",
       },
@@ -106,10 +106,11 @@ describe("Family Mode Integration Tests (e2e)", () => {
     readingSessionId = rs.id;
 
     // Create Second ReadingSession for TeachBack
-    const rs2 = await prisma.readingSession.create({
+    const rs2 = await prisma.reading_sessions.create({
       data: {
-        userId: learnerId,
-        contentId: content.id,
+        id: `rs2-${Date.now()}`,
+        user_id: learnerId,
+        content_id: content.id,
         phase: "FINISHED",
         modality: "READING",
       },
@@ -120,18 +121,18 @@ describe("Family Mode Integration Tests (e2e)", () => {
   afterAll(async () => {
     // Cleanup
     if (readingSessionId)
-      await prisma.readingSession.deleteMany({
+      await prisma.reading_sessions.deleteMany({
         where: { id: readingSessionId },
       });
     if (teachBackReadingSessionId)
-      await prisma.readingSession.deleteMany({
+      await prisma.reading_sessions.deleteMany({
         where: { id: teachBackReadingSessionId },
       });
     if (contentId)
-      await prisma.content.deleteMany({ where: { id: contentId } });
-    if (familyId) await prisma.family.deleteMany({ where: { id: familyId } });
-    if (userId) await prisma.user.deleteMany({ where: { id: userId } });
-    if (learnerId) await prisma.user.deleteMany({ where: { id: learnerId } });
+      await prisma.contents.deleteMany({ where: { id: contentId } });
+    if (familyId) await prisma.families.deleteMany({ where: { id: familyId } });
+    if (userId) await prisma.users.deleteMany({ where: { id: userId } });
+    if (learnerId) await prisma.users.deleteMany({ where: { id: learnerId } });
 
     await prisma.$disconnect();
     await app.close();
@@ -143,16 +144,16 @@ describe("Family Mode Integration Tests (e2e)", () => {
         .post("/api/v1/families/policy")
         .set("Authorization", authToken)
         .send({
-          familyId: familyId,
-          learnerUserId: learnerId,
-          timeboxDefaultMin: 20,
-          coReadingDays: [1, 3, 5],
-          privacyMode: "AGGREGATED_ONLY",
+          family_id: familyId,
+          learner_user_id: learnerId,
+          timebox_default_min: 20,
+          co_reading_days: [1, 3, 5],
+          privacy_mode: "AGGREGATED_ONLY",
         });
 
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty("id");
-      expect(response.body.timeboxDefaultMin).toBe(20);
+      expect(response.body.timebox_default_min).toBe(20);
 
       policyId = response.body.id;
     });

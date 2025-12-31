@@ -9,16 +9,17 @@ datasource db {
 }
 
 model annotation_comments {
-  id           String           @id
+  id           String           @id @default(uuid())
   highlight_id String
   user_id      String
   text         String
   status       AnnotationStatus @default(ACTIVE)
   deleted_at   DateTime?
   created_at   DateTime         @default(now())
-  updated_at   DateTime
-  highlights   highlights       @relation(fields: [highlight_id], references: [id], onDelete: Cascade)
-  users        users            @relation(fields: [user_id], references: [id])
+  updated_at   DateTime         @updatedAt
+
+  highlights highlights @relation(fields: [highlight_id], references: [id], onDelete: Cascade)
+  users      users      @relation(fields: [user_id], references: [id])
 
   @@index([highlight_id])
   @@index([status])
@@ -29,16 +30,20 @@ model annotation_shares {
   annotation_id String
   context_type  ShareContextType
   context_id    String
-  mode          AnnotationShareMode @default(VIEW)
-  created_by    String?
-  created_at    DateTime            @default(now())
+
+  mode AnnotationShareMode @default(VIEW)
+
+  created_by String?
+  created_at DateTime @default(now())
+
+  annotations annotations @relation(fields: [annotation_id], references: [id], onDelete: Cascade)
 
   @@id([annotation_id, context_type, context_id])
   @@index([context_type, context_id])
 }
 
 model annotations {
-  id                String               @id
+  id                String               @id @default(uuid())
   content_id        String
   user_id           String
   type              AnnotationType
@@ -52,12 +57,13 @@ model annotations {
   parent_id         String?
   is_favorite       Boolean              @default(false)
   created_at        DateTime             @default(now())
-  updated_at        DateTime
+  updated_at        DateTime             @updatedAt
   contents          contents             @relation(fields: [content_id], references: [id], onDelete: Cascade)
   study_groups      study_groups?        @relation(fields: [group_id], references: [id], onDelete: Cascade)
   annotations       annotations?         @relation("annotationsToannotations", fields: [parent_id], references: [id], onDelete: Cascade)
   other_annotations annotations[]        @relation("annotationsToannotations")
   users             users                @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  annotation_shares annotation_shares[]
 
   @@index([content_id])
   @@index([group_id])
@@ -65,7 +71,7 @@ model annotations {
 }
 
 model app_configs {
-  id          String       @id
+  id          String       @id @default(uuid())
   key         String       @unique
   value       String
   type        ConfigType
@@ -76,7 +82,7 @@ model app_configs {
   created_by  String?
   updated_by  String?
   created_at  DateTime     @default(now())
-  updated_at  DateTime
+  updated_at  DateTime     @updatedAt
 
   @@index([category])
   @@index([environment])
@@ -84,60 +90,64 @@ model app_configs {
 }
 
 model assessment_answers {
-  id                    String               @id
+  id                    String  @id @default(uuid())
   assessment_attempt_id String
   question_id           String
   user_answer           Json
   is_correct            Boolean
   time_spent_seconds    Int?
-  assessment_attempts   assessment_attempts  @relation(fields: [assessment_attempt_id], references: [id])
-  assessment_questions  assessment_questions @relation(fields: [question_id], references: [id])
+
+  assessment_attempts  assessment_attempts  @relation(fields: [assessment_attempt_id], references: [id])
+  assessment_questions assessment_questions @relation(fields: [question_id], references: [id])
 }
 
 model assessment_attempts {
-  id                 String               @id
-  assessment_id      String
-  user_id            String
-  started_at         DateTime             @default(now())
-  finished_at        DateTime?
-  score_raw          Float?
-  score_percent      Float?
+  id            String    @id @default(uuid())
+  assessment_id String
+  user_id       String
+  started_at    DateTime  @default(now())
+  finished_at   DateTime?
+  score_raw     Float?
+  score_percent Float?
+
   assessment_answers assessment_answers[]
   assessments        assessments          @relation(fields: [assessment_id], references: [id])
   users              users                @relation(fields: [user_id], references: [id])
 }
 
 model assessment_questions {
-  id                 String               @id
-  assessment_id      String
-  question_type      QuestionType
-  question_text      String
-  options            Json?
-  correct_answer     Json
-  skills             String[]             @default([])
+  id             String       @id @default(uuid())
+  assessment_id  String
+  question_type  QuestionType
+  question_text  String
+  options        Json?
+  correct_answer Json
+  skills         String[]     @default([])
+
   assessment_answers assessment_answers[]
   assessments        assessments          @relation(fields: [assessment_id], references: [id])
 }
 
 model assessments {
-  id                     String                 @id
+  id                     String   @id @default(uuid())
   content_id             String
   content_version_id     String?
   institution_id         String?
   schooling_level_target String
-  created_at             DateTime               @default(now())
-  updated_at             DateTime
-  assessment_attempts    assessment_attempts[]
-  assessment_questions   assessment_questions[]
-  contents               contents               @relation(fields: [content_id], references: [id])
-  content_versions       content_versions?      @relation(fields: [content_version_id], references: [id])
-  institutions           institutions?          @relation(fields: [institution_id], references: [id])
+  created_at             DateTime @default(now())
+  updated_at             DateTime @updatedAt
+
+  assessment_attempts  assessment_attempts[]
+  assessment_questions assessment_questions[]
+  contents             contents               @relation(fields: [content_id], references: [id])
+  content_versions     content_versions?      @relation(fields: [content_version_id], references: [id])
+  institutions         institutions?          @relation(fields: [institution_id], references: [id])
 }
 
 model audit_logs {
-  id            String    @id
+  id            String   @id
   actor_user_id String?
-  actor_role    UserRole?
+  actor_role    String?
   action        String
   resource_type String
   resource_id   String?
@@ -147,7 +157,7 @@ model audit_logs {
   before_json   Json?
   after_json    Json?
   reason        String?
-  created_at    DateTime  @default(now())
+  created_at    DateTime @default(now())
 
   @@index([action])
   @@index([actor_user_id])
@@ -224,26 +234,6 @@ model class_policies {
   classrooms              classrooms       @relation(fields: [classroom_id], references: [id], onDelete: Cascade)
 }
 
-model class_students {
-  class_id   String
-  student_id String
-  classes    classes @relation(fields: [class_id], references: [id])
-  users      users   @relation(fields: [student_id], references: [id])
-
-  @@id([class_id, student_id])
-}
-
-model classes {
-  id             String           @id
-  institution_id String
-  name           String
-  grade_level    String
-  created_at     DateTime         @default(now())
-  updated_at     DateTime
-  class_students class_students[]
-  institutions   institutions     @relation(fields: [institution_id], references: [id])
-}
-
 model classrooms {
   id                String             @id
   institution_id    String?
@@ -254,52 +244,65 @@ model classrooms {
   updated_at        DateTime
   class_plan_weeks  class_plan_weeks[]
   class_policies    class_policies?
+  institutions      institutions?      @relation(fields: [institution_id], references: [id])
+
   users             users              @relation(fields: [owner_educator_id], references: [id])
   enrollments       enrollments[]
 }
 
 model co_reading_sessions {
-  id                                                String           @id
-  family_id                                         String
-  educator_user_id                                  String
-  learner_user_id                                   String
-  reading_session_id                                String           @unique
-  thread_id_learner                                 String
-  thread_id_educator                                String
-  type                                              CoSessionType    @default(CO_READING)
-  timebox_min                                       Int
-  status                                            CoReadingStatus  @default(ACTIVE)
-  started_at                                        DateTime         @default(now())
-  ended_at                                          DateTime?
-  users_co_reading_sessions_educator_user_idTousers users            @relation("co_reading_sessions_educator_user_idTousers", fields: [educator_user_id], references: [id])
-  families                                          families         @relation(fields: [family_id], references: [id], onDelete: Cascade)
-  users_co_reading_sessions_learner_user_idTousers  users            @relation("co_reading_sessions_learner_user_idTousers", fields: [learner_user_id], references: [id])
-  reading_sessions                                  reading_sessions @relation(fields: [reading_session_id], references: [id], onDelete: Cascade)
+  id                 String          @id @default(uuid())
+  family_id          String
+  educator_user_id   String
+  learner_user_id    String
+  reading_session_id String          @unique
+  thread_id_learner  String
+  thread_id_educator String
+  type               CoSessionType   @default(CO_READING)
+  timebox_min        Int
+  status             CoReadingStatus @default(ACTIVE)
+  started_at         DateTime        @default(now())
+  ended_at           DateTime?
+
+  users_educator   users            @relation("co_reading_sessions_educator_user_idTousers", fields: [educator_user_id], references: [id])
+  families         families         @relation(fields: [family_id], references: [id], onDelete: Cascade)
+  users_learner    users            @relation("co_reading_sessions_learner_user_idTousers", fields: [learner_user_id], references: [id])
+  reading_sessions reading_sessions @relation(fields: [reading_session_id], references: [id], onDelete: Cascade)
 }
 
 model comment_threads {
-  id           String            @id
+  id String @id @default(uuid())
+
   context_type ShareContextType
   context_id   String
-  target_type  CommentTargetType
-  target_id    String
-  created_at   DateTime          @default(now())
-  comments     comments[]
+
+  target_type CommentTargetType
+  target_id   String
+
+  created_at DateTime @default(now())
+
+  comments comments[]
 
   @@unique([context_type, context_id, target_type, target_id])
   @@index([context_type, context_id])
 }
 
 model comments {
-  id              String          @id
-  thread_id       String
-  author_id       String
-  body            String
-  created_at      DateTime        @default(now())
-  deleted_at      DateTime?
-  deleted_by      String?
-  delete_reason   String?
-  comment_threads comment_threads @relation(fields: [thread_id], references: [id], onDelete: Cascade)
+  id String @id @default(uuid())
+
+  thread_id String
+  author_id String
+
+  body String
+
+  created_at DateTime @default(now())
+
+  deleted_at    DateTime?
+  deleted_by    String?
+  delete_reason String?
+
+  thread comment_threads @relation(fields: [thread_id], references: [id], onDelete: Cascade)
+  author users           @relation(fields: [author_id], references: [id], onDelete: Cascade)
 
   @@index([thread_id, created_at])
 }
@@ -319,7 +322,7 @@ model concept_difficulty {
 }
 
 model content_chunks {
-  id             String   @id
+  id             String   @id @default(uuid())
   content_id     String
   chunk_index    Int
   page_number    Int?
@@ -334,18 +337,18 @@ model content_chunks {
 }
 
 model content_extractions {
-  id                 String           @id
+  id                 String           @id @default(uuid())
   content_id         String           @unique
   status             ExtractionStatus @default(PENDING)
   extracted_text_ref String?
   metadata_json      Json?
   created_at         DateTime         @default(now())
-  updated_at         DateTime
+  updated_at         DateTime         @updatedAt
   contents           contents         @relation(fields: [content_id], references: [id], onDelete: Cascade)
 }
 
 model content_pedagogical_data {
-  id                  String   @id
+  id                  String   @id @default(uuid())
   content_id          String   @unique
   vocabulary_triage   Json?
   socratic_questions  Json?
@@ -355,7 +358,7 @@ model content_pedagogical_data {
   free_recall_prompts Json?
   processing_version  String   @default("v1.0")
   processed_at        DateTime @default(now())
-  updated_at          DateTime
+  updated_at          DateTime @updatedAt
   contents            contents @relation(fields: [content_id], references: [id], onDelete: Cascade)
 
   @@index([content_id])
@@ -365,92 +368,99 @@ model content_shares {
   content_id   String
   context_type ShareContextType
   context_id   String
-  permission   SharePermission  @default(VIEW)
-  created_by   String?
-  created_at   DateTime         @default(now())
+
+  permission SharePermission @default(VIEW)
+
+  created_by String?
+  created_at DateTime @default(now())
+
+  contents contents @relation(fields: [content_id], references: [id], onDelete: Cascade)
 
   @@id([content_id, context_type, context_id])
   @@index([context_type, context_id])
 }
 
 model content_versions {
-  id                     String               @id
+  id                     String   @id @default(uuid())
   content_id             String
   target_language        Language
   schooling_level_target String
   simplified_text        String
   summary                String?
   vocabulary_glossary    Json?
-  created_at             DateTime             @default(now())
-  assessments            assessments[]
-  contents               contents             @relation(fields: [content_id], references: [id])
-  reading_sessions       reading_sessions[]
-  user_library_items     user_library_items[]
+  created_at             DateTime @default(now())
+
+  assessments        assessments[]
+  contents           contents             @relation(fields: [content_id], references: [id])
+  reading_sessions   reading_sessions[]
+  user_library_items user_library_items[]
 }
 
 model contents {
-  id                                  String                    @id
-  institution_id                      String?
-  type                                ContentType
-  source_id                           String?
-  title                               String
-  original_language                   Language
-  raw_text                            String
-  metadata                            Json?
-  created_by                          String?
-  created_at                          DateTime                  @default(now())
-  updated_at                          DateTime
-  scope_type                          ScopeType                 @default(USER)
-  family_id                           String?
-  file_id                             String?
-  language_guess                      String?
-  owner_user_id                       String?
-  scope_id                            String?
-  source_url                          String?
-  duration                            Int?
-  owner_type                          String?
-  owner_id                            String?
-  annotations                         annotations[]
-  assessments                         assessments[]
-  content_chunks                      content_chunks[]
-  content_extractions                 content_extractions?
-  content_pedagogical_data            content_pedagogical_data?
-  content_versions                    content_versions[]
-  users_contents_created_byTousers    users?                    @relation("contents_created_byTousers", fields: [created_by], references: [id])
-  families                            families?                 @relation(fields: [family_id], references: [id])
-  files                               files?                    @relation(fields: [file_id], references: [id])
-  institutions                        institutions?             @relation(fields: [institution_id], references: [id])
-  users_contents_owner_user_idTousers users?                    @relation("contents_owner_user_idTousers", fields: [owner_user_id], references: [id])
-  cornell_notes                       cornell_notes[]
-  game_results                        game_results[]
-  group_contents                      group_contents[]
-  group_sessions                      group_sessions[]
-  highlights                          highlights[]
-  learning_assets                     learning_assets[]
-  lessons                             lessons[]
-  reading_sessions                    reading_sessions[]
-  user_library_items                  user_library_items[]
-  user_vocabularies                   user_vocabularies[]
+  id                String      @id
+  institution_id    String?
+  type              ContentType
+  source_id         String?
+  title             String
+  original_language Language
+  raw_text          String
+  metadata          Json?
+  created_by        String?
+  created_at        DateTime    @default(now())
+  updated_at        DateTime    @updatedAt
+  scope_type        ScopeType   @default(USER)
+
+  file_id        String?
+  language_guess String?
+  owner_user_id  String?
+  scope_id       String?
+  source_url     String?
+  duration       Int?
+  owner_type     String?
+  owner_id       String?
+
+  annotations              annotations[]
+  assessments              assessments[]
+  content_chunks           content_chunks[]
+  content_extractions      content_extractions?
+  content_pedagogical_data content_pedagogical_data?
+  content_versions         content_versions[]
+  users_created_by         users?                    @relation("contents_created_byTousers", fields: [created_by], references: [id])
+  files                    files?                    @relation(fields: [file_id], references: [id])
+  institutions             institutions?             @relation(fields: [institution_id], references: [id])
+  users_owner              users?                    @relation("contents_owner_user_idTousers", fields: [owner_user_id], references: [id])
+  cornell_notes            cornell_notes[]
+  content_shares           content_shares[]
+  game_results             game_results[]
+
+  group_sessions     group_sessions[]
+  highlights         highlights[]
+  learning_assets    learning_assets[]
+  lessons            lessons[]
+  reading_sessions   reading_sessions[]
+  user_library_items user_library_items[]
+  user_vocabularies  user_vocabularies[]
 
   @@index([owner_user_id])
   @@index([title])
 }
 
 model cornell_notes {
-  id          String   @id
-  contentId   String
-  createdAt   DateTime @default(now())
-  cuesJson    Json     @default("[]")
-  notesJson   Json     @default("[]")
-  summaryText String   @default("")
-  updatedAt   DateTime @default(now())
-  userId      String
-  contents    contents @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  users       users    @relation(fields: [userId], references: [id])
+  id           String   @id @default(uuid())
+  content_id   String
+  created_at   DateTime @default(now())
+  cues_json    Json     @default("[]")
+  notes_json   Json     @default("[]")
+  summary_text String   @default("")
+  updated_at   DateTime @default(now()) @updatedAt
+  user_id      String
 
-  @@unique([contentId, userId])
-  @@index([contentId])
-  @@index([userId])
+  contents contents @relation(fields: [content_id], references: [id], onDelete: Cascade)
+  users    users    @relation(fields: [user_id], references: [id])
+
+  @@unique([content_id, user_id])
+  @@index([content_id])
+  @@index([user_id])
 }
 
 model courses {
@@ -517,18 +527,24 @@ model entitlement_overrides {
 }
 
 model entitlement_snapshots {
-  id           String    @id
-  user_id      String    @unique
-  source       String
-  plan_type    PlanType
-  limits       Json
-  features     Json      @default("{}")
+  id         String               @id @default(uuid())
+  user_id    String
+  scope_type EntitlementScopeType
+  scope_id   String
+
+  source    String
+  plan_type PlanType
+  limits    Json
+  features  Json     @default("{}")
+
   effective_at DateTime  @default(now())
   expires_at   DateTime?
-  updated_at   DateTime
-  scope_type   String?
-  scope_id     String?
-  users        users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  updated_at   DateTime  @updatedAt
+
+  users users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, scope_type, scope_id])
+  @@index([user_id, scope_type])
 }
 
 model error_logs {
@@ -585,33 +601,39 @@ model extension_grants {
 }
 
 model families {
-  id                  String                @id
-  name                String
-  join_code           String?               @unique
-  owner_id            String
-  created_at          DateTime              @default(now())
-  updated_at          DateTime
-  co_reading_sessions co_reading_sessions[]
-  contents            contents[]
-  users               users                 @relation(fields: [owner_id], references: [id])
+  id            String  @id @default(uuid())
+  name          String?
+  join_code     String? @unique
+  owner_user_id String @map("owner_id")
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  users_owner         users                 @relation("families_owner_user_idTousers", fields: [owner_user_id], references: [id])
   family_members      family_members[]
+  co_reading_sessions co_reading_sessions[]
   family_policies     family_policies[]
   provider_usage      provider_usage[]
   subscriptions       subscriptions[]
+
+  @@map("families")
 }
 
 model family_members {
-  id           String             @id
-  family_id    String
-  user_id      String
-  role         FamilyRole
-  status       FamilyMemberStatus @default(INVITED)
-  display_name String?
-  joined_at    DateTime           @default(now())
-  families     families           @relation(fields: [family_id], references: [id], onDelete: Cascade)
-  users        users              @relation(fields: [user_id], references: [id])
+  id            String              @id @default(uuid())
+  family_id     String
+  user_id       String
+  role          FamilyRole
+  learning_role FamilyLearningRole?
+  status        FamilyMemberStatus  @default(INVITED)
+  display_name  String?
+  joined_at     DateTime            @default(now())
+
+  families families @relation(fields: [family_id], references: [id], onDelete: Cascade)
+  users    users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([family_id, user_id])
+  @@index([family_id, role])
 }
 
 model family_policies {
@@ -686,14 +708,14 @@ model game_results {
   id         String   @id
   user_id    String
   content_id String
-  gameType   String
+  game_type  String
   score      Float
   metadata   Json?
   played_at  DateTime @default(now())
   contents   contents @relation(fields: [content_id], references: [id], onDelete: Cascade)
   users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@index([gameType])
+  @@index([game_type])
   @@index([played_at])
   @@index([user_id, content_id])
 }
@@ -723,18 +745,6 @@ model group_chat_messages {
 
   @@index([created_at])
   @@index([session_id, round_id])
-}
-
-model group_contents {
-  group_id         String
-  content_id       String
-  added_by_user_id String
-  created_at       DateTime     @default(now())
-  contents         contents     @relation(fields: [content_id], references: [id], onDelete: Cascade)
-  study_groups     study_groups @relation(fields: [group_id], references: [id], onDelete: Cascade)
-
-  @@id([group_id, content_id])
-  @@index([content_id])
 }
 
 model group_events {
@@ -805,18 +815,18 @@ model group_sessions {
 }
 
 model highlights {
-  id                  String                @id
-  contentId           String
-  userId              String
+  id                  String                @id @default(uuid())
+  content_id          String
+  user_id             String
   kind                HighlightKind
-  targetType          TargetType
-  pageNumber          Int?
-  anchorJson          Json
-  colorKey            String                @default("yellow")
-  commentText         String?
-  tagsJson            Json                  @default("[]")
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @default(now())
+  target_type         TargetType
+  page_number         Int?
+  anchor_json         Json
+  color_key           String                @default("yellow")
+  comment_text        String?
+  tags_json           Json                  @default("[]")
+  created_at          DateTime              @default(now())
+  updated_at          DateTime              @default(now())
   timestamp_ms        Int?
   duration_ms         Int?
   visibility          AnnotationVisibility  @default(PRIVATE)
@@ -827,14 +837,14 @@ model highlights {
   status              AnnotationStatus      @default(ACTIVE)
   deleted_at          DateTime?
   annotation_comments annotation_comments[]
-  contents            contents              @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  users               users                 @relation(fields: [userId], references: [id])
+  contents            contents              @relation(fields: [content_id], references: [id], onDelete: Cascade)
+  users               users                 @relation(fields: [user_id], references: [id])
 
-  @@index([contentId])
+  @@index([content_id])
   @@index([context_id])
   @@index([context_type])
   @@index([status])
-  @@index([userId])
+  @@index([user_id])
   @@index([visibility])
 }
 
@@ -843,7 +853,7 @@ model institution_domains {
   institution_id String
   domain         String       @unique
   auto_approve   Boolean      @default(false)
-  default_role   UserRole     @default(COMMON_USER)
+  default_role   String       @default("STUDENT")
   created_at     DateTime     @default(now())
   institutions   institutions @relation(fields: [institution_id], references: [id], onDelete: Cascade)
 
@@ -854,7 +864,7 @@ model institution_invites {
   id             String       @id
   institution_id String
   email          String
-  role           UserRole     @default(COMMON_USER)
+  role           String       @default("STUDENT")
   token          String       @unique
   expires_at     DateTime
   used_at        DateTime?
@@ -869,57 +879,63 @@ model institution_invites {
 }
 
 model institution_members {
-  id             String       @id
+  id             String          @id @default(uuid())
   institution_id String
-  user_id        String
-  role           UserRole     @default(COMMON_USER)
-  status         MemberStatus @default(ACTIVE)
-  joined_at      DateTime     @default(now())
+  user_id        String          @unique
+  role           InstitutionRole
+  status         MemberStatus    @default(ACTIVE)
+  joined_at      DateTime        @default(now())
   left_at        DateTime?
-  institutions   institutions @relation(fields: [institution_id], references: [id], onDelete: Cascade)
-  users          users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@unique([institution_id, user_id])
+  institutions institutions @relation(fields: [institution_id], references: [id], onDelete: Cascade)
+  users        users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
   @@index([institution_id, status])
 }
 
 model institution_policies {
-  id                        String   @id
+  id                        String   @id @default(uuid())
   institution_id            String   @unique
   allow_advanced_ai         Boolean  @default(false)
-  allow_external_sharing    Boolean  @default(false)
   allow_text_extraction     Boolean  @default(false)
+  allow_external_sharing    Boolean  @default(false)
   student_unenrollment_mode String   @default("TEACHER_OR_ADMIN_ONLY")
   created_at                DateTime @default(now())
-  updated_at                DateTime
+  updated_at                DateTime @updatedAt
+
+  institutions institutions @relation(fields: [institution_id], references: [id], onDelete: Cascade)
 }
 
 model institutions {
-  id                        String                     @id
-  name                      String
-  type                      InstitutionType
-  city                      String?
-  state                     String?
-  country                   String?
-  created_at                DateTime                   @default(now())
-  updated_at                DateTime
-  maxMembers                Int?
-  requires_approval         Boolean                    @default(false)
-  slug                      String?                    @unique
-  sso_enabled               Boolean                    @default(false)
-  kind                      InstitutionKind            @default(EDUCATION)
+  id                String          @id @default(uuid())
+  name              String
+  type              InstitutionType
+  kind              InstitutionKind @default(EDUCATION)
+  city              String?
+  state             String?
+  country           String?
+  max_members       Int?
+  requires_approval Boolean         @default(false)
+  slug              String?         @unique
+  sso_enabled       Boolean         @default(false)
+  created_at        DateTime        @default(now())
+  updated_at        DateTime        @updatedAt
+
   assessments               assessments[]
-  classes                   classes[]
   contents                  contents[]
-  institution_domains       institution_domains[]
-  institution_invites       institution_invites[]
+  domains                   institution_domains[]
+  invites                   institution_invites[]
   institution_members       institution_members[]
+  institution_policies      institution_policies?
+  users_active              users[]
   org_subscription_policies org_subscription_policies?
   pending_user_approvals    pending_user_approvals[]
   provider_usage            provider_usage[]
   sso_configurations        sso_configurations?
   subscriptions             subscriptions[]
-  users                     users[]
+  teacher_verifications     teacher_verifications[]
+  classrooms                classrooms[]
+
 
   @@index([slug])
 }
@@ -1045,7 +1061,7 @@ model pending_user_approvals {
   email              String
   name               String
   temp_password_hash String
-  requested_role     UserRole       @default(COMMON_USER)
+  requested_role     String         @default("STUDENT")
   status             ApprovalStatus @default(PENDING)
   reviewed_by        String?
   reviewed_at        DateTime?
@@ -1191,26 +1207,27 @@ model question_translations {
 }
 
 model reading_sessions {
-  id                   String                 @id
-  user_id              String
-  content_id           String
-  content_version_id   String?
-  started_at           DateTime               @default(now())
-  finished_at          DateTime?
-  phase                SessionPhase?          @default(PRE)
-  modality             SessionModality?       @default(READING)
-  asset_layer          String?                @default("L1")
-  goal_statement       String?
-  prediction_text      String?
-  target_words_json    Json?
+  id                 String           @id @default(uuid())
+  user_id            String
+  content_id         String
+  content_version_id String?
+  started_at         DateTime         @default(now())
+  finished_at        DateTime?
+  phase              SessionPhase?    @default(PRE)
+  modality           SessionModality? @default(READING)
+  asset_layer        String?          @default("L1")
+  goal_statement     String?
+  prediction_text    String?
+  target_words_json  Json?
+
   co_reading_sessions  co_reading_sessions?
   legacy_cornell_notes legacy_cornell_notes[]
   contents             contents               @relation(fields: [content_id], references: [id])
   content_versions     content_versions?      @relation(fields: [content_version_id], references: [id])
   users                users                  @relation(fields: [user_id], references: [id])
+  vocab_attempts       vocab_attempts[]
   session_events       session_events[]
   session_outcomes     session_outcomes?
-  vocab_attempts       vocab_attempts[]
 
   @@index([user_id, started_at(sort: Desc)], map: "user_sessions_list")
   @@index([user_id, phase, started_at], map: "user_sessions_phase")
@@ -1227,14 +1244,14 @@ model seat_allocation_events {
 }
 
 model session_events {
-  id                 String            @id
+  id                 String            @id @default(uuid())
   reading_session_id String?
-  eventType          EventType
+  event_type         EventType @map("eventType")
   payload_json       Json
   created_at         DateTime          @default(now())
   reading_sessions   reading_sessions? @relation(fields: [reading_session_id], references: [id], onDelete: Cascade)
 
-  @@index([eventType])
+  @@index([event_type])
   @@index([reading_session_id])
 }
 
@@ -1306,18 +1323,18 @@ model study_group_members {
 }
 
 model study_groups {
-  id                  String                @id
-  owner_user_id       String
-  scope_type          ScopeType?
-  scope_id            String?
-  name                String
-  created_at          DateTime              @default(now())
+  id            String     @id @default(uuid())
+  owner_user_id String
+  scope_type    ScopeType?
+  scope_id      String?
+  name          String
+  created_at    DateTime   @default(now())
+
   annotations         annotations[]
-  group_contents      group_contents[]
   group_sessions      group_sessions[]
   provider_usage      provider_usage[]
   study_group_members study_group_members[]
-  users               users                 @relation(fields: [owner_user_id], references: [id])
+  users_owner         users                 @relation(fields: [owner_user_id], references: [id])
 
   @@index([owner_user_id])
   @@index([scope_type, scope_id])
@@ -1372,6 +1389,7 @@ model subscriptions {
   institutions             institutions?      @relation(fields: [institution_id], references: [id])
   plans                    plans              @relation(fields: [plan_id], references: [id])
   users                    users?             @relation(fields: [user_id], references: [id])
+  invoices                 invoices[]
 
   @@unique([scope_type, scope_id, status], map: "subscriptions_scope_status_unique")
   @@index([family_id])
@@ -1379,6 +1397,41 @@ model subscriptions {
   @@index([plan_id])
   @@index([scope_type, scope_id])
   @@index([status])
+  @@index([user_id])
+}
+
+model invoices {
+  id                  String         @id @default(uuid())
+  subscription_id     String
+  amount              Float
+  currency            String         @default("BRL")
+  period_start        DateTime
+  period_end          DateTime
+  status              String         @default("OPEN")
+  provider_invoice_id String?        @unique
+  metadata            Json?
+  created_at          DateTime       @default(now())
+  updated_at          DateTime       @updatedAt
+  subscriptions       subscriptions  @relation(fields: [subscription_id], references: [id], onDelete: Cascade)
+
+  @@index([subscription_id])
+  @@index([status])
+}
+
+model payment_methods {
+  id                String   @id @default(uuid())
+  user_id           String
+  provider          String   @default("stripe")
+  last4             String
+  exp_month         Int
+  exp_year          Int
+  is_default        Boolean  @default(false)
+  encrypted_details String
+  metadata          Json?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  users             users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
   @@index([user_id])
 }
 
@@ -1395,14 +1448,18 @@ model system_metrics {
 }
 
 model teacher_verifications {
-  id             String                    @id
+  id             String                    @id @default(uuid())
   user_id        String                    @unique
   institution_id String
   status         TeacherVerificationStatus @default(PENDING)
   verified_by    String?
   verified_at    DateTime?
   created_at     DateTime                  @default(now())
-  updated_at     DateTime
+  updated_at     DateTime                  @updatedAt
+
+  users          users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  institutions   institutions @relation(fields: [institution_id], references: [id], onDelete: Cascade)
+  users_verifier users?       @relation("VerifiedBy", fields: [verified_by], references: [id])
 
   @@index([institution_id, status])
 }
@@ -1453,21 +1510,6 @@ model user_library_items {
   users              users             @relation(fields: [user_id], references: [id])
 }
 
-model user_role_assignments {
-  id         String     @id
-  user_id    String
-  role       UserRole
-  scope_type ScopeType?
-  scope_id   String?
-  created_at DateTime   @default(now())
-  created_by String?
-  users      users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@unique([user_id, role, scope_type, scope_id])
-  @@index([role])
-  @@index([user_id])
-}
-
 model user_topic_mastery {
   id                  String   @id
   user_id             String
@@ -1516,81 +1558,85 @@ model user_vocabularies {
 }
 
 model users {
-  id                                                              String                   @id
-  institution_id                                                  String?
-  name                                                            String
-  email                                                           String                   @unique
-  password_hash                                                   String?
-  oauth_provider                                                  String?
-  oauth_id                                                        String?
-  oauth_picture                                                   String?
-  role                                                            UserRole
-  schooling_level                                                 String
-  age                                                             Int?
-  sex                                                             String?
-  preferred_languages                                             Json                     @default("[]")
-  created_at                                                      DateTime                 @default(now())
-  updated_at                                                      DateTime
-  last_login_at                                                   DateTime?
-  status                                                          String                   @default("ACTIVE")
-  avatar_url                                                      String?
-  bio                                                             String?
-  settings                                                        Json?                    @default("{}")
-  sso_provider                                                    String?
-  sso_subject                                                     String?                  @unique
-  password_reset_expires                                          DateTime?
-  password_reset_token                                            String?
-  address                                                         String?
-  birthday                                                        DateTime?
-  active_institution_id                                           String?
-  context_role                                                    ContextRole              @default(OWNER)
-  system_role                                                     SystemRole?
-  annotation_comments                                             annotation_comments[]
-  annotations                                                     annotations[]
-  assessment_attempts                                             assessment_attempts[]
-  class_plan_weeks                                                class_plan_weeks[]
-  class_students                                                  class_students[]
-  classrooms                                                      classrooms[]
-  co_reading_sessions_co_reading_sessions_educator_user_idTousers co_reading_sessions[]    @relation("co_reading_sessions_educator_user_idTousers")
-  co_reading_sessions_co_reading_sessions_learner_user_idTousers  co_reading_sessions[]    @relation("co_reading_sessions_learner_user_idTousers")
-  contents_contents_created_byTousers                             contents[]               @relation("contents_created_byTousers")
-  contents_contents_owner_user_idTousers                          contents[]               @relation("contents_owner_user_idTousers")
-  cornell_notes                                                   cornell_notes[]
-  daily_activities                                                daily_activities[]
-  daily_goals                                                     daily_goals[]
-  enrollments                                                     enrollments[]
-  entitlement_snapshots                                           entitlement_snapshots?
-  extension_device_auth                                           extension_device_auth[]
-  extension_grants                                                extension_grants[]
-  families                                                        families[]
-  family_members                                                  family_members[]
-  family_policies                                                 family_policies[]
-  game_progress                                                   game_progress[]
-  game_results                                                    game_results[]
-  group_chat_messages                                             group_chat_messages[]
-  group_session_members                                           group_session_members[]
-  highlights                                                      highlights[]
-  institution_invites                                             institution_invites[]
-  institution_members                                             institution_members[]
-  layer_eligibility                                               layer_eligibility?
-  learner_profiles                                                learner_profiles?
-  legacy_cornell_notes                                            legacy_cornell_notes[]
-  pending_user_approvals                                          pending_user_approvals[]
-  provider_usage                                                  provider_usage[]
-  question_results                                                question_results[]
-  reading_sessions                                                reading_sessions[]
-  streaks                                                         streaks?
-  study_group_members                                             study_group_members[]
-  study_groups                                                    study_groups[]
-  study_sessions                                                  study_sessions[]
-  subscriptions                                                   subscriptions[]
-  usage_events                                                    usage_events[]
-  user_badges                                                     user_badges[]
-  user_library_items                                              user_library_items[]
-  user_role_assignments                                           user_role_assignments[]
-  user_topic_mastery                                              user_topic_mastery[]
-  user_vocabularies                                               user_vocabularies[]
-  institutions                                                    institutions?            @relation(fields: [institution_id], references: [id])
+  id             String      @id @default(uuid())
+  name           String
+  email          String      @unique
+  password_hash  String?
+  system_role    SystemRole?
+  last_context_role   ContextRole @default(OWNER)
+  last_institution_id String?
+
+  oauth_provider      String?
+  oauth_id            String?
+  oauth_picture       String?
+  schooling_level     String?
+  age                 Int?
+  sex                 String?
+  preferred_languages Json      @default("[]")
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+  last_login_at       DateTime?
+  status              String    @default("ACTIVE")
+  avatar_url          String?
+  bio                 String?
+  settings            Json?     @default("{}")
+  sso_provider        String?
+  sso_subject         String?   @unique
+  address             String?
+  birthday            DateTime?
+  password_reset_token String?   @unique
+  password_reset_expires DateTime?
+
+  institutions          institutions?          @relation(fields: [last_institution_id], references: [id])
+  institution_members   institution_members?
+  teacher_verifications teacher_verifications?
+
+  annotation_comments          annotation_comments[]
+  annotations                  annotations[]
+  assessment_attempts          assessment_attempts[]
+  class_plan_weeks             class_plan_weeks[]
+  classrooms                   classrooms[]
+  co_reading_sessions_educator co_reading_sessions[]    @relation("co_reading_sessions_educator_user_idTousers")
+  co_reading_sessions_learner  co_reading_sessions[]    @relation("co_reading_sessions_learner_user_idTousers")
+  contents_created_by          contents[]               @relation("contents_created_byTousers")
+  contents_owner               contents[]               @relation("contents_owner_user_idTousers")
+  cornell_notes                cornell_notes[]
+  daily_activities             daily_activities[]
+  daily_goals                  daily_goals[]
+  enrollments                  enrollments[]
+  entitlement_snapshots        entitlement_snapshots[]
+  extension_device_auth        extension_device_auth[]
+  extension_grants             extension_grants[]
+  families_owned               families[]               @relation("families_owner_user_idTousers")
+  family_members               family_members[]
+  family_policies              family_policies[]
+  game_progress                game_progress[]
+  game_results                 game_results[]
+  group_chat_messages          group_chat_messages[]
+  group_session_members        group_session_members[]
+  highlights                   highlights[]
+  institution_invites          institution_invites[]
+  layer_eligibility            layer_eligibility?
+  learner_profiles             learner_profiles?
+  legacy_cornell_notes         legacy_cornell_notes[]
+  pending_user_approvals       pending_user_approvals[]
+  provider_usage               provider_usage[]
+  question_results             question_results[]
+  reading_sessions             reading_sessions[]
+  streaks                      streaks?
+  study_group_members          study_group_members[]
+  study_groups                 study_groups[]
+  study_sessions               study_sessions[]
+  subscriptions                subscriptions[]
+  teacher_verified             teacher_verifications[]  @relation("VerifiedBy")
+  payment_methods              payment_methods[]
+  usage_events                 usage_events[]
+  user_badges                  user_badges[]
+  user_library_items           user_library_items[]
+
+  user_topic_mastery user_topic_mastery[]
+  user_vocabularies  user_vocabularies[]
+  comments           comments[]
 
   @@unique([oauth_provider, oauth_id])
 }
@@ -1783,8 +1829,6 @@ enum FamilyRole {
   OWNER
   GUARDIAN
   CHILD
-  EDUCATOR
-  LEARNER
 }
 
 enum GroupMemberStatus {
@@ -2008,18 +2052,6 @@ enum TeacherVerificationStatus {
   REVOKED
 }
 
-enum UserRole {
-  ADMIN
-  SUPPORT
-  OPS
-  INSTITUTION_ADMIN
-  TEACHER
-  STUDENT
-  COMMON_USER
-  GUARDIAN
-  SCHOOL_ADMIN
-}
-
 enum VisibilityScope {
   CLASS_PROJECT
   ONLY_EDUCATORS
@@ -2031,4 +2063,16 @@ enum VocabDimension {
   FORM
   MEANING
   USE
+}
+
+enum EntitlementScopeType {
+  USER
+  FAMILY
+  INSTITUTION
+}
+
+enum FamilyLearningRole {
+  EDUCATOR
+  LEARNER
+  PEER
 }

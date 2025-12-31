@@ -5,7 +5,8 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { EncryptionService } from "./encryption.service";
-import { UserRole, Environment } from "@prisma/client";
+import { Environment } from "@prisma/client";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class SecretService {
@@ -25,7 +26,7 @@ export class SecretService {
       where.environment = filter.environment;
     }
 
-    const secrets = await this.prisma.integrationSecret.findMany({
+    const secrets = await this.prisma.integration_secrets.findMany({
       where,
       select: {
         id: true,
@@ -33,12 +34,12 @@ export class SecretService {
         name: true,
         provider: true,
         environment: true,
-        lastRotatedAt: true,
-        createdAt: true,
-        updatedAt: true,
+        last_rotated_at: true,
+        created_at: true,
+        updated_at: true,
         // NEVER return encrypted fields in list
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
     });
 
     // Add masked value for display
@@ -49,7 +50,7 @@ export class SecretService {
   }
 
   async getSecret(id: string) {
-    const secret = await this.prisma.integrationSecret.findUnique({
+    const secret = await this.prisma.integration_secrets.findUnique({
       where: { id },
     });
 
@@ -59,11 +60,11 @@ export class SecretService {
 
     // Decrypt the value
     const decryptedValue = this.encryption.decrypt({
-      encryptedValue: secret.encryptedValue,
-      encryptedDek: secret.encryptedDek,
+      encryptedValue: secret.encrypted_value,
+      encryptedDek: secret.encrypted_dek,
       iv: secret.iv,
-      authTag: secret.authTag,
-      keyId: secret.keyId,
+      authTag: secret.auth_tag,
+      keyId: secret.key_id,
     });
 
     return {
@@ -73,14 +74,14 @@ export class SecretService {
       value: decryptedValue, // Return plaintext (ADMIN only!)
       provider: secret.provider,
       environment: secret.environment,
-      lastRotatedAt: secret.lastRotatedAt,
-      createdAt: secret.createdAt,
-      updatedAt: secret.updatedAt,
+      lastRotatedAt: secret.last_rotated_at,
+      createdAt: secret.created_at,
+      updatedAt: secret.updated_at,
     };
   }
 
   async getSecretByKey(key: string): Promise<string | null> {
-    const secret = await this.prisma.integrationSecret.findUnique({
+    const secret = await this.prisma.integration_secrets.findUnique({
       where: { key },
     });
 
@@ -89,11 +90,11 @@ export class SecretService {
     }
 
     return this.encryption.decrypt({
-      encryptedValue: secret.encryptedValue,
-      encryptedDek: secret.encryptedDek,
+      encryptedValue: secret.encrypted_value,
+      encryptedDek: secret.encrypted_dek,
       iv: secret.iv,
-      authTag: secret.authTag,
-      keyId: secret.keyId,
+      authTag: secret.auth_tag,
+      keyId: secret.key_id,
     });
   }
 
@@ -108,7 +109,7 @@ export class SecretService {
     createdBy: string,
   ) {
     // Check if key already exists
-    const existing = await this.prisma.integrationSecret.findUnique({
+    const existing = await this.prisma.integration_secrets.findUnique({
       where: { key: data.key },
     });
 
@@ -121,18 +122,20 @@ export class SecretService {
     // Encrypt the value
     const encrypted = this.encryption.encrypt(data.value);
 
-    const secret = await this.prisma.integrationSecret.create({
+    const secret = await this.prisma.integration_secrets.create({
       data: {
+        id: uuidv4(),
+        updated_at: new Date(),
         key: data.key,
         name: data.name,
         provider: data.provider,
         environment: data.environment as Environment,
-        encryptedValue: encrypted.encryptedValue,
-        encryptedDek: encrypted.encryptedDek,
+        encrypted_value: encrypted.encryptedValue,
+        encrypted_dek: encrypted.encryptedDek,
         iv: encrypted.iv,
-        authTag: encrypted.authTag,
-        keyId: encrypted.keyId,
-        createdBy,
+        auth_tag: encrypted.authTag,
+        key_id: encrypted.keyId,
+        created_by: createdBy,
       },
     });
 
@@ -149,10 +152,10 @@ export class SecretService {
     value: string,
     reason: string,
     actorUserId: string,
-    actorRole: UserRole,
+    actorRole: string,
     auditLogFn: (data: any) => Promise<any>,
   ) {
-    const existing = await this.prisma.integrationSecret.findUnique({
+    const existing = await this.prisma.integration_secrets.findUnique({
       where: { id },
     });
 
@@ -163,15 +166,16 @@ export class SecretService {
     // Encrypt new value
     const encrypted = this.encryption.encrypt(value);
 
-    const updated = await this.prisma.integrationSecret.update({
+    const updated = await this.prisma.integration_secrets.update({
       where: { id },
       data: {
-        encryptedValue: encrypted.encryptedValue,
-        encryptedDek: encrypted.encryptedDek,
+        updated_at: new Date(),
+        encrypted_value: encrypted.encryptedValue,
+        encrypted_dek: encrypted.encryptedDek,
         iv: encrypted.iv,
-        authTag: encrypted.authTag,
-        keyId: encrypted.keyId,
-        lastRotatedAt: new Date(),
+        auth_tag: encrypted.authTag,
+        key_id: encrypted.keyId,
+        last_rotated_at: new Date(),
       },
     });
 
@@ -182,8 +186,11 @@ export class SecretService {
       action: "SECRET_ROTATED",
       resourceType: "SECRET",
       resourceId: id,
-      beforeJson: { key: existing.key, lastRotatedAt: existing.lastRotatedAt },
-      afterJson: { key: updated.key, lastRotatedAt: updated.lastRotatedAt },
+      beforeJson: {
+        key: existing.key,
+        lastRotatedAt: existing.last_rotated_at,
+      },
+      afterJson: { key: updated.key, lastRotatedAt: updated.last_rotated_at },
       reason,
     });
 
@@ -192,7 +199,7 @@ export class SecretService {
       key: updated.key,
       name: updated.name,
       maskedValue: this.encryption.maskValue(value),
-      lastRotatedAt: updated.lastRotatedAt,
+      lastRotatedAt: updated.last_rotated_at,
     };
   }
 
@@ -200,10 +207,10 @@ export class SecretService {
     id: string,
     reason: string,
     actorUserId: string,
-    actorRole: UserRole,
+    actorRole: string,
     auditLogFn: (data: any) => Promise<any>,
   ) {
-    const existing = await this.prisma.integrationSecret.findUnique({
+    const existing = await this.prisma.integration_secrets.findUnique({
       where: { id },
     });
 
@@ -211,7 +218,7 @@ export class SecretService {
       throw new NotFoundException("Secret not found");
     }
 
-    await this.prisma.integrationSecret.delete({
+    await this.prisma.integration_secrets.delete({
       where: { id },
     });
 

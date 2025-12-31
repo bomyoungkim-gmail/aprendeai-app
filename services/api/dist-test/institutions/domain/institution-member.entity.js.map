@@ -1,0 +1,1 @@
+{"version":3,"file":"institution-member.entity.js","sourceRoot":"","sources":["../../../src/institutions/domain/institution-member.entity.ts"],"names":[],"mappings":";;;AAEA,MAAa,iBAAiB;IAQ5B,YAAY,OAAmC;QAC7C,MAAM,CAAC,MAAM,CAAC,IAAI,EAAE,OAAO,CAAC,CAAC;QAC7B,IAAI,CAAC,QAAQ,GAAG,OAAO,CAAC,QAAQ,IAAI,IAAI,IAAI,EAAE,CAAC;IACjD,CAAC;CACF;AAZD,8CAYC"}

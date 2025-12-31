@@ -1,9 +1,9 @@
 'use client';
 
+import { useAuthStore } from '@/stores/auth-store';
 import { useQuery } from '@tanstack/react-query';
 import { Check, Sparkles, Building2, Zap } from 'lucide-react';
 import api from '@/lib/api';
-import { useAdmin } from '@/stores/admin';
 
 interface Plan {
   id: string;
@@ -19,7 +19,7 @@ interface Plan {
 }
 
 export default function PricingPage() {
-  const { user } = useAdmin();
+  const user = useAuthStore((state) => state.user);
 
   const { data: plans, isLoading } = useQuery({
     queryKey: ['plans'],

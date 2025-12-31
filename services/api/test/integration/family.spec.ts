@@ -37,18 +37,18 @@ describe("Family Plan (Integration)", () => {
     prisma = app.get<PrismaService>(PrismaService);
 
     // Clean up test data
-    await prisma.familyMember.deleteMany({});
-    await prisma.family.deleteMany({});
-    await prisma.user.deleteMany({
+    await prisma.family_members.deleteMany({});
+    await prisma.families.deleteMany({});
+    await prisma.users.deleteMany({
       where: { email: { contains: "@family-test.com" } },
     });
   });
 
   afterAll(async () => {
     // Clean up after tests
-    await prisma.familyMember.deleteMany({});
-    await prisma.family.deleteMany({});
-    await prisma.user.deleteMany({
+    await prisma.family_members.deleteMany({});
+    await prisma.families.deleteMany({});
+    await prisma.users.deleteMany({
       where: { email: { contains: "@family-test.com" } },
     });
 
@@ -100,18 +100,18 @@ describe("Family Plan (Integration)", () => {
 
       expect(response.body).toMatchObject({
         name: "Test Family",
-        ownerId: ownerUserId,
+        owner_user_id: ownerUserId,
       });
     });
 
     it("should create owner membership record", async () => {
-      const members = await prisma.familyMember.findMany({
-        where: { familyId },
+      const members = await prisma.family_members.findMany({
+        where: { family_id: familyId },
       });
 
       expect(members).toHaveLength(1);
       expect(members[0]).toMatchObject({
-        userId: ownerUserId,
+        user_id: ownerUserId,
         role: "OWNER",
         status: "ACTIVE",
       });
@@ -168,15 +168,15 @@ describe("Family Plan (Integration)", () => {
       // expect(response.body.message).toContain('invited'); // Controllers return data directly
 
       // Verify membership created
-      const existingUser = await prisma.user.findUnique({
+      const existingUser = await prisma.users.findUnique({
         where: { email: "existing@family-test.com" },
       });
 
-      const membership = await prisma.familyMember.findUnique({
+      const membership = await prisma.family_members.findUnique({
         where: {
-          familyId_userId: {
-            familyId,
-            userId: existingUser.id,
+          family_id_user_id: {
+            family_id: familyId,
+            user_id: existingUser.id,
           },
         },
       });
@@ -199,12 +199,12 @@ describe("Family Plan (Integration)", () => {
       // expect(response.body.message).toContain('invited'); // Controllers return data directly
 
       // Verify placeholder user created
-      const newUser = await prisma.user.findUnique({
+      const newUser = await prisma.users.findUnique({
         where: { email: "newuser@family-test.com" },
       });
 
       expect(newUser).toBeDefined();
-      expect(newUser.passwordHash).toBe("PENDING_INVITE");
+      expect(newUser.password_hash).toBe("PENDING_INVITE");
       expect(newUser.name).toBe("New User");
     });
 
@@ -256,7 +256,7 @@ describe("Family Plan (Integration)", () => {
     let memberUserId: string;
 
     beforeAll(async () => {
-      const existingUser = await prisma.user.findUnique({
+      const existingUser = await prisma.users.findUnique({
         where: { email: "existing@family-test.com" },
       });
       memberUserId = existingUser.id;
@@ -273,24 +273,24 @@ describe("Family Plan (Integration)", () => {
 
       // expect(response.body.message).toContain('transferred'); // Controllers return data directly
 
-      // Verify family ownerId updated
-      const family = await prisma.family.findUnique({
+      // Verify family owner_user_id updated
+      const family = await prisma.families.findUnique({
         where: { id: familyId },
       });
-      expect(family.ownerId).toBe(memberUserId);
+      expect(family.owner_user_id).toBe(memberUserId);
 
       // Verify old owner downgraded to GUARDIAN
-      const oldOwnerMembership = await prisma.familyMember.findUnique({
+      const oldOwnerMembership = await prisma.family_members.findUnique({
         where: {
-          familyId_userId: { familyId, userId: ownerUserId },
+          family_id_user_id: { family_id: familyId, user_id: ownerUserId },
         },
       });
       expect(oldOwnerMembership.role).toBe("GUARDIAN");
 
       // Verify new owner upgraded to OWNER
-      const newOwnerMembership = await prisma.familyMember.findUnique({
+      const newOwnerMembership = await prisma.family_members.findUnique({
         where: {
-          familyId_userId: { familyId, userId: memberUserId },
+          family_id_user_id: { family_id: familyId, user_id: memberUserId },
         },
       });
       expect(newOwnerMembership.role).toBe("OWNER");
@@ -336,7 +336,7 @@ describe("Family Plan (Integration)", () => {
       // expect(response.body.message).toContain('primary'); // Controllers return data directly
 
       // Verify user settings updated
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: ownerUserId },
       });
 
@@ -419,14 +419,14 @@ describe("Family Plan (Integration)", () => {
         .expect(200);
 
       // Verify family deleted
-      const family = await prisma.family.findUnique({
+      const family = await prisma.families.findUnique({
         where: { id: tempFamilyId },
       });
       expect(family).toBeNull();
 
       // Verify members deleted
-      const members = await prisma.familyMember.findMany({
-        where: { familyId: tempFamilyId },
+      const members = await prisma.family_members.findMany({
+        where: { family_id: tempFamilyId },
       });
       expect(members).toHaveLength(0);
     });
@@ -487,7 +487,7 @@ describe("Family Plan (Integration)", () => {
         .set("Authorization", `Bearer ${authToken}`)
         .expect(201);
 
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: ownerUserId },
       });
 

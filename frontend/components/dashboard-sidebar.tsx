@@ -18,6 +18,7 @@ import {
 import { useAuthStore } from '@/stores/auth-store';
 import { useState } from 'react';
 import { PlanBadge } from '@/components/billing/PlanBadge';
+import { ContextSwitcher } from '@/components/auth/ContextSwitcher';
 
 const navItems = [
   { href: '/dashboard', label: 'Início', icon: LayoutDashboard },
@@ -76,14 +77,22 @@ export function DashboardSidebar({ isOpen, onClose }: DashboardSidebarProps) {
             </button>
           )}
           
-          {/* Collapse toggle for desktop - ALWAYS VISIBLE */}
-          <button
+          {/* Collapse Toggle */}
+          <button 
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden md:block text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white"
+            className="hidden md:flex p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-800 text-gray-500 dark:text-slate-400"
           >
             {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
           </button>
         </div>
+
+        {/* Context Switcher - Only show when expanded */}
+        {!isCollapsed && (
+          <div className="px-4 mt-4 mb-2">
+            <ContextSwitcher />
+          </div>
+        )}
+
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">

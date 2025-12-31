@@ -1,14 +1,14 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, Inject } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
-import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "../email/email.service";
+import { IFamilyRepository } from "../family/domain/family.repository.interface";
 
 @Injectable()
 export class EmailWorker {
   private readonly logger = new Logger(EmailWorker.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    @Inject(IFamilyRepository) private readonly familyRepository: IFamilyRepository,
     private readonly emailService: EmailService,
   ) {}
 
@@ -17,23 +17,19 @@ export class EmailWorker {
     this.logger.log("Starting weekly report generation...");
 
     // tailored for families
-    const families = await this.prisma.family.findMany({
-      include: {
-        members: {
-          include: {
-            user: true,
-          },
-        },
-      },
-    });
+    const families = await this.familyRepository.findAll();
 
     for (const family of families) {
+      if (!family.members) continue;
+
       const parents = family.members.filter(
         (m) => m.role === "GUARDIAN" || m.role === "OWNER",
       );
-      const students = family.members.filter((m) => m.role === "CHILD");
+      // const students = family.members.filter((m) => m.role === "CHILD");
 
       for (const parent of parents) {
+        if (!parent.user?.email) continue;
+
         // In a real implementation we would aggregate stats here
         // For now we just log/simulate sending
         this.logger.log(

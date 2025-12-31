@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { PrismaService } from "../prisma/prisma.service";
+import { v4 as uuidv4 } from "uuid";
 import { MetricsService } from "./metrics.service";
 import { ErrorTrackingService } from "./error-tracking.service";
 import { ProviderUsageService } from "./provider-usage.service";
@@ -115,11 +116,12 @@ export class ObservabilityJobsService {
    * Helper: Create background job record
    */
   private async createJob(name: string) {
-    return this.prisma.backgroundJob.create({
+    return this.prisma.background_jobs.create({
       data: {
-        jobName: name,
+        id: uuidv4(),
+        job_name: name,
         status: "RUNNING",
-        startedAt: new Date(),
+        started_at: new Date(),
       },
     });
   }
@@ -128,15 +130,15 @@ export class ObservabilityJobsService {
    * Helper: Mark job as completed
    */
   private async completeJob(id: string) {
-    const job = await this.prisma.backgroundJob.findUnique({ where: { id } });
+    const job = await this.prisma.background_jobs.findUnique({ where: { id } });
     if (!job) return;
 
-    await this.prisma.backgroundJob.update({
+    await this.prisma.background_jobs.update({
       where: { id },
       data: {
         status: "COMPLETED",
-        completedAt: new Date(),
-        duration: Date.now() - job.startedAt.getTime(),
+        completed_at: new Date(),
+        duration: Date.now() - job.started_at.getTime(),
       },
     });
   }
@@ -145,11 +147,11 @@ export class ObservabilityJobsService {
    * Helper: Mark job as failed
    */
   private async failJob(id: string, error: string) {
-    await this.prisma.backgroundJob.update({
+    await this.prisma.background_jobs.update({
       where: { id },
       data: {
         status: "FAILED",
-        completedAt: new Date(),
+        completed_at: new Date(),
         error: error.substring(0, 1000), // Limit error message length
       },
     });

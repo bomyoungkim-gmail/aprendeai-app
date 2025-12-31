@@ -9,6 +9,7 @@ import { join, normalize } from "path";
 import { existsSync, mkdirSync } from "fs";
 import { URL_CONFIG } from "./config/urls.config";
 import { json, urlencoded } from "express";
+import * as cookieParser from "cookie-parser";
 
 async function bootstrap() {
   // Fix BigInt JSON serialization - Required for integration tests
@@ -23,6 +24,10 @@ async function bootstrap() {
   // Set global prefix for all routes (versioning)
   app.setGlobalPrefix("api/v1");
   logger.log("🌐 Global prefix set to /api/v1");
+
+  // Enable cookie parser for HTTP-only cookies
+  app.use(cookieParser());
+  logger.log("🍪 Cookie parser enabled");
 
   // Increase payload limit
   app.use(json({ limit: "50mb" }));

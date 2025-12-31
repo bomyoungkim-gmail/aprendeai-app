@@ -10,17 +10,17 @@ export interface TabooQuestion {
 }
 
 export interface TabooAnswer {
-  type: 'criteria';
+  type: "criteria";
   requiredKeywords: string[];
   forbiddenKeywords: string[];
   minWords: number;
   maxWords: number;
   validExamples: string[];
   scoring: {
-    noForbidden: number;    // Points for not using forbidden words
-    hasRequired: number;    // Points for including required keywords
-    goodLength: number;     // Points for appropriate length
-    clarity: number;        // Bonus points for clarity
+    noForbidden: number; // Points for not using forbidden words
+    hasRequired: number; // Points for including required keywords
+    goodLength: number; // Points for appropriate length
+    clarity: number; // Bonus points for clarity
   };
 }
 
@@ -31,7 +31,7 @@ export interface SRSQuestion {
 }
 
 export interface SRSAnswer {
-  type: 'exact';
+  type: "exact";
   correct: string;
   acceptableVariations: string[];
   keywords: string[];
@@ -50,7 +50,7 @@ export interface FreeRecallQuestion {
 }
 
 export interface FreeRecallAnswer {
-  type: 'self-assessed';
+  type: "self-assessed";
   topic: string;
   mustMentionConcepts: string[];
   optionalConcepts: string[];
@@ -59,7 +59,11 @@ export interface FreeRecallAnswer {
   rubric: {
     excellent: { description: string; minConcepts: number; minWords: number };
     good: { description: string; minConcepts: number; minWords: number };
-    needs_improvement: { description: string; minConcepts: number; minWords: number };
+    needs_improvement: {
+      description: string;
+      minConcepts: number;
+      minWords: number;
+    };
   };
   aiEvaluationAvailable: boolean;
 }
@@ -75,7 +79,7 @@ export interface ClozeQuestion {
 }
 
 export interface ClozeAnswer {
-  type: 'cloze';
+  type: "cloze";
   blanks: Array<{
     id: number;
     correct: string;
@@ -97,7 +101,7 @@ export interface QuizQuestion {
 }
 
 export interface QuizAnswer {
-  type: 'multiple-choice';
+  type: "multiple-choice";
   correctId: string;
   explanation?: string;
   scoring: {
@@ -116,7 +120,7 @@ export interface MisconceptionQuestion {
 }
 
 export interface MisconceptionAnswer {
-  type: 'composite';
+  type: "composite";
   correctWrongId: number;
   explanation: string;
   commonMisconceptions: string[];
@@ -134,7 +138,7 @@ export interface FeynmanQuestion {
 }
 
 export interface FeynmanAnswer extends FreeRecallAnswer {
-  type: 'self-assessed';
+  type: "self-assessed";
   simplicityKeywords: string[]; // Words that indicate simple explanation
   avoidJargon: string[]; // Technical terms to avoid
 }
@@ -159,34 +163,34 @@ export type GameAnswer =
   | FeynmanAnswer;
 
 // Helper type to get question/answer types by game ID
-export type QuestionForGame<T extends string> = T extends 'CONCEPT_LINKING'
+export type QuestionForGame<T extends string> = T extends "CONCEPT_LINKING"
   ? TabooQuestion
-  : T extends 'SRS_ARENA'
-  ? SRSQuestion
-  : T extends 'FREE_RECALL_SCORE'
-  ? FreeRecallQuestion
-  : T extends 'CLOZE_SPRINT'
-  ? ClozeQuestion
-  : T extends 'PROBLEM_SOLVER'
-  ? QuizQuestion
-  : T extends 'MISCONCEPTION_HUNT'
-  ? MisconceptionQuestion
-  : T extends 'FEYNMAN_TEACHER'
-  ? FeynmanQuestion
-  : GameQuestion;
+  : T extends "SRS_ARENA"
+    ? SRSQuestion
+    : T extends "FREE_RECALL_SCORE"
+      ? FreeRecallQuestion
+      : T extends "CLOZE_SPRINT"
+        ? ClozeQuestion
+        : T extends "PROBLEM_SOLVER"
+          ? QuizQuestion
+          : T extends "MISCONCEPTION_HUNT"
+            ? MisconceptionQuestion
+            : T extends "FEYNMAN_TEACHER"
+              ? FeynmanQuestion
+              : GameQuestion;
 
-export type AnswerForGame<T extends string> = T extends 'CONCEPT_LINKING'
+export type AnswerForGame<T extends string> = T extends "CONCEPT_LINKING"
   ? TabooAnswer
-  : T extends 'SRS_ARENA'
-  ? SRSAnswer
-  : T extends 'FREE_RECALL_SCORE'
-  ? FreeRecallAnswer
-  : T extends 'CLOZE_SPRINT'
-  ? ClozeAnswer
-  : T extends 'PROBLEM_SOLVER'
-  ? QuizAnswer
-  : T extends 'MISCONCEPTION_HUNT'
-  ? MisconceptionAnswer
-  : T extends 'FEYNMAN_TEACHER'
-  ? FeynmanAnswer
-  : GameAnswer;
+  : T extends "SRS_ARENA"
+    ? SRSAnswer
+    : T extends "FREE_RECALL_SCORE"
+      ? FreeRecallAnswer
+      : T extends "CLOZE_SPRINT"
+        ? ClozeAnswer
+        : T extends "PROBLEM_SOLVER"
+          ? QuizAnswer
+          : T extends "MISCONCEPTION_HUNT"
+            ? MisconceptionAnswer
+            : T extends "FEYNMAN_TEACHER"
+              ? FeynmanAnswer
+              : GameAnswer;

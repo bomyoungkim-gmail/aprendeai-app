@@ -1,6 +1,6 @@
 import { Controller, Get, Query, UseGuards } from "@nestjs/common";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { CurrentUser } from "../auth/current-user.decorator";
+import { JwtAuthGuard } from "../auth/infrastructure/jwt-auth.guard";
+import { CurrentUser } from "../auth/presentation/decorators/current-user.decorator";
 import { SearchService } from "./search.service";
 import { SearchDto } from "./dto/search.dto";
 

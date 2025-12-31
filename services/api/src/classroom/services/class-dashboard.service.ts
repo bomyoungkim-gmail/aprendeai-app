@@ -17,13 +17,13 @@ export class ClassDashboardService {
    */
   async getTeacherDashboard(classroomId: string) {
     // Get classroom with policy
-    const classroom = await this.prisma.classroom.findUnique({
+    const classroom = await this.prisma.classrooms.findUnique({
       where: { id: classroomId },
       include: {
         enrollments: {
           where: { status: "ACTIVE" },
           include: {
-            learner: true,
+            users: true,
           },
         },
       },
@@ -34,18 +34,18 @@ export class ClassDashboardService {
     }
 
     // Get class policy
-    const policy = await this.prisma.classPolicy.findUnique({
-      where: { classroomId },
+    const policy = await this.prisma.class_policies.findUnique({
+      where: { classroom_id: classroomId },
     });
 
     const privacyMode =
-      (policy?.privacyMode as unknown as ClassPrivacyMode) ||
+      (policy?.privacy_mode as unknown as ClassPrivacyMode) ||
       ClassPrivacyMode.AGGREGATED_ONLY;
 
     // Calculate stats for each student
     const studentsData: StudentData[] = await Promise.all(
-      classroom.enrollments.map(async (enrollment) => {
-        return this.calculateStudentStats(enrollment.learnerUserId);
+      (classroom as any).enrollments.map(async (enrollment: any) => {
+        return this.calculateStudentStats(enrollment.learner_user_id);
       }),
     );
 
@@ -78,15 +78,15 @@ export class ClassDashboardService {
     learnerUserId: string,
   ): Promise<StudentData> {
     // Get recent sessions
-    const sessions = await this.prisma.readingSession.findMany({
-      where: { userId: learnerUserId },
-      orderBy: { startedAt: "desc" },
+    const sessions = await this.prisma.reading_sessions.findMany({
+      where: { user_id: learnerUserId },
+      orderBy: { started_at: "desc" },
       take: 10,
     });
 
     const progressPercent = sessions.length > 0 ? 65 : 0; // TODO (Issue #7): Calculate
     const comprehensionScore = 72; // TODO (Issue #7): Calculate from assessments
-    const lastActivityDate = sessions[0]?.startedAt || null;
+    const lastActivityDate = sessions[0]?.started_at || null;
 
     return {
       learnerUserId,

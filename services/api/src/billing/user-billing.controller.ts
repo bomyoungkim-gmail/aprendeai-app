@@ -20,10 +20,7 @@ export class UserBillingController {
   @ApiBearerAuth()
   @ApiOperation({ summary: "Get my current subscription" })
   async getMySubscription(@Request() req) {
-    return this.subscriptionService.getActiveSubscription(
-      "USER",
-      req.user.id,
-    );
+    return this.subscriptionService.getActiveSubscription("USER", req.user.id);
   }
 
   @Get("entitlements")

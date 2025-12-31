@@ -24,15 +24,16 @@ export class TeachBackService {
    */
   async start(dto: StartTeachBackDto) {
     // Create teach-back co-session (child = educator, parent = learner)
-    const session = await this.prisma.coReadingSession.create({
+    const session = await this.prisma.co_reading_sessions.create({
       data: {
-        familyId: dto.familyId,
-        learnerUserId: dto.parentUserId, // Parent as LEARNER
-        educatorUserId: dto.childUserId, // Child as EDUCATOR
-        readingSessionId: dto.baseReadingSessionId,
-        threadIdLearner: `thread_tb_parent_${Date.now()}`,
-        threadIdEducator: `thread_tb_child_${Date.now()}`,
-        timeboxMin: dto.durationMin ?? 7,
+        id: crypto.randomUUID(),
+        family_id: dto.familyId,
+        learner_user_id: dto.parentUserId, // Parent as LEARNER
+        educator_user_id: dto.childUserId, // Child as EDUCATOR
+        reading_session_id: dto.baseReadingSessionId,
+        thread_id_learner: `thread_tb_parent_${Date.now()}`,
+        thread_id_educator: `thread_tb_child_${Date.now()}`,
+        timebox_min: dto.durationMin ?? 7,
         type: "TEACH_BACK", // New type for teach-back
         status: "ACTIVE",
       },
@@ -52,7 +53,7 @@ export class TeachBackService {
           educatorUserId: dto.childUserId,
           readingSessionId: dto.baseReadingSessionId,
           contentId: "TEACH_BACK_CONTENT",
-          timeboxMin: session.timeboxMin,
+          timeboxMin: session.timebox_min,
         },
       },
     );
@@ -112,11 +113,11 @@ export class TeachBackService {
    * Finish teach-back session with reward
    */
   async finish(sessionId: string, stars: number) {
-    await this.prisma.coReadingSession.update({
+    await this.prisma.co_reading_sessions.update({
       where: { id: sessionId },
       data: {
         status: "COMPLETED",
-        endedAt: new Date(),
+        ended_at: new Date(),
       },
     });
 

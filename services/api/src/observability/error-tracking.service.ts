@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class ErrorTrackingService {
@@ -19,15 +20,16 @@ export class ErrorTrackingService {
     metadata?: any;
   }) {
     try {
-      return await this.prisma.errorLog.create({
+      return await this.prisma.error_logs.create({
         data: {
+          id: uuidv4(),
           message: data.message,
           stack: data.stack,
           endpoint: data.endpoint,
           method: data.method,
-          statusCode: data.statusCode,
-          userId: data.userId,
-          requestId: data.requestId,
+          status_code: data.statusCode,
+          user_id: data.userId,
+          request_id: data.requestId,
           metadata: data.metadata,
           timestamp: new Date(),
           resolved: false,
@@ -66,7 +68,7 @@ export class ErrorTrackingService {
       where.endpoint = filters.endpoint;
     }
 
-    return this.prisma.errorLog.findMany({
+    return this.prisma.error_logs.findMany({
       where,
       orderBy: { timestamp: "desc" },
       take: filters.limit || 100,
@@ -77,13 +79,13 @@ export class ErrorTrackingService {
    * Get error count by endpoint
    */
   async getErrorsByEndpoint(from: Date, to: Date) {
-    const errors = await this.prisma.errorLog.findMany({
+    const errors = await this.prisma.error_logs.findMany({
       where: {
         timestamp: { gte: from, lte: to },
       },
       select: {
         endpoint: true,
-        statusCode: true,
+        status_code: true,
       },
     });
 
@@ -95,7 +97,7 @@ export class ErrorTrackingService {
           acc[endpoint] = { endpoint, count: 0, codes: {} };
         }
         acc[endpoint].count++;
-        const code = err.statusCode || 500;
+        const code = err.status_code || 500;
         acc[endpoint].codes[code] = (acc[endpoint].codes[code] || 0) + 1;
         return acc;
       },
@@ -109,7 +111,7 @@ export class ErrorTrackingService {
    * Mark error as resolved
    */
   async markResolved(id: string) {
-    return this.prisma.errorLog.update({
+    return this.prisma.error_logs.update({
       where: { id },
       data: { resolved: true },
     });
@@ -119,7 +121,7 @@ export class ErrorTrackingService {
    * Get error details by ID
    */
   async getErrorDetails(id: string) {
-    return this.prisma.errorLog.findUnique({
+    return this.prisma.error_logs.findUnique({
       where: { id },
     });
   }
@@ -130,7 +132,7 @@ export class ErrorTrackingService {
   async cleanupOldErrors() {
     const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-    const result = await this.prisma.errorLog.deleteMany({
+    const result = await this.prisma.error_logs.deleteMany({
       where: {
         resolved: true,
         timestamp: { lt: cutoff },

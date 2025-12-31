@@ -46,6 +46,34 @@ export class CreateHighlightDto {
   @IsArray()
   @IsOptional()
   tags_json?: string[];
+
+  @IsOptional()
+  @IsInt()
+  timestamp_ms?: number;
+
+  @IsOptional()
+  @IsInt()
+  duration_ms?: number;
+
+  @IsOptional()
+  @IsString()
+  visibility?: string;
+
+  @IsOptional()
+  @IsString()
+  visibility_scope?: string;
+
+  @IsOptional()
+  @IsString()
+  context_type?: string;
+
+  @IsOptional()
+  @IsString()
+  context_id?: string;
+
+  @IsOptional()
+  @IsString()
+  learner_id?: string;
 }
 
 export class UpdateHighlightDto {
@@ -98,4 +126,7 @@ export class UpdateContentDto {
   @IsOptional()
   @IsInt()
   duration?: number;
+
+  @IsOptional()
+  metadata?: Record<string, any>;
 }

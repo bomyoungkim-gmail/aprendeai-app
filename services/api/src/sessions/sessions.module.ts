@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { HttpModule } from "@nestjs/axios";
 import { PrismaModule } from "../prisma/prisma.module";
 import { ProfileModule } from "../profiles/profile.module";
@@ -8,10 +8,18 @@ import { OutcomesModule } from "../outcomes/outcomes.module";
 import { GatingModule } from "../gating/gating.module";
 import { ReadingSessionsService } from "./reading-sessions.service";
 import { ReadingSessionsController } from "./reading-sessions.controller";
+import { PrismaSessionsRepository } from "./infrastructure/repositories/prisma-sessions.repository";
+import { ISessionsRepository } from "./domain/sessions.repository.interface";
+import { StartSessionUseCase } from "./application/use-cases/start-session.use-case";
+import { GetSessionUseCase } from "./application/use-cases/get-session.use-case";
+import { UpdatePrePhaseUseCase } from "./application/use-cases/update-pre-phase.use-case";
+import { AdvancePhaseUseCase } from "./application/use-cases/advance-phase.use-case";
+import { RecordEventUseCase } from "./application/use-cases/record-event.use-case";
 import { QuickCommandParser } from "./parsers/quick-command.parser";
 import { AiServiceClient } from "../ai-service/ai-service.client";
 import { VocabCaptureListener } from "./listeners/vocab-capture.listener";
 import { ActivityModule } from "../activity/activity.module";
+import { CornellModule } from "../cornell/cornell.module";
 
 @Module({
   imports: [
@@ -20,9 +28,10 @@ import { ActivityModule } from "../activity/activity.module";
     ProfileModule,
     GamificationModule,
     VocabModule,
-    OutcomesModule,
+    forwardRef(() => OutcomesModule),
     GatingModule,
     ActivityModule,
+    CornellModule,
   ],
   controllers: [ReadingSessionsController],
   providers: [
@@ -30,7 +39,16 @@ import { ActivityModule } from "../activity/activity.module";
     QuickCommandParser,
     AiServiceClient,
     VocabCaptureListener,
+    {
+      provide: ISessionsRepository,
+      useClass: PrismaSessionsRepository,
+    },
+    StartSessionUseCase,
+    GetSessionUseCase,
+    UpdatePrePhaseUseCase,
+    AdvancePhaseUseCase,
+    RecordEventUseCase,
   ],
-  exports: [ReadingSessionsService],
+  exports: [ReadingSessionsService, ISessionsRepository],
 })
 export class SessionsModule {}

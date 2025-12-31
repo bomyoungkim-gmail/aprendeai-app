@@ -8,8 +8,6 @@ import {
   Put,
   Patch,
   Request,
-  Res,
-  Query,
   UseGuards,
   SetMetadata,
   UseInterceptors,
@@ -20,7 +18,6 @@ import {
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { AuthGuard } from "@nestjs/passport";
-import { QuotaGuard } from "../common/guards/quota.guard";
 import { CornellService } from "./cornell.service";
 import { StorageService } from "./services/storage.service";
 import { ContentService } from "./services/content.service";
@@ -33,9 +30,8 @@ import {
   UpdateContentDto,
 } from "./dto/cornell.dto";
 import { UploadContentDto } from "./dto/upload-content.dto";
-import { SearchContentDto } from "./dto/search-content.dto";
 import { NotificationsGateway } from "../notifications/notifications.gateway";
-
+import { CreateContentUseCase } from "./application/use-cases/create-content.use-case";
 import { QUEUES, DEFAULTS, UPLOAD_LIMITS } from "../config/constants";
 
 @Controller("contents")
@@ -47,6 +43,8 @@ export class CornellController {
     private contentService: ContentService,
     private queueService: QueueService,
     private notificationsGateway: NotificationsGateway,
+    // Refactored Use Cases
+    private createContentUseCase: CreateContentUseCase,
   ) {}
 
   @Post("create_manual")
@@ -56,9 +54,9 @@ export class CornellController {
 
   @Patch(":id/update")
   async updateContent(
-    @Param("id") id: string, 
-    @Body() dto: UpdateContentDto, 
-    @Request() req
+    @Param("id") id: string,
+    @Body() dto: UpdateContentDto,
+    @Request() req,
   ) {
     return this.contentService.updateContent(id, req.user.id, dto);
   }
@@ -79,7 +77,10 @@ export class CornellController {
   }
 
   @Post("bulk-delete")
-  async bulkDeleteContents(@Body() body: { contentIds: string[] }, @Request() req) {
+  async bulkDeleteContents(
+    @Body() body: { contentIds: string[] },
+    @Request() req,
+  ) {
     return this.cornellService.bulkDeleteContents(body.contentIds, req.user.id);
   }
 
@@ -120,10 +121,10 @@ export class CornellController {
       throw new BadRequestException("File is required");
     }
 
-    return this.contentService.uploadContent(file, dto, req.user.id);
+    return this.createContentUseCase.execute(file, dto, req.user.id);
   }
 
-  // ... (searchContent kept as is) but I need to be careful with range replacement. 
+  // ... (searchContent kept as is) but I need to be careful with range replacement.
   // Wait, replace_file_content replaces a chunk. I should target specific methods.
 
   // Skipping searchContent, proxyFile, getContent, etc. to minimize diff.

@@ -12,6 +12,7 @@ import {
   UseGuards,
   Request,
 } from "@nestjs/common";
+import { ApiOperation } from "@nestjs/swagger";
 import { Response } from "express";
 import { AuthGuard } from "@nestjs/passport";
 import { AnnotationService } from "./annotation.service";
@@ -19,6 +20,11 @@ import { AnnotationExportService } from "./annotation-export.service";
 import { CreateAnnotationDto, UpdateAnnotationDto } from "./dto/annotation.dto";
 import { SearchAnnotationsDto } from "./dto/search-annotations.dto";
 import { CreateReplyDto } from "./dto/create-reply.dto";
+import { SharingService } from "../sharing/sharing.service";
+import {
+  ShareAnnotationRequest,
+  ShareContextType,
+} from "../sharing/dto/sharing.dto";
 
 @Controller("contents/:contentId/annotations")
 @UseGuards(AuthGuard("jwt"))
@@ -65,6 +71,7 @@ export class AnnotationSearchController {
   constructor(
     private annotationService: AnnotationService,
     private exportService: AnnotationExportService,
+    private sharingService: SharingService,
   ) {}
 
   @Get("search")
@@ -111,5 +118,33 @@ export class AnnotationSearchController {
       );
       return res.send(markdown);
     }
+  }
+
+  // Sharing Endpoints (Script 7/8)
+
+  @Post(":id/shares")
+  @ApiOperation({ summary: "Share annotation with context" })
+  async share(
+    @Param("id") annotationId: string,
+    @Body() dto: ShareAnnotationRequest,
+    @Request() req,
+  ) {
+    return this.sharingService.shareAnnotation(req.user.id, annotationId, dto);
+  }
+
+  @Delete(":id/shares")
+  @ApiOperation({ summary: "Revoke annotation share" })
+  async revokeShare(
+    @Param("id") annotationId: string,
+    @Query("contextType") contextType: ShareContextType,
+    @Query("contextId") contextId: string,
+    @Request() req,
+  ) {
+    return this.sharingService.revokeAnnotationShare(
+      req.user.id,
+      annotationId,
+      contextType,
+      contextId,
+    );
   }
 }

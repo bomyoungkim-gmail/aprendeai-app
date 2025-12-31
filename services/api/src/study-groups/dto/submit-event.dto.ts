@@ -2,11 +2,11 @@ import { IsString, IsNotEmpty, IsInt, IsObject } from "class-validator";
 
 export class SubmitEventDto {
   @IsInt()
-  roundIndex: number;
+  round_index: number;
 
   @IsString()
   @IsNotEmpty()
-  eventType: string;
+  event_type: string;
 
   @IsObject()
   payload: any;

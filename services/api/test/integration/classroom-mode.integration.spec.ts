@@ -40,14 +40,15 @@ describe("Classroom Mode Integration Tests (e2e)", () => {
 
     // Create unique teacher user
     teacherEmail = `teacher_${Date.now()}@example.com`;
-    const teacherUser = await prisma.user.upsert({
+    const teacherUser = await prisma.users.upsert({
       where: { email: teacherEmail },
       create: {
+        id: `teacher-${Date.now()}`,
         email: teacherEmail,
         name: "Teacher Test",
-        passwordHash: "hash",
-        role: "TEACHER",
-        schoolingLevel: "HIGHER_EDUCATION",
+        password_hash: "hash",
+        last_context_role: "TEACHER",
+        schooling_level: "HIGHER_EDUCATION",
         status: "ACTIVE",
       },
       update: {},
@@ -61,16 +62,37 @@ describe("Classroom Mode Integration Tests (e2e)", () => {
       name: teacherUser.name,
     });
 
+    // Create institution and verify teacher
+    const institution = await prisma.institutions.create({
+      data: {
+        id: `inst-cl-${Date.now()}`,
+        name: "Classroom Test Institution",
+        type: "SCHOOL",
+        updated_at: new Date(),
+      },
+    });
+
+    await prisma.teacher_verifications.create({
+      data: {
+        id: `ver-${Date.now()}`,
+        user_id: teacherId,
+        institution_id: institution.id,
+        status: "VERIFIED",
+        verified_at: new Date(),
+      },
+    });
+
     // Create unique student user
     studentEmail = `student_${Date.now()}@example.com`;
-    const studentUser = await prisma.user.upsert({
+    const studentUser = await prisma.users.upsert({
       where: { email: studentEmail },
       create: {
+        id: `student-${Date.now()}`,
         email: studentEmail,
         name: "Student Maria",
-        passwordHash: "hash",
-        role: "COMMON_USER",
-        schoolingLevel: "ELEMENTARY",
+        password_hash: "hash",
+        last_context_role: "STUDENT",
+        schooling_level: "ELEMENTARY",
         status: "ACTIVE",
       },
       update: {},
@@ -81,15 +103,27 @@ describe("Classroom Mode Integration Tests (e2e)", () => {
   afterAll(async () => {
     // Cleanup
     if (classroomId) {
-      await prisma.classroom
+      await prisma.classrooms
         .delete({ where: { id: classroomId } })
         .catch(() => {});
     }
+    await prisma.teacher_verifications
+      .deleteMany({
+        where: { user_id: teacherId },
+      })
+      .catch(() => {});
+
+    await prisma.institutions
+      .deleteMany({
+        where: { name: "Classroom Test Institution" },
+      })
+      .catch(() => {});
+
     if (teacherId) {
-      await prisma.user.delete({ where: { id: teacherId } }).catch(() => {});
+      await prisma.users.delete({ where: { id: teacherId } }).catch(() => {});
     }
     if (studentId) {
-      await prisma.user.delete({ where: { id: studentId } }).catch(() => {});
+      await prisma.users.delete({ where: { id: studentId } }).catch(() => {});
     }
     await app.close();
   });

@@ -39,7 +39,7 @@ describe("Cornell Notes Integration Tests", () => {
     prisma = app.get<PrismaService>(PrismaService);
 
     // Create Institution
-    const institution = await prisma.institution.create({
+    const institution = await prisma.institutions.create({
       data: {
         name: "Cornell Test University",
         type: InstitutionType.UNIVERSITY,
@@ -76,17 +76,18 @@ describe("Cornell Notes Integration Tests", () => {
     authToken = `Bearer ${loginResponse.body.access_token}`;
 
     // Fetch the REAL user ID from DB
-    const user = await prisma.user.findUnique({ where: { email: testEmail } });
+    const user = await prisma.users.findUnique({ where: { email: testEmail } });
     testUserId = user.id;
 
     // Create test content OWNED by THIS user
-    const content = await prisma.content.create({
+    const content = await prisma.contents.create({
       data: {
-        ownerUserId: testUserId,
+        id: `content-${Date.now()}`,
+        owner_user_id: testUserId,
         title: "Cornell Test Content",
         type: "PDF",
-        originalLanguage: "EN",
-        rawText: "Test content for Cornell notes testing.",
+        original_language: "EN",
+        raw_text: "Test content for Cornell notes testing.",
       },
     });
     testContentId = content.id;
@@ -94,11 +95,13 @@ describe("Cornell Notes Integration Tests", () => {
 
   afterAll(async () => {
     try {
-      await prisma.cornellNotes.deleteMany({ where: { userId: testUserId } });
+      await prisma.cornell_notes.deleteMany({ where: { user_id: testUserId } });
       // Delete contents (allow failure if deps exist)
-      await prisma.content.deleteMany({ where: { id: testContentId } });
-      await prisma.user.deleteMany({ where: { id: testUserId } });
-      await prisma.institution.deleteMany({ where: { id: testInstitutionId } });
+      await prisma.contents.deleteMany({ where: { id: testContentId } });
+      await prisma.users.deleteMany({ where: { id: testUserId } });
+      await prisma.institutions.deleteMany({
+        where: { id: testInstitutionId },
+      });
     } catch (e) {
       // Ignore cleanup errors
       console.warn("Cleanup failed:", e.message);
@@ -114,11 +117,11 @@ describe("Cornell Notes Integration Tests", () => {
         .expect(200);
 
       expect(response.body).toHaveProperty("id");
-      expect(response.body.contentId).toBe(testContentId);
-      expect(response.body.userId).toBe(testUserId);
-      expect(response.body.notesJson).toEqual([]);
-      expect(response.body.cuesJson).toEqual([]);
-      expect(response.body.summaryText).toBe("");
+      expect(response.body.content_id).toBe(testContentId);
+      expect(response.body.user_id).toBe(testUserId);
+      expect(response.body.notes_json).toEqual([]);
+      expect(response.body.cues_json).toEqual([]);
+      expect(response.body.summary_text).toBe("");
     });
 
     it("should return existing Cornell notes on subsequent GET", async () => {
@@ -142,8 +145,8 @@ describe("Cornell Notes Integration Tests", () => {
 
   describe("PUT /contents/:id/cornell - Save Notes", () => {
     beforeEach(async () => {
-      await prisma.cornellNotes.deleteMany({
-        where: { userId: testUserId },
+      await prisma.cornell_notes.deleteMany({
+        where: { user_id: testUserId },
       });
     });
 
@@ -159,7 +162,7 @@ describe("Cornell Notes Integration Tests", () => {
         .send({ notes_json })
         .expect(200);
 
-      expect(response.body.notesJson).toEqual(notes_json);
+      expect(response.body.notes_json).toEqual(notes_json);
     });
 
     it("should save cues", async () => {
@@ -171,7 +174,7 @@ describe("Cornell Notes Integration Tests", () => {
         .send({ cues_json })
         .expect(200);
 
-      expect(response.body.cuesJson).toEqual(cues_json);
+      expect(response.body.cues_json).toEqual(cues_json);
     });
 
     it("should save summary text", async () => {
@@ -183,7 +186,7 @@ describe("Cornell Notes Integration Tests", () => {
         .send({ summary_text })
         .expect(200);
 
-      expect(response.body.summaryText).toBe(summary_text);
+      expect(response.body.summary_text).toBe(summary_text);
     });
 
     it("should save all fields together", async () => {
@@ -199,9 +202,9 @@ describe("Cornell Notes Integration Tests", () => {
         .send(data)
         .expect(200);
 
-      expect(response.body.notesJson).toEqual(data.notes_json);
-      expect(response.body.cuesJson).toEqual(data.cues_json);
-      expect(response.body.summaryText).toBe(data.summary_text);
+      expect(response.body.notes_json).toEqual(data.notes_json);
+      expect(response.body.cues_json).toEqual(data.cues_json);
+      expect(response.body.summary_text).toBe(data.summary_text);
     });
   });
 
@@ -225,8 +228,8 @@ describe("Cornell Notes Integration Tests", () => {
         .set("Authorization", authToken)
         .expect(200);
 
-      expect(response.body.notesJson).toEqual(data.notes_json);
-      expect(response.body.summaryText).toBe(data.summary_text);
+      expect(response.body.notes_json).toEqual(data.notes_json);
+      expect(response.body.summary_text).toBe(data.summary_text);
     });
 
     it("should update existing notes without losing data", async () => {
@@ -249,9 +252,9 @@ describe("Cornell Notes Integration Tests", () => {
         })
         .expect(200);
 
-      expect(updated.body.notesJson).toEqual([{ id: "1", text: "Original" }]);
-      expect(updated.body.summaryText).toBe("Original summary");
-      expect(updated.body.cuesJson).toEqual(["New cue"]);
+      expect(updated.body.notes_json).toEqual([{ id: "1", text: "Original" }]);
+      expect(updated.body.summary_text).toBe("Original summary");
+      expect(updated.body.cues_json).toEqual(["New cue"]);
     });
   });
 
@@ -277,7 +280,7 @@ describe("Cornell Notes Integration Tests", () => {
         })
         .expect(200);
 
-      expect(response.body.notesJson).toEqual([]);
+      expect(response.body.notes_json).toEqual([]);
     });
   });
 });

@@ -204,22 +204,25 @@ export const ROUTES = {
     UPDATE: (id: string) => `contents/${id}/update`,
     UPLOAD: "contents/upload",
     BULK_DELETE: "contents/bulk-delete",
-    
+
     // Cornell Notes operations
     CORNELL_NOTES: (contentId: string) => `contents/${contentId}/cornell`,
-    
+
     // Highlights (Annotations)
     HIGHLIGHTS: (contentId: string) => `contents/${contentId}/highlights`,
     HIGHLIGHT_BY_ID: (id: string) => `highlights/${id}`,
-    
+
     // AI operations
     SIMPLIFY: (contentId: string) => `contents/${contentId}/simplify`,
     ASSESSMENT: (contentId: string) => `contents/${contentId}/assessment`,
-    
+
     // Pedagogical Data (Cornell Enhancement)
-    PEDAGOGICAL_CONTEXT: (contentId: string) => `cornell/contents/${contentId}/context`,
-    PEDAGOGICAL_DATA: (contentId: string) => `cornell/contents/${contentId}/pedagogical`,
-    GAME_RESULTS: (contentId: string) => `cornell/contents/${contentId}/game-results`,
+    PEDAGOGICAL_CONTEXT: (contentId: string) =>
+      `cornell/contents/${contentId}/context`,
+    PEDAGOGICAL_DATA: (contentId: string) =>
+      `cornell/contents/${contentId}/pedagogical`,
+    GAME_RESULTS: (contentId: string) =>
+      `cornell/contents/${contentId}/game-results`,
   },
 
   // WebClip routes (Browser Extension)

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { API_BASE_URL, API_ENDPOINTS } from '@/lib/config/api';
+import { API_ENDPOINTS } from '@/lib/config/api';
+import api from '@/lib/api';
 
 type Tab = 'members' | 'domains' | 'pending' | 'sso';
 
@@ -79,17 +80,12 @@ export default function InstitutionDetailPage() {
     fetchSSO();
   }, [institutionId]);
 
-  const getToken = () => localStorage.getItem('admin_token');
+
 
   const fetchInstitution = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.GET(institutionId)}`, {
-        headers: { 'Authorization': `Bearer ${getToken()}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setInstitution(data);
-      }
+      const res = await api.get(API_ENDPOINTS.INSTITUTIONS.GET(institutionId));
+      setInstitution(res.data);
     } catch (error) {
       console.error('Failed to fetch institution:', error);
     } finally {
@@ -99,10 +95,8 @@ export default function InstitutionDetailPage() {
 
   const fetchInvites = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.INVITES(institutionId)}`, {
-        headers: { 'Authorization': `Bearer ${getToken()}` },
-      });
-      if (res.ok) setInvites(await res.json());
+      const res = await api.get(API_ENDPOINTS.INSTITUTIONS.INVITES(institutionId));
+      setInvites(res.data);
     } catch (error) {
       console.error('Failed to fetch invites:', error);
     }
@@ -110,10 +104,8 @@ export default function InstitutionDetailPage() {
 
   const fetchDomains = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.DOMAINS(institutionId)}`, {
-        headers: { 'Authorization': `Bearer ${getToken()}` },
-      });
-      if (res.ok) setDomains(await res.json());
+      const res = await api.get(API_ENDPOINTS.INSTITUTIONS.DOMAINS(institutionId));
+      setDomains(res.data);
     } catch (error) {
       console.error('Failed to fetch domains:', error);
     }
@@ -121,10 +113,8 @@ export default function InstitutionDetailPage() {
 
   const fetchPending = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.PENDING(institutionId)}`, {
-        headers: { 'Authorization': `Bearer ${getToken()}` },
-      });
-      if (res.ok) setPending(await res.json());
+      const res = await api.get(API_ENDPOINTS.INSTITUTIONS.PENDING(institutionId));
+      setPending(res.data);
     } catch (error) {
       console.error('Failed to fetch pending:', error);
     }
@@ -132,10 +122,8 @@ export default function InstitutionDetailPage() {
 
   const fetchSSO = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.SSO_GET(institutionId)}`, {
-        headers: { 'Authorization': `Bearer ${getToken()}` },
-      });
-      if (res.ok) setSSOConfig(await res.json());
+      const res = await api.get(API_ENDPOINTS.INSTITUTIONS.SSO_GET(institutionId));
+      setSSOConfig(res.data);
     } catch (error) {
       console.error('Failed to fetch SSO config:', error);
     }
@@ -143,75 +131,55 @@ export default function InstitutionDetailPage() {
 
   const handleCreateInvite = async (email: string, role: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.CREATE_INVITE(institutionId)}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, role, expiresInDays: 7 }),
+      const res = await api.post(API_ENDPOINTS.INSTITUTIONS.CREATE_INVITE(institutionId), { 
+        email, 
+        role, 
+        expiresInDays: 7 
       });
-
-      if (res.ok) {
-        setShowInviteModal(false);
-        fetchInvites();
-        alert('Invite sent successfully!');
-      } else {
-        const error = await res.json();
-        alert(`Failed: ${error.message || 'Unknown error'}`);
-      }
-    } catch (error) {
+      // Axios success is implied by lack of throw, check res.data?
+      // Actually standard pattern is just await.
+      
+      setShowInviteModal(false);
+      fetchInvites();
+      alert('Invite sent successfully!');
+    } catch (error: any) {
       console.error('Failed to create invite:', error);
-      alert('Failed to send invite');
+      const msg = error.response?.data?.message || 'Unknown error';
+      alert(`Failed: ${msg}`);
     }
   };
 
   const handleAddDomain = async (domain: string, autoApprove: boolean, defaultRole: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.ADD_DOMAIN(institutionId)}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ domain, autoApprove, defaultRole }),
+      await api.post(API_ENDPOINTS.INSTITUTIONS.ADD_DOMAIN(institutionId), { 
+        domain, 
+        autoApprove, 
+        defaultRole 
       });
 
-      if (res.ok) {
-        setShowDomainModal(false);
-        fetchDomains();
-        alert('Domain added successfully!');
-      } else {
-        const error = await res.json();
-        alert(`Failed: ${error.message || 'Unknown error'}`);
-      }
-    } catch (error) {
+      setShowDomainModal(false);
+      fetchDomains();
+      alert('Domain added successfully!');
+    } catch (error: any) {
       console.error('Failed to add domain:', error);
-      alert('Failed to add domain');
+      const msg = error.response?.data?.message || 'Unknown error';
+      alert(`Failed: ${msg}`);
     }
   };
 
   const handleProcessApproval = async (approvalId: string, approve: boolean, reason?: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.APPROVE(institutionId, approvalId)}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ approve, reason }),
+      await api.post(API_ENDPOINTS.INSTITUTIONS.APPROVE(institutionId, approvalId), { 
+        approve, 
+        reason 
       });
 
-      if (res.ok) {
-        fetchPending();
-        alert(approve ? 'User approved!' : 'User rejected!');
-      } else {
-        const error = await res.json();
-        alert(`Failed: ${error.message || 'Unknown error'}`);
-      }
-    } catch (error) {
+      fetchPending();
+      alert(approve ? 'User approved!' : 'User rejected!');
+    } catch (error: any) {
       console.error('Failed to process approval:', error);
-      alert('Failed to process approval');
+      const msg = error.response?.data?.message || 'Unknown error';
+      alert(`Failed: ${msg}`);
     }
   };
 
@@ -219,17 +187,12 @@ export default function InstitutionDetailPage() {
     if (!confirm('Cancel this invite?')) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.CANCEL_INVITE(institutionId, inviteId)}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${getToken()}` },
-      });
-
-      if (res.ok) {
-        fetchInvites();
-        alert('Invite cancelled');
-      }
+      await api.delete(API_ENDPOINTS.INSTITUTIONS.CANCEL_INVITE(institutionId, inviteId));
+      fetchInvites();
+      alert('Invite cancelled');
     } catch (error) {
       console.error('Failed to cancel invite:', error);
+      alert('Failed to cancel invite');
     }
   };
 
@@ -239,40 +202,24 @@ export default function InstitutionDetailPage() {
         ? API_ENDPOINTS.INSTITUTIONS.SSO_UPDATE(institutionId)
         : API_ENDPOINTS.INSTITUTIONS.SSO_CREATE(institutionId);
         
-      const method = ssoConfig?.id ? 'PATCH' : 'POST';
+      const promise = ssoConfig?.id 
+        ? api.patch(endpoint, config)
+        : api.post(endpoint, config);
 
-      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(config),
-      });
-
-      if (res.ok) {
-        setSSOConfig(await res.json());
-        alert('SSO Configuration saved!');
-      } else {
-        const error = await res.json();
-        alert(`Failed: ${error.message || 'Unknown error'}`);
-      }
-    } catch (error) {
+      const res = await promise;
+      setSSOConfig(res.data);
+      alert('SSO Configuration saved!');
+    } catch (error: any) {
       console.error('Failed to save SSO config:', error);
-      alert('Failed to save SSO configuration');
+      const msg = error.response?.data?.message || 'Unknown error';
+      alert(`Failed: ${msg}`);
     }
   };
 
   const handleTestSSO = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}${API_ENDPOINTS.INSTITUTIONS.SSO_TEST(institutionId)}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      const data = await res.json();
+      const res = await api.post(API_ENDPOINTS.INSTITUTIONS.SSO_TEST(institutionId));
+      const data = res.data;
       alert(`Test Result: ${data.status} - ${data.message}`);
     } catch (error) {
       console.error('SSO Test failed:', error);

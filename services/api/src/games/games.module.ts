@@ -13,10 +13,44 @@ import { LLMModule } from "../llm/llm.module";
 import { TopicMasteryModule } from "../analytics/topic-mastery.module";
 import { GamificationModule } from "../gamification/gamification.module";
 
+import { IGameProgressRepository } from "./domain/interfaces/game-progress.repository.interface";
+import { PrismaGameProgressRepository } from "./infrastructure/repositories/prisma-game-progress.repository";
+import { GetUserProgressUseCase } from "./application/use-cases/get-user-progress.use-case";
+import { GetGameProgressUseCase } from "./application/use-cases/get-game-progress.use-case";
+import { UpdateGameProgressUseCase } from "./application/use-cases/update-game-progress.use-case";
+
 @Module({
-  imports: [HttpModule, PrismaModule, TopicMasteryModule, LLMModule, GamificationModule],
+  imports: [
+    HttpModule,
+    PrismaModule,
+    TopicMasteryModule,
+    LLMModule,
+    GamificationModule,
+  ],
   controllers: [GamesController],
-  providers: [GamesService, GameProgressService, GameLeaderboardService, QuestionAnalyticsService, QuestionSelectionService, AIQuestionGeneratorService],
-  exports: [GamesService, GameProgressService, GameLeaderboardService],
+  providers: [
+    GamesService,
+    GameProgressService,
+    GameLeaderboardService,
+    QuestionAnalyticsService,
+    QuestionSelectionService,
+    AIQuestionGeneratorService,
+    // Refactored Game Progress Providers
+    {
+      provide: IGameProgressRepository,
+      useClass: PrismaGameProgressRepository,
+    },
+    GetUserProgressUseCase,
+    GetGameProgressUseCase,
+    UpdateGameProgressUseCase,
+  ],
+  exports: [
+    GamesService,
+    GameProgressService,
+    GameLeaderboardService,
+    GetUserProgressUseCase, // Export if needed by other modules
+    GetGameProgressUseCase,
+    UpdateGameProgressUseCase,
+  ],
 })
 export class GamesModule {}

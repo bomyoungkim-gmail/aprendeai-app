@@ -1,8 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { FamilyEventService } from "./family-event.service";
 import { PrismaService } from "../prisma/prisma.service";
-import { HttpService } from "@nestjs/axios";
-import { ConfigService } from "@nestjs/config";
 
 describe("FamilyEventService", () => {
   let service: FamilyEventService;

@@ -4,32 +4,28 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { EmailService } from "./email.service";
 import { EmailProcessor } from "./email.processor";
 import { EmailController } from "./email.controller";
+import { UnsubscribeUserUseCase } from "./application/use-cases/unsubscribe-user.use-case";
+import { UsersModule } from "../users/users.module";
 import { PrismaModule } from "../prisma/prisma.module";
-
 import { EmailWorker } from "../workers/email.worker";
+import { FamilyModule } from "../family/family.module";
 
 @Module({
   imports: [
     PrismaModule,
-    // BullModule temporarily disabled for local dev without Redis
-    // BullModule.registerQueue({
-    //   name: 'email',
-    //   connection: {
-    //     host: process.env.REDIS_HOST || 'localhost',
-    //     port: parseInt(process.env.REDIS_PORT || '6379'),
-    //   },
-    // }),
+    UsersModule,
+    FamilyModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get("JWT_SECRET"),
-        signOptions: { expiresIn: "30d" }, // Long expiry for unsubscribe links
+        signOptions: { expiresIn: "30d" },
       }),
       inject: [ConfigService],
     }),
   ],
   controllers: [EmailController],
-  providers: [EmailService, EmailProcessor, EmailWorker],
+  providers: [EmailService, EmailProcessor, EmailWorker, UnsubscribeUserUseCase],
   exports: [EmailService],
 })
 export class EmailModule {}

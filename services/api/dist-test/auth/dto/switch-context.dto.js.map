@@ -1,0 +1,1 @@
+{"version":3,"file":"switch-context.dto.js","sourceRoot":"","sources":["../../../src/auth/dto/switch-context.dto.ts"],"names":[],"mappings":";;;;;;;;;;;;AAAA,qDAAuD;AACvD,6CAA8C;AAE9C,MAAa,gBAAgB;CAU5B;AAVD,4CAUC;AADC;IARC,IAAA,qBAAW,EAAC;QACX,QAAQ,EAAE,KAAK;QACf,QAAQ,EAAE,IAAI;QACd,WAAW,EACT,yEAAyE;KAC5E,CAAC;IACD,IAAA,0BAAQ,GAAE;IACV,IAAA,4BAAU,GAAE;;6DACuB"}

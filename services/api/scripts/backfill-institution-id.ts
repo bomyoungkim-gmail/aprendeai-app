@@ -17,11 +17,11 @@ async function backfillInstitutionId() {
   console.log('='.repeat(50));
   
   // Get or create default institution
-  let defaultInstitution = await prisma.institution.findFirst();
+  let defaultInstitution = await prisma.institutions.findFirst();
   
   if (!defaultInstitution) {
     console.log('⚠️  No institution found. Creating default...');
-    defaultInstitution = await prisma.institution.create({
+    defaultInstitution = await prisma.institutions.create({
       data: {
         name: 'Default Institution',
         type: 'UNIVERSITY',
@@ -56,10 +56,10 @@ async function backfillInstitutionId() {
   `;
   console.log(`   ✅ Updated ${se} rows`);
   
-  // 3. Backfill user_vocabulary
-  console.log('\n3️⃣  Backfilling user_vocabulary...');
+  // 3. Backfill user_vocabularies
+  console.log('\n3️⃣  Backfilling user_vocabularies...');
   const uv = await prisma.$executeRaw`
-    UPDATE user_vocabulary uv
+    UPDATE user_vocabularies uv
     SET institution_id = COALESCE(u.institution_id, ${defaultId}::uuid)
     FROM users u
     WHERE uv.user_id = u.id AND uv.institution_id IS NULL
@@ -128,7 +128,7 @@ async function backfillInstitutionId() {
     UNION ALL
     SELECT 'session_events', COUNT(*) FROM session_events WHERE institution_id IS NULL
     UNION ALL
-    SELECT 'user_vocabulary', COUNT(*) FROM user_vocabulary WHERE institution_id IS NULL
+    SELECT 'user_vocabularies', COUNT(*) FROM user_vocabularies WHERE institution_id IS NULL
     UNION ALL
     SELECT 'cornell_notes', COUNT(*) FROM cornell_notes WHERE institution_id IS NULL
     UNION ALL

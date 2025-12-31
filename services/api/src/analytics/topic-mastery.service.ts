@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class TopicMasteryService {
@@ -22,17 +22,17 @@ export class TopicMasteryService {
     timeSpentSeconds: number = 0,
   ) {
     try {
-      const masteryRecord = await this.prisma.userTopicMastery.findUnique({
-        where: { userId_topic_subject: { userId, topic, subject } },
+      const masteryRecord = await this.prisma.user_topic_mastery.findUnique({
+        where: { user_id_topic_subject: { user_id: userId, topic, subject } },
       });
 
-      let newMastery = masteryRecord?.masteryLevel || 0;
-      let newStreak = isCorrect ? (masteryRecord?.streak || 0) + 1 : 0;
-      
+      let newMastery = masteryRecord?.mastery_level || 0;
+      const newStreak = isCorrect ? (masteryRecord?.streak || 0) + 1 : 0;
+
       // Mastery Calculation logic
       if (isCorrect) {
         // Base gain (5%) + streak bonus (max 5%)
-        const gain = 5 + Math.min(newStreak, 5); 
+        const gain = 5 + Math.min(newStreak, 5);
         newMastery = Math.min(100, newMastery + gain);
       } else {
         // Penalty (-2%)
@@ -40,32 +40,41 @@ export class TopicMasteryService {
       }
 
       // Upsert
-      await this.prisma.userTopicMastery.upsert({
-        where: { userId_topic_subject: { userId, topic, subject } },
+      // Upsert
+      // Import uuid
+      const { v4: uuidv4 } = require("uuid");
+      await this.prisma.user_topic_mastery.upsert({
+        where: { user_id_topic_subject: { user_id: userId, topic, subject } },
         create: {
-          userId,
+          id: uuidv4(),
+          user_id: userId,
           topic,
           subject,
-          masteryLevel: newMastery,
+          mastery_level: newMastery,
           streak: newStreak,
-          questionsAttempted: 1,
-          questionsCorrect: isCorrect ? 1 : 0,
-          timeSpent: timeSpentSeconds,
+          questions_attempted: 1,
+          questions_correct: isCorrect ? 1 : 0,
+          time_spent: timeSpentSeconds,
+          updated_at: new Date(),
         },
         update: {
-          masteryLevel: newMastery,
+          mastery_level: newMastery,
           streak: newStreak,
-          questionsAttempted: { increment: 1 },
-          questionsCorrect: { increment: isCorrect ? 1 : 0 },
-          timeSpent: { increment: timeSpentSeconds },
-          lastActivityAt: new Date(),
+          questions_attempted: { increment: 1 },
+          questions_correct: { increment: isCorrect ? 1 : 0 },
+          time_spent: { increment: timeSpentSeconds },
+          last_activity_at: new Date(),
+          updated_at: new Date(),
         },
       });
 
-      this.logger.debug(`Updated mastery for user ${userId} on ${topic}: ${newMastery}%`);
-
+      this.logger.debug(
+        `Updated mastery for user ${userId} on ${topic}: ${newMastery}%`,
+      );
     } catch (error) {
-      this.logger.error(`Failed to update topic mastery for user ${userId}: ${error.message}`);
+      this.logger.error(
+        `Failed to update topic mastery for user ${userId}: ${error.message}`,
+      );
     }
   }
 
@@ -73,9 +82,9 @@ export class TopicMasteryService {
    * Retrieves mastery overview for a user.
    */
   async getUserMastery(userId: string) {
-    return this.prisma.userTopicMastery.findMany({
-      where: { userId },
-      orderBy: { lastActivityAt: 'desc' },
+    return this.prisma.user_topic_mastery.findMany({
+      where: { user_id: userId },
+      orderBy: { last_activity_at: "desc" },
     });
   }
 
@@ -83,14 +92,14 @@ export class TopicMasteryService {
    * Retrieves the user's weakest topics (low mastery) to recommend content.
    */
   async getWeakestTopics(userId: string, limit: number = 5) {
-    return this.prisma.userTopicMastery.findMany({
+    return this.prisma.user_topic_mastery.findMany({
       where: {
-        userId,
-        masteryLevel: { lt: 70 }, // threshold for "weak"
+        user_id: userId,
+        mastery_level: { lt: 70 }, // threshold for "weak"
       },
       orderBy: [
-        { masteryLevel: 'asc' },     // Lowest mastery first
-        { lastActivityAt: 'asc' },   // Or least recently practiced
+        { mastery_level: "asc" }, // Lowest mastery first
+        { last_activity_at: "asc" }, // Or least recently practiced
       ],
       take: limit,
     });

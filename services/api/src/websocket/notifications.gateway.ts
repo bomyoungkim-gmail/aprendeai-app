@@ -56,7 +56,9 @@ export class NotificationsGateway
     }
     const user = client.data.user;
     if (user) {
-      this.logger.log(`Client connected to notifications: ${client.id}, User: ${user.userId}`);
+      this.logger.log(
+        `Client connected to notifications: ${client.id}, User: ${user.userId}`,
+      );
     }
   }
 
@@ -71,7 +73,9 @@ export class NotificationsGateway
   handleDisconnect(client: Socket) {
     const user = client.data.user;
     if (user) {
-      this.logger.log(`Client disconnected from notifications: ${client.id}, User: ${user.userId}`);
+      this.logger.log(
+        `Client disconnected from notifications: ${client.id}, User: ${user.userId}`,
+      );
     }
   }
 
@@ -82,7 +86,9 @@ export class NotificationsGateway
   ) {
     const user = client.data.user;
     client.join(`content:${contentId}`);
-    this.logger.log(`User ${user.userId} subscribed to content updates: ${contentId}`);
+    this.logger.log(
+      `User ${user.userId} subscribed to content updates: ${contentId}`,
+    );
     return { success: true, message: `Subscribed to content ${contentId}` };
   }
 
@@ -93,7 +99,9 @@ export class NotificationsGateway
   ) {
     const user = client.data.user;
     client.leave(`content:${contentId}`);
-    this.logger.log(`User ${user.userId} unsubscribed from content: ${contentId}`);
+    this.logger.log(
+      `User ${user.userId} unsubscribed from content: ${contentId}`,
+    );
     return { success: true, message: `Unsubscribed from content ${contentId}` };
   }
 

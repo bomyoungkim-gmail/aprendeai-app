@@ -1,7 +1,7 @@
-
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { Prisma } from "@prisma/client";
+import * as crypto from "crypto";
 
 @Injectable()
 export class ContentPedagogicalService {
@@ -11,24 +11,35 @@ export class ContentPedagogicalService {
 
   async createOrUpdatePedagogicalData(
     contentId: string,
-    data: Omit<Prisma.ContentPedagogicalDataUncheckedCreateInput, 'contentId'>
+    data: Omit<
+      Prisma.content_pedagogical_dataUncheckedCreateInput,
+      "content_id" | "id" | "updated_at" | "processed_at"
+    >,
   ) {
     // Upsert logic ensuring unique contentId
-    return this.prisma.contentPedagogicalData.upsert({
-      where: { contentId },
-      create: { ...data, contentId },
-      update: data,
+    return this.prisma.content_pedagogical_data.upsert({
+      where: { content_id: contentId },
+      create: {
+        ...data,
+        id: crypto.randomUUID(),
+        content_id: contentId,
+        updated_at: new Date(),
+      },
+      update: {
+        ...data,
+        updated_at: new Date(),
+      },
     });
   }
 
   async getPedagogicalData(contentId: string) {
-    return this.prisma.contentPedagogicalData.findUnique({
-      where: { contentId },
+    return this.prisma.content_pedagogical_data.findUnique({
+      where: { content_id: contentId },
     });
   }
 
-  async recordGameResult(data: Prisma.GameResultCreateInput) {
-    return this.prisma.gameResult.create({
+  async recordGameResult(data: Prisma.game_resultsCreateInput) {
+    return this.prisma.game_results.create({
       data,
     });
   }

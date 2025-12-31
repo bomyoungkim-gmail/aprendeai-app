@@ -1,3 +1,4 @@
+import { ShareContextType, ContextRole } from "@prisma/client";
 import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
 import { io, Socket as ClientSocket } from "socket.io-client";
@@ -38,14 +39,15 @@ describe("WebSocket Gateway (Integration)", () => {
     app.setGlobalPrefix("api/v1");
     app.useWebSocketAdapter(new IoAdapter(app));
     await app.init();
-    
+
     // Use port 0 for dynamic allocation to avoid EADDRINUSE
     await app.listen(0);
-    
+
     // Extract the actual port assigned
     const httpServer = app.getHttpServer();
     const address = httpServer.address();
-    SOCKET_PORT = typeof address === 'string' ? parseInt(address) : address.port;
+    SOCKET_PORT =
+      typeof address === "string" ? parseInt(address) : address.port;
     SOCKET_URL = `http://localhost:${SOCKET_PORT}/study-groups`;
 
     prisma = app.get<PrismaService>(PrismaService);
@@ -53,26 +55,26 @@ describe("WebSocket Gateway (Integration)", () => {
     authHelper = new TestAuthHelper("integration-test-secret");
 
     // Create test users
-    const user1 = await prisma.user.upsert({
+    const user1 = await prisma.users.upsert({
       where: { email: "ws-user1@example.com" },
       create: {
         email: "ws-user1@example.com",
         name: "WS User 1",
-        passwordHash: "hash",
-        role: "COMMON_USER",
-        schoolingLevel: "ADVANCED_USER",
+        password_hash: "hash",
+        last_context_role: ContextRole.STUDENT,
+        schooling_level: "ADVANCED_USER",
       },
-      update: { passwordHash: "hash" },
+      update: { password_hash: "hash" },
     });
 
-    const user2 = await prisma.user.upsert({
+    const user2 = await prisma.users.upsert({
       where: { email: "ws-user2@example.com" },
       create: {
         email: "ws-user2@example.com",
         name: "WS User 2",
-        passwordHash: "hash",
-        role: "COMMON_USER",
-        schoolingLevel: "ADVANCED_USER",
+        password_hash: "hash",
+        last_context_role: ContextRole.STUDENT,
+        schooling_level: "ADVANCED_USER",
       },
       update: {},
     });
@@ -93,39 +95,51 @@ describe("WebSocket Gateway (Integration)", () => {
     });
 
     // Create test content
-    const content = await prisma.content.create({
+    const content = await prisma.contents.create({
       data: {
+        id: "ws-test-content",
         title: "WebSocket Test Content",
         type: "PDF",
-        originalLanguage: "PT_BR",
-        rawText: "Test content",
-        ownerUserId: user1.id,
+        original_language: "PT_BR",
+        raw_text: "Test content",
+        users_owner: { connect: { id: user1.id } },
       },
     });
     contentId = content.id;
 
     // Create group
-    const group = await prisma.studyGroup.create({
+    const group = await prisma.study_groups.create({
       data: {
         name: "WebSocket Test Group",
-        ownerUserId: user1.id,
+        users_owner: { connect: { id: user1.id } },
       },
     });
     groupId = group.id;
 
     // Add members
-    await prisma.studyGroupMember.createMany({
+    await prisma.study_group_members.createMany({
       data: [
-        { groupId, userId: user1.id, role: "OWNER", status: "ACTIVE" },
-        { groupId, userId: user2.id, role: "MEMBER", status: "ACTIVE" },
+        {
+          group_id: groupId,
+          user_id: user1.id,
+          role: "OWNER",
+          status: "ACTIVE",
+        },
+        {
+          group_id: groupId,
+          user_id: user2.id,
+          role: "MEMBER",
+          status: "ACTIVE",
+        },
       ],
     });
 
     // Create session
-    const session = await prisma.groupSession.create({
+    const session = await prisma.group_sessions.create({
       data: {
-        groupId,
-        contentId,
+        id: "ws-test-session",
+        study_groups: { connect: { id: groupId } },
+        contents: { connect: { id: contentId } },
         mode: "PI_SPRINT",
         layer: "L1",
         status: "CREATED",
@@ -134,22 +148,31 @@ describe("WebSocket Gateway (Integration)", () => {
     sessionId = session.id;
 
     // Assign roles
-    await prisma.groupSessionMember.createMany({
+    await prisma.group_session_members.createMany({
       data: [
-        { sessionId, userId: user1.id, assignedRole: "FACILITATOR" },
-        { sessionId, userId: user2.id, assignedRole: "CLARIFIER" },
+        {
+          session_id: sessionId,
+          user_id: user1.id,
+          assigned_role: "FACILITATOR",
+        },
+        {
+          session_id: sessionId,
+          user_id: user2.id,
+          assigned_role: "CLARIFIER",
+        },
       ],
     });
 
     // Create rounds
-    await prisma.groupRound.createMany({
+    await prisma.group_rounds.createMany({
       data: [
         {
-          sessionId,
-          roundIndex: 1,
-          roundType: "PI",
-          promptJson: { prompt_text: "Test question?" },
-          timingJson: {
+          id: "initial-round-1",
+          session_id: sessionId,
+          round_index: 1,
+          round_type: "PI",
+          prompt_json: { prompt_text: "Test question?" },
+          timing_json: {
             voteSec: 60,
             discussSec: 180,
             revoteSec: 60,
@@ -168,20 +191,35 @@ describe("WebSocket Gateway (Integration)", () => {
 
     // Cleanup database records
     if (sessionId) {
-      await prisma.groupEvent.deleteMany({ where: { sessionId } });
-      await prisma.sharedCard.deleteMany({ where: { sessionId } });
-      await prisma.groupRound.deleteMany({ where: { sessionId } });
-      await prisma.groupSessionMember.deleteMany({ where: { sessionId } });
-      await prisma.groupSession.delete({ where: { id: sessionId } });
+      await prisma.group_events.deleteMany({
+        where: { session_id: sessionId },
+      });
+      await prisma.shared_cards.deleteMany({
+        where: { session_id: sessionId },
+      });
+      await prisma.group_rounds.deleteMany({
+        where: { session_id: sessionId },
+      });
+      await prisma.group_session_members.deleteMany({
+        where: { session_id: sessionId },
+      });
+      await prisma.group_sessions.delete({ where: { id: sessionId } });
     }
     if (groupId) {
-      await prisma.groupContent.deleteMany({ where: { groupId } });
-      await prisma.studyGroupMember.deleteMany({ where: { groupId } });
-      await prisma.studyGroup.delete({ where: { id: groupId } });
+      await prisma.content_shares.deleteMany({
+        where: {
+          context_id: groupId,
+          context_type: ShareContextType.STUDY_GROUP,
+        },
+      });
+      await prisma.study_group_members.deleteMany({
+        where: { group_id: groupId },
+      });
+      await prisma.study_groups.delete({ where: { id: groupId } });
     }
-    await prisma.content.delete({ where: { id: contentId } });
-    await prisma.user.delete({ where: { id: user1Id } });
-    await prisma.user.delete({ where: { id: user2Id } });
+    await prisma.contents.delete({ where: { id: contentId } });
+    await prisma.users.delete({ where: { id: user1Id } });
+    await prisma.users.delete({ where: { id: user2Id } });
 
     // CRITICAL: Close RabbitMQ connections before closing the app
     // CRITICAL: Close RabbitMQ connections before closing the app
@@ -356,14 +394,14 @@ describe("WebSocket Gateway (Integration)", () => {
 
       // User 1 starts session via HTTP (triggers WebSocket emission)
       setTimeout(async () => {
-        await prisma.groupSession.update({
+        await prisma.group_sessions.update({
           where: { id: sessionId },
-          data: { status: "RUNNING", startsAt: new Date() },
+          data: { status: "RUNNING", starts_at: new Date() },
         });
         // Manually trigger emission (service would do this)
         const gateway = app.get(StudyGroupsWebSocketGateway);
         gateway.emitToSession(sessionId, "session.started", {
-          sessionId,
+          session_id: sessionId,
           status: "RUNNING",
           startedBy: user1Id,
         });
@@ -380,20 +418,20 @@ describe("WebSocket Gateway (Integration)", () => {
       });
 
       setTimeout(async () => {
-        const round = await prisma.groupRound.findFirst({
-          where: { sessionId, roundIndex: 1 },
+        const round = await prisma.group_rounds.findFirst({
+          where: { session_id: sessionId, round_index: 1 },
         });
 
-        await prisma.groupRound.update({
+        await prisma.group_rounds.update({
           where: { id: round!.id },
           data: { status: "VOTING" },
         });
 
         const gateway = app.get(StudyGroupsWebSocketGateway);
         gateway.emitToSession(sessionId, "round.advanced", {
-          sessionId,
-          roundId: round!.id,
-          roundIndex: 1,
+          session_id: sessionId,
+          round_id: round!.id,
+          round_index: 1,
           status: "VOTING",
         });
       }, 100);
@@ -408,26 +446,27 @@ describe("WebSocket Gateway (Integration)", () => {
       });
 
       setTimeout(async () => {
-        const round = await prisma.groupRound.findFirst({
-          where: { sessionId, roundIndex: 1 },
+        const round = await prisma.group_rounds.findFirst({
+          where: { session_id: sessionId, round_index: 1 },
         });
 
-        await prisma.groupEvent.create({
+        await prisma.group_events.create({
           data: {
-            sessionId,
-            roundId: round!.id,
-            userId: user1Id,
-            eventType: "PI_VOTE_SUBMIT",
-            payloadJson: { choice: "A" },
+            id: "ws-vote-event",
+            group_sessions: { connect: { id: sessionId } },
+            group_rounds: { connect: { id: round!.id } },
+            user_id: user1Id,
+            event_type: "PI_VOTE_SUBMIT",
+            payload_json: { choice: "A" },
           },
         });
 
         const gateway = app.get(StudyGroupsWebSocketGateway);
         gateway.emitToSession(sessionId, "vote.submitted", {
-          sessionId,
+          session_id: sessionId,
           roundId: round!.id,
           roundIndex: 1,
-          userId: user1Id,
+          user_id: user1Id,
           eventType: "PI_VOTE_SUBMIT",
         });
       }, 100);
@@ -445,7 +484,7 @@ describe("WebSocket Gateway (Integration)", () => {
         const gateway = app.get(StudyGroupsWebSocketGateway);
         gateway.emitToSession(sessionId, "chat.message", {
           message: "Hello from user 1!",
-          userId: user1Id,
+          user_id: user1Id,
         });
       }, 100);
     });
@@ -456,10 +495,11 @@ describe("WebSocket Gateway (Integration)", () => {
 
     beforeAll(async () => {
       // Create second session
-      const session2 = await prisma.groupSession.create({
+      const session2 = await prisma.group_sessions.create({
         data: {
-          groupId,
-          contentId,
+          id: "ws-test-session-2",
+          study_groups: { connect: { id: groupId } },
+          contents: { connect: { id: contentId } },
           mode: "PI_SPRINT",
           layer: "L1",
           status: "CREATED",
@@ -469,7 +509,7 @@ describe("WebSocket Gateway (Integration)", () => {
     });
 
     afterAll(async () => {
-      await prisma.groupSession.delete({ where: { id: session2Id } });
+      await prisma.group_sessions.delete({ where: { id: session2Id } });
     });
 
     it("should NOT receive events from other sessions", (done) => {
@@ -477,11 +517,11 @@ describe("WebSocket Gateway (Integration)", () => {
       client2 = io(SOCKET_URL, { auth: { token: user2Token } });
 
       client1.on("connect", () => {
-        client1.emit("joinSession", { sessionId: sessionId }); // Join session 1
+        client1.emit("joinSession", { session_id: sessionId }); // Join session 1
       });
 
       client2.on("connect", () => {
-        client2.emit("joinSession", { sessionId: session2Id }); // Join session 2
+        client2.emit("joinSession", { session_id: session2Id }); // Join session 2
       });
 
       // User 2 should NOT receive events from session 1
@@ -497,7 +537,7 @@ describe("WebSocket Gateway (Integration)", () => {
       setTimeout(() => {
         const gateway = app.get(StudyGroupsWebSocketGateway);
         gateway.emitToSession(sessionId, "session.started", {
-          sessionId,
+          session_id: sessionId,
           status: "RUNNING",
         });
 

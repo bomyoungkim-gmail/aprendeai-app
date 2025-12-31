@@ -1,15 +1,15 @@
 import { Controller, Post, Body, Param, Get, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { CurrentUser } from "../auth/current-user.decorator";
-import { User } from "@prisma/client";
+import { JwtAuthGuard } from "../auth/infrastructure/jwt-auth.guard";
+import { CurrentUser } from "../auth/presentation/decorators/current-user.decorator";
+import { users } from "@prisma/client";
 import { WebClipsService } from "./webclips.service";
 import { CreateWebClipDto, StartWebClipSessionDto } from "./dto/webclip.dto";
 import { ROUTES } from "../common/constants/routes.constants";
 import {
   ExtensionScopeGuard,
   RequireExtensionScopes,
-} from "../auth/extension-scope.guard";
+} from "../auth/infrastructure/extension-scope.guard";
 
 @ApiTags("WebClips")
 @ApiBearerAuth()
@@ -30,7 +30,7 @@ export class WebClipsController {
   @RequireExtensionScopes("extension:webclip:create")
   @ApiOperation({ summary: "Create WebClip from browser extension" })
   async createWebClip(
-    @CurrentUser() user: User,
+    @CurrentUser() user: users,
     @Body() dto: CreateWebClipDto,
   ) {
     return this.webClipsService.createWebClip(user.id, dto);
@@ -49,7 +49,7 @@ export class WebClipsController {
   @RequireExtensionScopes("extension:session:start")
   @ApiOperation({ summary: "Start reading session for WebClip" })
   async startSession(
-    @CurrentUser() user: User,
+    @CurrentUser() user: users,
     @Param("contentId") contentId: string,
     @Body() dto: StartWebClipSessionDto,
   ) {
@@ -62,7 +62,7 @@ export class WebClipsController {
   @Get(":contentId")
   @ApiOperation({ summary: "Get WebClip by ID" })
   async getWebClip(
-    @CurrentUser() user: User,
+    @CurrentUser() user: users,
     @Param("contentId") contentId: string,
   ) {
     return this.webClipsService.getWebClip(user.id, contentId);

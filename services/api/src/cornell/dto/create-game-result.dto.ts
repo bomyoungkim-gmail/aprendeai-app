@@ -1,5 +1,4 @@
-
-import { IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsObject, IsOptional, IsString } from "class-validator";
 
 export class CreateGameResultDto {
   @IsString()

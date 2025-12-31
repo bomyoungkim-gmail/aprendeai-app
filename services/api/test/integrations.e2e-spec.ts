@@ -25,43 +25,44 @@ describe("Advanced Integrations (E2E)", () => {
 
     // 1. Create Test Users/Institutions if not exist
     // Setup Admin
-    const admin = await prisma.user.upsert({
+    const admin = await prisma.users.upsert({
       where: { email: "admin_e2e@test.com" },
       update: {},
       create: {
         email: "admin_e2e@test.com",
         name: "Admin E2E",
-        schoolingLevel: "HIGHER_EDUCATION",
-        passwordHash: "hash",
-        role: "ADMIN",
+        schooling_level: "SUPERIOR",
+        password_hash: "hash",
+        system_role: "ADMIN",
+        last_context_role: "OWNER",
       },
     });
     adminToken = jwtService.sign({
       sub: admin.id,
-      role: "ADMIN",
+      systemRole: "ADMIN",
+      contextRole: "OWNER",
       email: admin.email,
     });
 
     // Setup Institution + Admin
-    const inst = await prisma.institution.create({
+    const inst = await prisma.institutions.create({
       data: {
         name: "E2E Institution",
         slug: `e2e-inst-${Date.now()}`,
         type: "UNIVERSITY",
-
       },
     });
 
-    const instAdmin = await prisma.user.create({
+    const instAdmin = await prisma.users.create({
       data: {
         email: `inst_admin_${Date.now()}@e2e.edu`,
         name: "Inst Admin",
-        schoolingLevel: "HIGHER_EDUCATION",
-        role: "INSTITUTION_ADMIN",
-        institutionMemberships: {
+        schooling_level: "SUPERIOR",
+        last_context_role: "INSTITUTION_EDUCATION_ADMIN",
+        institution_members: {
           create: {
-            institutionId: inst.id,
-            role: "ADMIN",
+            institution_id: inst.id,
+            role: "INSTITUTION_EDUCATION_ADMIN",
             status: "ACTIVE",
           },
         },
@@ -69,7 +70,8 @@ describe("Advanced Integrations (E2E)", () => {
     });
     institutionAdminToken = jwtService.sign({
       sub: instAdmin.id,
-      role: "INSTITUTION_ADMIN",
+      contextRole: "INSTITUTION_EDUCATION_ADMIN",
+      institutionId: inst.id,
       email: instAdmin.email,
     });
   });

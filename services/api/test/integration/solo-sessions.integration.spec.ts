@@ -43,7 +43,7 @@ describe("Sprint 2: Solo Sessions (Integration)", () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('api/v1');
+    app.setGlobalPrefix("api/v1");
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, transform: true }),
     );
@@ -52,7 +52,7 @@ describe("Sprint 2: Solo Sessions (Integration)", () => {
     prisma = app.get<PrismaService>(PrismaService);
 
     // Clean up existing user
-    await prisma.user.deleteMany({ where: { email: "maria@example.com" } });
+    await prisma.users.deleteMany({ where: { email: "maria@example.com" } });
 
     // Register test user (creates valid hash and meets password length reqs)
     await request(app.getHttpServer())
@@ -74,9 +74,11 @@ describe("Sprint 2: Solo Sessions (Integration)", () => {
 
     authToken = loginResponse.body.access_token;
     testUserId = loginResponse.body.user?.id;
-    
+
     if (!authToken || !testUserId) {
-      throw new Error(`Login failed: token=${!!authToken}, userId=${!!testUserId}`);
+      throw new Error(
+        `Login failed: token=${!!authToken}, userId=${!!testUserId}`,
+      );
     }
   });
 
@@ -90,27 +92,28 @@ describe("Sprint 2: Solo Sessions (Integration)", () => {
 
     beforeEach(async () => {
       // Create test content
-      const content = await prisma.content.create({
+      const content = await prisma.contents.create({
         data: {
+          id: "test-content-solo",
           title: "Test Reading Material",
           type: "PDF",
-          originalLanguage: "PT_BR",
-          rawText: "Sample text for reading",
+          original_language: "PT_BR",
+          raw_text: "Sample text for reading",
         },
       });
       testContentId = content.id;
 
       // Create test session
-      const session = await prisma.readingSession.create({
+      const session = await prisma.reading_sessions.create({
         data: {
-          userId: testUserId,
-          contentId: testContentId,
+          user_id: testUserId,
+          content_id: testContentId,
           phase: "PRE",
           modality: "READING",
-          assetLayer: "ORIGINAL",
-          goalStatement: "Test goal",
-          predictionText: "",
-          targetWordsJson: {},
+          asset_layer: "ORIGINAL",
+          goal_statement: "Test goal",
+          prediction_text: "",
+          target_words_json: {},
         },
       });
       testSessionId = session.id;
@@ -119,32 +122,32 @@ describe("Sprint 2: Solo Sessions (Integration)", () => {
     afterEach(async () => {
       // Cleanup
       if (testSessionId) {
-        await prisma.sessionEvent.deleteMany({
-          where: { readingSessionId: testSessionId },
+        await prisma.session_events.deleteMany({
+          where: { reading_session_id: testSessionId },
         });
-        await prisma.readingSession.delete({ where: { id: testSessionId } });
+        await prisma.reading_sessions.delete({ where: { id: testSessionId } });
       }
       if (testContentId) {
-        await prisma.content.delete({ where: { id: testContentId } });
+        await prisma.contents.delete({ where: { id: testContentId } });
       }
     });
 
     it("should return session with content, messages, and quickReplies", async () => {
       // Create some session events (messages)
-      await prisma.sessionEvent.createMany({
+      await prisma.session_events.createMany({
         data: [
           {
-            readingSessionId: testSessionId,
-            eventType: "PROMPT_SENT",
-            payloadJson: {
+            reading_session_id: testSessionId,
+            event_type: "PROMPT_SENT",
+            payload_json: {
               role: "USER",
               text: "Hello, I want to start reading",
             },
           },
           {
-            readingSessionId: testSessionId,
-            eventType: "PROMPT_RECEIVED",
-            payloadJson: {
+            reading_session_id: testSessionId,
+            event_type: "PROMPT_RECEIVED",
+            payload_json: {
               role: "EDUCATOR",
               text: "Great! Let me know if you have questions.",
               quickReplies: ["Continue", "Ask question", "Finish"],
@@ -204,8 +207,9 @@ describe("Sprint 2: Solo Sessions (Integration)", () => {
 
     it("should expose file.storageKey if content has file", async () => {
       // Create file
-      const file = await prisma.file.create({
+      const file = await prisma.files.create({
         data: {
+          id: "test-file-solo",
           storageProvider: "LOCAL",
           storageKey: "session-content-abc123.pdf",
           mimeType: "application/pdf",
@@ -216,9 +220,9 @@ describe("Sprint 2: Solo Sessions (Integration)", () => {
       });
 
       // Update content with file
-      await prisma.content.update({
+      await prisma.contents.update({
         where: { id: testContentId },
-        data: { fileId: file.id },
+        data: { file_id: file.id },
       });
 
       const response = await request(app.getHttpServer())
@@ -232,11 +236,11 @@ describe("Sprint 2: Solo Sessions (Integration)", () => {
       );
 
       // Cleanup file
-      await prisma.content.update({
+      await prisma.contents.update({
         where: { id: testContentId },
-        data: { fileId: null },
+        data: { file_id: null },
       });
-      await prisma.file.delete({ where: { id: file.id } });
+      await prisma.files.delete({ where: { id: file.id } });
     });
 
     it("should return 404 for non-existent session", async () => {
@@ -248,26 +252,26 @@ describe("Sprint 2: Solo Sessions (Integration)", () => {
 
     it("should return 403 for session owned by another user", async () => {
       // Create another user's session
-      const otherUser = await prisma.user.create({
+      const otherUser = await prisma.users.create({
         data: {
           email: "other@example.com",
           name: "Other User",
-          passwordHash: "hash",
-          role: "STUDENT",
-          schoolingLevel: "MEDIO",
-        },
+          password_hash: "hash",
+          status: "ACTIVE",
+          updated_at: new Date(),
+        } as any,
       });
 
-      const otherSession = await prisma.readingSession.create({
+      const otherSession = await prisma.reading_sessions.create({
         data: {
-          userId: otherUser.id,
-          contentId: testContentId,
+          user_id: otherUser.id,
+          content_id: testContentId,
           phase: "PRE",
           modality: "READING",
-          assetLayer: "ORIGINAL",
-          goalStatement: "Other goal",
-          predictionText: "",
-          targetWordsJson: {},
+          asset_layer: "ORIGINAL",
+          goal_statement: "Other goal",
+          prediction_text: "",
+          target_words_json: {},
         },
       });
 
@@ -277,8 +281,8 @@ describe("Sprint 2: Solo Sessions (Integration)", () => {
         .expect(403);
 
       // Cleanup
-      await prisma.readingSession.delete({ where: { id: otherSession.id } });
-      await prisma.user.delete({ where: { id: otherUser.id } });
+      await prisma.reading_sessions.delete({ where: { id: otherSession.id } });
+      await prisma.users.delete({ where: { id: otherUser.id } });
     });
   });
 
@@ -287,37 +291,38 @@ describe("Sprint 2: Solo Sessions (Integration)", () => {
     let testSessionId: string;
 
     beforeEach(async () => {
-      const content = await prisma.content.create({
+      const content = await prisma.contents.create({
         data: {
+          id: "test-content-prompt",
           title: "Prompt Test Material",
           type: "ARTICLE",
-          originalLanguage: "PT_BR",
-          rawText: "Article content",
+          original_language: "PT_BR",
+          raw_text: "Article content",
         },
       });
       testContentId = content.id;
 
-      const session = await prisma.readingSession.create({
+      const session = await prisma.reading_sessions.create({
         data: {
-          userId: testUserId,
-          contentId: testContentId,
+          user_id: testUserId,
+          content_id: testContentId,
           phase: "DURING",
           modality: "READING",
-          assetLayer: "ORIGINAL",
-          goalStatement: "Read article",
-          predictionText: "",
-          targetWordsJson: {},
+          asset_layer: "ORIGINAL",
+          goal_statement: "Read article",
+          prediction_text: "",
+          target_words_json: {},
         },
       });
       testSessionId = session.id;
     });
 
     afterEach(async () => {
-      await prisma.sessionEvent.deleteMany({
-        where: { readingSessionId: testSessionId },
+      await prisma.session_events.deleteMany({
+        where: { reading_session_id: testSessionId },
       });
-      await prisma.readingSession.delete({ where: { id: testSessionId } });
-      await prisma.content.delete({ where: { id: testContentId } });
+      await prisma.reading_sessions.delete({ where: { id: testSessionId } });
+      await prisma.contents.delete({ where: { id: testContentId } });
     });
 
     it("should create session event when sending prompt", async () => {
@@ -344,14 +349,14 @@ describe("Sprint 2: Solo Sessions (Integration)", () => {
       expect(response.body).toHaveProperty("quickReplies");
 
       // Verify event was created
-      const events = await prisma.sessionEvent.findMany({
-        where: { readingSessionId: testSessionId },
+      const events = await prisma.session_events.findMany({
+        where: { reading_session_id: testSessionId },
       });
 
       expect(events.length).toBeGreaterThan(0);
       const userEvent = events.find(
         (e) =>
-          (e.payloadJson as any)?.text ===
+          (e.payload_json as any)?.text ===
           "What is the main idea of this article?",
       );
       expect(userEvent).toBeDefined();

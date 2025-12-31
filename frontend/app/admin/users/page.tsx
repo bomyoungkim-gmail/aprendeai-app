@@ -10,7 +10,15 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: string;
+  
+  // Legacy role (keep for backward compatibility)
+  role?: string;
+  
+  // New dual-role structure
+  systemRole?: 'ADMIN' | 'SUPPORT' | 'OPS' | null;
+  contextRole: 'OWNER' | 'INSTITUTION_EDUCATION_ADMIN' | 'TEACHER' | 'STUDENT' | 'INSTITUTION_ENTERPRISE_ADMIN' | 'EMPLOYEE';
+  activeInstitutionId?: string | null;
+  
   status: string;
   lastLoginAt: string | null;
   institution?: {
@@ -19,7 +27,24 @@ interface User {
   };
 }
 
-const ROLES = ['ADMIN', 'SUPPORT', 'OPS', 'INSTITUTION_ADMIN', 'TEACHER', 'STUDENT', 'COMMON_USER'];
+const SYSTEM_ROLES = [
+  { value: '', label: 'None (Regular User)' },
+  { value: 'ADMIN', label: 'System Admin' },
+  { value: 'SUPPORT', label: 'Support' },
+  { value: 'OPS', label: 'Operations' },
+];
+
+const CONTEXT_ROLES = [
+  { value: 'OWNER', label: 'Owner (Personal)' },
+  { value: 'INSTITUTION_EDUCATION_ADMIN', label: 'Institution Admin' },
+  { value: 'TEACHER', label: 'Teacher' },
+  { value: 'STUDENT', label: 'Student' },
+  { value: 'INSTITUTION_ENTERPRISE_ADMIN', label: 'Enterprise Admin' },
+  { value: 'EMPLOYEE', label: 'Employee' },
+];
+
+// Combined roles for filtering (dual-role system)
+const ALL_ROLES = [...SYSTEM_ROLES.map(r => r.value), ...CONTEXT_ROLES.map(r => r.value)];
 
 export default function UsersPage() {
   const [search, setSearch] = useState('');
@@ -110,7 +135,7 @@ export default function UsersPage() {
           className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
         >
           <option value="">All Roles</option>
-          {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+          {ALL_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
         </select>
       </div>
 
@@ -134,7 +159,7 @@ export default function UsersPage() {
                         Email
                       </th>
                       <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                        Role
+                        Roles
                       </th>
                       <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                         Status
@@ -156,10 +181,17 @@ export default function UsersPage() {
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {user.email}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          <span className="inline-flex rounded-full bg-blue-100 px-2 text-xs font-semibold leading-5 text-blue-800">
-                            {user.role}
-                          </span>
+                        <td className="px-3 py-4 text-sm text-gray-500">
+                          <div className="flex flex-col gap-1">
+                            {user.systemRole && (
+                              <span className="inline-flex rounded-full bg-orange-100 px-2 text-xs font-semibold leading-5 text-orange-800">
+                                System: {user.systemRole}
+                              </span>
+                            )}
+                            <span className="inline-flex rounded-full bg-blue-100 px-2 text-xs font-semibold leading-5 text-blue-800">
+                              Context: {user.contextRole}
+                            </span>
+                          </div>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           <span
@@ -275,7 +307,8 @@ function UserDetailModal({
   onRefresh: () => void;
 }) {
   const [status, setStatus] = useState(user.status);
-  const [role, setRole] = useState(user.role);
+  const [systemRole, setSystemRole] = useState<string>(user.systemRole || '');
+  const [contextRole, setContextRole] = useState(user.contextRole);
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -287,12 +320,27 @@ function UserDetailModal({
         if (status !== user.status) {
             promises.push(api.put(`/admin/users/${user.id}/status`, { status, reason }));
         }
-        // Update Role if changed
-        if (role !== user.role) {
-            // Note: This updates access roles. Does it update primary?
-            // Assuming simplified update for now. 
+        
+        // Update System Role if changed
+        if (systemRole !== (user.systemRole || '')) {
             promises.push(api.put(`/admin/users/${user.id}/roles`, { 
-                roles: [{ role, scopeType: null, scopeId: null }], 
+                roles: [{ 
+                    role: systemRole || null, 
+                    scopeType: 'SYSTEM',
+                    scopeId: null 
+                }], 
+                reason: reason 
+            }));
+        }
+        
+        // Update Context Role if changed
+        if (contextRole !== user.contextRole) {
+            promises.push(api.put(`/admin/users/${user.id}/roles`, { 
+                roles: [{ 
+                    role: contextRole, 
+                    scopeType: 'CONTEXT',
+                    scopeId: user.activeInstitutionId 
+                }], 
                 reason: reason 
             }));
         }
@@ -325,14 +373,31 @@ function UserDetailModal({
             {/* Editable Fields */}
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Role</label>
+                <label className="block text-sm font-medium text-gray-700">System Role</label>
                 <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
+                  value={systemRole}
+                  onChange={(e) => setSystemRole(e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
                 >
-                    {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                    {SYSTEM_ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                 </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  System roles grant global admin privileges. Most users should have "None".
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Context Role</label>
+                <select
+                  value={contextRole}
+                  onChange={(e) => setContextRole(e.target.value as any)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
+                >
+                    {CONTEXT_ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Context role determines permissions within institutions or families.
+                </p>
               </div>
 
               <div>
@@ -348,7 +413,7 @@ function UserDetailModal({
                 </select>
               </div>
 
-              {(status !== user.status || role !== user.role) && (
+              {(status !== user.status || systemRole !== (user.systemRole || '') || contextRole !== user.contextRole) && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
                     Reason for change <span className="text-red-500">*</span>
@@ -369,7 +434,7 @@ function UserDetailModal({
             <button
               type="button"
               onClick={handleSave}
-              disabled={(!status && !role) || (status !== user.status && !reason) || (role !== user.role && !reason) || saving}
+              disabled={(!status && !contextRole) || ((status !== user.status || systemRole !== (user.systemRole || '') || contextRole !== user.contextRole) && !reason) || saving}
               className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save'}

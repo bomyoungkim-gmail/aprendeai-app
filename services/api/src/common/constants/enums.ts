@@ -1,9 +1,9 @@
 /**
  * Centralized Enums - Backend
- * 
+ *
  * Re-exports enums from Prisma Client for type-safe usage.
  * DO NOT use hard-coded strings - always import from here or directly from @prisma/client.
- * 
+ *
  * @module common/constants/enums
  */
 
@@ -16,7 +16,7 @@ import {
   GroupRole,
   GroupMemberStatus,
   FamilyMemberStatus,
-} from '@prisma/client';
+} from "@prisma/client";
 
 // Re-export for easy importing throughout the application
 export {
@@ -38,10 +38,10 @@ export {
  * Will be added to schema.prisma
  */
 export enum VisibilityScope {
-  CLASS_PROJECT = 'CLASS_PROJECT',
-  ONLY_EDUCATORS = 'ONLY_EDUCATORS',
-  RESPONSIBLES_OF_LEARNER = 'RESPONSIBLES_OF_LEARNER',
-  GROUP_MEMBERS = 'GROUP_MEMBERS',
+  CLASS_PROJECT = "CLASS_PROJECT",
+  ONLY_EDUCATORS = "ONLY_EDUCATORS",
+  RESPONSIBLES_OF_LEARNER = "RESPONSIBLES_OF_LEARNER",
+  GROUP_MEMBERS = "GROUP_MEMBERS",
 }
 
 /**
@@ -49,9 +49,9 @@ export enum VisibilityScope {
  * Will be added to schema.prisma
  */
 export enum ContextType {
-  INSTITUTION = 'INSTITUTION',
-  GROUP_STUDY = 'GROUP_STUDY',
-  FAMILY = 'FAMILY',
+  INSTITUTION = "INSTITUTION",
+  GROUP_STUDY = "GROUP_STUDY",
+  FAMILY = "FAMILY",
 }
 
 /**
@@ -59,8 +59,8 @@ export enum ContextType {
  * Will be added to schema.prisma
  */
 export enum AnnotationStatus {
-  ACTIVE = 'ACTIVE',
-  DELETED = 'DELETED',
+  ACTIVE = "ACTIVE",
+  DELETED = "DELETED",
 }
 
 // ========================================
@@ -69,7 +69,7 @@ export enum AnnotationStatus {
 
 /**
  * After migration is applied, import these from @prisma/client instead:
- * 
+ *
  * import { VisibilityScope, ContextType, AnnotationStatus } from '@prisma/client';
  * export { VisibilityScope, ContextType, AnnotationStatus };
  */

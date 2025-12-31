@@ -1,27 +1,60 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { PrismaService } from "../prisma/prisma.service";
+import { Injectable, Inject, NotFoundException } from "@nestjs/common";
+import { CreateSubscriptionUseCase } from "./application/use-cases/create-subscription.use-case";
+import { CancelSubscriptionUseCase } from "./application/use-cases/cancel-subscription.use-case";
+import { AddPaymentMethodUseCase } from "./application/use-cases/add-payment-method.use-case";
+import { SetDefaultPaymentMethodUseCase } from "./application/use-cases/set-default-payment-method.use-case";
+import { GenerateInvoiceUseCase } from "./application/use-cases/generate-invoice.use-case";
+import { IPlansRepository } from "./domain/interfaces/plans.repository.interface";
+import { Plan } from "./domain/entities/plan.entity";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class BillingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    @Inject(IPlansRepository) private readonly plansRepository: IPlansRepository,
+    private createSubscriptionUseCase: CreateSubscriptionUseCase,
+    private cancelSubscriptionUseCase: CancelSubscriptionUseCase,
+    private addPaymentMethodUseCase: AddPaymentMethodUseCase,
+    private setDefaultPaymentMethodUseCase: SetDefaultPaymentMethodUseCase,
+    private generateInvoiceUseCase: GenerateInvoiceUseCase,
+  ) {}
 
+  // --- Subscriptions ---
+  async createSubscription(userId: string, planId: string, stripePriceId: string) {
+    return this.createSubscriptionUseCase.execute(userId, planId, stripePriceId);
+  }
+
+  async cancelSubscription(subscriptionId: string) {
+    return this.cancelSubscriptionUseCase.execute(subscriptionId);
+  }
+
+  // --- Invoices ---
+  async generateInvoice(subscriptionId: string) {
+    return this.generateInvoiceUseCase.execute(subscriptionId);
+  }
+
+  // --- Payment Methods ---
+  async addPaymentMethod(userId: string, stripePaymentMethodId: string) {
+    return this.addPaymentMethodUseCase.execute(userId, stripePaymentMethodId);
+  }
+
+  async setDefaultPaymentMethod(paymentMethodId: string) {
+    return this.setDefaultPaymentMethodUseCase.execute(paymentMethodId);
+  }
+
+  // --- Plans ---
   /**
    * Get all active plans
    */
   async getPlans() {
-    return this.prisma.plan.findMany({
-      where: { isActive: true },
-      orderBy: { monthlyPrice: "asc" }, // FREE first
-    });
+    return this.plansRepository.findActive();
   }
 
   /**
    * Get plan by code
    */
   async getPlanByCode(code: string) {
-    const plan = await this.prisma.plan.findUnique({
-      where: { code },
-    });
+    const plan = await this.plansRepository.findByCode(code);
 
     if (!plan) {
       throw new NotFoundException(`Plan ${code} not found`);
@@ -34,9 +67,7 @@ export class BillingService {
    * Get plan by ID
    */
   async getPlanById(id: string) {
-    const plan = await this.prisma.plan.findUnique({
-      where: { id },
-    });
+    const plan = await this.plansRepository.findById(id);
 
     if (!plan) {
       throw new NotFoundException("Plan not found");
@@ -56,17 +87,20 @@ export class BillingService {
     monthlyPrice?: number;
     yearlyPrice?: number;
   }) {
-    return this.prisma.plan.create({
-      data: {
-        code: data.code,
-        name: data.name,
-        description: data.description,
-        entitlements: data.entitlements,
-        monthlyPrice: data.monthlyPrice,
-        yearlyPrice: data.yearlyPrice,
-        isActive: true,
-      },
+    const plan = new Plan({
+      id: uuidv4(),
+      code: data.code,
+      name: data.name,
+      description: data.description,
+      entitlements: data.entitlements,
+      monthlyPrice: data.monthlyPrice,
+      yearlyPrice: data.yearlyPrice,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
+
+    return this.plansRepository.create(plan);
   }
 
   /**
@@ -83,11 +117,15 @@ export class BillingService {
       isActive?: boolean;
     },
   ) {
-    const plan = await this.getPlanById(id);
+    await this.getPlanById(id); // Ensure exists
 
-    return this.prisma.plan.update({
-      where: { id: plan.id },
-      data,
+    return this.plansRepository.update(id, {
+      name: data.name,
+      description: data.description,
+      entitlements: data.entitlements,
+      monthlyPrice: data.monthlyPrice,
+      yearlyPrice: data.yearlyPrice,
+      isActive: data.isActive,
     });
   }
 

@@ -5,6 +5,7 @@ import { CoReadingStateMachine } from "../../state-machine/co-reading-state-mach
 import { PromptLibraryService } from "../../prompts/prompt-library.service";
 import { CoReadingPhase, CoReadingContext } from "../../state-machine/types";
 import { StartCoSessionDto } from "../dto/co-session.dto";
+import { CoReadingSessionMapper } from "../../mappers/co-reading-session.mapper";
 
 @Injectable()
 export class CoReadingService {
@@ -28,15 +29,16 @@ export class CoReadingService {
    */
   async start(dto: StartCoSessionDto) {
     // Create session record
-    const coSession = await this.prisma.coReadingSession.create({
+    const coSession = await this.prisma.co_reading_sessions.create({
       data: {
-        familyId: dto.familyId,
-        learnerUserId: dto.learnerUserId,
-        educatorUserId: dto.educatorUserId,
-        readingSessionId: dto.readingSessionId,
-        threadIdLearner: `thread_learner_${Date.now()}`,
-        threadIdEducator: `thread_educator_${Date.now()}`,
-        timeboxMin: dto.timeboxMin ?? 20,
+        id: crypto.randomUUID(),
+        family_id: dto.familyId,
+        learner_user_id: dto.learnerUserId,
+        educator_user_id: dto.educatorUserId,
+        reading_session_id: dto.readingSessionId,
+        thread_id_learner: `thread_learner_${Date.now()}`,
+        thread_id_educator: `thread_educator_${Date.now()}`,
+        timebox_min: dto.timeboxMin ?? 20,
         type: "CO_READING",
         status: "ACTIVE",
       },
@@ -56,7 +58,7 @@ export class CoReadingService {
           educatorUserId: dto.educatorUserId,
           readingSessionId: dto.readingSessionId,
           contentId: dto.contentId,
-          timeboxMin: coSession.timeboxMin,
+          timeboxMin: coSession.timebox_min,
         },
       },
     );
@@ -69,7 +71,7 @@ export class CoReadingService {
       educatorUserId: dto.educatorUserId,
       readingSessionId: dto.readingSessionId,
       currentPhase: CoReadingPhase.BOOT,
-      timeboxMin: coSession.timeboxMin,
+      timeboxMin: coSession.timebox_min,
       checkpointFailCount: 0,
       startedAt: new Date(),
       phaseStartedAt: new Date(),
@@ -87,7 +89,7 @@ export class CoReadingService {
     );
 
     return {
-      coSession,
+      coSession: CoReadingSessionMapper.toDto(coSession),
       context,
       nextPrompts: {
         learner: learnerPrompt,
@@ -118,11 +120,11 @@ export class CoReadingService {
     if (result.success) {
       // Update session status in DB if needed
       if (targetPhase === CoReadingPhase.CLOSE) {
-        await this.prisma.coReadingSession.update({
+        await this.prisma.co_reading_sessions.update({
           where: { id: coSessionId },
           data: {
             status: "COMPLETED",
-            endedAt: new Date(),
+            ended_at: new Date(),
           },
         });
       }
@@ -170,13 +172,13 @@ export class CoReadingService {
    * Get session by ID
    */
   async getById(coSessionId: string) {
-    return this.prisma.coReadingSession.findUnique({
+    return this.prisma.co_reading_sessions.findUnique({
       where: { id: coSessionId },
       include: {
-        family: true,
-        learner: true,
-        educator: true,
-        readingSession: true,
+        families: true,
+        users_learner: true,
+        users_educator: true,
+        reading_sessions: true,
       },
     });
   }
@@ -187,11 +189,11 @@ export class CoReadingService {
   async finish(coSessionId: string, context: CoReadingContext) {
     const result = await this.stateMachine.close(context);
 
-    await this.prisma.coReadingSession.update({
+    await this.prisma.co_reading_sessions.update({
       where: { id: coSessionId },
       data: {
         status: "COMPLETED",
-        endedAt: new Date(),
+        ended_at: new Date(),
       },
     });
 

@@ -4,6 +4,7 @@ import {
   BadRequestException,
   ForbiddenException,
   ConflictException,
+  Inject,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateFamilyDto } from "./dto/create-family.dto";
@@ -11,6 +12,8 @@ import { InviteMemberDto } from "./dto/invite-member.dto";
 import { ScopeType } from "@prisma/client";
 import { SubscriptionService } from "../billing/subscription.service";
 import { UsageTrackingService } from "../billing/usage-tracking.service";
+import { IFamilyRepository } from "./domain/family.repository.interface";
+import { CreateFamilyUseCase } from "./application/use-cases/create-family.use-case";
 
 @Injectable()
 export class FamilyService {
@@ -18,90 +21,38 @@ export class FamilyService {
     private prisma: PrismaService,
     private subscriptionService: SubscriptionService,
     private usageTracking: UsageTrackingService,
+    @Inject(IFamilyRepository) private readonly repository: IFamilyRepository,
+    private readonly createFamilyUseCase: CreateFamilyUseCase,
   ) {}
 
   /**
    * Create a new family
    */
   async create(userId: string, dto: CreateFamilyDto) {
-    // Transaction to create family and add owner as member
-    return this.prisma.$transaction(async (tx) => {
-      const family = await tx.family.create({
-        data: {
-          name: dto.name,
-          ownerId: userId,
-          members: {
-            create: {
-              userId,
-              role: "OWNER",
-              status: "ACTIVE",
-            },
-          },
-        },
-        include: {
-          members: true,
-        },
-      });
-
-      // Create initial Subscription for the family (Free Tier)
-      await this.subscriptionService.createInitialSubscription(
-        ScopeType.FAMILY,
-        family.id,
-        tx,
-      );
-
-      // Auto-set this family as Primary for the creator (Rule 1.2)
-      const user = await tx.user.findUnique({
-        where: { id: userId },
-        select: { settings: true },
-      });
-      const currentSettings = (user?.settings as Record<string, any>) || {};
-
-      console.log("[FamilyService.create] BEFORE UPDATE:", {
-        userId,
-        currentSettings,
-      });
-
-      await tx.user.update({
-        where: { id: userId },
-        data: {
-          settings: {
-            ...currentSettings,
-            primaryFamilyId: family.id,
-          },
-        },
-      });
-
-      console.log(
-        "[FamilyService.create] AFTER UPDATE - Set primaryFamilyId:",
-        family.id,
-      );
-
-      return family;
-    });
+    return this.createFamilyUseCase.execute(userId, dto);
   }
 
   /**
    * Find families for a user
    */
   async findAllForUser(userId: string) {
-    return this.prisma.family.findMany({
+    return this.prisma.families.findMany({
       where: {
-        members: {
+        family_members: {
           some: {
-            userId,
+            user_id: userId,
           },
         },
       },
       include: {
-        members: {
+        family_members: {
           include: {
-            user: {
+            users: {
               select: {
                 id: true,
                 name: true,
                 email: true,
-                avatarUrl: true,
+                avatar_url: true,
               },
             },
           },
@@ -114,22 +65,23 @@ export class FamilyService {
    * Find one family by ID (with validation)
    */
   async findOne(familyId: string, userId: string) {
-    const family = await this.prisma.family.findUnique({
+    const family = await this.prisma.families.findUnique({
       where: { id: familyId },
       include: {
-        members: {
+        family_members: {
           include: {
-            user: {
+            users: {
               select: {
                 id: true,
                 name: true,
                 email: true,
-                avatarUrl: true,
+                avatar_url: true,
               },
             },
           },
         },
-        owner: {
+        users_owner: {
+          // owner relation
           select: { id: true, name: true, email: true },
         },
         // subscriptions is not a direct relation anymore, need billing service to fetch
@@ -141,7 +93,7 @@ export class FamilyService {
     }
 
     // Check membership
-    const isMember = family.members.some((m) => m.userId === userId);
+    const isMember = family.family_members.some((m) => m.user_id === userId);
     if (!isMember) {
       throw new ForbiddenException("You are not a member of this family");
     }
@@ -155,7 +107,7 @@ export class FamilyService {
   async inviteMember(familyId: string, userId: string, dto: InviteMemberDto) {
     // 1. Verify permission (Only Owner or Guardian)
     const family = await this.findOne(familyId, userId);
-    const requester = family.members.find((m) => m.userId === userId);
+    const requester = family.family_members.find((m) => m.user_id === userId);
 
     if (
       !requester ||
@@ -167,7 +119,7 @@ export class FamilyService {
     }
 
     // 2. Find user by email
-    let invitedUser = await this.prisma.user.findUnique({
+    let invitedUser = await this.prisma.users.findUnique({
       where: { email: dto.email },
     });
 
@@ -183,23 +135,26 @@ export class FamilyService {
       // So we MUST create a User record.
 
       console.log(`Inviting new user: ${dto.email}`);
-      invitedUser = await this.prisma.user.create({
+      const { v4: uuidv4 } = require("uuid");
+      invitedUser = await this.prisma.users.create({
         data: {
+          id: uuidv4(),
           email: dto.email,
           name: dto.displayName || dto.email.split("@")[0],
-          passwordHash: "PENDING_INVITE", // Disabled login until reset/claim
-          role: "COMMON_USER",
-          schoolingLevel: "UNDERGRADUATE",
-        },
+          password_hash: "PENDING_INVITE", // Disabled login until reset/claim
+          system_role: "USER" as any,
+          schooling_level: "UNDERGRADUATE",
+          updated_at: new Date(),
+        } as any,
       });
     }
 
     // 3. Check if already member
-    const existingMember = await this.prisma.familyMember.findUnique({
+    const existingMember = await this.prisma.family_members.findUnique({
       where: {
-        familyId_userId: {
-          familyId,
-          userId: invitedUser.id,
+        family_id_user_id: {
+          family_id: familyId,
+          user_id: invitedUser.id,
         },
       },
     });
@@ -209,17 +164,19 @@ export class FamilyService {
     }
 
     // 4. Create member (INVITED)
-    const newMember = await this.prisma.familyMember.create({
+    const { v4: uuidv4 } = require("uuid");
+    const newMember = await this.prisma.family_members.create({
       data: {
-        familyId,
-        userId: invitedUser.id,
+        id: uuidv4(),
+        family_id: familyId,
+        user_id: invitedUser.id,
         role: dto.role,
         status: "INVITED",
-        displayName: dto.displayName,
+        display_name: dto.displayName,
       },
       include: {
-        user: {
-          select: { id: true, email: true, name: true, avatarUrl: true },
+        users: {
+          select: { id: true, email: true, name: true, avatar_url: true },
         },
       },
     });
@@ -236,22 +193,22 @@ export class FamilyService {
     memberUserIdToRemove: string,
   ) {
     const family = await this.findOne(familyId, userId);
-    const requester = family.members.find((m) => m.userId === userId);
+    const requester = family.family_members.find((m) => m.user_id === userId);
 
     // Only user themselves or Owner can remove
     if (userId !== memberUserIdToRemove && requester?.role !== "OWNER") {
       throw new ForbiddenException("Insufficient permissions to remove member");
     }
 
-    if (family.ownerId === memberUserIdToRemove) {
+    if (family.owner_user_id === memberUserIdToRemove) {
       throw new BadRequestException("Cannot remove the Family Owner");
     }
 
-    return this.prisma.familyMember.delete({
+    return this.prisma.family_members.delete({
       where: {
-        familyId_userId: {
-          familyId,
-          userId: memberUserIdToRemove,
+        family_id_user_id: {
+          family_id: familyId,
+          user_id: memberUserIdToRemove,
         },
       },
     });
@@ -261,11 +218,11 @@ export class FamilyService {
    * Accept invite
    */
   async acceptInvite(familyId: string, userId: string) {
-    const member = await this.prisma.familyMember.findUnique({
+    const member = await this.prisma.family_members.findUnique({
       where: {
-        familyId_userId: {
-          familyId,
-          userId,
+        family_id_user_id: {
+          family_id: familyId,
+          user_id: userId,
         },
       },
     });
@@ -279,13 +236,13 @@ export class FamilyService {
     }
 
     // Update member status to ACTIVE
-    const updatedMember = await this.prisma.familyMember.update({
+    const updatedMember = await this.prisma.family_members.update({
       where: { id: member.id },
       data: { status: "ACTIVE" },
     });
 
     // Auto-set as Primary if this is user's first family (Rule 2.1)
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.users.findUnique({
       where: { id: userId },
       select: { settings: true },
     });
@@ -294,7 +251,7 @@ export class FamilyService {
 
     if (!hasPrimaryFamily) {
       // First family - auto-set as Primary
-      await this.prisma.user.update({
+      await this.prisma.users.update({
         where: { id: userId },
         data: {
           settings: {
@@ -338,7 +295,7 @@ export class FamilyService {
     ];
 
     // Fetch user settings to see if a primary family is set
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.users.findUnique({
       where: { id: userId },
       select: { settings: true },
     });
@@ -350,11 +307,11 @@ export class FamilyService {
 
     if (primaryFamilyId) {
       // Check if member of primary family
-      member = await this.prisma.familyMember.findUnique({
+      member = await this.prisma.family_members.findUnique({
         where: {
-          familyId_userId: {
-            familyId: primaryFamilyId,
-            userId,
+          family_id_user_id: {
+            family_id: primaryFamilyId,
+            user_id: userId,
           },
         },
       });
@@ -366,14 +323,17 @@ export class FamilyService {
 
     // Fallback if no primary, or primary is invalid/inactive: find first active
     if (!member) {
-      member = await this.prisma.familyMember.findFirst({
-        where: { userId, status: "ACTIVE" },
-        select: { familyId: true, id: true, status: true },
+      member = await this.prisma.family_members.findFirst({
+        where: { user_id: userId, status: "ACTIVE" },
+        select: { family_id: true, id: true, status: true },
       });
     }
 
     if (member) {
-      hierarchy.push({ scopeType: ScopeType.FAMILY, scopeId: member.familyId });
+      hierarchy.push({
+        scopeType: ScopeType.FAMILY,
+        scopeId: member.family_id,
+      });
     }
 
     return hierarchy;
@@ -384,9 +344,9 @@ export class FamilyService {
    */
   async setPrimaryFamily(userId: string, familyId: string) {
     // Verify membership
-    const member = await this.prisma.familyMember.findUnique({
+    const member = await this.prisma.family_members.findUnique({
       where: {
-        familyId_userId: { familyId, userId },
+        family_id_user_id: { family_id: familyId, user_id: userId },
       },
     });
 
@@ -397,10 +357,10 @@ export class FamilyService {
     }
 
     // Update user settings
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.users.findUnique({ where: { id: userId } });
     const currentSettings = (user?.settings as Record<string, any>) || {};
 
-    await this.prisma.user.update({
+    await this.prisma.users.update({
       where: { id: userId },
       data: {
         settings: {
@@ -434,7 +394,7 @@ export class FamilyService {
     const family = await this.findOne(familyId, currentOwnerId);
 
     // Verify current owner FIRST (before self-transfer check)
-    if (family.ownerId !== currentOwnerId) {
+    if (family.owner_user_id !== currentOwnerId) {
       throw new ForbiddenException(
         "Only the current owner can transfer ownership",
       );
@@ -448,15 +408,17 @@ export class FamilyService {
     // DEBUG: Log ownership state
     if (process.env.NODE_ENV === "test") {
       console.log("[transferOwnership] Validation:", {
-        familyOwnerId: family.ownerId,
+        familyOwnerId: family.owner_user_id,
         currentOwnerId,
-        match: family.ownerId === currentOwnerId,
-        willThrow: family.ownerId !== currentOwnerId,
+        match: family.owner_user_id === currentOwnerId,
+        willThrow: family.owner_user_id !== currentOwnerId,
       });
     }
 
     // Verify new owner is a member
-    const newOwnerMember = family.members.find((m) => m.userId === newOwnerId);
+    const newOwnerMember = family.family_members.find(
+      (m) => m.user_id === newOwnerId,
+    );
     if (!newOwnerMember) {
       throw new BadRequestException("New owner must be a member of the family");
     }
@@ -464,25 +426,25 @@ export class FamilyService {
     // Transaction to update ownerId and roles
     return this.prisma.$transaction(async (tx) => {
       // 1. Update Family ownerId
-      await tx.family.update({
+      await tx.families.update({
         where: { id: familyId },
-        data: { ownerId: newOwnerId },
+        data: { owner_user_id: newOwnerId },
       });
 
       // 2. Update Old Owner Role to GUARDIAN
       // We downgrade them so they don't lose access, but there can be only 1 OWNER.
-      await tx.familyMember.update({
+      await tx.family_members.update({
         where: {
-          familyId_userId: { familyId, userId: currentOwnerId },
+          family_id_user_id: { family_id: familyId, user_id: currentOwnerId },
         },
         data: { role: "GUARDIAN" },
       });
 
       // 3. Update New Owner Role to OWNER
       // We upgrade the selected member to be the new OWNER.
-      await tx.familyMember.update({
+      await tx.family_members.update({
         where: {
-          familyId_userId: { familyId, userId: newOwnerId },
+          family_id_user_id: { family_id: familyId, user_id: newOwnerId },
         },
         data: { role: "OWNER" },
       });
@@ -497,13 +459,13 @@ export class FamilyService {
   async deleteFamily(familyId: string, userId: string) {
     const family = await this.findOne(familyId, userId);
 
-    if (family.ownerId !== userId) {
+    if (family.owner_user_id !== userId) {
       throw new ForbiddenException("Only the owner can delete the family");
     }
 
     // Delete family (Cascades to members due to relation, but let's be safe/check logic)
     // Prisma relation usually cascades delete.
-    return this.prisma.family.delete({
+    return this.prisma.families.delete({
       where: { id: familyId },
     });
   }
@@ -513,7 +475,7 @@ export class FamilyService {
    */
   async getFamilyForOwner(userId: string) {
     // 1. Get user's primary family from settings
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.users.findUnique({
       where: { id: userId },
       select: { settings: true },
     });
@@ -522,12 +484,12 @@ export class FamilyService {
 
     // 2. If no primary, find first family where user is OWNER or GUARDIAN
     if (!familyId) {
-      const member = await this.prisma.familyMember.findFirst({
-        where: { userId, status: "ACTIVE" },
+      const member = await this.prisma.family_members.findFirst({
+        where: { user_id: userId, status: "ACTIVE" },
         orderBy: { role: "asc" }, // OWNER comes first alphabetically? No, O > G. But 'OWNER' > 'GUARDIAN'.
         // Let's rely on finding any active family for now
       });
-      familyId = member?.familyId;
+      familyId = member?.family_id;
     }
 
     if (!familyId) {
@@ -535,13 +497,13 @@ export class FamilyService {
     }
 
     // 3. Fetch details
-    const family = await this.prisma.family.findUnique({
+    const family = await this.prisma.families.findUnique({
       where: { id: familyId },
       include: {
-        members: {
+        family_members: {
           include: {
-            user: {
-              select: { id: true, name: true, email: true, avatarUrl: true },
+            users: {
+              select: { id: true, name: true, email: true, avatar_url: true },
             },
           },
         },
@@ -551,8 +513,8 @@ export class FamilyService {
     if (!family) return null;
 
     // 4. Aggregate Stats
-    const totalMembers = family.members.length;
-    const activeMembers = family.members.filter(
+    const totalMembers = family.family_members.length;
+    const activeMembers = family.family_members.filter(
       (m) => m.status === "ACTIVE",
     ).length;
 

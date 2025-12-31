@@ -14,7 +14,7 @@ export class GamesService {
   async getGamesCatalog(): Promise<GameCatalogResponse> {
     try {
       this.logger.log(`Fetching games from ${this.AI_SERVICE_URL}/games`);
-      
+
       // Call Python AI service /games endpoint with timeout
       const response = await firstValueFrom(
         this.httpService.get<{ games: GameMetadata[]; total: number }>(
@@ -22,24 +22,29 @@ export class GamesService {
           {
             timeout: 10000, // 10 seconds
             headers: {
-              'Accept': 'application/json',
+              Accept: "application/json",
             },
-          }
+          },
         ),
       );
 
       const games = response.data.games;
       const total = response.data.total || games.length;
 
-      this.logger.log(`Successfully fetched ${games.length} games from AI service`);
+      this.logger.log(
+        `Successfully fetched ${games.length} games from AI service`,
+      );
 
       return {
         games,
         total,
       };
     } catch (error) {
-      this.logger.error(`Failed to fetch games from AI service: ${error.message}`, error.stack);
-      
+      this.logger.error(
+        `Failed to fetch games from AI service: ${error.message}`,
+        error.stack,
+      );
+
       // Return empty array instead of throwing to allow frontend fallback
       return {
         games: [],

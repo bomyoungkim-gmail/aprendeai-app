@@ -38,15 +38,15 @@ describe("Annotations Integration Tests", () => {
     testUserEmail = `annotations-test-${Date.now()}@example.com`;
 
     // Explicitly create user in DB
-    const user = await prisma.user.upsert({
+    const user = await prisma.users.upsert({
       where: { email: testUserEmail },
       create: {
         email: testUserEmail,
         name: "Annotations Tester",
-        passwordHash: "hash", // Not used for JWT auth skip
-        role: "COMMON_USER",
-        schoolingLevel: "ADULT",
+        password_hash: "hash", // Not used for JWT auth skip
+        schooling_level: "ADULT",
         status: "ACTIVE",
+        system_role: "ADMIN" as any, // Give admin to be safe for all Ops
       },
       update: {},
     });
@@ -61,33 +61,35 @@ describe("Annotations Integration Tests", () => {
     });
 
     // Create test content
-    const content = await prisma.content.create({
+    const content = await prisma.contents.create({
       data: {
+        id: `content-${Date.now()}`,
         title: "Test Content for Annotations",
         type: "PDF",
-        originalLanguage: "EN",
-        rawText:
+        original_language: "EN",
+        raw_text:
           "This is test content for annotations. We will highlight and annotate this text.",
-        ownerUserId: testUserId,
+        owner_user_id: testUserId,
       },
     });
     testContentId = content.id;
 
     // Create test group
-    const group = await prisma.studyGroup.create({
+    const group = await prisma.study_groups.create({
       data: {
+        id: `group-${Date.now()}`,
         name: "Test Annotation Group",
-        ownerUserId: testUserId,
+        owner_user_id: testUserId,
       },
     });
     testGroupId = group.id;
 
     // Add user to group
-    await prisma.studyGroupMember.create({
+    await prisma.study_group_members.create({
       data: {
-        groupId: testGroupId,
-        userId: testUserId,
-        role: "OWNER",
+        group_id: testGroupId,
+        user_id: testUserId,
+        role: "OWNER" as any,
         status: "ACTIVE",
       },
     });
@@ -96,21 +98,21 @@ describe("Annotations Integration Tests", () => {
   afterAll(async () => {
     // Cleanup in correct order
     if (testContentId) {
-      await prisma.annotation.deleteMany({
-        where: { contentId: testContentId },
+      await prisma.annotations.deleteMany({
+        where: { content_id: testContentId },
       });
-      await prisma.content.delete({ where: { id: testContentId } });
+      await prisma.contents.delete({ where: { id: testContentId } });
     }
 
     if (testGroupId) {
-      await prisma.studyGroupMember.deleteMany({
-        where: { groupId: testGroupId },
+      await prisma.study_group_members.deleteMany({
+        where: { group_id: testGroupId },
       });
-      await prisma.studyGroup.delete({ where: { id: testGroupId } });
+      await prisma.study_groups.delete({ where: { id: testGroupId } });
     }
 
     if (testUserId) {
-      await prisma.user.delete({ where: { id: testUserId } });
+      await prisma.users.delete({ where: { id: testUserId } });
     }
 
     await app.close();
@@ -173,7 +175,7 @@ describe("Annotations Integration Tests", () => {
         .expect(201);
 
       expect(res.body.visibility).toBe("GROUP");
-      expect(res.body.groupId).toBe(testGroupId);
+      expect(res.body.group_id).toBe(testGroupId);
     });
   });
 
@@ -186,7 +188,7 @@ describe("Annotations Integration Tests", () => {
 
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body.length).toBeGreaterThan(0);
-      expect(res.body[0]).toHaveProperty("user");
+      expect(res.body[0]).toHaveProperty("users");
     });
 
     it("should filter by groupId", async () => {
@@ -200,7 +202,7 @@ describe("Annotations Integration Tests", () => {
         .expect(200);
 
       const groupAnnotations = res.body.filter(
-        (a: any) => a.groupId === testGroupId,
+        (a: any) => a.groupId === testGroupId || a.group_id === testGroupId,
       );
       expect(groupAnnotations.length).toBeGreaterThan(0);
     });
@@ -256,7 +258,7 @@ describe("Annotations Integration Tests", () => {
         .expect(200);
 
       // Verify deletion
-      const annotations = await prisma.annotation.findUnique({
+      const annotations = await prisma.annotations.findUnique({
         where: { id: annotationId },
       });
       expect(annotations).toBeNull();

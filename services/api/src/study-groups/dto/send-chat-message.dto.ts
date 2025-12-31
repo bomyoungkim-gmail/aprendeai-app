@@ -3,7 +3,7 @@ import { IsString, IsNotEmpty, MaxLength, IsInt, Min } from "class-validator";
 export class SendChatMessageDto {
   @IsInt()
   @Min(1)
-  roundIndex: number;
+  round_index: number;
 
   @IsString()
   @IsNotEmpty()

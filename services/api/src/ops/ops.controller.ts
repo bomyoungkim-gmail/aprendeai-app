@@ -1,8 +1,8 @@
 import { Controller, Get, Post, Body, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { CurrentUser } from "../auth/current-user.decorator";
-import { User } from "@prisma/client";
+import { JwtAuthGuard } from "../auth/infrastructure/jwt-auth.guard";
+import { CurrentUser } from "../auth/presentation/decorators/current-user.decorator";
+import { users } from "@prisma/client";
 import { OpsService } from "./ops.service";
 import { LogTimeDto } from "./dto/ops.dto";
 import { ROUTES } from "../common/constants/routes.constants";
@@ -19,7 +19,7 @@ export class OpsController {
    */
   @Get("daily-snapshot")
   @ApiOperation({ summary: "Get daily operational snapshot" })
-  async getDailySnapshot(@CurrentUser() user: User) {
+  async getDailySnapshot(@CurrentUser() user: users) {
     return this.opsService.getDailySnapshot(user.id);
   }
 
@@ -28,7 +28,7 @@ export class OpsController {
    */
   @Get("what-next")
   @ApiOperation({ summary: "Get next prioritized tasks" })
-  async getWhatsNext(@CurrentUser() user: User) {
+  async getWhatsNext(@CurrentUser() user: users) {
     return this.opsService.getWhatsNext(user.id);
   }
 
@@ -37,7 +37,7 @@ export class OpsController {
    */
   @Get("context-cards")
   @ApiOperation({ summary: "Get context-aware action cards" })
-  async getContextCards(@CurrentUser() user: User) {
+  async getContextCards(@CurrentUser() user: users) {
     return this.opsService.getContextCards(user.id);
   }
 
@@ -46,7 +46,7 @@ export class OpsController {
    */
   @Post("log")
   @ApiOperation({ summary: "Log time spent studying" })
-  async logTime(@CurrentUser() user: User, @Body() dto: LogTimeDto) {
+  async logTime(@CurrentUser() user: users, @Body() dto: LogTimeDto) {
     return this.opsService.logTime(user.id, dto);
   }
 
@@ -55,7 +55,7 @@ export class OpsController {
    */
   @Get("boot")
   @ApiOperation({ summary: "Get daily boot prompt" })
-  async getBootPrompt(@CurrentUser() user: User) {
+  async getBootPrompt(@CurrentUser() user: users) {
     return this.opsService.getBootPrompt(user.id);
   }
 
@@ -64,7 +64,7 @@ export class OpsController {
    */
   @Get("close")
   @ApiOperation({ summary: "Get daily close prompt" })
-  async getClosePrompt(@CurrentUser() user: User) {
+  async getClosePrompt(@CurrentUser() user: users) {
     return this.opsService.getClosePrompt(user.id);
   }
 }

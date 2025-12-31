@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { AIQuestionGeneratorService } from './ai-question-generator.service';
-import { CreateQuestionBankDto, EducationLevel, SourceType } from '../dto/question-bank.dto';
-import { GenerateQuestionsDto } from '../dto/generate-questions.dto';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { AIQuestionGeneratorService } from "./ai-question-generator.service";
+import { CreateQuestionBankDto, SourceType } from "../dto/question-bank.dto";
+import { GenerateQuestionsDto } from "../dto/generate-questions.dto";
+import * as crypto from "crypto";
 
 @Injectable()
 export class QuestionSelectionService {
@@ -10,26 +11,33 @@ export class QuestionSelectionService {
 
   constructor(
     private prisma: PrismaService,
-    private aiGenerator: AIQuestionGeneratorService
+    private aiGenerator: AIQuestionGeneratorService,
   ) {}
 
   async getQuestionsForUser(params: GenerateQuestionsDto) {
-    const { gameType, topic, subject, educationLevel, count, language = 'pt-BR' } = params;
+    const {
+      gameType,
+      topic,
+      subject,
+      educationLevel,
+      count,
+      language = "pt-BR",
+    } = params;
     const questions = [];
 
     // 1. Try to fetch from existing curated database first
-    const dbQuestions = await this.prisma.questionBank.findMany({
+    const dbQuestions = await this.prisma.question_bank.findMany({
       where: {
-        gameType,
+        game_type: gameType,
         subject,
         topic,
-        educationLevel,
+        education_level: educationLevel,
         language,
       },
       take: count,
       orderBy: {
         // Randomize visually (Prisma doesn't support RAND() natively easily, so we take sample and shuffle in memory)
-        updatedAt: 'desc', 
+        updated_at: "desc",
       },
     });
 
@@ -38,7 +46,9 @@ export class QuestionSelectionService {
     // 2. If not enough questions, generate via AI
     if (questions.length < count) {
       const remainingCount = count - questions.length;
-      this.logger.log(`Not enough questions in DB (${questions.length}/${count}). Generating ${remainingCount} via AI...`);
+      this.logger.log(
+        `Not enough questions in DB (${questions.length}/${count}). Generating ${remainingCount} via AI...`,
+      );
 
       try {
         const generatedQuestions = await this.aiGenerator.generate({
@@ -64,7 +74,7 @@ export class QuestionSelectionService {
           questions.push(saved);
         }
       } catch (error) {
-        this.logger.error('Failed to generate AI questions fallback:', error);
+        this.logger.error("Failed to generate AI questions fallback:", error);
         // If AI fails, return what we have (even if fewer)
       }
     }
@@ -74,18 +84,20 @@ export class QuestionSelectionService {
   }
 
   private async saveGeneratedQuestion(dto: CreateQuestionBankDto) {
-    return this.prisma.questionBank.create({
+    return this.prisma.question_bank.create({
       data: {
-        gameType: dto.gameType,
+        id: crypto.randomUUID(),
+        game_type: dto.gameType,
         subject: dto.subject,
         topic: dto.topic,
         difficulty: dto.difficulty,
-        educationLevel: dto.educationLevel,
+        education_level: dto.educationLevel,
         language: dto.language,
-        question: dto.question,
-        answer: dto.answer,
-        sourceType: dto.sourceType,
-        metadata: dto.metadata || {},
+        question: dto.question as any,
+        answer: dto.answer as any,
+        source_type: dto.sourceType,
+        metadata: (dto.metadata as any) || {},
+        updated_at: new Date(),
       },
     });
   }

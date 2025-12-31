@@ -9,12 +9,12 @@ describe("AnnotationService - Sprint 3: Audit Trail", () => {
   let prisma: PrismaService;
 
   const mockPrismaService = {
-    annotation: {
+    annotations: {
       findUnique: jest.fn(),
       update: jest.fn(),
       create: jest.fn(),
     },
-    sessionEvent: {
+    session_events: {
       create: jest.fn(),
     },
   };
@@ -48,59 +48,61 @@ describe("AnnotationService - Sprint 3: Audit Trail", () => {
   describe("toggleFavorite", () => {
     const mockAnnotation = {
       id: "annotation-123",
-      userId: "user-123",
-      contentId: "content-123",
+      user_id: "user-123",
+      content_id: "content-123",
       type: "HIGHLIGHT",
-      startOffset: 0,
-      endOffset: 10,
+      start_offset: 0,
+      end_offset: 10,
       text: "Test highlight",
       color: "#FFFF00",
       visibility: "PRIVATE",
-      isFavorite: false,
-      groupId: null,
-      parentId: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      is_favorite: false,
+      group_id: null,
+      parent_id: null,
+      created_at: new Date(),
+      updated_at: new Date(),
     };
 
     it("should toggle favorite and create SessionEvent", async () => {
       // Mock findUnique to return annotation
-      mockPrismaService.annotation.findUnique.mockResolvedValue(mockAnnotation);
+      mockPrismaService.annotations.findUnique.mockResolvedValue(
+        mockAnnotation,
+      );
 
       // Mock update to return toggled annotation
-      const toggledAnnotation = { ...mockAnnotation, isFavorite: true };
-      mockPrismaService.annotation.update.mockResolvedValue({
+      const toggledAnnotation = { ...mockAnnotation, is_favorite: true };
+      mockPrismaService.annotations.update.mockResolvedValue({
         ...toggledAnnotation,
-        user: { id: "user-123", name: "Test User" },
+        users: { id: "user-123", name: "Test User" },
       });
 
       // Mock SessionEvent creation
-      mockPrismaService.sessionEvent.create.mockResolvedValue({
+      mockPrismaService.session_events.create.mockResolvedValue({
         id: "event-123",
-        eventType: "ANNOTATION_FAVORITE_TOGGLED",
-        payloadJson: {
+        event_type: "ANNOTATION_FAVORITE_TOGGLED",
+        payload_json: {
           annotationId: "annotation-123",
           favorite: true,
           userId: "user-123",
         },
-        createdAt: new Date(),
+        created_at: new Date(),
       });
 
       // Execute
       const result = await service.toggleFavorite("annotation-123", "user-123");
 
       // Verify annotation update
-      expect(mockPrismaService.annotation.update).toHaveBeenCalledWith({
+      expect(mockPrismaService.annotations.update).toHaveBeenCalledWith({
         where: { id: "annotation-123" },
-        data: { isFavorite: true },
-        include: { user: { select: { id: true, name: true } } },
+        data: { is_favorite: true },
+        include: { users: { select: { id: true, name: true } } },
       });
 
       // Verify SessionEvent creation
-      expect(mockPrismaService.sessionEvent.create).toHaveBeenCalledWith({
+      expect(mockPrismaService.session_events.create).toHaveBeenCalledWith({
         data: {
-          eventType: "ANNOTATION_FAVORITE_TOGGLED",
-          payloadJson: {
+          event_type: "ANNOTATION_FAVORITE_TOGGLED",
+          payload_json: {
             annotationId: "annotation-123",
             favorite: true,
             userId: "user-123",
@@ -109,85 +111,87 @@ describe("AnnotationService - Sprint 3: Audit Trail", () => {
       });
 
       // Verify result
-      expect(result.isFavorite).toBe(true);
+      expect(result.is_favorite).toBe(true);
     });
 
     it("should throw NotFoundException if annotation does not exist", async () => {
-      mockPrismaService.annotation.findUnique.mockResolvedValue(null);
+      mockPrismaService.annotations.findUnique.mockResolvedValue(null);
 
       await expect(
         service.toggleFavorite("non-existent", "user-123"),
       ).rejects.toThrow(NotFoundException);
 
       // SessionEvent should not be created
-      expect(mockPrismaService.sessionEvent.create).not.toHaveBeenCalled();
+      expect(mockPrismaService.session_events.create).not.toHaveBeenCalled();
     });
 
     it("should throw ForbiddenException if not owner", async () => {
-      mockPrismaService.annotation.findUnique.mockResolvedValue(mockAnnotation);
+      mockPrismaService.annotations.findUnique.mockResolvedValue(
+        mockAnnotation,
+      );
 
       await expect(
         service.toggleFavorite("annotation-123", "different-user"),
       ).rejects.toThrow(ForbiddenException);
 
       // SessionEvent should not be created
-      expect(mockPrismaService.sessionEvent.create).not.toHaveBeenCalled();
+      expect(mockPrismaService.session_events.create).not.toHaveBeenCalled();
     });
   });
 
   describe("createReply", () => {
     const mockParentAnnotation = {
       id: "parent-123",
-      userId: "user-123",
-      contentId: "content-123",
+      user_id: "user-123",
+      content_id: "content-123",
       type: "COMMENT",
-      startOffset: 5,
-      endOffset: 15,
+      start_offset: 5,
+      end_offset: 15,
       text: "Parent comment",
       color: "#00FF00",
       visibility: "PRIVATE",
-      isFavorite: false,
-      groupId: null,
-      parentId: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      is_favorite: false,
+      group_id: null,
+      parent_id: null,
+      created_at: new Date(),
+      updated_at: new Date(),
     };
 
     it("should create reply and SessionEvent", async () => {
       // Mock parent annotation lookup
-      mockPrismaService.annotation.findUnique.mockResolvedValue(
+      mockPrismaService.annotations.findUnique.mockResolvedValue(
         mockParentAnnotation,
       );
 
       // Mock reply creation
       const mockReply = {
         id: "reply-123",
-        userId: "user-456",
-        contentId: "content-123",
+        user_id: "user-456",
+        content_id: "content-123",
         type: "COMMENT",
-        startOffset: 5,
-        endOffset: 15,
+        start_offset: 5,
+        end_offset: 15,
         text: "Reply text",
         color: "#00FF00",
         visibility: "PRIVATE",
-        parentId: "parent-123",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        user: { id: "user-456", name: "Reply User" },
-        parent: mockParentAnnotation,
+        parent_id: "parent-123",
+        created_at: new Date(),
+        updated_at: new Date(),
+        users: { id: "user-456", name: "Reply User" },
+        annotations: mockParentAnnotation,
       };
-      mockPrismaService.annotation.create.mockResolvedValue(mockReply);
+      mockPrismaService.annotations.create.mockResolvedValue(mockReply);
 
       // Mock SessionEvent creation
-      mockPrismaService.sessionEvent.create.mockResolvedValue({
+      mockPrismaService.session_events.create.mockResolvedValue({
         id: "event-456",
-        eventType: "ANNOTATION_REPLY_CREATED",
-        payloadJson: {
+        event_type: "ANNOTATION_REPLY_CREATED",
+        payload_json: {
           annotationId: "parent-123",
           replyId: "reply-123",
           userId: "user-456",
         },
-        createdAt: new Date(),
+        created_at: new Date(),
       });
 
       // Execute
@@ -197,30 +201,30 @@ describe("AnnotationService - Sprint 3: Audit Trail", () => {
       });
 
       // Verify reply creation
-      expect(mockPrismaService.annotation.create).toHaveBeenCalledWith({
+      expect(mockPrismaService.annotations.create).toHaveBeenCalledWith({
         data: {
-          contentId: "content-123",
-          userId: "user-456",
+          content_id: "content-123",
+          user_id: "user-456",
           type: "COMMENT",
-          startOffset: 5,
-          endOffset: 15,
+          start_offset: 5,
+          end_offset: 15,
           text: "Reply text",
           color: "#00FF00",
           visibility: "PRIVATE",
-          groupId: null,
-          parentId: "parent-123",
+          group_id: null,
+          parent_id: "parent-123",
         },
         include: {
-          user: { select: { id: true, name: true } },
-          parent: true,
+          users: { select: { id: true, name: true } },
+          annotations: true,
         },
       });
 
       // Verify SessionEvent creation
-      expect(mockPrismaService.sessionEvent.create).toHaveBeenCalledWith({
+      expect(mockPrismaService.session_events.create).toHaveBeenCalledWith({
         data: {
-          eventType: "ANNOTATION_REPLY_CREATED",
-          payloadJson: {
+          event_type: "ANNOTATION_REPLY_CREATED",
+          payload_json: {
             annotationId: "parent-123",
             replyId: "reply-123",
             userId: "user-456",
@@ -230,11 +234,11 @@ describe("AnnotationService - Sprint 3: Audit Trail", () => {
 
       // Verify result
       expect(result.id).toBe("reply-123");
-      expect(result.parentId).toBe("parent-123");
+      expect(result.parent_id).toBe("parent-123");
     });
 
     it("should throw NotFoundException if parent does not exist", async () => {
-      mockPrismaService.annotation.findUnique.mockResolvedValue(null);
+      mockPrismaService.annotations.findUnique.mockResolvedValue(null);
 
       await expect(
         service.createReply("non-existent", "user-123", {
@@ -244,26 +248,26 @@ describe("AnnotationService - Sprint 3: Audit Trail", () => {
       ).rejects.toThrow(NotFoundException);
 
       // No SessionEvent should be created
-      expect(mockPrismaService.sessionEvent.create).not.toHaveBeenCalled();
+      expect(mockPrismaService.session_events.create).not.toHaveBeenCalled();
     });
 
     it("should emit WebSocket event for GROUP visibility", async () => {
       const groupAnnotation = {
         ...mockParentAnnotation,
         visibility: "GROUP",
-        groupId: "group-789",
+        group_id: "group-789",
       };
 
-      mockPrismaService.annotation.findUnique.mockResolvedValue(
+      mockPrismaService.annotations.findUnique.mockResolvedValue(
         groupAnnotation,
       );
-      mockPrismaService.annotation.create.mockResolvedValue({
+      mockPrismaService.annotations.create.mockResolvedValue({
         id: "reply-123",
-        parentId: "parent-123",
-        user: { id: "user-456", name: "User" },
-        parent: groupAnnotation,
+        parent_id: "parent-123",
+        users: { id: "user-456", name: "User" },
+        annotations: groupAnnotation,
       });
-      mockPrismaService.sessionEvent.create.mockResolvedValue({});
+      mockPrismaService.session_events.create.mockResolvedValue({});
 
       await service.createReply("parent-123", "user-456", {
         content: "Group reply",

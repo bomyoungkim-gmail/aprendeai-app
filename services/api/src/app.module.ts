@@ -36,6 +36,7 @@ import { RecommendationModule } from "./recommendations/recommendation.module";
 import { SearchModule } from "./search/search.module";
 import { FamilyModule } from "./family/family.module";
 import { ClassroomModule } from "./classroom/classroom.module";
+import { SharingModule } from "./sharing/sharing.module";
 import { OpsModule } from "./ops/ops.module";
 import { WebClipsModule } from "./webclips/webclips.module";
 import { GamesModule } from "./games/games.module";
@@ -43,17 +44,13 @@ import { InstitutionsModule } from "./institutions/institutions.module";
 import { ContentClassificationModule } from "./content-classification/content-classification.module";
 import { AssessmentModule } from "./assessment/assessment.module";
 import { AuthModule } from "./auth/auth.module";
-import { JwtAuthGuard } from "./auth/jwt-auth.guard";
+import { JwtAuthGuard } from "./auth/infrastructure/jwt-auth.guard";
 import { MiddlewareConsumer, NestModule, RequestMethod } from "@nestjs/common";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
 import { ActionLoggerMiddleware } from "./common/middleware/logger.middleware";
 import { RouteValidationMiddleware } from "./common/middleware/route-validation.middleware";
-import { UsersModule } from "./users/users.module";
 import { NotificationsModule } from "./notifications/notifications.module";
-import { AIContentModule } from "./common/services/ai-content.module";
-import { LLMModule } from "./llm/llm.module";
 import { SessionTrackingModule } from "./analytics/session-tracking.module";
-import { FeatureFlagsModule } from "./common/feature-flags.module";
 
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
@@ -117,6 +114,7 @@ import { join } from "path";
     FamilyModule,
     // Classroom Mode
     ClassroomModule,
+    SharingModule,
     // OpsCoach
     OpsModule,
     // Browser Extension WebClips
@@ -131,7 +129,6 @@ import { join } from "path";
     // Real-time Notifications
     NotificationsModule,
     SessionTrackingModule,
-    // Feature Flags Module (Global)\n    FeatureFlagsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -149,9 +146,7 @@ import { join } from "path";
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     // Apply request ID and logging to ALL routes (runs before guards)
-    consumer
-      .apply(RequestIdMiddleware, ActionLoggerMiddleware)
-      .forRoutes('*');
+    consumer.apply(RequestIdMiddleware, ActionLoggerMiddleware).forRoutes("*");
 
     // Apply route validation ONLY to non-public routes (runs after auth)
     // Public routes bypass this validation to avoid blocking before auth check
@@ -159,11 +154,11 @@ export class AppModule implements NestModule {
       .apply(RouteValidationMiddleware)
       .exclude(
         // Exclude all auth-related endpoints
-        { path: 'auth/(.*)', method: RequestMethod.ALL },
+        { path: "auth/(.*)", method: RequestMethod.ALL },
         // Exclude health check
-        { path: 'health', method: RequestMethod.ALL },
-        { path: 'api/v1/health', method: RequestMethod.ALL },
+        { path: "health", method: RequestMethod.ALL },
+        { path: "api/v1/health", method: RequestMethod.ALL },
       )
-      .forRoutes('*');
+      .forRoutes("*");
   }
 }

@@ -74,7 +74,7 @@ export class StudyGroupsController {
     await this.studyGroupsService.addContent(
       groupId,
       req.user.id,
-      dto.contentId,
+      dto.content_id,
     );
     return { message: "Content added to playlist" };
   }
@@ -127,10 +127,10 @@ export class StudyGroupsController {
   @Get("sessions/:sessionId/chat")
   async getChatMessages(
     @Param("sessionId") sessionId: string,
-    @Query("roundIndex") roundIndex: string,
+    @Query("round_index") round_index: string,
     @Request() req,
   ) {
-    const roundIdx = parseInt(roundIndex, 10);
+    const roundIdx = parseInt(round_index, 10);
     return this.groupChatService.getMessages(sessionId, roundIdx, req.user.id);
   }
 }

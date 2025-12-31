@@ -2,7 +2,7 @@ import { IsString, IsOptional, IsArray } from "class-validator";
 
 export class UpdatePromptDto {
   @IsString()
-  promptText: string;
+  prompt_text: string;
 
   @IsOptional()
   @IsArray()
@@ -10,5 +10,5 @@ export class UpdatePromptDto {
 
   @IsOptional()
   @IsArray()
-  linkedHighlightIds?: string[];
+  linked_highlight_ids?: string[];
 }

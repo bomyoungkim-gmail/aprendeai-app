@@ -1,17 +1,31 @@
 import { Module } from "@nestjs/common";
-import { AuthService } from "./auth.service";
-import { AuthController } from "./auth.controller";
+import { AuthController } from "./presentation/auth.controller";
 import { ExtensionAuthService } from "./extension-auth.service";
-import { ExtensionAuthController } from "./extension-auth.controller";
+import { ExtensionAuthController } from "./presentation/extension-auth.controller";
 import { UsersModule } from "../users/users.module";
 import { PassportModule } from "@nestjs/passport";
 import { JwtModule } from "@nestjs/jwt";
 import { ConfigModule, ConfigService } from "@nestjs/config";
-import { JwtStrategy } from "./jwt.strategy";
-import { GoogleStrategy } from "./strategies/google.strategy";
-import { MicrosoftStrategy } from "./strategies/microsoft.strategy";
+import { JwtStrategy } from "./infrastructure/jwt.strategy";
+import { GoogleStrategy } from "./infrastructure/strategies/google.strategy";
+import { MicrosoftStrategy } from "./infrastructure/strategies/microsoft.strategy";
 import { EmailModule } from "../email/email.module";
 import { InstitutionsModule } from "../institutions/institutions.module";
+import { FeatureFlagsModule } from "../common/feature-flags.module";
+import { PermissionEvaluator } from "./domain/permission.evaluator";
+
+// Use Cases
+import { LoginUseCase } from "./application/login.use-case";
+import { RegisterUseCase } from "./application/register.use-case";
+import { RefreshTokenUseCase } from "./application/refresh-token.use-case";
+import { SwitchContextUseCase } from "./application/switch-context.use-case";
+import { ValidateOAuthUseCase } from "./application/validate-oauth.use-case";
+import { ForgotPasswordUseCase } from "./application/forgot-password.use-case";
+import { ResetPasswordUseCase } from "./application/reset-password.use-case";
+
+// Infrastructure
+import { TokenGeneratorService } from "./infrastructure/token-generator.service";
+import { BillingModule } from "../billing/billing.module";
 
 @Module({
   imports: [
@@ -19,6 +33,8 @@ import { InstitutionsModule } from "../institutions/institutions.module";
     PassportModule,
     EmailModule,
     InstitutionsModule,
+    FeatureFlagsModule,
+    BillingModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
@@ -30,20 +46,29 @@ import { InstitutionsModule } from "../institutions/institutions.module";
         }
         return {
           secret,
-          signOptions: { expiresIn: "60m" },
+          signOptions: { expiresIn: "15m" }, // Access token 15 min
         };
       },
       inject: [ConfigService],
     }),
   ],
   providers: [
-    AuthService,
     JwtStrategy,
     GoogleStrategy,
     MicrosoftStrategy,
     ExtensionAuthService,
+    PermissionEvaluator,
+    TokenGeneratorService,
+    // Use Cases
+    LoginUseCase,
+    RegisterUseCase,
+    RefreshTokenUseCase,
+    SwitchContextUseCase,
+    ValidateOAuthUseCase,
+    ForgotPasswordUseCase,
+    ResetPasswordUseCase,
   ],
   controllers: [AuthController, ExtensionAuthController],
-  exports: [AuthService, JwtModule],
+  exports: [JwtModule, PermissionEvaluator, TokenGeneratorService],
 })
 export class AuthModule {}

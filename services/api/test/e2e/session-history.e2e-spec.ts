@@ -3,7 +3,6 @@ import { INestApplication, ValidationPipe } from "@nestjs/common";
 import * as request from "supertest";
 import { AppModule } from "../../src/app.module";
 import { PrismaService } from "../../src/prisma/prisma.service";
-import { UserRole } from "@prisma/client";
 import { TestAuthHelper } from "../helpers/auth.helper";
 
 describe("Session History API (E2E)", () => {
@@ -33,13 +32,13 @@ describe("Session History API (E2E)", () => {
     authHelper = new TestAuthHelper(secret);
 
     // Create test user
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
         email: `session_history_${Date.now()}@test.com`,
         name: "History Test User",
-        passwordHash: "test-hash",
-        role: UserRole.COMMON_USER,
-        schoolingLevel: "MEDIO",
+        password_hash: "test-hash",
+        last_context_role: "STUDENT",
+        schooling_level: "HIGHER_EDUCATION",
       },
     });
     userId = user.id;
@@ -52,14 +51,16 @@ describe("Session History API (E2E)", () => {
     });
 
     // Create test content
-    const content = await prisma.content.create({
+    const content = await prisma.contents.create({
       data: {
+        id: `content_hist_${Date.now()}`,
         title: "Test Article for History",
-        rawText: "Test content",
+        raw_text: "Test content",
         type: "ARTICLE",
-        originalLanguage: "PT_BR",
-        creator: { connect: { id: userId } },
-        scopeType: "USER",
+        original_language: "PT_BR",
+        users_created_by: { connect: { id: userId } },
+        scope_type: "USER",
+        updated_at: new Date(),
       },
     });
     contentId = content.id;
@@ -70,18 +71,18 @@ describe("Session History API (E2E)", () => {
       const startedAt = new Date(now);
       startedAt.setDate(startedAt.getDate() - i);
 
-      await prisma.readingSession.create({
+      await prisma.reading_sessions.create({
         data: {
-          userId,
-          contentId,
+          user_id: userId,
+          content_id: contentId,
           phase: i % 3 === 0 ? "PRE" : i % 3 === 1 ? "DURING" : "POST",
           modality: "READING",
-          assetLayer: "L1",
-          goalStatement: `Session ${i}`,
-          predictionText: "",
-          targetWordsJson: [],
-          startedAt,
-          finishedAt:
+          asset_layer: "L1",
+          goal_statement: `Session ${i}`,
+          prediction_text: "",
+          target_words_json: [],
+          started_at: startedAt,
+          finished_at:
             i < 20 ? new Date(startedAt.getTime() + 30 * 60000) : null, // 30 min
         },
       });
@@ -90,9 +91,9 @@ describe("Session History API (E2E)", () => {
 
   afterAll(async () => {
     if (userId) {
-      await prisma.readingSession.deleteMany({ where: { userId } });
-      await prisma.content.deleteMany({ where: { createdBy: userId } });
-      await prisma.user.delete({ where: { id: userId } });
+      await prisma.reading_sessions.deleteMany({ where: { user_id: userId } });
+      await prisma.contents.deleteMany({ where: { created_by: userId } });
+      await prisma.users.delete({ where: { id: userId } });
     }
     await prisma.$disconnect();
     await app.close();

@@ -1,6 +1,6 @@
-import { Injectable, Logger, InternalServerErrorException } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { ScopeType, Environment, PlanType } from "@prisma/client";
+import { ScopeType, PlanType, EntitlementScopeType } from "@prisma/client";
 import { SubscriptionService } from "./subscription.service";
 
 // Default Free Limits
@@ -33,76 +33,85 @@ export class EntitlementsService {
     limits: any;
     features: any;
   }> {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.users.findUnique({
       where: { id: userId },
       include: {
-        institutionMemberships: { 
-          include: { 
-            institution: { 
-              include: { 
-                subscriptions: { 
-                  where: { status: { in: ["ACTIVE", "TRIALING", "GRACE_PERIOD"] } },
-                  include: { plan: true },
-                  orderBy: { createdAt: "desc" },
-                  take: 1
-                } 
-              } 
-            } 
+        institution_members: {
+          include: {
+            institutions: {
+              include: {
+                subscriptions: {
+                  where: {
+                    status: { in: ["ACTIVE", "TRIALING", "GRACE_PERIOD"] },
+                  },
+                  include: { plans: true },
+                  orderBy: { created_at: "desc" },
+                  take: 1,
+                },
+              },
+            },
           },
-          where: { status: "ACTIVE" }
         },
-        memberships: { // Family memberships
-          include: { 
-            family: { 
-              include: { 
-                subscriptions: { 
-                  where: { status: { in: ["ACTIVE", "TRIALING", "GRACE_PERIOD"] } },
-                  include: { plan: true },
-                  orderBy: { createdAt: "desc" },
-                  take: 1
-                } 
-              } 
-            } 
+        family_members: {
+          include: {
+            families: {
+              include: {
+                subscriptions: {
+                  where: {
+                    status: { in: ["ACTIVE", "TRIALING", "GRACE_PERIOD"] },
+                  },
+                  include: { plans: true },
+                  orderBy: { created_at: "desc" },
+                  take: 1,
+                },
+              },
+            },
           },
-          where: { status: "ACTIVE" }
+          where: { status: "ACTIVE" },
         },
-        subscriptions: { 
+        subscriptions: {
           where: { status: { in: ["ACTIVE", "TRIALING", "GRACE_PERIOD"] } },
-          include: { plan: true }, 
-          orderBy: { createdAt: "desc" },
-          take: 1
+          include: { plans: true },
+          orderBy: { created_at: "desc" },
+          take: 1,
         },
       },
     });
 
     if (!user) {
-      return { source: "FREE", planType: "FREE", limits: FREE_LIMITS, features: {} };
+      return {
+        source: "FREE",
+        planType: "FREE",
+        limits: FREE_LIMITS,
+        features: {},
+      };
     }
 
-    // 1. Check Institution (Org)
-    // Simplify: Take the first active institution membership with an active subscription
-    for (const membership of user.institutionMemberships) {
-      const sub = membership.institution.subscriptions[0];
-      if (sub) {
-         // TODO: Check 'active seats' limit vs baseline
-        return {
-          source: "ORG",
-          planType: "INSTITUTION",
-          limits: (sub.plan.entitlements as any)["limits"] || {},
-          features: (sub.plan.entitlements as any)["features"] || {},
-        };
+    // 1. Check Institution (Org) - Schema says one-to-one (singular)
+    if (user.institution_members) {
+      const membership = user.institution_members as any;
+      if (membership.status === "ACTIVE") {
+        const sub = (membership.institutions.subscriptions as any[])[0];
+        if (sub) {
+          return {
+            source: "ORG",
+            planType: "INSTITUTION",
+            limits: (sub.plans.entitlements as any)["limits"] || {},
+            features: (sub.plans.entitlements as any)["features"] || {},
+          };
+        }
       }
     }
 
-    // 2. Check Family
-    for (const membership of user.memberships) { // user.memberships refers to FamilyMember
-      const sub = membership.family.subscriptions[0];
+    // 2. Check Family - Schema says one-to-many (array)
+    for (const membership of user.family_members) {
+      const sub = (membership.families.subscriptions as any[])[0];
       if (sub) {
         return {
           source: "FAMILY",
           planType: "FAMILY",
-          limits: (sub.plan.entitlements as any)["limits"] || {},
-          features: (sub.plan.entitlements as any)["features"] || {},
+          limits: (sub.plans.entitlements as any)["limits"] || {},
+          features: (sub.plans.entitlements as any)["features"] || {},
         };
       }
     }
@@ -112,17 +121,22 @@ export class EntitlementsService {
     if (individualSub) {
       return {
         source: "INDIVIDUAL",
-        planType: individualSub.plan.type,
-        limits: (individualSub.plan.entitlements as any)["limits"] || {},
-        features: (individualSub.plan.entitlements as any)["features"] || {},
+        planType: individualSub.plans.type,
+        limits: (individualSub.plans.entitlements as any)["limits"] || {},
+        features: (individualSub.plans.entitlements as any)["features"] || {},
       };
     }
 
     // 4. Default Free
-    // Try to fetch from DB if seeded, else hardcoded
-    const freePlan = await this.prisma.plan.findUnique({ where: { code: "FREE" } });
-    const freeLimits = freePlan?.entitlements ? (freePlan.entitlements as any)["limits"] : FREE_LIMITS;
-    const freeFeatures = freePlan?.entitlements ? (freePlan.entitlements as any)["features"] : {};
+    const freePlan = await this.prisma.plans.findUnique({
+      where: { code: "FREE" },
+    });
+    const freeLimits = freePlan?.entitlements
+      ? (freePlan.entitlements as any)["limits"]
+      : FREE_LIMITS;
+    const freeFeatures = freePlan?.entitlements
+      ? (freePlan.entitlements as any)["features"]
+      : {};
 
     return {
       source: "FREE",
@@ -132,103 +146,84 @@ export class EntitlementsService {
     };
   }
 
-  /**
-   * Resolve entitlements for a scope
-   * Supports: USER (Hierarchy), FAMILY (Direct), INSTITUTION (Direct)
-   */
   async resolve(scopeType: string, scopeId: string, environment?: string) {
-    // If User, use hierarchy logic
     if (scopeType === "USER") {
-        return this.resolveUser(scopeId);
+      return this.resolveUser(scopeId);
     }
 
-    // For Org/Family, just get direct subscription limits (No hierarchy)
-    const sub = await this.prisma.subscription.findFirst({
-        where: {
-            scopeType: scopeType as ScopeType,
-            scopeId,
-            status: { in: ["ACTIVE", "TRIALING", "GRACE_PERIOD"] }
-        },
-        include: { plan: true },
-        orderBy: { createdAt: 'desc' }
+    const sub = await this.prisma.subscriptions.findFirst({
+      where: {
+        scope_type: scopeType as ScopeType,
+        scope_id: scopeId,
+        status: { in: ["ACTIVE", "TRIALING", "GRACE_PERIOD"] },
+      },
+      include: { plans: true },
+      orderBy: { created_at: "desc" },
     });
 
     if (sub) {
-        return {
-            source: 'DIRECT',
-            planType: sub.plan.type,
-            limits: (sub.plan.entitlements as any)["limits"] || {},
-            features: (sub.plan.entitlements as any)["features"] || {},
-        };
+      return {
+        source: "DIRECT",
+        planType: sub.plans.type,
+        limits: (sub.plans.entitlements as any)["limits"] || {},
+        features: (sub.plans.entitlements as any)["features"] || {},
+      };
     }
 
-    // Default Fallback (Free)
     return {
-        source: 'DEFAULT',
-        planType: 'FREE',
-        limits: FREE_LIMITS,
-        features: {},
+      source: "DEFAULT",
+      planType: "FREE",
+      limits: FREE_LIMITS,
+      features: {},
     };
   }
 
-  /**
-   * Get entitlement snapshot for a user in a specific scope
-   * Falls back to USER scope if not found in requested scope
-   * 
-   * @param userId - User ID to check entitlements for
-   * @param scopeType - Scope type (USER, FAMILY, INSTITUTION)
-   * @param scopeId - Scope ID (defaults to userId for USER scope)
-   * @returns Entitlement snapshot or null
-   */
   async getEntitlement(
-    userId: string, 
-    scopeType: ScopeType = 'USER' as ScopeType, 
-    scopeId?: string
+    userId: string,
+    scopeType: EntitlementScopeType = EntitlementScopeType.USER,
+    scopeId?: string,
   ) {
     const effectiveScopeId = scopeId || userId;
 
-    // Try to find snapshot for requested scope
-    const snapshot = await this.prisma.entitlementSnapshot.findFirst({
+    const snapshot = await this.prisma.entitlement_snapshots.findFirst({
       where: {
-        userId: userId,
-        scopeType: scopeType,
-        scopeId: effectiveScopeId,
+        user_id: userId,
+        scope_type: scopeType,
+        scope_id: effectiveScopeId,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { expires_at: "desc" },
     });
 
-    // If found and not expired, return it
-    if (snapshot && snapshot.expiresAt > new Date()) {
+    if (snapshot && snapshot.expires_at && snapshot.expires_at > new Date()) {
       return snapshot;
     }
 
-    // If not found or expired, try USER scope fallback (unless already USER scope)
-    if (scopeType !== 'USER') {
-      return this.getEntitlement(userId, 'USER' as ScopeType, userId);
+    if (scopeType !== EntitlementScopeType.USER) {
+      return this.getEntitlement(userId, EntitlementScopeType.USER, userId);
     }
 
-    // If USER scope not found or expired, refresh it
     return this.refreshSnapshot(userId);
   }
 
-  /**
-   * Resolve entitlements using Cached Snapshot (User specific)
-   */
   async resolveUser(userId: string) {
-    let snapshot = await this.prisma.entitlementSnapshot.findUnique({
-      where: { userId },
+    const snapshot = await this.prisma.entitlement_snapshots.findFirst({
+      where: {
+        user_id: userId,
+        scope_type: EntitlementScopeType.USER,
+      },
+      orderBy: { expires_at: "desc" },
     });
 
-    if (!snapshot || snapshot.expiresAt < new Date()) {
+    if (
+      !snapshot ||
+      (snapshot.expires_at && snapshot.expires_at < new Date())
+    ) {
       return await this.refreshSnapshot(userId);
     }
 
     return snapshot;
   }
 
-  /**
-   * Set entitlement overrides (Admin only)
-   */
   async setOverrides(
     scopeType: string,
     scopeId: string,
@@ -236,110 +231,96 @@ export class EntitlementsService {
     reason: string,
     adminUserId: string,
   ) {
-      // Placeholder or Basic Impl
-      // TODO(github): Implement strict validation for override schema and audit logging integration
-      // Check if EntitlementOverride model exists in schema (it does)
-      // I need to use prisma.entitlementOverride (if type exists)
-      // Since I haven't regenerated client successfully, types might be missing, 
-      // but Runtime validation is what matters now.
-      // Casting prisma as any to avoid type check till client regen
-      return (this.prisma as any).entitlementOverride.upsert({
-        where: {
-            scopeType_scopeId: {
-            scopeType,
-            scopeId,
-            },
+    return (this.prisma as any).entitlement_overrides.upsert({
+      where: {
+        scope_type_scope_id: {
+          scope_type: scopeType,
+          scope_id: scopeId,
         },
-        create: {
-            scopeType,
-            scopeId,
-            overrides,
-            reason,
-            updatedBy: adminUserId,
-        },
-        update: {
-            overrides,
-            reason,
-            updatedBy: adminUserId,
-        },
-      });
+      },
+      create: {
+        scope_type: scopeType,
+        scope_id: scopeId,
+        overrides,
+        reason,
+        updated_by: adminUserId,
+      },
+      update: {
+        overrides,
+        reason,
+        updated_by: adminUserId,
+      },
+    });
   }
 
-  /**
-   * Remove overrides
-   */
   async removeOverrides(scopeType: string, scopeId: string) {
     try {
-      await (this.prisma as any).entitlementOverride.delete({
+      await (this.prisma as any).entitlement_overrides.delete({
         where: {
-          scopeType_scopeId: {
-            scopeType,
-            scopeId,
+          scope_type_scope_id: {
+            scope_type: scopeType,
+            scope_id: scopeId,
           },
         },
       });
-    } catch (error) {
-      // Ignore if doesn't exist
-    }
+    } catch (error) {}
   }
 
-  /**
-   * Get overrides (if exist)
-   */
   async getOverrides(scopeType: string, scopeId: string) {
-    return (this.prisma as any).entitlementOverride.findUnique({
+    return (this.prisma as any).entitlement_overrides.findUnique({
       where: {
-        scopeType_scopeId: {
-          scopeType,
-          scopeId,
+        scope_type_scope_id: {
+          scope_type: scopeType,
+          scope_id: scopeId,
         },
       },
     });
   }
 
-  /**
-   * Refreshes the entitlement snapshot for a user
-   */
   async refreshSnapshot(userId: string) {
     const computed = await this.computeEntitlements(userId);
+    const { v4: uuidv4 } = require("uuid");
 
-    const snapshot = await this.prisma.entitlementSnapshot.upsert({
-      where: { userId },
+    return this.prisma.entitlement_snapshots.upsert({
+      where: {
+        user_id_scope_type_scope_id: {
+          user_id: userId,
+          scope_type: EntitlementScopeType.USER,
+          scope_id: userId,
+        },
+      },
       create: {
-        userId,
+        id: uuidv4(),
+        updated_at: new Date(),
+        users: { connect: { id: userId } },
         source: computed.source,
-        planType: computed.planType,
+        plan_type: computed.planType,
         limits: computed.limits || {},
         features: computed.features || {},
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24), // 24h cache
+        scope_type: EntitlementScopeType.USER,
+        scope_id: userId,
+        expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24), // 24h cache
       },
       update: {
         source: computed.source,
-        planType: computed.planType,
+        plan_type: computed.planType,
         limits: computed.limits || {},
         features: computed.features || {},
-        updatedAt: new Date(),
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24), // 24h cache
+        updated_at: new Date(),
+        expires_at: new Date(Date.now() + 1000 * 60 * 60 * 24), // 24h cache
       },
     });
-    
-    return snapshot;
   }
 
-  /**
-   * Helper to force refresh for a scope (e.g. after upgrade payment)
-   */
-  async forceRefreshForScope(scopeType: ScopeType, scopeId: string) {
-      this.logger.log(`Forcing entitlement refresh for ${scopeType}:${scopeId}`);
-      // Implementation depends on scope
-      // If FAMILY, find all members and refresh
-      // If USER, refresh user
-      if (scopeType === "USER") {
-        await this.refreshSnapshot(scopeId);
-      } else if (scopeType === "FAMILY") {
-         const members = await this.prisma.familyMember.findMany({ where: { familyId: scopeId }});
-         for (const m of members) await this.refreshSnapshot(m.userId);
-      }
-      // Institution similar logic
+  async forceRefreshForScope(scopeType: EntitlementScopeType, scopeId: string) {
+    this.logger.log(`Forcing entitlement refresh for ${scopeType}:${scopeId}`);
+    if (scopeType === EntitlementScopeType.USER) {
+      await this.refreshSnapshot(scopeId);
+    } else if (scopeType === EntitlementScopeType.FAMILY) {
+      const members = await this.prisma.family_members.findMany({
+        where: { family_id: scopeId },
+      });
+      for (const m of members) await this.refreshSnapshot(m.user_id);
+    }
   }
 }

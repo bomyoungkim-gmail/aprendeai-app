@@ -8,6 +8,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Enable sending cookies with requests
 });
 
 // Fix #3: Race condition prevention with promise queue
@@ -23,9 +24,17 @@ const CHECK_INTERVAL = 60 * 1000; // Check token expiry max once per minute
 api.interceptors.request.use(async (config) => {
   const token = useAuthStore.getState().token;
   
-  // CRITICAL: Skip token refresh check for /auth/refresh to prevent infinite loop
-  if (config.url?.includes('/auth/refresh')) {
-    if (token) {
+  // CRITICAL: Skip token refresh check for public auth routes to prevent loops/redundancy
+  const isPublicAuthRoute = 
+    config.url?.includes('/auth/login') ||
+    config.url?.includes('/auth/register') ||
+    config.url?.includes('/auth/refresh') ||
+    config.url?.includes('/auth/forgot-password') ||
+    config.url?.includes('/auth/reset-password');
+
+  if (isPublicAuthRoute) {
+    // For refresh specifically, we still need the old token if any
+    if (config.url?.includes('/auth/refresh') && token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -81,7 +90,24 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
-      console.log('[API] Received 401, attempting token refresh...');
+      const requestedUrl = originalRequest.url || '';
+      console.log(`[API] Received 401 from: ${requestedUrl}, checking if refresh is appropriate...`);
+      
+      // Skip refresh for public auth routes (e.g., login failure)
+      // We check for both relative and absolute matches
+      const isPublicAuthRoute = 
+        requestedUrl.includes('/auth/login') ||
+        requestedUrl.includes('/auth/register') ||
+        requestedUrl.includes('/auth/refresh') ||
+        requestedUrl.includes('/auth/forgot-password') ||
+        requestedUrl.includes('/auth/reset-password');
+
+      if (isPublicAuthRoute) {
+        console.log(`[API] Skipping refresh for public route: ${requestedUrl}`);
+        return Promise.reject(error);
+      }
+
+      console.log('[API] Attempting token refresh for non-public route...');
       
       // Fix #3: Use same promise queue pattern for reactive refresh
       if (!refreshTokenPromise) {

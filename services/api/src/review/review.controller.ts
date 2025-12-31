@@ -31,16 +31,9 @@ export class ReviewController {
     // TODO: Get userId from auth token
     const userId = req.user?.id || "test-user-id";
 
-    // Verify ownership
-    const vocab = await this.reviewService["prisma"].userVocabulary.findUnique({
-      where: { id: dto.vocabId },
-    });
-
-    if (!vocab || vocab.userId !== userId) {
-      throw new Error("Forbidden");
-    }
-
+    // Ownership check delegated to Service/UseCase
     return this.reviewService.recordVocabAttempt(
+      userId,
       dto.vocabId,
       dto.dimension,
       dto.result as any,

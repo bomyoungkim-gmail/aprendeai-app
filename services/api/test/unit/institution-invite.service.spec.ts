@@ -7,21 +7,24 @@ import { ConflictException, NotFoundException } from "@nestjs/common";
 
 describe("InstitutionInviteService (Unit)", () => {
   let service: InstitutionInviteService;
-  let prismaService: PrismaService;
+  let prismaService: any;
   let emailService: EmailService;
   let adminService: AdminService;
 
   const mockPrismaService = {
-    user: {
+    users: {
       findUnique: jest.fn(),
     },
-    institutionInvite: {
+    institution_invites: {
       create: jest.fn(),
       findUnique: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
       delete: jest.fn(),
+    },
+    institutions: {
+      findUnique: jest.fn(),
     },
   };
 
@@ -34,6 +37,8 @@ describe("InstitutionInviteService (Unit)", () => {
   };
 
   beforeEach(async () => {
+    process.env.FRONTEND_URL = "http://localhost:3000";
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InstitutionInviteService,
@@ -44,7 +49,7 @@ describe("InstitutionInviteService (Unit)", () => {
     }).compile();
 
     service = module.get<InstitutionInviteService>(InstitutionInviteService);
-    prismaService = module.get<PrismaService>(PrismaService);
+    prismaService = module.get(PrismaService);
     emailService = module.get<EmailService>(EmailService);
     adminService = module.get<AdminService>(AdminService);
 
@@ -62,19 +67,19 @@ describe("InstitutionInviteService (Unit)", () => {
 
     const createdInvite = {
       id: "invite-id",
-      institutionId,
+      institution_id: institutionId,
       email: dto.email,
       role: dto.role,
       token: "crypto-token-123",
-      expiresAt: new Date(),
-      usedAt: null,
-      invitedBy,
-      createdAt: new Date(),
-      institution: {
+      expires_at: new Date(),
+      used_at: null,
+      invited_by: invitedBy,
+      created_at: new Date(),
+      institutions: {
         id: institutionId,
         name: "Escola Teste",
       },
-      inviter: {
+      users: {
         id: invitedBy,
         name: "Admin User",
         email: "admin@escola.com",
@@ -82,11 +87,11 @@ describe("InstitutionInviteService (Unit)", () => {
     };
 
     it("should create invite with crypto-secure token", async () => {
-      (prismaService.user.findUnique as jest.Mock).mockResolvedValue(null);
-      (
-        prismaService.institutionInvite.updateMany as jest.Mock
-      ).mockResolvedValue({ count: 0 });
-      (prismaService.institutionInvite.create as jest.Mock).mockResolvedValue(
+      mockPrismaService.users.findUnique.mockResolvedValue(null);
+      mockPrismaService.institution_invites.updateMany.mockResolvedValue({
+        count: 0,
+      });
+      mockPrismaService.institution_invites.create.mockResolvedValue(
         createdInvite,
       );
 
@@ -99,30 +104,32 @@ describe("InstitutionInviteService (Unit)", () => {
     });
 
     it("should invalidate previous unused invites", async () => {
-      (prismaService.user.findUnique as jest.Mock).mockResolvedValue(null);
-      (
-        prismaService.institutionInvite.updateMany as jest.Mock
-      ).mockResolvedValue({ count: 1 });
-      (prismaService.institutionInvite.create as jest.Mock).mockResolvedValue(
+      mockPrismaService.users.findUnique.mockResolvedValue(null);
+      mockPrismaService.institution_invites.updateMany.mockResolvedValue({
+        count: 1,
+      });
+      mockPrismaService.institution_invites.create.mockResolvedValue(
         createdInvite,
       );
 
       await service.create(institutionId, dto, invitedBy);
 
-      expect(prismaService.institutionInvite.updateMany).toHaveBeenCalledWith({
+      expect(
+        mockPrismaService.institution_invites.updateMany,
+      ).toHaveBeenCalledWith({
         where: {
-          institutionId,
+          institution_id: institutionId,
           email: dto.email.toLowerCase(),
-          usedAt: null,
+          used_at: null,
         },
         data: {
-          expiresAt: expect.any(Date),
+          expires_at: expect.any(Date),
         },
       });
     });
 
     it("should throw ConflictException if user already exists", async () => {
-      (prismaService.user.findUnique as jest.Mock).mockResolvedValue({
+      mockPrismaService.users.findUnique.mockResolvedValue({
         id: "existing-user",
         email: dto.email,
       });
@@ -133,11 +140,11 @@ describe("InstitutionInviteService (Unit)", () => {
     });
 
     it("should send invitation email", async () => {
-      (prismaService.user.findUnique as jest.Mock).mockResolvedValue(null);
-      (
-        prismaService.institutionInvite.updateMany as jest.Mock
-      ).mockResolvedValue({ count: 0 });
-      (prismaService.institutionInvite.create as jest.Mock).mockResolvedValue(
+      mockPrismaService.users.findUnique.mockResolvedValue(null);
+      mockPrismaService.institution_invites.updateMany.mockResolvedValue({
+        count: 0,
+      });
+      mockPrismaService.institution_invites.create.mockResolvedValue(
         createdInvite,
       );
 
@@ -156,11 +163,11 @@ describe("InstitutionInviteService (Unit)", () => {
     });
 
     it("should create audit log", async () => {
-      (prismaService.user.findUnique as jest.Mock).mockResolvedValue(null);
-      (
-        prismaService.institutionInvite.updateMany as jest.Mock
-      ).mockResolvedValue({ count: 0 });
-      (prismaService.institutionInvite.create as jest.Mock).mockResolvedValue(
+      mockPrismaService.users.findUnique.mockResolvedValue(null);
+      mockPrismaService.institution_invites.updateMany.mockResolvedValue({
+        count: 0,
+      });
+      mockPrismaService.institution_invites.create.mockResolvedValue(
         createdInvite,
       );
 
@@ -181,16 +188,14 @@ describe("InstitutionInviteService (Unit)", () => {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
 
-      (
-        prismaService.institutionInvite.findUnique as jest.Mock
-      ).mockResolvedValue({
+      mockPrismaService.institution_invites.findUnique.mockResolvedValue({
         id: "invite-id",
         token: "valid-token",
         email: "test@test.com",
         role: "TEACHER",
-        expiresAt: tomorrow,
-        usedAt: null,
-        institution: {
+        expires_at: tomorrow,
+        used_at: null,
+        institutions: {
           id: "inst-123",
           name: "Test Institution",
         },
@@ -204,9 +209,7 @@ describe("InstitutionInviteService (Unit)", () => {
     });
 
     it("should return invalid for non-existent token", async () => {
-      (
-        prismaService.institutionInvite.findUnique as jest.Mock
-      ).mockResolvedValue(null);
+      mockPrismaService.institution_invites.findUnique.mockResolvedValue(null);
 
       const result = await service.validate("invalid-token");
 
@@ -215,13 +218,11 @@ describe("InstitutionInviteService (Unit)", () => {
     });
 
     it("should return invalid for used token", async () => {
-      (
-        prismaService.institutionInvite.findUnique as jest.Mock
-      ).mockResolvedValue({
+      mockPrismaService.institution_invites.findUnique.mockResolvedValue({
         id: "invite-id",
         token: "used-token",
-        usedAt: new Date(),
-        expiresAt: new Date(),
+        used_at: new Date(),
+        expires_at: new Date(),
       });
 
       const result = await service.validate("used-token");
@@ -234,13 +235,11 @@ describe("InstitutionInviteService (Unit)", () => {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
 
-      (
-        prismaService.institutionInvite.findUnique as jest.Mock
-      ).mockResolvedValue({
+      mockPrismaService.institution_invites.findUnique.mockResolvedValue({
         id: "invite-id",
         token: "expired-token",
-        expiresAt: yesterday,
-        usedAt: null,
+        expires_at: yesterday,
+        used_at: null,
       });
 
       const result = await service.validate("expired-token");
@@ -251,19 +250,21 @@ describe("InstitutionInviteService (Unit)", () => {
   });
 
   describe("markAsUsed()", () => {
-    it("should update invite with usedAt timestamp", async () => {
+    it("should update invite with used_at timestamp", async () => {
       const inviteId = "invite-id";
-      (prismaService.institutionInvite.update as jest.Mock).mockResolvedValue({
+      mockPrismaService.institution_invites.update.mockResolvedValue({
         id: inviteId,
-        usedAt: new Date(),
+        used_at: new Date(),
       });
 
       await service.markAsUsed(inviteId);
 
-      expect(prismaService.institutionInvite.update).toHaveBeenCalledWith({
-        where: { id: inviteId },
-        data: { usedAt: expect.any(Date) },
-      });
+      expect(mockPrismaService.institution_invites.update).toHaveBeenCalledWith(
+        {
+          where: { id: inviteId },
+          data: { used_at: expect.any(Date) },
+        },
+      );
     });
   });
 
@@ -275,15 +276,13 @@ describe("InstitutionInviteService (Unit)", () => {
       const invite = {
         id: inviteId,
         email: "test@test.com",
-        institutionId: "inst-123",
+        institution_id: "inst-123",
       };
 
-      (
-        prismaService.institutionInvite.findUnique as jest.Mock
-      ).mockResolvedValue(invite);
-      (prismaService.institutionInvite.delete as jest.Mock).mockResolvedValue(
+      mockPrismaService.institution_invites.findUnique.mockResolvedValue(
         invite,
       );
+      mockPrismaService.institution_invites.delete.mockResolvedValue(invite);
 
       const result = await service.delete(inviteId, deletedBy);
 
@@ -298,9 +297,7 @@ describe("InstitutionInviteService (Unit)", () => {
     });
 
     it("should throw NotFoundException if invite not found", async () => {
-      (
-        prismaService.institutionInvite.findUnique as jest.Mock
-      ).mockResolvedValue(null);
+      mockPrismaService.institution_invites.findUnique.mockResolvedValue(null);
 
       await expect(service.delete(inviteId, deletedBy)).rejects.toThrow(
         NotFoundException,

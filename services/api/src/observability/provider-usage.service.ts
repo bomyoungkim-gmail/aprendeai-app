@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class ProviderUsageService {
@@ -26,22 +27,23 @@ export class ProviderUsageService {
     metadata?: any;
   }) {
     try {
-      return await this.prisma.providerUsage.create({
+      return await this.prisma.provider_usage.create({
         data: {
+          id: uuidv4(),
           provider: data.provider,
           model: data.metadata?.model || null,
           operation: data.operation,
           tokens: data.tokens, // Legacy/Total
-          promptTokens: data.promptTokens,
-          completionTokens: data.completionTokens,
-          totalTokens: data.tokens,
-          costUsd: data.costUsd,
+          prompt_tokens: data.promptTokens,
+          completion_tokens: data.completionTokens,
+          total_tokens: data.tokens,
+          cost_usd: data.costUsd,
           latency: data.latency,
-          statusCode: data.statusCode,
-          userId: data.userId,
-          familyId: data.familyId,
-          groupId: data.groupId,
-          institutionId: data.institutionId,
+          status_code: data.statusCode,
+          user_id: data.userId,
+          family_id: data.familyId,
+          group_id: data.groupId,
+          institution_id: data.institutionId,
           feature: data.feature || "unknown",
           metadata: data.metadata,
           timestamp: new Date(),
@@ -64,19 +66,19 @@ export class ProviderUsageService {
       where.provider = params.provider;
     }
 
-    const stats = await this.prisma.providerUsage.aggregate({
+    const stats = await this.prisma.provider_usage.aggregate({
       where,
-      _sum: { tokens: true, costUsd: true },
+      _sum: { tokens: true, cost_usd: true },
       _count: true,
-      _avg: { latency: true, costUsd: true },
+      _avg: { latency: true, cost_usd: true },
     });
 
     return {
       totalCalls: stats._count,
       totalTokens: stats._sum.tokens || 0,
-      totalCost: stats._sum.costUsd || 0,
+      totalCost: stats._sum.cost_usd || 0,
       avgLatency: stats._avg.latency || 0,
-      avgCost: stats._avg.costUsd || 0,
+      avgCost: stats._avg.cost_usd || 0,
     };
   }
 
@@ -84,7 +86,7 @@ export class ProviderUsageService {
    * Get usage by provider (breakdown)
    */
   async getUsageByProvider(from: Date, to: Date) {
-    const usage = await this.prisma.providerUsage.findMany({
+    const usage = await this.prisma.provider_usage.findMany({
       where: {
         timestamp: { gte: from, lte: to },
       },
@@ -92,7 +94,7 @@ export class ProviderUsageService {
         provider: true,
         operation: true,
         tokens: true,
-        costUsd: true,
+        cost_usd: true,
         latency: true,
       },
     });
@@ -111,7 +113,7 @@ export class ProviderUsageService {
         }
         acc[u.provider].calls++;
         acc[u.provider].tokens += u.tokens || 0;
-        acc[u.provider].cost += u.costUsd || 0;
+        acc[u.provider].cost += u.cost_usd || 0;
         if (u.latency) acc[u.provider].latency.push(u.latency);
         return acc;
       },
@@ -137,7 +139,7 @@ export class ProviderUsageService {
    * Get recent provider calls
    */
   async getRecentCalls(provider?: string, limit = 50) {
-    return this.prisma.providerUsage.findMany({
+    return this.prisma.provider_usage.findMany({
       where: provider ? { provider } : undefined,
       orderBy: { timestamp: "desc" },
       take: limit,
@@ -150,7 +152,7 @@ export class ProviderUsageService {
   async cleanupOldUsage() {
     const cutoff = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000);
 
-    const result = await this.prisma.providerUsage.deleteMany({
+    const result = await this.prisma.provider_usage.deleteMany({
       where: { timestamp: { lt: cutoff } },
     });
 

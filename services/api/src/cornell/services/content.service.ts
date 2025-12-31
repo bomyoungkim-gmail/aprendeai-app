@@ -9,7 +9,7 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { StorageService } from "./storage.service";
 import { UploadContentDto } from "../dto/upload-content.dto";
 import {
-  Content,
+  contents as Content,
   ContentType,
   Language,
   Environment,
@@ -23,6 +23,7 @@ import { UsageTrackingService } from "../../billing/usage-tracking.service";
 import { ActivityService } from "../../activity/activity.service";
 import * as mammoth from "mammoth";
 import * as path from "path";
+import { v4 as uuidv4 } from "uuid";
 
 import { TopicMasteryService } from "../../analytics/topic-mastery.service";
 
@@ -39,7 +40,7 @@ export class ContentService {
     private readonly familyService: FamilyService,
     private readonly usageTracking: UsageTrackingService,
     private readonly activityService: ActivityService,
-    private readonly topicMastery: TopicMasteryService
+    private readonly topicMastery: TopicMasteryService,
   ) {}
 
   /**
@@ -150,20 +151,24 @@ export class ContentService {
     }
 
     // 2. Create File record
-    const fileRecord = await this.prisma.file.create({
+    const fileRecord = await this.prisma.files.create({
       data: {
+        id: uuidv4(),
         originalFilename: file.originalname,
         mimeType: file.mimetype,
         sizeBytes: file.size,
         storageKey,
         storageProvider: "LOCAL", // TODO: Change to 'S3' for production
       },
+      // Note: Model files uses camelCase properties as per schema check
     });
 
     // Track activity: content upload counts as reading new content
-    await this.activityService.trackActivity(userId, 'read').catch(err => 
-      this.logger.warn(`Failed to track upload activity: ${err.message}`)
-    );
+    await this.activityService
+      .trackActivity(userId, "read")
+      .catch((err) =>
+        this.logger.warn(`Failed to track upload activity: ${err.message}`),
+      );
 
     // Determine owner based on context and dto
     // If scope is FAMILY or INSTITUTION, use that as owner
@@ -171,31 +176,32 @@ export class ContentService {
     let ownerType: string;
     let ownerId: string;
 
-    if (dto.scopeType === 'FAMILY' || dto.scopeType === 'INSTITUTION') {
+    if (dto.scopeType === "FAMILY" || dto.scopeType === "INSTITUTION") {
       ownerType = dto.scopeType;
       ownerId = dto.scopeId || userId; //  Fallback to userId if no scopeId
     } else {
-      ownerType = 'USER';
+      ownerType = "USER";
       ownerId = userId;
     }
 
     // 3. Create Content record
-    const content = await this.prisma.content.create({
+    const content = await this.prisma.contents.create({
       data: {
+        id: uuidv4(),
         title: dto.title,
         type: this.getContentType(file.mimetype),
-        originalLanguage: dto.originalLanguage,
-        rawText,
-        fileId: fileRecord.id,
-        ownerUserId: userId, // Legacy field - kept for backward compat
-        ownerType: ownerType, // NEW: Consolidated owner pattern
-        ownerId: ownerId,     // NEW: Consolidated owner ID
-        scopeType: dto.scopeType,
-        scopeId: dto.scopeId,
+        original_language: dto.originalLanguage,
+        raw_text: rawText,
+        files: { connect: { id: fileRecord.id } },
+        owner_type: ownerType,
+        owner_id: ownerId,
+        scope_type: dto.scopeType,
+        scope_id: dto.scopeId,
         metadata: {
           duration,
           thumbnailUrl,
         },
+        updated_at: new Date(), // Required field
       },
     });
 
@@ -215,28 +221,29 @@ export class ContentService {
     if (!dto.type) throw new BadRequestException("Type is required");
 
     // NEW: Support owner type specification or default to USER
-    const ownerType = dto.ownerType || 'USER';
+    const ownerType = dto.ownerType || "USER";
     const ownerId = dto.ownerId || userId;
 
     // Create Content record without file
-    const content = await this.prisma.content.create({
+    const content = await this.prisma.contents.create({
       data: {
+        id: uuidv4(),
         title: dto.title,
         type: dto.type,
-        originalLanguage: dto.originalLanguage || "PT_BR", // Default
-        rawText: dto.rawText || "",
-        ownerUserId: userId, // Legacy
-        ownerType: ownerType, // NEW
-        ownerId: ownerId,     // NEW
-        scopeType: dto.scopeType || ScopeType.USER,
-        scopeId: dto.scopeId,
+        original_language: dto.originalLanguage || "PT_BR", // Default
+        raw_text: dto.rawText || "",
+        owner_type: ownerType,
+        owner_id: ownerId,
+        scope_type: dto.scopeType || ScopeType.USER,
+        scope_id: dto.scopeId,
         metadata: {
           duration: dto.duration,
           thumbnailUrl: dto.thumbnailUrl,
           sourceUrl: dto.sourceUrl,
         },
         duration: dto.duration, // Mapped to column
-        sourceUrl: dto.sourceUrl,
+        source_url: dto.sourceUrl,
+        updated_at: new Date(),
       },
     });
 
@@ -277,33 +284,42 @@ export class ContentService {
    * Extract text from PDF using unpdf (modern, zero-dependency library)
    */
   private async extractPdfText(buffer: Buffer): Promise<string> {
-    this.logger.log(`Starting PDF extraction with unpdf, buffer size: ${buffer.length} bytes`);
-    
+    this.logger.log(
+      `Starting PDF extraction with unpdf, buffer size: ${buffer.length} bytes`,
+    );
+
     try {
       // unpdf provides a simple extractText function
-      const { extractText } = await import('unpdf');
-      
+      const { extractText } = await import("unpdf");
+
       // Convert Buffer to Uint8Array for unpdf
       const uint8Array = new Uint8Array(buffer);
-      
+
       this.logger.log(`Converted to Uint8Array, length: ${uint8Array.length}`);
-      
-      const { text, totalPages } = await extractText(uint8Array, { mergePages: true });
-      
-      this.logger.log(`PDF extracted successfully. Text length: ${text?.length || 0}, pages: ${totalPages || 0}`);
-      
+
+      const { text, totalPages } = await extractText(uint8Array, {
+        mergePages: true,
+      });
+
+      this.logger.log(
+        `PDF extracted successfully. Text length: ${text?.length || 0}, pages: ${totalPages || 0}`,
+      );
+
       if (!text || text.trim().length === 0) {
-        this.logger.warn('PDF extraction returned empty text');
+        this.logger.warn("PDF extraction returned empty text");
         // For scanned PDFs or image-based PDFs, return placeholder
-        return '(This PDF may be image-based and requires OCR. Text extraction not available yet.)';
+        return "(This PDF may be image-based and requires OCR. Text extraction not available yet.)";
       }
-      
+
       // Sanitize text: Remove null bytes (\0) that PostgreSQL UTF8 doesn't accept
-      const sanitized = (text || '').replace(/\0/g, '');
-      
+      const sanitized = (text || "").replace(/\0/g, "");
+
       return sanitized;
     } catch (error) {
-      this.logger.error(`unpdf extraction failed: ${error.message}`, error.stack);
+      this.logger.error(
+        `unpdf extraction failed: ${error.message}`,
+        error.stack,
+      );
       throw new BadRequestException(`PDF extraction failed: ${error.message}`);
     }
   }
@@ -376,7 +392,13 @@ export class ContentService {
     },
     userId: string,
   ) {
-    const { type, language, page = 1, limit = 20, recommendForUserId } = filters;
+    const {
+      type,
+      language,
+      page = 1,
+      limit = 20,
+      recommendForUserId,
+    } = filters;
     const skip = (page - 1) * limit;
 
     // 1. Get user's families to check permissions
@@ -386,11 +408,8 @@ export class ContentService {
     // Build permission filter (Owner OR Member of Family Scope)
     const permissionFilter = {
       OR: [
-        { ownerUserId: userId },
-        {
-          scopeType: ScopeType.FAMILY,
-          scopeId: { in: familyIds },
-        },
+        { owner_type: "USER", owner_id: userId },
+        { owner_type: "FAMILY", owner_id: { in: familyIds } },
       ],
     };
 
@@ -398,29 +417,32 @@ export class ContentService {
     let searchFilter: any = {
       OR: [
         { title: { contains: query, mode: "insensitive" } },
-        { rawText: { contains: query, mode: "insensitive" } },
+        { raw_text: { contains: query, mode: "insensitive" } },
       ],
     };
 
     // Recommendation Logic
     if (recommendForUserId) {
-        const weakTopics = await this.topicMastery.getWeakestTopics(recommendForUserId, 8);
-        const topicNames = weakTopics.map(wt => wt.topic);
+      const weakTopics = await this.topicMastery.getWeakestTopics(
+        recommendForUserId,
+        8,
+      );
+      const topicNames = weakTopics.map((wt) => wt.topic);
 
-        if (topicNames.length > 0) {
-            // Boost search by including weak topics in the OR condition
-            // If query is empty, we search explicitly for these topics
-            if (!query || query.trim() === '') {
-                searchFilter = {
-                    OR: topicNames.map(topic => ({
-                        OR: [
-                             { title: { contains: topic, mode: "insensitive" } },
-                             { rawText: { contains: topic, mode: "insensitive" } }
-                        ]
-                    }))
-                };
-            }
+      if (topicNames.length > 0) {
+        // Boost search by including weak topics in the OR condition
+        // If query is empty, we search explicitly for these topics
+        if (!query || query.trim() === "") {
+          searchFilter = {
+            OR: topicNames.map((topic) => ({
+              OR: [
+                { title: { contains: topic, mode: "insensitive" } },
+                { rawText: { contains: topic, mode: "insensitive" } },
+              ],
+            })),
+          };
         }
+      }
     }
 
     // Combine filters
@@ -429,24 +451,24 @@ export class ContentService {
     };
 
     if (type) where.type = type;
-    if (language) where.originalLanguage = language;
+    if (language) where.original_language = language;
 
     // Get total count
-    const total = await this.prisma.content.count({ where });
+    const total = await this.prisma.contents.count({ where });
 
     // Get results
-    const contents = await this.prisma.content.findMany({
+    const contents = await this.prisma.contents.findMany({
       where,
       skip,
       take: limit,
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       select: {
         id: true,
         title: true,
         type: true,
-        originalLanguage: true,
-        rawText: true,
-        createdAt: true,
+        original_language: true,
+        raw_text: true,
+        created_at: true,
       },
     });
 
@@ -455,10 +477,10 @@ export class ContentService {
       id: content.id,
       title: content.title,
       type: content.type,
-      originalLanguage: content.originalLanguage,
-      excerpt: this.generateExcerpt(content.rawText, query),
-      highlights: this.findHighlights(content.rawText, query),
-      createdAt: content.createdAt,
+      originalLanguage: content.original_language,
+      excerpt: this.generateExcerpt(content.raw_text, query),
+      highlights: this.findHighlights(content.raw_text, query),
+      createdAt: content.created_at,
     }));
 
     return {
@@ -477,12 +499,12 @@ export class ContentService {
    * Get content by ID with permission check
    */
   async getContent(contentId: string, userId: string) {
-    const content = await this.prisma.content.findUnique({
+    const content = await this.prisma.contents.findUnique({
       where: { id: contentId },
       include: {
-        file: true,
-        cornellNotes: {
-          where: { userId },
+        files: true,
+        cornell_notes: {
+          where: { user_id: userId },
           take: 1,
         },
         _count: {
@@ -505,28 +527,42 @@ export class ContentService {
     }
 
     // Transform BigInt to Number for JSON serialization
-    // Prisma returns BigInt for _count fields which cannot be JSON serialized
+    const contentAny = content as any;
     const transformedContent = {
-      ...content,
-      _count: content._count ? {
-        assessments: Number(content._count.assessments),
-        highlights: Number(content._count.highlights),
-      } : undefined,
+      ...contentAny,
+      _count: contentAny._count
+        ? {
+            assessments: Number(contentAny._count.assessments || 0),
+            highlights: Number(contentAny._count.highlights || 0),
+          }
+        : undefined,
       // Transform file.sizeBytes if file exists
-      file: content.file ? {
-        ...content.file,
-        sizeBytes: Number(content.file.sizeBytes),
-      } : undefined,
+      file: contentAny.files
+        ? {
+            ...contentAny.files,
+            sizeBytes: Number(contentAny.files.sizeBytes),
+          }
+        : undefined,
     };
 
     // Also transform any BigInt in nested cornellNotes if present
-    if (transformedContent.cornellNotes && Array.isArray(transformedContent.cornellNotes)) {
-      transformedContent.cornellNotes = transformedContent.cornellNotes.map((note: any) => ({
-        ...note,
-        _count: note._count ? Object.fromEntries(
-          Object.entries(note._count).map(([key, value]) => [key, Number(value)])
-        ) : undefined,
-      }));
+    if (
+      transformedContent.cornell_notes &&
+      Array.isArray(transformedContent.cornell_notes)
+    ) {
+      transformedContent.cornell_notes = transformedContent.cornell_notes.map(
+        (note: any) => ({
+          ...note,
+          _count: note._count
+            ? Object.fromEntries(
+                Object.entries(note._count).map(([key, value]) => [
+                  key,
+                  Number(value),
+                ]),
+              )
+            : undefined,
+        }),
+      );
     }
 
     return transformedContent;
@@ -576,31 +612,32 @@ export class ContentService {
    * Supports USER, FAMILY, and INSTITUTION ownership
    */
   async canAccessContent(contentId: string, userId: string): Promise<boolean> {
-    const content = await this.prisma.content.findUnique({
+    const content = await this.prisma.contents.findUnique({
       where: { id: contentId },
-      select: { ownerType: true, ownerId: true, ownerUserId: true },
+      select: { owner_type: true, owner_id: true },
     });
 
     if (!content) return false;
 
     // NEW: Check ownerType/ownerId first (if present)
-    if (content.ownerType && content.ownerId) {
-      switch (content.ownerType) {
-        case 'USER':
-          return content.ownerId === userId;
+    if (content.owner_type && content.owner_id) {
+      switch (content.owner_type) {
+        case "USER":
+          return content.owner_id === userId;
 
-        case 'FAMILY':
+        case "FAMILY":
           // Check if user is family member
-          const familyMember = await this.prisma.familyMember.findFirst({
-            where: { familyId: content.ownerId, userId: userId },
+          const familyMember = await this.prisma.family_members.findFirst({
+            where: { family_id: content.owner_id, user_id: userId },
           });
           return !!familyMember;
 
-        case 'INSTITUTION':
+        case "INSTITUTION":
           // Check if user is institution member
-          const institutionMember = await this.prisma.institutionMember.findFirst({
-            where: { institutionId: content.ownerId, userId: userId },
-          });
+          const institutionMember =
+            await this.prisma.institution_members.findFirst({
+              where: { institution_id: content.owner_id, user_id: userId },
+            });
           return !!institutionMember;
 
         default:
@@ -608,8 +645,7 @@ export class ContentService {
       }
     }
 
-    // LEGACY: Fall back to ownerUserId check (backward compat)
-    return content.ownerUserId === userId;
+    return false;
   }
 
   /**
@@ -620,16 +656,17 @@ export class ContentService {
   }
 
   async updateContent(id: string, userId: string, dto: any): Promise<Content> {
-    const content = await this.prisma.content.findUnique({ where: { id } });
+    const content = await this.prisma.contents.findUnique({ where: { id } });
     if (!content) throw new NotFoundException("Content not found");
-    if (content.ownerUserId !== userId) throw new ForbiddenException("Access denied");
+    if (content.owner_user_id !== userId)
+      throw new ForbiddenException("Access denied");
 
     const updatedMetadata = {
-       ...(content.metadata as any || {}),
-       duration: dto.duration ?? (content.metadata as any)?.duration,
+      ...((content.metadata as any) || {}),
+      duration: dto.duration ?? (content.metadata as any)?.duration,
     };
 
-    return this.prisma.content.update({
+    return this.prisma.contents.update({
       where: { id },
       data: {
         title: dto.title,

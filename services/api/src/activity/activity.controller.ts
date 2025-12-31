@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Query, UseGuards } from "@nestjs/common";
 import { ActivityService } from "./activity.service";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { CurrentUser } from "../auth/current-user.decorator";
+import { JwtAuthGuard } from "../auth/infrastructure/jwt-auth.guard";
+import { CurrentUser } from "../auth/presentation/decorators/current-user.decorator";
 import { IsEnum, IsNumber, IsOptional } from "class-validator";
 
 class TrackActivityDto {

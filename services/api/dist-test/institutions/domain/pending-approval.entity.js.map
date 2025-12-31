@@ -1,0 +1,1 @@
+{"version":3,"file":"pending-approval.entity.js","sourceRoot":"","sources":["../../../src/institutions/domain/pending-approval.entity.ts"],"names":[],"mappings":";;;AAEA,MAAa,eAAe;IAa1B,YAAY,OAAiC;QAC3C,MAAM,CAAC,MAAM,CAAC,IAAI,EAAE,OAAO,CAAC,CAAC;QAC7B,IAAI,CAAC,SAAS,GAAG,OAAO,CAAC,SAAS,IAAI,IAAI,IAAI,EAAE,CAAC;IACnD,CAAC;CACF;AAjBD,0CAiBC"}

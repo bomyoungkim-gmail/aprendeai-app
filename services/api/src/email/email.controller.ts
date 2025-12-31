@@ -1,14 +1,10 @@
 import { Controller, Get, Param, Res } from "@nestjs/common";
 import { Response } from "express";
-import { PrismaService } from "../prisma/prisma.service";
-import { JwtService } from "@nestjs/jwt";
+import { UnsubscribeUserUseCase } from "./application/use-cases/unsubscribe-user.use-case";
 
 @Controller("email")
 export class EmailController {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly unsubscribeUseCase: UnsubscribeUserUseCase) {}
 
   /**
    * Unsubscribe from all emails
@@ -16,27 +12,7 @@ export class EmailController {
   @Get("unsubscribe/:token")
   async unsubscribe(@Param("token") token: string, @Res() res: Response) {
     try {
-      // Decode token to get user ID
-      const payload = this.jwtService.verify(token);
-      const userId = payload.sub;
-
-      // Update user settings to disable all emails
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: {
-          settings: {
-            notifications: {
-              email: {
-                enabled: false,
-                groupInvitations: false,
-                annotations: false,
-                studyReminders: false,
-                weeklyDigest: false,
-              },
-            },
-          },
-        },
-      });
+      await this.unsubscribeUseCase.execute(token);
 
       // Return success page
       return res.send(`
@@ -72,7 +48,7 @@ export class EmailController {
           <div class="container">
             <h1>✅ Unsubscribed Successfully</h1>
             <p>You have been unsubscribed from all AprendeAI email notifications.</p>
-            <p>You can re-enable emails anytime in your <a href="${process.env.FRONTEND_URL}/settings/notifications">notification settings</a>.</p>
+            <p>You can re-enable emails anytime in your notification settings.</p>
             <p style="margin-top: 30px;">
               <a href="${process.env.FRONTEND_URL}">← Back to AprendeAI</a>
             </p>

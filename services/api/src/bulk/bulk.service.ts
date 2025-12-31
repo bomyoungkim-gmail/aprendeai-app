@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import * as csvParser from "csv-parser";
 import { Readable } from "stream";
+import { randomUUID } from "crypto";
 
 @Injectable()
 export class BulkService {
@@ -37,27 +38,29 @@ export class BulkService {
               }
 
               // Create or find user
-              let user = await this.prisma.user.findUnique({
+              let user = await this.prisma.users.findUnique({
                 where: { email },
               });
 
               if (!user) {
-                user = await this.prisma.user.create({
+                user = await this.prisma.users.create({
                   data: {
+                    id: randomUUID(),
                     email,
                     name: row.name || email.split("@")[0],
-                    passwordHash: "PENDING_INVITE",
-                    role: "COMMON_USER",
-                    schoolingLevel: "UNDERGRADUATE",
+                    password_hash: "PENDING_INVITE",
+                    schooling_level: "UNDERGRADUATE",
+                    updated_at: new Date(),
                   },
                 });
               }
 
               // Create institution member
-              await this.prisma.institutionMember.create({
+              await this.prisma.institution_members.create({
                 data: {
-                  institutionId,
-                  userId: user.id,
+                  id: randomUUID(),
+                  institution_id: institutionId,
+                  user_id: user.id,
                   role: role as any,
                   status: "ACTIVE" as any,
                 },
@@ -92,18 +95,30 @@ export class BulkService {
     for (const userId of userIds) {
       try {
         if (action === "approve") {
-          await this.prisma.institutionMember.update({
+          const member = await this.prisma.institution_members.findFirst({
             where: {
-              institutionId_userId: { institutionId, userId },
+              institution_id: institutionId,
+              user_id: userId,
             },
-            data: { status: "ACTIVE" },
           });
+          if (member) {
+            await this.prisma.institution_members.update({
+              where: { id: member.id },
+              data: { status: "ACTIVE" },
+            });
+          }
         } else {
-          await this.prisma.institutionMember.delete({
+          const member = await this.prisma.institution_members.findFirst({
             where: {
-              institutionId_userId: { institutionId, userId },
+              institution_id: institutionId,
+              user_id: userId,
             },
           });
+          if (member) {
+            await this.prisma.institution_members.delete({
+              where: { id: member.id },
+            });
+          }
         }
         results.success++;
       } catch (error) {
@@ -119,16 +134,16 @@ export class BulkService {
    * Export institution members as CSV
    */
   async exportMembersCSV(institutionId: string): Promise<string> {
-    const members = await this.prisma.institutionMember.findMany({
-      where: { institutionId },
-      include: { user: { select: { id: true, email: true, name: true } } },
+    const members = await this.prisma.institution_members.findMany({
+      where: { institution_id: institutionId },
+      include: { users: { select: { id: true, email: true, name: true } } },
     });
 
     const csvRows = [
       "Email,Name,Role,Status,Joined",
       ...members.map(
         (m) =>
-          `${m.user.email},${m.user.name},${m.role},${m.status},${m.joinedAt.toISOString()}`,
+          `${m.users.email},${m.users.name},${m.role},${m.status},${m.joined_at.toISOString()}`,
       ),
     ];
 

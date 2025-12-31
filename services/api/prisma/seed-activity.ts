@@ -7,7 +7,7 @@ async function seedActivityData() {
   console.log('🌱 Seeding activity data...');
 
   // Get the first user (or you can specify a user ID)
-  const user = await prisma.user.findFirst();
+  const user = await prisma.users.findFirst();
   
   if (!user) {
     console.error('❌ No user found. Please create a user first.');
@@ -23,21 +23,22 @@ async function seedActivityData() {
     const date = startOfDay(subDays(new Date(), i));
     
     activities.push({
-      userId: user.id,
+      user_id: user.id,
       date,
-      minutesStudied: Math.floor(Math.random() * 60) + 15, // 15-75 minutes
-      sessionsCount: Math.floor(Math.random() * 3) + 1,    // 1-3 sessions
-      contentsRead: Math.floor(Math.random() * 5) + 1,     // 1-5 contents
-      annotationsCreated: Math.floor(Math.random() * 10) + 5, // 5-15 annotations
+      minutes_studied: Math.floor(Math.random() * 60) + 15, // 15-75 minutes
+      sessions_count: Math.floor(Math.random() * 3) + 1,    // 1-3 sessions
+      contents_read: Math.floor(Math.random() * 5) + 1,     // 1-5 contents
+      annotations_created: Math.floor(Math.random() * 10) + 5, // 5-15 annotations
+      updated_at: new Date(),
     });
   }
 
   // Insert activities
   for (const activity of activities) {
-    await prisma.dailyActivity.upsert({
+    await prisma.daily_activities.upsert({
       where: {
-        userId_date: {
-          userId: activity.userId,
+        user_id_date: {
+          user_id: activity.user_id,
           date: activity.date,
         },
       },
@@ -45,13 +46,13 @@ async function seedActivityData() {
       update: activity,
     });
     
-    console.log(`✅ Created activity for ${activity.date.toISOString().split('T')[0]}: ${activity.minutesStudied} min`);
+    console.log(`✅ Created activity for ${activity.date.toISOString().split('T')[0]}: ${activity.minutes_studied} min`);
   }
 
   // Summary
-  const totalMinutes = activities.reduce((sum, a) => sum + a.minutesStudied, 0);
-  const totalContents = activities.reduce((sum, a) => sum + a.contentsRead, 0);
-  const totalAnnotations = activities.reduce((sum, a) => sum + a.annotationsCreated, 0);
+  const totalMinutes = activities.reduce((sum, a) => sum + a.minutes_studied, 0);
+  const totalContents = activities.reduce((sum, a) => sum + a.contents_read, 0);
+  const totalAnnotations = activities.reduce((sum, a) => sum + a.annotations_created, 0);
 
   console.log('\n📊 Activity Summary:');
   console.log(`   Days with activity: ${activities.length}`);

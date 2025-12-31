@@ -5,7 +5,8 @@
  * Handles transformations, validations, and offline queue.
  */
 
-import { cornellApi, type CreateHighlightPayload, type UpdateHighlightPayload } from '../api/cornell.api';
+import { cornellApi } from '@/lib/api/cornell';
+import type { CreateHighlightDto as CreateHighlightPayload, UpdateHighlightDto as UpdateHighlightPayload } from '@/lib/types/cornell';
 import { offlineQueue } from '@/lib/cornell/offline-queue';
 import type { VisibilityConfig } from '@/lib/cornell/visibility-config';
 
@@ -78,7 +79,7 @@ export const highlightsService = {
       return { id: highlightId, ...payload };
     }
 
-    const result = await cornellApi.updateHighlight(contentId, highlightId, payload);
+    const result = await cornellApi.updateHighlight(highlightId, payload);
     return result;
   },
 
@@ -100,7 +101,7 @@ export const highlightsService = {
       return { success: true };
     }
 
-    const result = await cornellApi.deleteHighlight(contentId, highlightId);
+    const result = await cornellApi.deleteHighlight(highlightId);
     return result;
   },
 

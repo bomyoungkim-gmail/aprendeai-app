@@ -1,11 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import {
-  LLMProvider,
-  LLMOptions,
-  LLMResponse,
-} from "./llm-provider.interface";
+import { LLMProvider, LLMOptions, LLMResponse } from "./llm-provider.interface";
 import { LLMConfigService } from "../llm-config.service";
 
 @Injectable()
@@ -24,9 +20,7 @@ export class GeminiProvider implements LLMProvider {
       this.client = new GoogleGenerativeAI(apiKey);
       this.logger.log("Gemini client initialized");
     } else {
-      this.logger.warn(
-        "GOOGLE_API_KEY not found, Gemini provider unavailable",
-      );
+      this.logger.warn("GOOGLE_API_KEY not found, Gemini provider unavailable");
     }
   }
 
@@ -44,8 +38,8 @@ export class GeminiProvider implements LLMProvider {
 
     // Get model from DB config, fallback to options, then default
     const modelConfig = await this.llmConfig.getModelConfig(
-      'gemini',
-      'gemini-1.5-flash'
+      "gemini",
+      "gemini-1.5-flash",
     );
     const modelName = options?.model || modelConfig.model;
     const model = this.client.getGenerativeModel({

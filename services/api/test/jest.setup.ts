@@ -1,6 +1,6 @@
 /**
  * Jest Setup File for Integration Tests
- * 
+ *
  * This file runs before each test suite to configure the testing environment.
  * It's specified in jest-integration.config.js via setupFilesAfterEnv.
  */
@@ -12,4 +12,4 @@ BigInt.prototype.toJSON = function () {
   return this.toString();
 };
 
-console.log('✅ Jest setup: BigInt.prototype.toJSON configured');
+console.log("✅ Jest setup: BigInt.prototype.toJSON configured");

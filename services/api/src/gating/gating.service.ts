@@ -25,8 +25,8 @@ export class GatingService {
 
     // If no specific layer requested, determine based on eligibility
     if (!requestedLayer) {
-      if (eligibility.eligibleL3) return "L3";
-      if (eligibility.eligibleL2) return "L2";
+      if (eligibility.eligible_l3) return "L3";
+      if (eligibility.eligible_l2) return "L2";
       return "L1";
     }
 
@@ -37,12 +37,12 @@ export class GatingService {
 
     // If requested L2, check eligibility
     if (requestedLayer === "L2") {
-      if (eligibility.eligibleL2) {
+      if (eligibility.eligible_l2) {
         return "L2";
       }
 
       // Fallback: check if L3-eligible user can use L2
-      if (eligibility.eligibleL3) {
+      if (eligibility.eligible_l3) {
         return "L2"; // L3 users can always use L2
       }
 
@@ -52,12 +52,12 @@ export class GatingService {
 
     // If requested L3, check eligibility
     if (requestedLayer === "L3") {
-      if (eligibility.eligibleL3) {
+      if (eligibility.eligible_l3) {
         return "L3";
       }
 
       // Not eligible for L3, check L2
-      if (eligibility.eligibleL2) {
+      if (eligibility.eligible_l2) {
         return "L2";
       }
 
@@ -83,19 +83,20 @@ export class GatingService {
       updatedAt: new Date().toISOString(),
     };
 
-    await this.prisma.layerEligibility.upsert({
-      where: { userId },
+    await this.prisma.layer_eligibility.upsert({
+      where: { user_id: userId },
       create: {
-        userId,
-        eligibleL2,
-        eligibleL3,
-        reasonJson: reason,
+        user_id: userId,
+        eligible_l2: eligibleL2,
+        eligible_l3: eligibleL3,
+        reason_json: reason,
+        updated_at: new Date(),
       },
       update: {
-        eligibleL2,
-        eligibleL3,
-        reasonJson: reason,
-        updatedAt: new Date(),
+        eligible_l2: eligibleL2,
+        eligible_l3: eligibleL3,
+        reason_json: reason,
+        updated_at: new Date(),
       },
     });
   }
@@ -109,16 +110,16 @@ export class GatingService {
    * - Average frustration index <= 50
    */
   async checkL2Eligibility(userId: string): Promise<boolean> {
-    const recentSessions = await this.prisma.readingSession.findMany({
+    const recentSessions = await this.prisma.reading_sessions.findMany({
       where: {
-        userId,
+        user_id: userId,
         phase: "FINISHED",
       },
       include: {
-        outcome: true,
+        session_outcomes: true,
       },
       orderBy: {
-        finishedAt: "desc",
+        finished_at: "desc",
       },
       take: 10, // Look at last 10 sessions
     });
@@ -129,7 +130,9 @@ export class GatingService {
     }
 
     // Calculate average comprehension and frustration
-    const sessionsWithOutcomes = recentSessions.filter((s) => s.outcome);
+    const sessionsWithOutcomes = recentSessions.filter(
+      (s) => s.session_outcomes,
+    );
 
     if (sessionsWithOutcomes.length < 3) {
       return false; // Not enough data
@@ -137,13 +140,13 @@ export class GatingService {
 
     const avgComprehension =
       sessionsWithOutcomes.reduce(
-        (sum, s) => sum + (s.outcome?.comprehensionScore || 0),
+        (sum, s) => sum + (s.session_outcomes?.comprehension_score || 0),
         0,
       ) / sessionsWithOutcomes.length;
 
     const avgFrustration =
       sessionsWithOutcomes.reduce(
-        (sum, s) => sum + (s.outcome?.frustrationIndex || 0),
+        (sum, s) => sum + (s.session_outcomes?.frustration_index || 0),
         0,
       ) / sessionsWithOutcomes.length;
 
@@ -162,16 +165,16 @@ export class GatingService {
    * - Currently eligible for L2
    */
   async checkL3Eligibility(userId: string): Promise<boolean> {
-    const recentSessions = await this.prisma.readingSession.findMany({
+    const recentSessions = await this.prisma.reading_sessions.findMany({
       where: {
-        userId,
+        user_id: userId,
         phase: "FINISHED",
       },
       include: {
-        outcome: true,
+        session_outcomes: true,
       },
       orderBy: {
-        finishedAt: "desc",
+        finished_at: "desc",
       },
       take: 10,
     });
@@ -181,7 +184,9 @@ export class GatingService {
       return false;
     }
 
-    const sessionsWithOutcomes = recentSessions.filter((s) => s.outcome);
+    const sessionsWithOutcomes = recentSessions.filter(
+      (s) => s.session_outcomes,
+    );
 
     if (sessionsWithOutcomes.length < 5) {
       return false;
@@ -189,19 +194,19 @@ export class GatingService {
 
     const avgComprehension =
       sessionsWithOutcomes.reduce(
-        (sum, s) => sum + (s.outcome?.comprehensionScore || 0),
+        (sum, s) => sum + (s.session_outcomes?.comprehension_score || 0),
         0,
       ) / sessionsWithOutcomes.length;
 
     const avgProduction =
       sessionsWithOutcomes.reduce(
-        (sum, s) => sum + (s.outcome?.productionScore || 0),
+        (sum, s) => sum + (s.session_outcomes?.production_score || 0),
         0,
       ) / sessionsWithOutcomes.length;
 
     const avgFrustration =
       sessionsWithOutcomes.reduce(
-        (sum, s) => sum + (s.outcome?.frustrationIndex || 0),
+        (sum, s) => sum + (s.session_outcomes?.frustration_index || 0),
         0,
       ) / sessionsWithOutcomes.length;
 
@@ -216,21 +221,22 @@ export class GatingService {
    * Defaults to L1 only (not eligible for L2/L3).
    */
   private async getOrCreateEligibility(userId: string) {
-    let eligibility = await this.prisma.layerEligibility.findUnique({
-      where: { userId },
+    let eligibility = await this.prisma.layer_eligibility.findUnique({
+      where: { user_id: userId },
     });
 
     if (!eligibility) {
       // Create default eligibility (L1 only)
-      eligibility = await this.prisma.layerEligibility.create({
+      eligibility = await this.prisma.layer_eligibility.create({
         data: {
-          userId,
-          eligibleL2: false,
-          eligibleL3: false,
-          reasonJson: {
+          user_id: userId,
+          eligible_l2: false,
+          eligible_l3: false,
+          reason_json: {
             message: "New user - default to L1",
             createdAt: new Date().toISOString(),
           },
+          updated_at: new Date(),
         },
       });
     }

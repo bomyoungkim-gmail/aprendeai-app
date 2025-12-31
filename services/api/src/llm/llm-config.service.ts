@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { ConfigService } from "@nestjs/config";
 
 interface LLMModelConfig {
   provider: string;
   model: string;
-  source: 'database' | 'env' | 'default';
+  source: "database" | "env" | "default";
 }
 
 @Injectable()
@@ -23,34 +23,37 @@ export class LLMConfigService {
    * Get LLM model configuration for a provider
    * Priority: Database > Environment Variable > Provider Default
    */
-  async getModelConfig(provider: string, defaultModel: string): Promise<LLMModelConfig> {
+  async getModelConfig(
+    provider: string,
+    defaultModel: string,
+  ): Promise<LLMModelConfig> {
     const cacheKey = `llm.${provider}.model`;
-    
+
     // Check cache first
     const cached = this.cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
       return {
         provider,
         model: cached.value,
-        source: 'database',
+        source: "database",
       };
     }
 
     try {
       // Try to get from database
-      const dbConfig = await this.prisma.appConfig.findFirst({
+      const dbConfig = await this.prisma.app_configs.findFirst({
         where: {
           key: cacheKey,
-          category: 'llm',
+          category: "llm",
         },
         orderBy: {
-          environment: 'desc', // Prefer env-specific over global
+          environment: "desc", // Prefer env-specific over global
         },
       });
 
       if (dbConfig?.value) {
         this.logger.debug(`Using DB model for ${provider}: ${dbConfig.value}`);
-        
+
         // Update cache
         this.cache.set(cacheKey, {
           value: dbConfig.value,
@@ -60,7 +63,7 @@ export class LLMConfigService {
         return {
           provider,
           model: dbConfig.value,
-          source: 'database',
+          source: "database",
         };
       }
     } catch (error) {
@@ -70,13 +73,13 @@ export class LLMConfigService {
     // Fallback to environment variable
     const envKey = `${provider.toUpperCase()}_MODEL`;
     const envModel = this.config.get<string>(envKey);
-    
+
     if (envModel) {
       this.logger.debug(`Using env model for ${provider}: ${envModel}`);
       return {
         provider,
         model: envModel,
-        source: 'env',
+        source: "env",
       };
     }
 
@@ -85,14 +88,17 @@ export class LLMConfigService {
     return {
       provider,
       model: defaultModel,
-      source: 'default',
+      source: "default",
     };
   }
 
   /**
    * Convenience method to get just the model name string
    */
-  async getModelName(provider: string, defaultModel: string = 'gpt-4'): Promise<string> {
+  async getModelName(
+    provider: string,
+    defaultModel: string = "gpt-4",
+  ): Promise<string> {
     const config = await this.getModelConfig(provider, defaultModel);
     return config.model;
   }
@@ -106,7 +112,7 @@ export class LLMConfigService {
       this.logger.log(`Cache cleared for ${provider}`);
     } else {
       this.cache.clear();
-      this.logger.log('All LLM config cache cleared');
+      this.logger.log("All LLM config cache cleared");
     }
   }
 
@@ -115,11 +121,11 @@ export class LLMConfigService {
    */
   async preloadCache(): Promise<void> {
     try {
-      const configs = await this.prisma.appConfig.findMany({
+      const configs = await this.prisma.app_configs.findMany({
         where: {
-          category: 'llm',
+          category: "llm",
           key: {
-            endsWith: '.model',
+            endsWith: ".model",
           },
         },
       });

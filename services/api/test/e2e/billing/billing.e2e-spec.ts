@@ -1,11 +1,11 @@
-import * as request from 'supertest';
-import { Test } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import { AppModule } from '../../../src/app.module'; // Adjust path
-import { PrismaService } from '../../../src/prisma/prisma.service';
-import { JwtService } from '@nestjs/jwt';
+import * as request from "supertest";
+import { Test } from "@nestjs/testing";
+import { INestApplication } from "@nestjs/common";
+import { AppModule } from "../../../src/app.module"; // Adjust path
+import { PrismaService } from "../../../src/prisma/prisma.service";
+import { JwtService } from "@nestjs/jwt";
 
-describe('Billing (E2E)', () => {
+describe("Billing (E2E)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let jwtService: JwtService;
@@ -29,23 +29,26 @@ describe('Billing (E2E)', () => {
   const testEmail = `e2e-billing-${Date.now()}@example.com`;
   let authToken: string;
 
-  it('should authenticate and return entitlements', async () => {
+  it("should authenticate and return entitlements", async () => {
     // 1. Create User
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
         email: testEmail,
-        name: 'E2E Billing User',
-        passwordHash: 'hashed',
-        role: 'STUDENT',
-        schoolingLevel: 'The rest',
-        entitlementSnapshot: {
+        name: "E2E Billing User",
+        password_hash: "hashed",
+        last_context_role: "STUDENT",
+        schooling_level: "SUPERIOR",
+        entitlement_snapshots: {
           create: {
-             source: 'FREE',
-             planType: 'FREE',
-             limits: { seats: 1 },
-             features: {}
-          }
-        }
+            scope_type: "USER",
+            scope_id: "", // Will be updated manually if needed, or Prisma might handle it if it was a relation but here it's a field. Wait, scope_id is a field.
+            source: "FREE",
+            plan_type: "FREE",
+            limits: { seats: 1 },
+            features: {},
+            updated_at: new Date(),
+          },
+        },
       },
     });
 
@@ -54,11 +57,11 @@ describe('Billing (E2E)', () => {
 
     // 3. GET /me/entitlements
     const response = await request(app.getHttpServer())
-      .get('/me/entitlements')
-      .set('Authorization', `Bearer ${authToken}`)
+      .get("/me/entitlements")
+      .set("Authorization", `Bearer ${authToken}`)
       .expect(200);
 
-    expect(response.body).toHaveProperty('source', 'FREE');
-    expect(response.body).toHaveProperty('planType', 'FREE');
+    expect(response.body).toHaveProperty("source", "FREE");
+    expect(response.body).toHaveProperty("planType", "FREE");
   });
 });

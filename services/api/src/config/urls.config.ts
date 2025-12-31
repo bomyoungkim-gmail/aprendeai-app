@@ -26,6 +26,16 @@ function requireInProduction(envVar: string, fallback?: string): string {
       );
     }
 
+    // Allow skipping check in test environment, using fallback if provided
+    if (IS_TEST) {
+      if (fallback === undefined) {
+        // In test, if no value and no fallback, return an empty string to satisfy type,
+        // as we're skipping the check.
+        return "";
+      }
+      return fallback;
+    }
+
     if (fallback) {
       console.warn(`⚠️  ${envVar} not set, using fallback: ${fallback}`);
       return fallback;

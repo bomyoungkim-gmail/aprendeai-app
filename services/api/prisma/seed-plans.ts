@@ -4,12 +4,13 @@ const prisma = new PrismaClient();
 
 const DEFAULT_PLANS = [
   {
+    id: "plan_free",
     code: "FREE",
     name: "Free Plan",
     description: "Perfect for getting started with AprendeAI",
-    isActive: true,
-    monthlyPrice: null,
-    yearlyPrice: null,
+    is_active: true,
+    monthly_price: 0,
+    yearly_price: 0,
     entitlements: {
       features: {
         ai_chat: true,
@@ -26,12 +27,13 @@ const DEFAULT_PLANS = [
     },
   },
   {
+    id: "individual_premium",
     code: "PRO",
     name: "Pro Plan",
     description: "For power users who need more",
-    isActive: true,
-    monthlyPrice: 29.99,
-    yearlyPrice: 299.99,
+    is_active: true,
+    monthly_price: 29.99,
+    yearly_price: 299.99,
     entitlements: {
       features: {
         ai_chat: true,
@@ -50,13 +52,14 @@ const DEFAULT_PLANS = [
     },
   },
   {
+    id: "plan_family",
     code: "FAMILY",
     name: "Family Plan",
     description:
       "For families - 1 owner + up to 4 dependents with PRO features",
-    isActive: true,
-    monthlyPrice: 49.99,
-    yearlyPrice: 499.99,
+    is_active: true,
+    monthly_price: 49.99,
+    yearly_price: 499.99,
     entitlements: {
       features: {
         ai_chat: true,
@@ -76,13 +79,14 @@ const DEFAULT_PLANS = [
     },
   },
   {
+    id: "plan_institution",
     code: "INSTITUTION",
     name: "Institution Plan",
     description:
       "For schools and large organizations with PRO features for each user",
-    isActive: true,
-    monthlyPrice: 299.99,
-    yearlyPrice: 2999.99,
+    is_active: true,
+    monthly_price: 299.99,
+    yearly_price: 2999.99,
     entitlements: {
       features: {
         ai_chat: true,
@@ -108,13 +112,21 @@ const DEFAULT_PLANS = [
 async function main() {
   console.log("Seeding billing plans...");
 
-  for (const planData of DEFAULT_PLANS) {
-    const plan = await prisma.plan.upsert({
-      where: { code: planData.code },
-      create: planData,
-      update: planData,
+  for (const planSeed of DEFAULT_PLANS) {
+    const plan = await prisma.plans.upsert({
+      where: { id: planSeed.id },
+      update: {
+        name: planSeed.name,
+        monthly_price: planSeed.monthly_price,
+        yearly_price: planSeed.yearly_price,
+        updated_at: new Date(),
+      },
+      create: {
+        ...planSeed,
+        type: planSeed.code === 'FREE' ? 'FREE' : (planSeed.code === 'FAMILY' ? 'FAMILY' : (planSeed.code === 'INSTITUTION' ? 'INSTITUTION' : 'INDIVIDUAL_PREMIUM')),
+        updated_at: new Date(),
+      },
     });
-    console.log(`✅ Seeded plan: ${plan.code} (${plan.name})`);
   }
 
   console.log("✅ Billing plans seeded successfully!");

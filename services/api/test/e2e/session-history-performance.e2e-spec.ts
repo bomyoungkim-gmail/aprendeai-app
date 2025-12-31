@@ -3,7 +3,6 @@ import { INestApplication, ValidationPipe } from "@nestjs/common";
 import * as request from "supertest";
 import { AppModule } from "../../src/app.module";
 import { PrismaService } from "../../src/prisma/prisma.service";
-import { UserRole } from "@prisma/client";
 import { ConfigService } from "@nestjs/config";
 import { TestAuthHelper } from "../helpers/auth.helper";
 
@@ -35,13 +34,13 @@ describe("Session History Performance Tests (E2E)", () => {
     prisma = app.get(PrismaService);
 
     // Create test user
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
         email: `perf_test_${Date.now()}@test.com`,
         name: "Performance Test User",
-        passwordHash: "test-hash",
-        role: UserRole.COMMON_USER,
-        schoolingLevel: "MEDIO",
+        password_hash: "test-hash",
+        last_context_role: "STUDENT",
+        schooling_level: "HIGHER_EDUCATION",
       },
     });
     userId = user.id;
@@ -53,14 +52,16 @@ describe("Session History Performance Tests (E2E)", () => {
     });
 
     // Create test content
-    const content = await prisma.content.create({
+    const content = await prisma.contents.create({
       data: {
+        id: `content_perf_${Date.now()}`,
         title: "Performance Test Article",
-        rawText: "Test content for performance testing",
+        raw_text: "Test content for performance testing",
         type: "ARTICLE",
-        originalLanguage: "PT_BR",
-        creator: { connect: { id: userId } },
-        scopeType: "USER",
+        original_language: "PT_BR",
+        users_created_by: { connect: { id: userId } },
+        scope_type: "USER",
+        updated_at: new Date(),
       },
     });
     contentId = content.id;
@@ -82,8 +83,8 @@ describe("Session History Performance Tests (E2E)", () => {
         startedAt.setHours(startedAt.getHours() - (sessionIndex % 24)); // Different hours
 
         sessions.push({
-          userId,
-          contentId,
+          user_id: userId,
+          content_id: contentId,
           phase:
             sessionIndex % 3 === 0
               ? "PRE"
@@ -91,12 +92,12 @@ describe("Session History Performance Tests (E2E)", () => {
                 ? "DURING"
                 : "POST",
           modality: "READING",
-          assetLayer: "L1",
-          goalStatement: `Performance test session ${sessionIndex}`,
-          predictionText: "",
-          targetWordsJson: [],
-          startedAt,
-          finishedAt:
+          asset_layer: "L1",
+          goal_statement: `Performance test session ${sessionIndex}`,
+          prediction_text: "",
+          target_words_json: [],
+          started_at: startedAt,
+          finished_at:
             sessionIndex < 800
               ? new Date(
                   startedAt.getTime() + (15 + Math.random() * 45) * 60000,
@@ -105,7 +106,7 @@ describe("Session History Performance Tests (E2E)", () => {
         });
       }
 
-      await prisma.readingSession.createMany({ data: sessions });
+      await prisma.reading_sessions.createMany({ data: sessions });
 
       if ((batch + 1) % 2 === 0) {
         console.log(`  ✓ Created ${(batch + 1) * batchSize} sessions...`);
@@ -121,9 +122,9 @@ describe("Session History Performance Tests (E2E)", () => {
   afterAll(async () => {
     console.log("🧹 Cleaning up test data...");
     if (userId) {
-      await prisma.readingSession.deleteMany({ where: { userId } });
-      await prisma.content.deleteMany({ where: { createdBy: userId } });
-      await prisma.user.delete({ where: { id: userId } });
+      await prisma.reading_sessions.deleteMany({ where: { user_id: userId } });
+      await prisma.contents.deleteMany({ where: { created_by: userId } });
+      await prisma.users.delete({ where: { id: userId } });
     }
     await prisma.$disconnect();
     await app.close();

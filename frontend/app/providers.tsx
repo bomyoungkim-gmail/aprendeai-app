@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { WebSocketProvider } from "@/contexts/WebSocketContext";
 import { HydrationWrapper } from "@/components/HydrationWrapper";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -29,6 +29,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
     });
   }
   const queryClient = queryClientRef.current;
+
+  // CRITICAL: Listen for token refresh events and invalidate all queries
+  // This ensures dashboard data is re-fetched with the new token
+  useEffect(() => {
+    const handleTokenRefresh = () => {
+      console.log('[Providers] Token refreshed, invalidating all queries...');
+      queryClient.invalidateQueries();
+    };
+
+    window.addEventListener('token-refreshed', handleTokenRefresh);
+    
+    return () => {
+      window.removeEventListener('token-refreshed', handleTokenRefresh);
+    };
+  }, [queryClient]);
 
   return (
     <ErrorBoundary>

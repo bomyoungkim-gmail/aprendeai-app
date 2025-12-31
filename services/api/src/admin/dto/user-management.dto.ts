@@ -10,7 +10,7 @@ import {
   ValidateNested,
 } from "class-validator";
 import { Type } from "class-transformer";
-import { UserRole } from "@prisma/client";
+import { SystemRole, ContextRole } from "@prisma/client";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class UserSearchDto {
@@ -27,10 +27,21 @@ export class UserSearchDto {
   @IsEnum(["ACTIVE", "SUSPENDED", "DELETED"])
   status?: string;
 
-  @ApiPropertyOptional({ description: "Filter by role", enum: UserRole })
+  @ApiPropertyOptional({
+    description: "Filter by system role",
+    enum: SystemRole,
+  })
   @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
+  @IsEnum(SystemRole)
+  systemRole?: string;
+
+  @ApiPropertyOptional({
+    description: "Filter by context role",
+    enum: ContextRole,
+  })
+  @IsOptional()
+  @IsEnum(ContextRole)
+  contextRole?: string;
 
   @ApiPropertyOptional({ description: "Filter by institution ID" })
   @IsOptional()
@@ -74,9 +85,9 @@ export class UpdateUserStatusDto {
 }
 
 export class RoleAssignmentDto {
-  @ApiProperty({ enum: UserRole })
-  @IsEnum(UserRole)
-  role: UserRole;
+  @ApiProperty({ enum: { ...SystemRole, ...ContextRole } })
+  @IsEnum({ ...SystemRole, ...ContextRole })
+  role: string;
 
   @ApiPropertyOptional({ enum: ["GLOBAL", "INSTITUTION", "USER"] })
   @IsOptional()

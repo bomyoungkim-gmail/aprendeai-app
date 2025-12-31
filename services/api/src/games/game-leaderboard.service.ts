@@ -6,7 +6,7 @@ export interface LeaderboardEntry {
   userId: string;
   userName: string;
   totalStars: number;
-  avatarUrl: string | null;
+  avatar_url: string | null;
 }
 
 @Injectable()
@@ -22,8 +22,8 @@ export class GameLeaderboardService {
     limit: number = 10,
   ): Promise<{ leaders: LeaderboardEntry[] }> {
     // Aggregate total stars per user
-    const results = await this.prisma.gameProgress.groupBy({
-      by: ["userId"],
+    const results: any[] = await (this.prisma.game_progress as any).groupBy({
+      by: ["user_id"],
       _sum: {
         stars: true,
       },
@@ -36,30 +36,29 @@ export class GameLeaderboardService {
     });
 
     // Fetch user details
-    const userIds = results.map((r) => r.userId);
-    const users = await this.prisma.user.findMany({
+    const userIds = results.map((r) => r.user_id);
+    const users = await this.prisma.users.findMany({
       where: { id: { in: userIds } },
       select: {
         id: true,
         name: true,
-        avatarUrl: true,
+        avatar_url: true,
       },
     });
 
     const userMap = new Map(users.map((u) => [u.id, u]));
 
-    // Combine and add ranks
     const leaders: LeaderboardEntry[] = results
-      .map((result, index) => {
-        const user = userMap.get(result.userId);
+      .map((result: any, index: number) => {
+        const user = userMap.get(result.user_id);
         if (!user) return null;
 
         return {
           rank: index + 1,
-          userId: result.userId,
-          userName: user.name,
+          userId: result.user_id,
+          userName: (user as any).name,
           totalStars: result._sum.stars || 0,
-          avatarUrl: user.avatarUrl,
+          avatar_url: (user as any).avatar_url,
         };
       })
       .filter((entry): entry is LeaderboardEntry => entry !== null);
@@ -78,46 +77,48 @@ export class GameLeaderboardService {
     nearby: LeaderboardEntry[];
   }> {
     // Get user's total stars
-    const userProgress = await this.prisma.gameProgress.aggregate({
-      where: { userId },
+    const userProgress: any = await (
+      this.prisma.game_progress as any
+    ).aggregate({
+      where: { user_id: userId },
       _sum: { stars: true },
     });
 
     const totalStars = userProgress._sum.stars || 0;
 
     // Get all users with their total stars (for ranking)
-    const allResults = await this.prisma.gameProgress.groupBy({
-      by: ["userId"],
+    const allResults: any[] = await (this.prisma.game_progress as any).groupBy({
+      by: ["user_id"],
       _sum: { stars: true },
       orderBy: { _sum: { stars: "desc" } },
     });
 
     // Find user's rank
-    const userRank = allResults.findIndex((r) => r.userId === userId) + 1;
+    const userRank = allResults.findIndex((r) => r.user_id === userId) + 1;
 
     // Get nearby players (2 above, 2 below)
     const startIndex = Math.max(0, userRank - 3);
     const nearbyResults = allResults.slice(startIndex, startIndex + 5);
 
-    const userIds = nearbyResults.map((r) => r.userId);
-    const users = await this.prisma.user.findMany({
+    const userIds = nearbyResults.map((r) => r.user_id);
+    const users = await this.prisma.users.findMany({
       where: { id: { in: userIds } },
-      select: { id: true, name: true, avatarUrl: true },
+      select: { id: true, name: true, avatar_url: true },
     });
 
     const userMap = new Map(users.map((u) => [u.id, u]));
 
     const nearby: LeaderboardEntry[] = nearbyResults
-      .map((result, index) => {
-        const user = userMap.get(result.userId);
+      .map((result: any, index: number) => {
+        const user = userMap.get(result.user_id);
         if (!user) return null;
 
         return {
           rank: startIndex + index + 1,
-          userId: result.userId,
-          userName: user.name,
+          userId: result.user_id,
+          userName: (user as any).name,
           totalStars: result._sum.stars || 0,
-          avatarUrl: user.avatarUrl,
+          avatar_url: (user as any).avatar_url,
         };
       })
       .filter((entry): entry is LeaderboardEntry => entry !== null);

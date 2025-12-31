@@ -8,9 +8,9 @@ export class CreateGroupDto {
 
   @IsOptional()
   @IsEnum(ScopeType)
-  scopeType?: ScopeType;
+  scope_type?: ScopeType;
 
   @IsOptional()
   @IsString()
-  scopeId?: string;
+  scope_id?: string;
 }

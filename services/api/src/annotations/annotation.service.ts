@@ -17,23 +17,23 @@ export class AnnotationService {
   ) {}
 
   async create(contentId: string, userId: string, dto: CreateAnnotationDto) {
-    const annotation = await this.prisma.annotation.create({
+    const annotation = await this.prisma.annotations.create({
       data: {
-        contentId,
-        userId,
+        content_id: contentId,
+        user_id: userId,
         type: dto.type,
-        startOffset: dto.startOffset,
-        endOffset: dto.endOffset,
-        selectedText: dto.selectedText,
+        start_offset: dto.startOffset,
+        end_offset: dto.endOffset,
+        selected_text: dto.selectedText,
         text: dto.text,
         color: dto.color,
         visibility: dto.visibility,
-        groupId: dto.groupId,
-        parentId: dto.parentId,
+        group_id: dto.groupId,
+        parent_id: dto.parentId,
       },
       include: {
-        user: { select: { id: true, name: true } },
-        parent: true,
+        users: { select: { id: true, name: true } },
+        annotations: { select: { id: true, text: true } }, // parent relation
       },
     });
 
@@ -46,30 +46,30 @@ export class AnnotationService {
   }
 
   async getByContent(contentId: string, userId: string, groupId?: string) {
-    return this.prisma.annotation.findMany({
+    return this.prisma.annotations.findMany({
       where: {
-        contentId,
+        content_id: contentId,
         OR: [
-          { userId, visibility: "PRIVATE" },
-          { groupId, visibility: "GROUP" },
+          { user_id: userId, visibility: "PRIVATE" },
+          { group_id: groupId, visibility: "GROUP" },
           { visibility: "PUBLIC" },
         ],
       },
       include: {
-        user: { select: { id: true, name: true } },
-        replies: {
+        users: { select: { id: true, name: true } },
+        other_annotations: {
           include: {
-            user: { select: { id: true, name: true } },
+            users: { select: { id: true, name: true } },
           },
-          orderBy: { createdAt: "asc" },
+          orderBy: { created_at: "asc" },
         },
       },
-      orderBy: { startOffset: "asc" },
+      orderBy: { start_offset: "asc" },
     });
   }
 
   async update(id: string, userId: string, dto: UpdateAnnotationDto) {
-    const annotation = await this.prisma.annotation.findUnique({
+    const annotation = await this.prisma.annotations.findUnique({
       where: { id },
     });
 
@@ -77,22 +77,22 @@ export class AnnotationService {
       throw new NotFoundException("Annotation not found");
     }
 
-    if (annotation.userId !== userId) {
+    if (annotation.user_id !== userId) {
       throw new ForbiddenException("Not your annotation");
     }
 
-    const updated = await this.prisma.annotation.update({
+    const updated = await this.prisma.annotations.update({
       where: { id },
-      data: { text: dto.text, updatedAt: new Date() },
+      data: { text: dto.text },
       include: {
-        user: { select: { id: true, name: true } },
+        users: { select: { id: true, name: true } },
       },
     });
 
     // Real-time broadcast
-    if (annotation.visibility === "GROUP" && annotation.groupId) {
+    if (annotation.visibility === "GROUP" && annotation.group_id) {
       this.wsGateway.emitToGroup(
-        annotation.groupId,
+        annotation.group_id,
         "annotation:updated",
         updated,
       );
@@ -102,7 +102,7 @@ export class AnnotationService {
   }
 
   async delete(id: string, userId: string) {
-    const annotation = await this.prisma.annotation.findUnique({
+    const annotation = await this.prisma.annotations.findUnique({
       where: { id },
     });
 
@@ -110,15 +110,15 @@ export class AnnotationService {
       throw new NotFoundException("Annotation not found");
     }
 
-    if (annotation.userId !== userId) {
+    if (annotation.user_id !== userId) {
       throw new ForbiddenException("Not your annotation");
     }
 
-    await this.prisma.annotation.delete({ where: { id } });
+    await this.prisma.annotations.delete({ where: { id } });
 
     // Real-time broadcast
-    if (annotation.visibility === "GROUP" && annotation.groupId) {
-      this.wsGateway.emitToGroup(annotation.groupId, "annotation:deleted", {
+    if (annotation.visibility === "GROUP" && annotation.group_id) {
+      this.wsGateway.emitToGroup(annotation.group_id, "annotation:deleted", {
         id,
       });
     }
@@ -131,7 +131,7 @@ export class AnnotationService {
    */
   async searchAnnotations(userId: string, params: SearchAnnotationsDto) {
     const where: any = {
-      userId, // Only search user's own annotations
+      user_id: userId, // Only search user's own annotations
       AND: [],
     };
 
@@ -140,7 +140,7 @@ export class AnnotationService {
       where.AND.push({
         OR: [
           { text: { contains: params.query, mode: "insensitive" } },
-          { selectedText: { contains: params.query, mode: "insensitive" } },
+          { selected_text: { contains: params.query, mode: "insensitive" } },
         ],
       });
     }
@@ -152,12 +152,12 @@ export class AnnotationService {
 
     // Filter by content
     if (params.contentId) {
-      where.AND.push({ contentId: params.contentId });
+      where.AND.push({ content_id: params.contentId });
     }
 
     // Filter by group
     if (params.groupId) {
-      where.AND.push({ groupId: params.groupId });
+      where.AND.push({ group_id: params.groupId });
     }
 
     // Filter by color
@@ -167,7 +167,7 @@ export class AnnotationService {
 
     // Filter by favorite
     if (params.isFavorite !== undefined) {
-      where.AND.push({ isFavorite: params.isFavorite });
+      where.AND.push({ is_favorite: params.isFavorite });
     }
 
     // Date range filter
@@ -179,7 +179,7 @@ export class AnnotationService {
       if (params.endDate) {
         dateFilter.lte = new Date(params.endDate);
       }
-      where.AND.push({ createdAt: dateFilter });
+      where.AND.push({ created_at: dateFilter });
     }
 
     // Remove empty AND if no filters
@@ -187,18 +187,18 @@ export class AnnotationService {
       delete where.AND;
     }
 
-    return this.prisma.annotation.findMany({
+    return this.prisma.annotations.findMany({
       where,
       include: {
-        user: { select: { id: true, name: true } },
-        content: { select: { id: true, title: true } },
-        replies: {
+        users: { select: { id: true, name: true } },
+        contents: { select: { id: true, title: true } },
+        other_annotations: {
           include: {
-            user: { select: { id: true, name: true } },
+            users: { select: { id: true, name: true } },
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
     });
   }
 
@@ -206,7 +206,7 @@ export class AnnotationService {
    * Create reply to annotation
    */
   async createReply(parentId: string, userId: string, dto: CreateReplyDto) {
-    const parent = await this.prisma.annotation.findUnique({
+    const parent = await this.prisma.annotations.findUnique({
       where: { id: parentId },
     });
 
@@ -214,35 +214,35 @@ export class AnnotationService {
       throw new NotFoundException("Parent annotation not found");
     }
 
-    const reply = await this.prisma.annotation.create({
+    const reply = await this.prisma.annotations.create({
       data: {
-        contentId: parent.contentId,
-        userId,
+        content_id: parent.content_id,
+        user_id: userId,
         type: "COMMENT",
-        startOffset: parent.startOffset,
-        endOffset: parent.endOffset,
+        start_offset: parent.start_offset,
+        end_offset: parent.end_offset,
         text: dto.content,
         color: dto.color,
-        visibility: parent.visibility,
-        groupId: parent.groupId,
-        parentId,
+        visibility: parent.visibility as any,
+        group_id: parent.group_id,
+        parent_id: parentId,
       },
       include: {
-        user: { select: { id: true, name: true } },
-        parent: true,
+        users: { select: { id: true, name: true } },
+        annotations: true,
       },
     });
 
     // Real-time broadcast
-    if (parent.visibility === "GROUP" && parent.groupId) {
-      this.wsGateway.emitToGroup(parent.groupId, "annotation:reply", reply);
+    if (parent.visibility === "GROUP" && parent.group_id) {
+      this.wsGateway.emitToGroup(parent.group_id, "annotation:reply", reply);
     }
 
     // Audit trail - track reply creation
-    await this.prisma.sessionEvent.create({
+    await this.prisma.session_events.create({
       data: {
-        eventType: "ANNOTATION_REPLY_CREATED",
-        payloadJson: {
+        event_type: "ANNOTATION_REPLY_CREATED",
+        payload_json: {
           annotationId: parentId,
           replyId: reply.id,
           userId,
@@ -257,7 +257,7 @@ export class AnnotationService {
    * Toggle favorite status
    */
   async toggleFavorite(id: string, userId: string) {
-    const annotation = await this.prisma.annotation.findUnique({
+    const annotation = await this.prisma.annotations.findUnique({
       where: { id },
     });
 
@@ -265,25 +265,25 @@ export class AnnotationService {
       throw new NotFoundException("Annotation not found");
     }
 
-    if (annotation.userId !== userId) {
+    if (annotation.user_id !== userId) {
       throw new ForbiddenException("Not your annotation");
     }
 
-    const updated = await this.prisma.annotation.update({
+    const updated = await this.prisma.annotations.update({
       where: { id },
-      data: { isFavorite: !annotation.isFavorite },
+      data: { is_favorite: !annotation.is_favorite },
       include: {
-        user: { select: { id: true, name: true } },
+        users: { select: { id: true, name: true } },
       },
     });
 
     // Audit trail - track favorite toggle
-    await this.prisma.sessionEvent.create({
+    await this.prisma.session_events.create({
       data: {
-        eventType: "ANNOTATION_FAVORITE_TOGGLED",
-        payloadJson: {
+        event_type: "ANNOTATION_FAVORITE_TOGGLED",
+        payload_json: {
           annotationId: id,
-          favorite: updated.isFavorite,
+          favorite: updated.is_favorite,
           userId,
         },
       },

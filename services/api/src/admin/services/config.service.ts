@@ -7,6 +7,7 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { SecretService } from "./secret.service";
 import { ConfigType, Environment } from "@prisma/client";
 import { LLMConfigService } from "../../llm/llm-config.service";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class ConfigService {
@@ -25,7 +26,7 @@ export class ConfigService {
     if (filters.category) where.category = filters.category;
     if (filters.environment) where.environment = filters.environment;
 
-    const configs = await this.prisma.appConfig.findMany({
+    const configs = await this.prisma.app_configs.findMany({
       where,
       orderBy: [{ category: "asc" }, { key: "asc" }],
     });
@@ -41,7 +42,7 @@ export class ConfigService {
    * Get single config by ID
    */
   async getConfig(id: string, resolveSecrets = false) {
-    const config = await this.prisma.appConfig.findUnique({
+    const config = await this.prisma.app_configs.findUnique({
       where: { id },
     });
 
@@ -78,7 +79,7 @@ export class ConfigService {
 
     // If environment specified, find exact match or fallback to null (global)
     if (environment) {
-      const configs = await this.prisma.appConfig.findMany({
+      const configs = await this.prisma.app_configs.findMany({
         where: { key },
         orderBy: { environment: "desc" }, // Prefer env-specific over global
       });
@@ -91,7 +92,7 @@ export class ConfigService {
       return config || null;
     }
 
-    return this.prisma.appConfig.findUnique({ where });
+    return this.prisma.app_configs.findUnique({ where });
   }
 
   /**
@@ -110,7 +111,7 @@ export class ConfigService {
     userId: string,
   ) {
     // Check for duplicate key + environment combo
-    const existing = await this.prisma.appConfig.findFirst({
+    const existing = await this.prisma.app_configs.findFirst({
       where: {
         key: data.key,
         environment: data.environment || null,
@@ -123,11 +124,13 @@ export class ConfigService {
       );
     }
 
-    return this.prisma.appConfig.create({
+    return this.prisma.app_configs.create({
       data: {
+        id: uuidv4(),
+        updated_at: new Date(),
         ...data,
-        createdBy: userId,
-        updatedBy: userId,
+        created_by: userId,
+        updated_by: userId,
       },
     });
   }
@@ -144,18 +147,18 @@ export class ConfigService {
     },
     userId: string,
   ) {
-    const config = await this.prisma.appConfig.findUnique({ where: { id } });
+    const config = await this.prisma.app_configs.findUnique({ where: { id } });
 
     if (!config) {
       throw new NotFoundException("Configuration not found");
     }
 
-    return this.prisma.appConfig.update({
+    return this.prisma.app_configs.update({
       where: { id },
       data: {
         ...data,
-        updatedBy: userId,
-        updatedAt: new Date(),
+        updated_by: userId,
+        updated_at: new Date(),
       },
     });
   }
@@ -164,13 +167,13 @@ export class ConfigService {
    * Delete config
    */
   async deleteConfig(id: string) {
-    const config = await this.prisma.appConfig.findUnique({ where: { id } });
+    const config = await this.prisma.app_configs.findUnique({ where: { id } });
 
     if (!config) {
       throw new NotFoundException("Configuration not found");
     }
 
-    return this.prisma.appConfig.delete({ where: { id } });
+    return this.prisma.app_configs.delete({ where: { id } });
   }
 
   /**
@@ -275,7 +278,7 @@ export class ConfigService {
     const where: any = { category };
     if (environment) where.environment = environment;
 
-    return this.prisma.appConfig.findMany({
+    return this.prisma.app_configs.findMany({
       where,
       orderBy: { key: "asc" },
     });

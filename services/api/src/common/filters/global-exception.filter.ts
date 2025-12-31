@@ -7,6 +7,7 @@ import {
   Logger,
 } from "@nestjs/common";
 import { Request, Response } from "express";
+import { AppError } from "../domain/app-error";
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -17,19 +18,30 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const status =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let message: any = "Internal server error";
+    let code = "INTERNAL_ERROR";
+    let details: any = undefined;
 
-    const message =
-      exception instanceof HttpException
-        ? exception.getResponse()
-        : "Internal server error";
+    if (exception instanceof AppError) {
+      status = exception.httpStatus;
+      message = exception.message;
+      code = exception.code;
+      details = exception.details;
+    } else if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      const res = exception.getResponse();
+      message =
+        typeof res === "object" && (res as any).message
+          ? (res as any).message
+          : res;
+      code = (res as any).error || "HTTP_ERROR";
+    }
 
     // Log the error
+    const errorLog = `${request.method} ${request.url} - ${status} - ${code}`;
     this.logger.error(
-      `${request.method} ${request.url}`,
+      errorLog,
       exception instanceof Error ? exception.stack : String(exception),
     );
 
@@ -38,7 +50,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
-      message: typeof message === "string" ? message : message,
+      code,
+      message,
+      details,
     });
   }
 }

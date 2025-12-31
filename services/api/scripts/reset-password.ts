@@ -5,32 +5,30 @@ const prisma = new PrismaClient();
 
 async function resetPassword() {
   const email = 'bom.kim@placestecnologia.com.br';
-  const newPassword = 'AprendeAI2024!'; // Temporary password
+  const newPassword = 'teste123'; // Temporary password requested for testing
 
   try {
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: { id: true, email: true, name: true },
-    });
-
-    if (!user) {
-      console.log('❌ User not found:', email);
-      return;
-    }
-
-    console.log('✅ User found:', user);
-
     // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update password
-    await prisma.user.update({
+    // Upsert user (Create or Update)
+    const result = await prisma.users.upsert({
       where: { email },
-      data: { passwordHash: hashedPassword },
+      update: { password_hash: hashedPassword },
+      create: {
+        id: 'user-' + Date.now(),
+        email,
+        name: 'Bom Kim',
+        password_hash: hashedPassword,
+        system_role: 'ADMIN',
+        last_context_role: 'OWNER',
+        status: 'ACTIVE',
+        updated_at: new Date()
+      },
     });
 
-    console.log('✅ Password reset successfully!');
+    console.log('✅ User record processed:', result.email);
+    console.log('✅ Password set successfully!');
     console.log('📧 Email:', email);
     console.log('🔑 New password:', newPassword);
     console.log('⚠️  Please change this password after login!');

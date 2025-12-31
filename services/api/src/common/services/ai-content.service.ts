@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { LLMService } from '../../llm/llm.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { LLMService } from "../../llm/llm.service";
 
 export interface SimplificationResult {
   simplifiedText: string;
@@ -9,7 +9,7 @@ export interface SimplificationResult {
 
 export interface AssessmentQuestion {
   questionText: string;
-  questionType: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
+  questionType: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
   options?: string[];
   correctAnswer: string;
   explanation: string;
@@ -25,7 +25,7 @@ export class AIContentService {
 
   constructor(
     private configService: ConfigService,
-    private llmService: LLMService
+    private llmService: LLMService,
   ) {}
 
   async simplifyText(params: {
@@ -34,23 +34,23 @@ export class AIContentService {
     targetLanguage: string;
   }): Promise<SimplificationResult> {
     const { text, targetLevel, targetLanguage } = params;
-    
+
     // Check if any AI is available (LLMService handles provider check)
     // Actually LLMService.generateText handles checking internally
-    
+
     const levelDescriptions: Record<string, string> = {
-      '1_EF': 'primeira série do ensino fundamental (6-7 anos)',
-      '2_EF': 'segunda série do ensino fundamental (7-8 anos)',
-      '3_EF': 'terceira série do ensino fundamental (8-9 anos)',
-      '4_EF': 'quarta série do ensino fundamental (9-10 anos)',
-      '5_EF': 'quinta série do ensino fundamental (10-11 anos)',
-      '6_EF': 'sexta série do ensino fundamental (11-12 anos)',
-      '7_EF': 'sétima série do ensino fundamental (12-13 anos)',
-      '8_EF': 'oitava série do ensino fundamental (13-14 anos)',
-      '9_EF': 'nona série do ensino fundamental (14-15 anos)',
-      '1_EM': 'primeira série do ensino médio (15-16 anos)',
-      '2_EM': 'segunda série do ensino médio (16-17 anos)',
-      '3_EM': 'terceira série do ensino médio (17-18 anos)',
+      "1_EF": "primeira série do ensino fundamental (6-7 anos)",
+      "2_EF": "segunda série do ensino fundamental (7-8 anos)",
+      "3_EF": "terceira série do ensino fundamental (8-9 anos)",
+      "4_EF": "quarta série do ensino fundamental (9-10 anos)",
+      "5_EF": "quinta série do ensino fundamental (10-11 anos)",
+      "6_EF": "sexta série do ensino fundamental (11-12 anos)",
+      "7_EF": "sétima série do ensino fundamental (12-13 anos)",
+      "8_EF": "oitava série do ensino fundamental (13-14 anos)",
+      "9_EF": "nona série do ensino fundamental (14-15 anos)",
+      "1_EM": "primeira série do ensino médio (15-16 anos)",
+      "2_EM": "segunda série do ensino médio (16-17 anos)",
+      "3_EM": "terceira série do ensino médio (17-18 anos)",
     };
 
     const prompt = `
@@ -63,7 +63,7 @@ REQUISITOS:
 - Frases curtas e diretas
 - Explique termos complexos de forma simples
 - Mantenha as ideias principais
-- Idioma: ${targetLanguage === 'PT_BR' ? 'Português do Brasil' : targetLanguage}
+- Idioma: ${targetLanguage === "PT_BR" ? "Português do Brasil" : targetLanguage}
 
 TEXTO ORIGINAL:
 ${text}
@@ -77,13 +77,13 @@ FORMATO DE RESPOSTA (JSON ONLY):
 
     try {
       // Use LLMService for multi-provider support (Gemini -> OpenAI -> Fallback)
-      const result = await this.llmService.generateText(prompt, { 
+      const result = await this.llmService.generateText(prompt, {
         temperature: 0.3,
         maxTokens: 2000,
       });
 
       const response = result.text;
-      
+
       // Try to parse JSON response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -93,7 +93,7 @@ FORMATO DE RESPOSTA (JSON ONLY):
           summary: parsed.summary,
         };
       }
-      
+
       // Fallback: treat entire response as simplified text
       return {
         simplifiedText: response,
@@ -102,15 +102,18 @@ FORMATO DE RESPOSTA (JSON ONLY):
     } catch (error) {
       // LLMService already handles retries and provider failover.
       // If we are here, ALL providers failed or Quota exceeded on all.
-      
+
       this.logger.error(`AI Simplification full failure: ${error.message}`);
-      
+
       // Bubble up specific errors for QueueConsumer to handle (e.g. Quota)
-      if (error.message?.includes('QUOTA') || error.message?.includes('rate limit')) {
-         throw new Error('QUOTA_EXCEEDED');
+      if (
+        error.message?.includes("QUOTA") ||
+        error.message?.includes("rate limit")
+      ) {
+        throw new Error("QUOTA_EXCEEDED");
       }
-      
-      throw new Error('AI_PROCESSING_ERROR');
+
+      throw new Error("AI_PROCESSING_ERROR");
     }
   }
 
@@ -154,23 +157,26 @@ FORMATO DE RESPOSTA (JSON Array ONLY):
       });
 
       const response = result.text;
-      
+
       // Try to parse JSON array
       const jsonMatch = response.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         const questions = JSON.parse(jsonMatch[0]);
         return { questions };
       }
-      
-      throw new Error('Could not parse AI response');
+
+      throw new Error("Could not parse AI response");
     } catch (error) {
       this.logger.error(`AI Assessment generation failure: ${error.message}`);
 
-      if (error.message?.includes('QUOTA') || error.message?.includes('rate limit')) {
-         throw new Error('QUOTA_EXCEEDED');
+      if (
+        error.message?.includes("QUOTA") ||
+        error.message?.includes("rate limit")
+      ) {
+        throw new Error("QUOTA_EXCEEDED");
       }
 
-      throw new Error('AI_PROCESSING_ERROR');
+      throw new Error("AI_PROCESSING_ERROR");
     }
   }
 }

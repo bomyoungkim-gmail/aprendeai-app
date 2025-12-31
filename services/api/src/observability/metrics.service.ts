@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class MetricsService {
@@ -17,8 +18,9 @@ export class MetricsService {
   }) {
     try {
       // Record request count
-      await this.prisma.systemMetric.create({
+      await this.prisma.system_metrics.create({
         data: {
+          id: uuidv4(),
           metric: "api_request",
           value: 1,
           tags: {
@@ -32,8 +34,9 @@ export class MetricsService {
       });
 
       // Record latency
-      await this.prisma.systemMetric.create({
+      await this.prisma.system_metrics.create({
         data: {
+          id: uuidv4(),
           metric: "api_latency",
           value: data.latency,
           tags: { endpoint: data.endpoint },
@@ -56,7 +59,7 @@ export class MetricsService {
     to: Date;
     bucket: string;
   }) {
-    return this.prisma.systemMetric.findMany({
+    return this.prisma.system_metrics.findMany({
       where: {
         metric: params.metric,
         bucket: params.bucket,
@@ -73,7 +76,7 @@ export class MetricsService {
    * Get aggregated stats (count, avg, etc.)
    */
   async getStats(metric: string, from: Date, to: Date) {
-    const result = await this.prisma.systemMetric.aggregate({
+    const result = await this.prisma.system_metrics.aggregate({
       where: {
         metric,
         timestamp: { gte: from, lte: to },
@@ -96,7 +99,7 @@ export class MetricsService {
     const now = new Date();
 
     // Get all 1-minute metrics from last hour
-    const minuteMetrics = await this.prisma.systemMetric.findMany({
+    const minuteMetrics = await this.prisma.system_metrics.findMany({
       where: {
         bucket: "1m",
         timestamp: { gte: oneHourAgo, lte: now },
@@ -125,12 +128,14 @@ export class MetricsService {
     );
 
     // Create hourly aggregates
-    for (const group of Object.values(grouped)) {
+    for (const groupObj of Object.values(grouped)) {
+      const group = groupObj as any;
       const values = group.values as number[];
       const avg = values.reduce((a, b) => a + b, 0) / values.length;
 
-      await this.prisma.systemMetric.create({
+      await this.prisma.system_metrics.create({
         data: {
+          id: uuidv4(),
           metric: group.metric,
           value: avg,
           tags: group.tags,
@@ -148,7 +153,7 @@ export class MetricsService {
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const now = new Date();
 
-    const hourlyMetrics = await this.prisma.systemMetric.findMany({
+    const hourlyMetrics = await this.prisma.system_metrics.findMany({
       where: {
         bucket: "1h",
         timestamp: { gte: oneDayAgo, lte: now },
@@ -177,12 +182,14 @@ export class MetricsService {
     );
 
     // Create daily aggregates
-    for (const group of Object.values(grouped)) {
+    for (const groupObj of Object.values(grouped)) {
+      const group = groupObj as any;
       const values = group.values as number[];
       const avg = values.reduce((a, b) => a + b, 0) / values.length;
 
-      await this.prisma.systemMetric.create({
+      await this.prisma.system_metrics.create({
         data: {
+          id: uuidv4(),
           metric: group.metric,
           value: avg,
           tags: group.tags,
@@ -199,7 +206,7 @@ export class MetricsService {
   async cleanupOldMetrics() {
     const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
-    const result = await this.prisma.systemMetric.deleteMany({
+    const result = await this.prisma.system_metrics.deleteMany({
       where: { timestamp: { lt: cutoff } },
     });
 

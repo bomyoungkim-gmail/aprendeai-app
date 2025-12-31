@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { API_ENDPOINTS } from '@/lib/config/api';
 
 export type PlanType = 'FREE' | 'INDIVIDUAL_PREMIUM' | 'FAMILY' | 'INSTITUTION';
 
@@ -14,7 +15,7 @@ export const useEntitlements = () => {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['entitlements'],
     queryFn: async () => {
-      const response = await api.get<EntitlementSnapshot>('/me/entitlements');
+      const response = await api.get<EntitlementSnapshot>(API_ENDPOINTS.USERS.ME + '/entitlements');
       return response.data;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes

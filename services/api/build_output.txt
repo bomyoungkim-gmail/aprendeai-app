@@ -1,0 +1,17 @@
+
+> api@0.0.1 build
+> nest build
+
+test/unit/users/application/get-profile.use-case.spec.ts:25:5 - error TS2322: Type '{ findById: jest.Mock<any, any, any>; findByEmail: jest.Mock<any, any, any>; findAll: jest.Mock<any, any, any>; create: jest.Mock<any, any, any>; update: jest.Mock<...>; delete: jest.Mock<...>; }' is not assignable to type 'Mocked<IUsersRepository>'.
+  Property 'updateSettings' is missing in type '{ findById: jest.Mock<any, any, any>; findByEmail: jest.Mock<any, any, any>; findAll: jest.Mock<any, any, any>; create: jest.Mock<any, any, any>; update: jest.Mock<...>; delete: jest.Mock<...>; }' but required in type '{ findByEmail: MockInstance<Promise<User>, [email: string], unknown>; updateSettings: MockInstance<Promise<void>, [id: string, settings: any], unknown>; ... 4 more ...; delete: MockInstance<...>; }'.
+
+25     mockRepo = {
+       ~~~~~~~~
+
+  src/users/domain/users.repository.interface.ts:6:3
+    6   updateSettings(id: string, settings: any): Promise<void>;
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    'updateSettings' is declared here.
+
+Found 1 error(s).
+

@@ -5,9 +5,10 @@ import {
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { PrismaService } from "../prisma/prisma.service";
-import { randomBytes } from "crypto";
+import { randomBytes, randomUUID } from "crypto";
 import { EXTENSION_SCOPES } from "./dto/extension-auth.dto";
 import { URL_CONFIG } from "../config/urls.config";
+import { buildClaimsV2 } from "./domain/auth-claims.adapter";
 
 @Injectable()
 export class ExtensionAuthService {
@@ -33,13 +34,15 @@ export class ExtensionAuthService {
     const userCode = this.generateUserCode(); // ABCD-1234 format
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    await this.prisma.extensionDeviceAuth.create({
+    await this.prisma.extension_device_auth.create({
       data: {
-        deviceCode,
-        userCode,
-        requestedScopes: validScopes,
-        expiresAt,
+        id: randomUUID(),
+        device_code: deviceCode,
+        user_code: userCode,
+        requested_scopes: validScopes,
+        expires_at: expiresAt,
         status: "PENDING",
+        updated_at: new Date(),
       },
     });
 
@@ -59,8 +62,8 @@ export class ExtensionAuthService {
    * Extension calls this repeatedly until user approves
    */
   async pollDeviceCode(deviceCode: string) {
-    const auth = await this.prisma.extensionDeviceAuth.findUnique({
-      where: { deviceCode },
+    const auth = await this.prisma.extension_device_auth.findUnique({
+      where: { device_code: deviceCode },
     });
 
     if (!auth) {
@@ -68,8 +71,8 @@ export class ExtensionAuthService {
     }
 
     // Check expiration
-    if (auth.expiresAt < new Date()) {
-      await this.prisma.extensionDeviceAuth.update({
+    if (auth.expires_at < new Date()) {
+      await this.prisma.extension_device_auth.update({
         where: { id: auth.id },
         data: { status: "EXPIRED" },
       });
@@ -87,15 +90,15 @@ export class ExtensionAuthService {
     }
 
     // Approved - generate tokens
-    if (auth.status === "APPROVED" && auth.userId) {
+    if (auth.status === "APPROVED" && auth.user_id) {
       const tokens = await this.generateTokens(
-        auth.userId,
-        auth.clientId,
-        auth.requestedScopes as string[],
+        auth.user_id,
+        auth.client_id,
+        auth.requested_scopes as string[],
       );
 
       // Mark as consumed (prevent replay)
-      await this.prisma.extensionDeviceAuth.delete({
+      await this.prisma.extension_device_auth.delete({
         where: { id: auth.id },
       });
 
@@ -105,7 +108,7 @@ export class ExtensionAuthService {
         accessToken: tokens.accessToken,
         expiresInSec: 900, // 15 minutes
         refreshToken: tokens.refreshToken,
-        scope: (auth.requestedScopes as string[]).join(" "),
+        scope: (auth.requested_scopes as string[]).join(" "),
       };
     }
 
@@ -116,15 +119,15 @@ export class ExtensionAuthService {
    * Approve device code (called by logged-in user via web UI)
    */
   async approveDeviceCode(userCode: string, userId: string, approve: boolean) {
-    const auth = await this.prisma.extensionDeviceAuth.findUnique({
-      where: { userCode },
+    const auth = await this.prisma.extension_device_auth.findUnique({
+      where: { user_code: userCode },
     });
 
     if (!auth) {
       throw new BadRequestException("Invalid user code");
     }
 
-    if (auth.expiresAt < new Date()) {
+    if (auth.expires_at < new Date()) {
       throw new BadRequestException("Code expired");
     }
 
@@ -132,11 +135,11 @@ export class ExtensionAuthService {
       throw new BadRequestException("Code already processed");
     }
 
-    await this.prisma.extensionDeviceAuth.update({
+    await this.prisma.extension_device_auth.update({
       where: { id: auth.id },
       data: {
         status: approve ? "APPROVED" : "DENIED",
-        userId: approve ? userId : null,
+        user_id: approve ? userId : null,
       },
     });
 
@@ -147,35 +150,47 @@ export class ExtensionAuthService {
    * Refresh access token using refresh token
    */
   async refreshToken(refreshToken: string) {
-    const grant = await this.prisma.extensionGrant.findUnique({
-      where: { refreshToken },
+    const grant = await this.prisma.extension_grants.findUnique({
+      where: { refresh_token: refreshToken },
     });
 
-    if (!grant || grant.revokedAt) {
+    if (!grant || grant.revoked_at) {
       throw new UnauthorizedException("Invalid or revoked refresh token");
     }
 
     // Update last used
-    await this.prisma.extensionGrant.update({
+    await this.prisma.extension_grants.update({
       where: { id: grant.id },
-      data: { lastUsedAt: new Date() },
+      data: { last_used_at: new Date() },
     });
 
+    // Fetch user for claims
+    const user = await this.prisma.users.findUnique({
+      where: { id: grant.user_id },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException("User not found");
+    }
+
     // Generate new access token (keep same refresh token)
-    const accessToken = this.jwtService.sign(
-      {
-        sub: grant.userId,
-        scopes: grant.scopes,
-        clientId: grant.clientId,
-      },
-      { expiresIn: "15m" },
-    );
+    const claims = buildClaimsV2({
+      id: user.id,
+      email: user.email,
+      systemRole: user.system_role,
+      contextRole: user.last_context_role,
+      institutionId: user.last_institution_id,
+      scopes: grant.scopes as string[],
+      clientId: grant.client_id,
+    });
+
+    const accessToken = this.jwtService.sign(claims, { expiresIn: "15m" });
 
     // Update grant with new token JTI
     const jti = this.extractJti(accessToken);
-    await this.prisma.extensionGrant.update({
+    await this.prisma.extension_grants.update({
       where: { id: grant.id },
-      data: { accessTokenJti: jti },
+      data: { access_token_jti: jti },
     });
 
     return {
@@ -189,17 +204,17 @@ export class ExtensionAuthService {
    * Revoke extension grant
    */
   async revokeGrant(grantId: string, userId: string) {
-    const grant = await this.prisma.extensionGrant.findFirst({
-      where: { id: grantId, userId },
+    const grant = await this.prisma.extension_grants.findFirst({
+      where: { id: grantId, user_id: userId },
     });
 
     if (!grant) {
       throw new BadRequestException("Grant not found");
     }
 
-    await this.prisma.extensionGrant.update({
+    await this.prisma.extension_grants.update({
       where: { id: grantId },
-      data: { revokedAt: new Date() },
+      data: { revoked_at: new Date() },
     });
 
     return { ok: true };
@@ -209,7 +224,7 @@ export class ExtensionAuthService {
    * Get user info for extension (masked email)
    */
   async getExtensionUserInfo(userId: string) {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.users.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -237,26 +252,38 @@ export class ExtensionAuthService {
     clientId: string,
     scopes: string[],
   ) {
-    const accessToken = this.jwtService.sign(
-      {
-        sub: userId,
-        scopes,
-        clientId,
-      },
-      { expiresIn: "15m" },
-    );
+    const user = await this.prisma.users.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException("User not found");
+    }
+
+    const claims = buildClaimsV2({
+      id: user.id,
+      email: user.email,
+      systemRole: user.system_role,
+      contextRole: user.last_context_role,
+      institutionId: user.last_institution_id,
+      scopes,
+      clientId,
+    });
+
+    const accessToken = this.jwtService.sign(claims, { expiresIn: "15m" });
 
     const refreshToken = "rft_" + randomBytes(32).toString("hex");
     const jti = this.extractJti(accessToken);
 
     // Save grant
-    await this.prisma.extensionGrant.create({
+    await this.prisma.extension_grants.create({
       data: {
-        userId,
-        clientId,
+        id: randomUUID(),
+        user_id: userId,
+        client_id: clientId,
         scopes,
-        accessTokenJti: jti,
-        refreshToken,
+        access_token_jti: jti,
+        refresh_token: refreshToken,
       },
     });
 

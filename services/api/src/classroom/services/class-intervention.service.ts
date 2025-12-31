@@ -56,11 +56,11 @@ export class ClassInterventionService {
    * Check if intervention mode allows 1:1 sessions
    */
   async canDo1on1(classroomId: string): Promise<boolean> {
-    const policy = await this.prisma.classPolicy.findUnique({
-      where: { classroomId },
+    const policy = await this.prisma.class_policies.findUnique({
+      where: { classroom_id: classroomId },
     });
 
-    return policy?.interventionMode === "PROMPT_COACH_PLUS_1ON1";
+    return policy?.intervention_mode === "PROMPT_COACH_PLUS_1ON1";
   }
 
   /**

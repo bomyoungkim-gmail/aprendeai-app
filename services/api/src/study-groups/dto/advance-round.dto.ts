@@ -3,5 +3,5 @@ import { RoundStatus } from "@prisma/client";
 
 export class AdvanceRoundDto {
   @IsEnum(RoundStatus)
-  toStatus: RoundStatus;
+  to_status: RoundStatus;
 }

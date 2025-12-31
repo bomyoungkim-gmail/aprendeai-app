@@ -45,7 +45,7 @@ async function seedLLMConfigs() {
   ];
 
   for (const config of configs) {
-    const existing = await prisma.appConfig.findFirst({
+    const existing = await prisma.app_configs.findFirst({
       where: {
         key: config.key,
         environment: null,
@@ -57,11 +57,11 @@ async function seedLLMConfigs() {
       continue;
     }
 
-    await prisma.appConfig.create({
+    await prisma.app_configs.create({
       data: {
         ...config,
-        createdBy: 'system',
-        updatedBy: 'system',
+        created_by: 'system',
+        updated_by: 'system',
       },
     });
 

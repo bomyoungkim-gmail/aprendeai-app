@@ -34,18 +34,51 @@ export default function LoginPage() {
     setError('');
     try {
       const res = await api.post(API_ENDPOINTS.AUTH.LOGIN, data);
-      setAuth(res.data.access_token, res.data.refresh_token, res.data.user);
       
-      // Role-based redirect
-      const userRole = res.data.user.role;
-      let redirectPath = ROUTES.DASHBOARD.HOME; // Default
+      const rawUser = res.data.user;
       
-      if (userRole === 'ADMIN') {
+      // Map backend snake_case to frontend camelCase (User interface)
+      const user = {
+        id: rawUser.id,
+        email: rawUser.email,
+        name: rawUser.name,
+        role: rawUser.role, // Legacy fallback
+        systemRole: rawUser.system_role,
+        contextRole: rawUser.context_role,
+        activeInstitutionId: rawUser.active_institution_id,
+        institutionMemberships: rawUser.institution_members?.map((m: any) => ({
+             institution: m.institutions,
+             role: m.role
+        })) || [],
+        settings: rawUser.settings
+      };
+
+      setAuth(res.data.access_token, user as any);
+      
+      // Role-based redirect logic
+      let redirectPath: string = ROUTES.DASHBOARD.HOME; // Default (Student / Common User)
+      
+      // 1. System Role Override
+      if (user.systemRole === 'ADMIN') {
         redirectPath = '/admin';
-      } else if (userRole === 'INSTITUTION_ADMIN') {
-        redirectPath = '/institution/dashboard';
-      } else if (userRole === 'FAMILY_OWNER') {
+      } 
+      // 2. Context Role (Institution)
+      else if (user.contextRole) {
+        if (['OWNER', 'INSTITUTION_EDUCATION_ADMIN', 'INSTITUTION_ENTERPRISE_ADMIN'].includes(user.contextRole)) {
+           redirectPath = '/institution/dashboard';
+        } else if (user.contextRole === 'TEACHER') {
+           redirectPath = '/institution/dashboard';
+        }
+        // Students stay on default /dashboard
+      }
+      // 3. Legacy / Fallback Roles
+      else if (user.role === 'FAMILY_OWNER') {
         redirectPath = '/parent';
+      } else if (user.role === 'INSTITUTION_ADMIN') {
+         // Fallback if contextRole not set but legacy role exists
+         redirectPath = '/institution/dashboard';
+      } else if (user.role === 'ADMIN') {
+         redirectPath = '/admin';
       }
       
       router.push(redirectPath);

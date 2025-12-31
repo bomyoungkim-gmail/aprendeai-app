@@ -9,13 +9,13 @@ export class TokenAnalyticsService {
    * Get total usage metrics within a date range
    */
   async getAggregatedMetrics(from: Date, to: Date) {
-    const aggregations = await this.prisma.providerUsage.aggregate({
+    const aggregations = await this.prisma.provider_usage.aggregate({
       where: {
         timestamp: { gte: from, lte: to },
       },
       _sum: {
-        totalTokens: true,
-        costUsd: true,
+        total_tokens: true,
+        cost_usd: true,
       },
       _count: {
         id: true,
@@ -27,8 +27,8 @@ export class TokenAnalyticsService {
 
     return {
       totalRequests: aggregations._count.id,
-      totalTokens: aggregations._sum.totalTokens || 0,
-      totalCostUsd: aggregations._sum.costUsd || 0,
+      totalTokens: aggregations._sum.total_tokens || 0,
+      totalCostUsd: aggregations._sum.cost_usd || 0,
       avgLatency: aggregations._avg.latency || 0,
     };
   }
@@ -39,7 +39,7 @@ export class TokenAnalyticsService {
   async getEvolution(from: Date, to: Date, interval: "day" | "hour" = "day") {
     // Using raw query for efficient date_trunc grouping
     const intervalSql = interval === "hour" ? "hour" : "day";
-    
+
     // Note: Prisma raw query returns plain objects.
     // Ensure table name matches @map("provider_usage")
     const series = await this.prisma.$queryRaw<any[]>`
@@ -68,11 +68,11 @@ export class TokenAnalyticsService {
   async getDistribution(
     dimension: "provider" | "model" | "feature" | "operation",
     from: Date,
-    to: Date
+    to: Date,
   ) {
     // We can use groupBy for standard fields, but we need dynamic grouping
     // provider, model, operation, feature are columns.
-    
+
     // Check allowlist
     const validDimensions = ["provider", "model", "feature", "operation"];
     if (!validDimensions.includes(dimension)) {
@@ -83,18 +83,18 @@ export class TokenAnalyticsService {
     // Using Prisma.sql for safety is best, but table columns are identifiers.
     // Since we validate input against allowlist, we can use unsafe injection for column name safely?
     // Actually, Prisma's groupBy is safer.
-    
+
     // Mapping dimension to Prisma field key
     // dimension 'model' -> model is nullable.
-    
-    const groupByResult = await this.prisma.providerUsage.groupBy({
+
+    const groupByResult = await this.prisma.provider_usage.groupBy({
       by: [dimension as any],
       where: {
         timestamp: { gte: from, lte: to },
       },
       _sum: {
-        totalTokens: true,
-        costUsd: true,
+        total_tokens: true,
+        cost_usd: true,
       },
       _count: {
         id: true,
@@ -104,8 +104,8 @@ export class TokenAnalyticsService {
     return groupByResult.map((g) => ({
       key: g[dimension],
       requests: g._count.id,
-      tokens: g._sum.totalTokens || 0,
-      cost: g._sum.costUsd || 0,
+      tokens: g._sum.total_tokens || 0,
+      cost: g._sum.cost_usd || 0,
     }));
   }
 
@@ -116,7 +116,7 @@ export class TokenAnalyticsService {
     entity: "user" | "family" | "institution",
     from: Date,
     to: Date,
-    limit: number = 10
+    limit: number = 10,
   ) {
     const colMap = {
       user: "user_id",
@@ -124,7 +124,7 @@ export class TokenAnalyticsService {
       institution: "institution_id",
     };
     const colName = colMap[entity];
-    
+
     if (!colName) throw new Error("Invalid entity type");
 
     const result = await this.prisma.$queryRaw<any[]>`
@@ -140,11 +140,11 @@ export class TokenAnalyticsService {
       LIMIT ${limit}
     `;
 
-    return result.map(row => ({
+    return result.map((row) => ({
       id: row.id,
       requests: Number(row.requests),
       tokens: Number(row.tokens || 0),
-      cost: Number(row.cost || 0)
+      cost: Number(row.cost || 0),
     }));
   }
 }

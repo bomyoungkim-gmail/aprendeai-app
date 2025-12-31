@@ -1,21 +1,19 @@
+import { Test, TestingModule } from "@nestjs/testing";
+import { ContentPedagogicalService } from "../../src/cornell/services/content-pedagogical.service";
+import { PrismaService } from "../../src/prisma/prisma.service";
 
-import { Test, TestingModule } from '@nestjs/testing';
-import { ContentPedagogicalService } from '../../src/cornell/services/content-pedagogical.service';
-import { PrismaService } from '../../src/prisma/prisma.service';
-
-const mockPrismaService = {
-  contentPedagogicalData: {
-    upsert: jest.fn(),
-    findUnique: jest.fn(),
-  },
-  gameResult: {
-    create: jest.fn(),
-  },
-};
-
-describe('ContentPedagogicalService', () => {
+describe("ContentPedagogicalService", () => {
   let service: ContentPedagogicalService;
-  let prisma: typeof mockPrismaService;
+
+  const mockPrismaService = {
+    content_pedagogical_data: {
+      upsert: jest.fn(),
+      findUnique: jest.fn(),
+    },
+    game_results: {
+      create: jest.fn(),
+    },
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -26,47 +24,52 @@ describe('ContentPedagogicalService', () => {
     }).compile();
 
     service = module.get<ContentPedagogicalService>(ContentPedagogicalService);
-    prisma = module.get(PrismaService);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('createOrUpdatePedagogicalData', () => {
-    it('should upsert pedagogical data', async () => {
-      const contentId = 'content-123';
+  describe("createOrUpdatePedagogicalData", () => {
+    it("should upsert pedagogical data", async () => {
+      const contentId = "content-123";
       const inputData: any = {
-        vocabularyTriage: { words: [] },
-        content: { connect: { id: contentId } } // Mock relation
+        vocabulary_triage: { words: [] },
       };
 
       await service.createOrUpdatePedagogicalData(contentId, inputData);
 
-      expect(prisma.contentPedagogicalData.upsert).toHaveBeenCalledWith({
-        where: { contentId },
-        create: { ...inputData, contentId },
-        update: inputData,
+      expect(
+        mockPrismaService.content_pedagogical_data.upsert,
+      ).toHaveBeenCalledWith({
+        where: { content_id: contentId },
+        create: expect.objectContaining({
+          ...inputData,
+          content_id: contentId,
+        }),
+        update: expect.objectContaining({
+          ...inputData,
+        }),
       });
     });
   });
 
-  describe('recordGameResult', () => {
-    it('should create a game result', async () => {
+  describe("recordGameResult", () => {
+    it("should create a game result", async () => {
       const gameData: any = {
-        gameType: 'QUIZ',
+        game_type: "QUIZ",
         score: 100,
-        userId: 'user-123',
-        contentId: 'content-123',
+        user_id: "user-123",
+        content_id: "content-123",
       };
 
       await service.recordGameResult(gameData);
 
-      expect(prisma.gameResult.create).toHaveBeenCalledWith({
+      expect(mockPrismaService.game_results.create).toHaveBeenCalledWith({
         data: gameData,
       });
     });

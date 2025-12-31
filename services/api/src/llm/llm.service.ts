@@ -32,10 +32,10 @@ export class LLMService {
     // Order matters: try providers in sequence
     // Prioritize Gemini (free tier), then Anthropic (balanced), then OpenAI, then Fallback
     this.providers = [
-      geminiProvider,      // Try Gemini first (free tier available)
-      anthropicProvider,   // Claude Sonnet (balanced cost/quality)
-      openaiProvider,      // GPT fallback
-      degradedProvider,    // Always available fallback
+      geminiProvider, // Try Gemini first (free tier available)
+      anthropicProvider, // Claude Sonnet (balanced cost/quality)
+      openaiProvider, // GPT fallback
+      degradedProvider, // Always available fallback
     ];
 
     this.maxRetries = this.config.get("LLM_MAX_RETRIES", 3);

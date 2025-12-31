@@ -56,8 +56,8 @@ export class OpenAIProvider implements LLMProvider {
 
     // Get model from DB config, fallback to options, then env, then default
     const modelConfig = await this.llmConfig.getModelConfig(
-      'openai',
-      'gpt-3.5-turbo'
+      "openai",
+      "gpt-3.5-turbo",
     );
     const model = options?.model || modelConfig.model;
     const temperature = options?.temperature ?? 0.7;

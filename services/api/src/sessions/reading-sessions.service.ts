@@ -24,6 +24,11 @@ import { v4 as uuid } from "uuid";
 import { SessionsQueryDto } from "./dto/sessions-query.dto";
 import { Prisma } from "@prisma/client";
 import { ProviderUsageService } from "../observability/provider-usage.service";
+import { StartSessionUseCase } from "./application/use-cases/start-session.use-case";
+import { GetSessionUseCase } from "./application/use-cases/get-session.use-case";
+import { UpdatePrePhaseUseCase, UpdatePrePhaseData } from "./application/use-cases/update-pre-phase.use-case";
+import { AdvancePhaseUseCase } from "./application/use-cases/advance-phase.use-case";
+import { RecordEventUseCase } from "./application/use-cases/record-event.use-case";
 
 @Injectable()
 export class ReadingSessionsService {
@@ -41,219 +46,53 @@ export class ReadingSessionsService {
     private providerUsageService: ProviderUsageService,
     private activityService: ActivityService,
     @Inject(EventEmitter2) private eventEmitter: EventEmitter2,
+    // Refactored Use Cases
+    private startSessionUseCase: StartSessionUseCase,
+    private getSessionUseCase: GetSessionUseCase,
+    private updatePrePhaseUseCase: UpdatePrePhaseUseCase,
+    private advancePhaseUseCase: AdvancePhaseUseCase,
+    private recordEventUseCase: RecordEventUseCase,
   ) {}
 
-  async startSession(userId: string, contentId: string) {
-    // 1. Get/create learner profile
-    const profile = await this.profileService.getOrCreate(userId);
-
-    // 2. Verify content exists
-    const content = await this.prisma.content.findUnique({
-      where: { id: contentId },
-    });
-
-    if (!content) {
-      throw new NotFoundException("Content not found");
-    }
-
-    // 3. Determine appropriate layer based on user eligibility
-    const assetLayer = await this.gatingService.determineLayer(
-      userId,
-      contentId,
-    );
-
-    this.logger.log(
-      `Starting session for user ${userId}, content ${contentId}, layer: ${assetLayer}`,
-    );
-
-    // 4. Create session with phase=PRE
-    const session = await this.prisma.readingSession.create({
-      data: {
-        userId,
-        contentId,
-        phase: "PRE",
-        modality: "READING",
-        assetLayer,
-      },
-      include: {
-        content: {
-          select: {
-            id: true,
-            title: true,
-            type: true,
-          },
-        },
-      },
-    });
-
-    // 4. Return with minTargetWords
-    return {
-      ...session,
-      minTargetWords: this.getMinTargetWords(profile.educationLevel as any),
-    };
+  async startSession(user_id: string, content_id: string) {
+    return this.startSessionUseCase.execute(user_id, content_id);
   }
 
-  async getSession(sessionId: string, userId: string) {
-    const session = await this.prisma.readingSession.findUnique({
-      where: { id: sessionId },
-      include: {
-        content: {
-          include: { file: true }, // Expõe storageKey para media
-        },
-        outcome: true,
-        events: {
-          orderBy: { createdAt: "asc" },
-          select: {
-            id: true,
-            eventType: true,
-            payloadJson: true,
-            createdAt: true,
-          },
-        },
-      },
-    });
-
-    if (!session) {
-      throw new NotFoundException("Session not found");
-    }
-
-    if (session.userId !== userId) {
-      throw new ForbiddenException("Access denied");
-    }
-
-    // Transform events to messages format
-    // Events with payloadJson.role are actual messages
-    const messages = session.events
-      .filter(
-        (event) => event.payloadJson && typeof event.payloadJson === "object",
-      )
-      .filter(
-        (event) =>
-          (event.payloadJson as any).role || (event.payloadJson as any).text,
-      )
-      .map((event) => {
-        const payload = event.payloadJson as any;
-        return {
-          id: event.id,
-          role: payload.role || "SYSTEM",
-          content: payload.text || payload.content || payload.message || "",
-          timestamp: event.createdAt,
-        };
-      });
-
-    // Extract quickReplies from last event that has them
-    const lastEventWithReplies = [...session.events]
-      .reverse()
-      .find((e) => (e.payloadJson as any)?.quickReplies);
-    const quickReplies = lastEventWithReplies
-      ? (lastEventWithReplies.payloadJson as any).quickReplies
-      : [];
-
-    return {
-      session,
-      content: session.content,
-      messages,
-      quickReplies,
-    };
+  async getSession(sessionId: string, user_id: string) {
+    return this.getSessionUseCase.execute(sessionId, user_id);
   }
 
-  async updatePrePhase(sessionId: string, userId: string, data: PrePhaseDto) {
-    const result = await this.getSession(sessionId, userId);
-
-    if (result.session.phase !== "PRE") {
-      throw new BadRequestException("Session not in PRE phase");
-    }
-
-    // Validate target words count
-    const profile = await this.profileService.get(userId);
-    const minWords = this.getMinTargetWords(profile.educationLevel as any);
-
-    if (data.targetWordsJson.length < minWords) {
-      throw new BadRequestException(
-        `Minimum ${minWords} target words required for ${profile.educationLevel} level`,
-      );
-    }
-
-    // Update and advance to DURING
-    return this.prisma.readingSession.update({
-      where: { id: sessionId },
-      data: {
-        goalStatement: data.goalStatement,
-        predictionText: data.predictionText,
-        targetWordsJson: data.targetWordsJson,
-        phase: "DURING",
-      },
-    });
+  async updatePrePhase(sessionId: string, user_id: string, data: PrePhaseDto) {
+    return this.updatePrePhaseUseCase.execute(sessionId, user_id, data);
   }
 
-  async recordEvent(sessionId: string, eventType: string, payload: any) {
-    // Verify session exists
-    const session = await this.prisma.readingSession.findUnique({
-      where: { id: sessionId },
-    });
-
-    if (!session) {
-      throw new NotFoundException("Session not found");
-    }
-
-    return this.prisma.sessionEvent.create({
-      data: {
-        readingSessionId: sessionId,
-        eventType: eventType as any,
-        payloadJson: payload,
-      },
-    });
+  async recordEvent(sessionId: string, event_type: string, payload: any) {
+    return this.recordEventUseCase.execute(sessionId, event_type, payload); 
   }
 
   async advancePhase(
     sessionId: string,
-    userId: string,
+    user_id: string,
     toPhase: "POST" | "FINISHED",
   ) {
-    const result = await this.getSession(sessionId, userId);
-
-    // Validate transition
-    if (toPhase === "POST" && result.session.phase !== "DURING") {
-      throw new BadRequestException(
-        "Can only advance to POST from DURING phase",
-      );
-    }
-
-    if (toPhase === "FINISHED") {
-      if (result.session.phase !== "POST") {
-        throw new BadRequestException("Can only finish from POST phase");
-      }
-
-      // Validate DoD (Definition of Done)
-      await this.validatePostCompletion(
-        sessionId,
-        result.session.userId,
-        result.session.contentId,
-      );
-    }
-
-    // Update session
-    const updated = await this.prisma.readingSession.update({
-      where: { id: sessionId },
-      data: {
-        phase: toPhase,
-        ...(toPhase === "FINISHED" && { finishedAt: new Date() }),
-      },
-    });
+    const updated = await this.advancePhaseUseCase.execute(sessionId, user_id, toPhase);
 
     // If finishing, compute outcomes and integrate with gamification
+    // Note: Use Case only handles state transition. Side effects like Gamification/Outcomes 
+    // ideally happen via Domain Events, but for now we keep them here or move them later.
+    // The previous implementation did this integration AFTER update.
     if (toPhase === "FINISHED") {
-      await this.integrateWithGamification(updated);
+      await this.integrateWithGamification(updated); // Pass compatible object or map
 
       // Auto-create vocabulary from target words on session finish
       if (
         updated.targetWordsJson &&
         Array.isArray(updated.targetWordsJson) &&
-        updated.targetWordsJson.length > 0
+        (updated.targetWordsJson as any[]).length > 0
       ) {
         try {
           this.logger.log(
-            `Auto-creating vocab from ${updated.targetWordsJson.length} target words for session ${sessionId}`,
+            `Auto-creating vocab from ${(updated.targetWordsJson as any[]).length} target words for session ${sessionId}`,
           );
           await this.vocabService.createFromTargetWords(sessionId);
         } catch (vocabError) {
@@ -281,18 +120,18 @@ export class ReadingSessionsService {
 
   private async validatePostCompletion(
     sessionId: string,
-    userId: string,
-    contentId: string,
+    user_id: string,
+    content_id: string,
   ) {
     // 1. Check Cornell Notes has summary
-    const notes = await this.prisma.cornellNotes.findFirst({
+    const notes = await this.prisma.cornell_notes.findFirst({
       where: {
-        contentId,
-        userId,
+        content_id,
+        user_id,
       },
     });
 
-    if (!notes?.summaryText?.trim()) {
+    if (!notes?.summary_text?.trim()) {
       throw new BadRequestException(
         "Cornell Notes summary is required to complete the session. Please add a summary in the Cornell Notes section.",
       );
@@ -300,10 +139,10 @@ export class ReadingSessionsService {
 
     // 2. Check at least 1 quiz/checkpoint response
     const hasQuiz =
-      (await this.prisma.sessionEvent.count({
+      (await this.prisma.session_events.count({
         where: {
-          readingSessionId: sessionId,
-          eventType: { in: ["QUIZ_RESPONSE", "CHECKPOINT_RESPONSE"] },
+          reading_session_id: sessionId,
+          event_type: { in: ["QUIZ_RESPONSE", "CHECKPOINT_RESPONSE"] },
         },
       })) > 0;
 
@@ -315,10 +154,10 @@ export class ReadingSessionsService {
 
     // 3. Check at least 1 production submission
     const hasProduction =
-      (await this.prisma.sessionEvent.count({
+      (await this.prisma.session_events.count({
         where: {
-          readingSessionId: sessionId,
-          eventType: "PRODUCTION_SUBMIT",
+          reading_session_id: sessionId,
+          event_type: "PRODUCTION_SUBMIT",
         },
       })) > 0;
 
@@ -335,59 +174,61 @@ export class ReadingSessionsService {
     this.logger.log(`Computing outcome for session ${sessionId}`);
 
     // Get all session events
-    const events = await this.prisma.sessionEvent.findMany({
-      where: { readingSessionId: sessionId },
+    const events = await this.prisma.session_events.findMany({
+      where: { reading_session_id: sessionId },
     });
 
     // Calculate comprehension score (basic - just completion for V3)
     const quizEvents = events.filter(
       (e) =>
-        e.eventType === "QUIZ_RESPONSE" ||
-        e.eventType === "CHECKPOINT_RESPONSE",
+        e.event_type === "QUIZ_RESPONSE" ||
+        e.event_type === "CHECKPOINT_RESPONSE",
     );
     const comprehensionScore = quizEvents.length > 0 ? 100 : 0;
 
     // Calculate production score (based on word count)
     const prodEvents = events.filter(
-      (e) => e.eventType === "PRODUCTION_SUBMIT",
+      (e) => e.event_type === "PRODUCTION_SUBMIT",
     );
     const totalWords = prodEvents.reduce((sum, e) => {
-      const payload = e.payloadJson as any;
+      const payload = e.payload_json as any;
       return sum + (payload.word_count || 0);
     }, 0);
     const productionScore = Math.min(100, totalWords * 2); // 50 words = 100 score
 
     // Calculate frustration index (based on unknown words marked)
     const unknownWords = events.filter(
-      (e) => e.eventType === "MARK_UNKNOWN_WORD",
+      (e) => e.event_type === "MARK_UNKNOWN_WORD",
     ).length;
     const frustrationIndex = Math.min(100, unknownWords * 5); // 20 unknown words = 100 index
 
-    return this.prisma.sessionOutcome.create({
+    return this.prisma.session_outcomes.create({
       data: {
-        readingSessionId: sessionId,
-        comprehensionScore,
-        productionScore,
-        frustrationIndex,
+        reading_session_id: sessionId,
+        comprehension_score: comprehensionScore,
+        production_score: productionScore,
+        frustration_index: frustrationIndex,
       },
     });
   }
 
   private async integrateWithGamification(session: any) {
-    if (!session.finishedAt) return;
+    if (!session.finishedAt && !session.finished_at) return;
+    const finishedAt = session.finishedAt || session.finished_at;
+    const startedAt = session.startTime || session.started_at;
 
     const durationMinutes = Math.floor(
-      (new Date(session.finishedAt).getTime() -
-        new Date(session.startedAt).getTime()) /
+      (new Date(finishedAt).getTime() -
+        new Date(startedAt).getTime()) /
         (1000 * 60),
     );
 
     this.logger.log(
-      `Registering ${durationMinutes} minutes for user ${session.userId}`,
+      `Registering ${durationMinutes} minutes for user ${session.user_id}`,
     );
 
     try {
-      await this.gamificationService.registerActivity(session.userId, {
+      await this.gamificationService.registerActivity(session.user_id, {
         minutesSpentDelta: durationMinutes,
         lessonsCompletedDelta: 1,
       });
@@ -399,11 +240,15 @@ export class ReadingSessionsService {
     // Track activity for dashboard metrics
     try {
       // Track study time
-      await this.activityService.trackActivity(session.userId, 'study', durationMinutes);
+      await this.activityService.trackActivity(
+        session.user_id,
+        "study",
+        durationMinutes,
+      );
       // Track session completion
-      await this.activityService.trackActivity(session.userId, 'session');
+      await this.activityService.trackActivity(session.user_id, "session");
     } catch (error) {
-      this.logger.warn('Failed to track activity metrics', error);
+      this.logger.warn("Failed to track activity metrics", error);
     }
   }
 
@@ -426,14 +271,14 @@ export class ReadingSessionsService {
    * POST /sessions/start - Prompt-only version
    * Creates session and returns initial prompt
    */
-  async startSessionPromptOnly(userId: string, dto: StartSessionDto) {
+  async startSessionPromptOnly(user_id: string, dto: StartSessionDto) {
     this.logger.log(
-      `Starting prompt-only session for user ${userId}, content ${dto.contentId}`,
+      `Starting prompt-only session for user ${user_id}, content ${dto.contentId}`,
     );
 
     // Create session (reuse existing logic)
-    const profile = await this.profileService.getOrCreate(userId);
-    const content = await this.prisma.content.findUnique({
+    const profile = await this.profileService.getOrCreate(user_id);
+    const content = await this.prisma.contents.findUnique({
       where: { id: dto.contentId },
     });
 
@@ -443,15 +288,16 @@ export class ReadingSessionsService {
 
     const assetLayer =
       dto.assetLayer ||
-      (await this.gatingService.determineLayer(userId, dto.contentId));
+      (await this.gatingService.determineLayer(user_id, dto.contentId));
 
-    const session = await this.prisma.readingSession.create({
+    const session = await this.prisma.reading_sessions.create({
       data: {
-        userId,
-        contentId: dto.contentId,
+        id: uuid(),
+        user_id: user_id,
+        content_id: dto.contentId,
         phase: "PRE",
         modality: "READING",
-        assetLayer,
+        asset_layer: assetLayer,
       },
     });
 
@@ -463,7 +309,7 @@ export class ReadingSessionsService {
       "Meta do dia: em 1 linha, o que você quer entender neste texto?";
 
     return {
-      readingSessionId: session.id,
+      reading_session_id: session.id,
       threadId,
       nextPrompt,
     };
@@ -475,8 +321,8 @@ export class ReadingSessionsService {
    */
   private async enrichPromptContext(
     sessionId: string,
-    userId: string,
-    contentId: string,
+    user_id: string,
+    content_id: string,
     userText: string,
   ): Promise<any> {
     // 1. Load compact pedagogical state from Redis (Phase 3)
@@ -484,26 +330,26 @@ export class ReadingSessionsService {
     try {
       const { loadCompactState } =
         await import("../common/helpers/redis-context.helper");
-      pedState = await loadCompactState(userId, contentId);
+      pedState = await loadCompactState(user_id, content_id);
 
       if (pedState) {
-        this.logger.debug(`Loaded compact state for ${userId}/${contentId}`);
+        this.logger.debug(`Loaded compact state for ${user_id}/${content_id}`);
       }
     } catch (err) {
       this.logger.warn(`Failed to load compact state: ${err.message}`);
     }
 
     // 2. Get last 6 turns (window for efficient context)
-    const lastTurns = await this.prisma.sessionEvent.findMany({
+    const lastTurns = await this.prisma.session_events.findMany({
       where: {
-        readingSessionId: sessionId,
-        eventType: { in: ["PROMPT_SENT", "PROMPT_RECEIVED"] },
+        reading_session_id: sessionId,
+        event_type: { in: ["PROMPT_SENT", "PROMPT_RECEIVED"] },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { created_at: "desc" },
       take: 6,
       select: {
-        payloadJson: true,
-        createdAt: true,
+        payload_json: true,
+        created_at: true,
       },
     });
 
@@ -518,14 +364,14 @@ export class ReadingSessionsService {
     // For now, use first 12K chars. TODO: implement block-based slicing
     let contentSlice = "";
     try {
-      const content = await this.prisma.content.findUnique({
-        where: { id: contentId },
-        select: { rawText: true },
+      const content = await this.prisma.contents.findUnique({
+        where: { id: content_id },
+        select: { raw_text: true },
       });
 
-      if (content?.rawText) {
+      if (content?.raw_text) {
         // Take first 12K chars (≈3K tokens)
-        contentSlice = content.rawText.substring(0, 12000);
+        contentSlice = content.raw_text.substring(0, 12000);
         this.logger.debug(`Content slice: ${contentSlice.length} chars`);
       }
     } catch (err) {
@@ -553,12 +399,12 @@ export class ReadingSessionsService {
   async processPrompt(
     sessionId: string,
     dto: PromptMessageDto,
-    userId: string,
+    user_id: string,
   ): Promise<AgentTurnResponseDto> {
     this.logger.log(`Processing prompt for session ${sessionId}`);
 
     // 1. Verify session ownership
-    const session = await this.getSession(sessionId, userId);
+    const session = await this.getSession(sessionId, user_id);
 
     // 2. Parse quick commands
     const parsedEvents = this.quickCommandParser.parse(dto.text, dto.metadata);
@@ -572,8 +418,8 @@ export class ReadingSessionsService {
     // 4. Phase 3: Enrich context for AI (token optimization)
     const enrichedContext = await this.enrichPromptContext(
       sessionId,
-      userId,
-      session.session.contentId,
+      user_id,
+      session.session.content_id,
       dto.text,
     );
 
@@ -582,9 +428,9 @@ export class ReadingSessionsService {
       ...dto,
       metadata: {
         ...dto.metadata,
-        tenantId: userId, // For memory namespacing
-        userId,
-        contentId: session.session.contentId,
+        tenantId: user_id, // For memory namespacing
+        user_id,
+        content_id: session.session.content_id,
         ...enrichedContext, // pedState, lastTurns, contentSlice
       },
     };
@@ -596,13 +442,14 @@ export class ReadingSessionsService {
     if (aiResponse.usage) {
       // Fetch user context for attribution
       const [user, familyMember] = await Promise.all([
-        this.prisma.user.findUnique({
-          where: { id: userId },
-          select: { institutionId: true },
+        this.prisma.users.findUnique({
+          where: { id: user_id },
+          // Cast select to avoid lint errors if client is stale vs schema
+          select: { last_institution_id: true } as any,
         }),
-        this.prisma.familyMember.findFirst({
-          where: { userId },
-          select: { familyId: true },
+        this.prisma.family_members.findFirst({
+          where: { user_id },
+          select: { family_id: true },
         }),
       ]);
 
@@ -614,13 +461,13 @@ export class ReadingSessionsService {
         promptTokens: aiResponse.usage.prompt_tokens,
         completionTokens: aiResponse.usage.completion_tokens,
         costUsd: aiResponse.usage.cost_est_usd,
-        userId: userId,
-        familyId: familyMember?.familyId,
-        institutionId: user?.institutionId,
+        userId: user_id,
+        familyId: familyMember?.family_id,
+        institutionId: (user as any)?.last_institution_id,
         feature: "educator_chat",
         metadata: {
           sessionId,
-          readingSessionId: sessionId,
+          reading_session_id: sessionId,
           model: "multi-agent-mix", // Python side handles specific model logging details internally if needed in `details`
         },
       });
@@ -655,9 +502,9 @@ export class ReadingSessionsService {
           };
 
           await enqueueMemoryJob({
-            tenantId: userId,
-            userId,
-            contentId: session.session.contentId,
+            tenantId: user_id,
+            userId: user_id,
+            contentId: session.session.content_id,
             sessionOutcome: outcome,
           });
         } catch (err) {
@@ -675,18 +522,18 @@ export class ReadingSessionsService {
    */
   async finishSessionPromptOnly(
     sessionId: string,
-    userId: string,
+    user_id: string,
     dto: FinishSessionDto,
   ) {
     this.logger.log(`Finishing session ${sessionId}, reason: ${dto.reason}`);
 
-    const session = await this.getSession(sessionId, userId);
+    const session = await this.getSession(sessionId, user_id);
 
-    const updated = await this.prisma.readingSession.update({
+    const updated = await this.prisma.reading_sessions.update({
       where: { id: sessionId },
       data: {
         phase: "FINISHED",
-        finishedAt: new Date(),
+        finished_at: new Date(),
       },
     });
 
@@ -705,12 +552,13 @@ export class ReadingSessionsService {
     // Note: Validation happens in QuickCommandParser for now
     // Add DTO validation here in future if needed
 
-    await this.prisma.sessionEvent.createMany({
+    await this.prisma.session_events.createMany({
       data: events.map((e) => ({
-        readingSessionId: sessionId,
-        eventType: e.eventType,
-        payloadJson: e.payloadJson,
-        // occurredAt field does not exist in schema, relying on createdAt default
+        id: uuid(),
+        reading_session_id: sessionId,
+        event_type: e.eventType,
+        payload_json: e.payloadJson,
+        created_at: new Date(), // Add created_at since schema probably requires or uses it
       })),
     });
 
@@ -725,21 +573,21 @@ export class ReadingSessionsService {
    * Get user's reading sessions with pagination and filters
    * Reuses patterns from SearchService and admin controllers
    */
-  async getUserSessions(userId: string, dto: SessionsQueryDto) {
+  async getUserSessions(user_id: string, dto: SessionsQueryDto) {
     const page = dto.page || 1;
     const limit = Math.min(dto.limit || 20, 100);
     const skip = (page - 1) * limit;
 
     // Build where clause (SAME pattern as SearchService)
-    const where: Prisma.ReadingSessionWhereInput = {
-      userId,
+    const where: Prisma.reading_sessionsWhereInput = {
+      user_id,
     };
 
     // Date filters (SAME pattern as admin/dashboard.controller.ts)
     if (dto.since || dto.until) {
-      where.startedAt = {};
-      if (dto.since) where.startedAt.gte = new Date(dto.since);
-      if (dto.until) where.startedAt.lte = new Date(dto.until);
+      where.started_at = {};
+      if (dto.since) where.started_at.gte = new Date(dto.since);
+      if (dto.until) where.started_at.lte = new Date(dto.until);
     }
 
     if (dto.phase) {
@@ -748,29 +596,29 @@ export class ReadingSessionsService {
 
     // Search in content title (SAME pattern as SearchService)
     if (dto.query) {
-      where.content = {
+      where.contents = {
         title: { contains: dto.query, mode: "insensitive" },
       };
     }
 
     // Count total for pagination
-    const total = await this.prisma.readingSession.count({ where });
+    const total = await this.prisma.reading_sessions.count({ where });
 
     // Fetch sessions
-    const sessions = await this.prisma.readingSession.findMany({
+    const sessions = await this.prisma.reading_sessions.findMany({
       where,
       include: {
-        content: {
+        contents: {
           select: { id: true, title: true, type: true },
         },
         _count: {
-          select: { events: true },
+          select: { session_events: true },
         },
       },
       orderBy:
         dto.sortBy === "duration"
-          ? [{ finishedAt: dto.sortOrder }]
-          : [{ startedAt: dto.sortOrder }],
+          ? [{ finished_at: dto.sortOrder }]
+          : [{ started_at: dto.sortOrder }],
       skip,
       take: limit,
     });
@@ -790,24 +638,25 @@ export class ReadingSessionsService {
    * Transform session to summary format
    */
   private transformToSessionSummary(session: any) {
-    const duration = session.finishedAt
+    const duration = session.finished_at
       ? Math.round(
-          (session.finishedAt.getTime() - session.startedAt.getTime()) / 60000,
+          (session.finished_at.getTime() - session.started_at.getTime()) /
+            60000,
         )
       : null;
 
     return {
       id: session.id,
-      startedAt: session.startedAt.toISOString(),
-      finishedAt: session.finishedAt?.toISOString() || null,
+      started_at: session.started_at.toISOString(),
+      finished_at: session.finished_at?.toISOString() || null,
       duration,
       phase: session.phase,
       content: {
-        id: session.content.id,
-        title: session.content.title,
-        type: session.content.type,
+        id: session.contents.id,
+        title: session.contents.title,
+        type: session.contents.type,
       },
-      eventsCount: session._count?.events || 0,
+      eventsCount: session._count?.session_events || 0,
     };
   }
 
@@ -815,18 +664,18 @@ export class ReadingSessionsService {
    * Export user sessions to CSV/JSON
    * For LGPD/compliance data export
    */
-  async exportSessions(userId: string, format: "csv" | "json") {
-    const sessions = await this.prisma.readingSession.findMany({
-      where: { userId },
+  async exportSessions(user_id: string, format: "csv" | "json") {
+    const sessions = await this.prisma.reading_sessions.findMany({
+      where: { user_id },
       include: {
-        content: {
+        contents: {
           select: { id: true, title: true, type: true },
         },
         _count: {
-          select: { events: true },
+          select: { session_events: true },
         },
       },
-      orderBy: { startedAt: "desc" },
+      orderBy: { started_at: "desc" },
     });
 
     const data = sessions.map((s) => this.transformToSessionSummary(s));
@@ -848,8 +697,8 @@ export class ReadingSessionsService {
     ];
     const rows = data.map((s) => [
       s.id,
-      s.startedAt,
-      s.finishedAt || "N/A",
+      s.started_at,
+      s.finished_at || "N/A",
       s.duration?.toString() || "N/A",
       s.phase,
       s.content.title,
@@ -868,21 +717,21 @@ export class ReadingSessionsService {
   /**
    * Get activity analytics for charts
    */
-  async getActivityAnalytics(userId: string, days: number = 30) {
+  async getActivityAnalytics(user_id: string, days: number = 30) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    const sessions = await this.prisma.readingSession.findMany({
+    const sessions = await this.prisma.reading_sessions.findMany({
       where: {
-        userId,
-        startedAt: { gte: startDate },
+        user_id,
+        started_at: { gte: startDate },
       },
       select: {
-        startedAt: true,
-        finishedAt: true,
+        started_at: true,
+        finished_at: true,
         phase: true,
       },
-      orderBy: { startedAt: "asc" },
+      orderBy: { started_at: "asc" },
     });
 
     // Group by date
@@ -890,15 +739,15 @@ export class ReadingSessionsService {
       {};
 
     sessions.forEach((s) => {
-      const dateKey = s.startedAt.toISOString().split("T")[0];
+      const dateKey = s.started_at.toISOString().split("T")[0];
       if (!activityByDate[dateKey]) {
         activityByDate[dateKey] = { count: 0, minutes: 0 };
       }
       activityByDate[dateKey].count++;
 
-      if (s.finishedAt) {
+      if (s.finished_at) {
         const duration = Math.round(
-          (s.finishedAt.getTime() - s.startedAt.getTime()) / 60000,
+          (s.finished_at.getTime() - s.started_at.getTime()) / 60000,
         );
         activityByDate[dateKey].minutes += duration;
       }

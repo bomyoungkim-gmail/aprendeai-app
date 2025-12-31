@@ -34,9 +34,10 @@ import {
   AddDomainDto,
   ProcessApprovalDto,
 } from "./dto/institution.dto";
+import { InstitutionMapper } from "../mappers/institution.mapper";
 import { Roles } from "../admin/decorators/roles.decorator";
 import { RolesGuard } from "../admin/guards/roles.guard";
-import { UserRole } from "@prisma/client";
+import { SystemRole, ContextRole } from "@prisma/client";
 
 @ApiTags("Institutions")
 @Controller("institutions")
@@ -55,22 +56,24 @@ export class InstitutionsController {
   // ==================== Institution CRUD ====================
 
   @Post()
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiOperation({ summary: "Create a new institution" })
   @ApiResponse({
     status: 201,
     description: "The institution has been successfully created.",
   })
-  create(@Body() createInstitutionDto: CreateInstitutionDto) {
-    return this.institutionsService.create(createInstitutionDto);
+  async create(@Body() createInstitutionDto: CreateInstitutionDto) {
+    const inst = await this.institutionsService.create(createInstitutionDto);
+    return InstitutionMapper.toDto(inst);
   }
 
   @Get()
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiOperation({ summary: "Get all institutions" })
   @ApiResponse({ status: 200, description: "Return all institutions." })
-  findAll() {
-    return this.institutionsService.findAll();
+  async findAll() {
+    const insts = await this.institutionsService.findAll();
+    return InstitutionMapper.toCollectionDto(insts);
   }
 
   @Get("my-institution")
@@ -79,33 +82,41 @@ export class InstitutionsController {
     status: 200,
     description: "Returns institution data with stats",
   })
-  getMyInstitution(@Request() req) {
-    return this.institutionsService.getInstitutionForAdmin(req.user.id);
+  async getMyInstitution(@Request() req) {
+    const inst = await this.institutionsService.getInstitutionForAdmin(
+      req.user.id,
+    );
+    return InstitutionMapper.toDto(inst as any); // Mapper will pick up the common fields
   }
 
   @Get(":id")
   @ApiOperation({ summary: "Get institution by ID" })
   @ApiResponse({ status: 200, description: "Return the institution." })
-  findOne(@Param("id") id: string) {
-    return this.institutionsService.findOne(id);
+  async findOne(@Param("id") id: string) {
+    const inst = await this.institutionsService.findOne(id);
+    return InstitutionMapper.toDto(inst);
   }
 
   @Patch(":id")
-  @Roles(UserRole.ADMIN, UserRole.INSTITUTION_ADMIN)
+  @Roles(SystemRole.ADMIN, ContextRole.INSTITUTION_EDUCATION_ADMIN)
   @ApiOperation({ summary: "Update an institution" })
   @ApiResponse({
     status: 200,
     description: "The institution has been successfully updated.",
   })
-  update(
+  async update(
     @Param("id") id: string,
     @Body() updateInstitutionDto: UpdateInstitutionDto,
   ) {
-    return this.institutionsService.update(id, updateInstitutionDto);
+    const inst = await this.institutionsService.update(
+      id,
+      updateInstitutionDto,
+    );
+    return InstitutionMapper.toDto(inst);
   }
 
   @Delete(":id")
-  @Roles(UserRole.ADMIN)
+  @Roles(SystemRole.ADMIN)
   @ApiOperation({ summary: "Delete an institution" })
   @ApiResponse({
     status: 200,
@@ -118,7 +129,7 @@ export class InstitutionsController {
   // ==================== Invites ====================
 
   @Post(":id/invites")
-  @Roles(UserRole.INSTITUTION_ADMIN, UserRole.ADMIN)
+  @Roles(ContextRole.INSTITUTION_EDUCATION_ADMIN, SystemRole.ADMIN)
   @ApiOperation({ summary: "Create an institution invite" })
   createInvite(
     @Param("id") institutionId: string,
@@ -133,14 +144,14 @@ export class InstitutionsController {
   }
 
   @Get(":id/invites")
-  @Roles(UserRole.INSTITUTION_ADMIN, UserRole.ADMIN)
+  @Roles(ContextRole.INSTITUTION_EDUCATION_ADMIN, SystemRole.ADMIN)
   @ApiOperation({ summary: "Get all invites for an institution" })
   getInvites(@Param("id") institutionId: string) {
     return this.inviteService.findByInstitution(institutionId);
   }
 
   @Delete(":id/invites/:inviteId")
-  @Roles(UserRole.INSTITUTION_ADMIN, UserRole.ADMIN)
+  @Roles(ContextRole.INSTITUTION_EDUCATION_ADMIN, SystemRole.ADMIN)
   @ApiOperation({ summary: "Cancel an invite" })
   cancelInvite(@Param("inviteId") inviteId: string, @Request() req) {
     return this.inviteService.delete(inviteId, req.user.id);
@@ -149,7 +160,7 @@ export class InstitutionsController {
   // ==================== Bulk Actions ====================
 
   @Post(":id/bulk-invite")
-  @Roles(UserRole.INSTITUTION_ADMIN)
+  @Roles(ContextRole.INSTITUTION_EDUCATION_ADMIN)
   @ApiOperation({ summary: "Bulk invite members via CSV" })
   @ApiConsumes("multipart/form-data")
   @UseInterceptors(FileInterceptor("file"))
@@ -161,7 +172,7 @@ export class InstitutionsController {
   }
 
   @Get(":id/export")
-  @Roles(UserRole.INSTITUTION_ADMIN)
+  @Roles(ContextRole.INSTITUTION_EDUCATION_ADMIN)
   @ApiOperation({ summary: "Export members as CSV" })
   async exportMembers(@Param("id") id: string) {
     const csv = await this.bulkService.exportMembersCSV(id);
@@ -171,7 +182,7 @@ export class InstitutionsController {
   // ==================== Domains ====================
 
   @Post(":id/domains")
-  @Roles(UserRole.INSTITUTION_ADMIN)
+  @Roles(ContextRole.INSTITUTION_EDUCATION_ADMIN)
   @ApiOperation({ summary: "Add a domain to an institution" })
   addDomain(
     @Param("id") institutionId: string,
@@ -186,14 +197,14 @@ export class InstitutionsController {
   }
 
   @Get(":id/domains")
-  @Roles(UserRole.INSTITUTION_ADMIN)
+  @Roles(ContextRole.INSTITUTION_EDUCATION_ADMIN)
   @ApiOperation({ summary: "Get all domains for an institution" })
   getDomains(@Param("id") institutionId: string) {
     return this.domainService.findByInstitution(institutionId);
   }
 
   @Delete(":id/domains/:domainId")
-  @Roles(UserRole.INSTITUTION_ADMIN)
+  @Roles(ContextRole.INSTITUTION_EDUCATION_ADMIN)
   @ApiOperation({ summary: "Remove a domain" })
   removeDomain(@Param("domainId") domainId: string, @Request() req) {
     return this.domainService.removeDomain(domainId, req.user.id);
@@ -202,14 +213,14 @@ export class InstitutionsController {
   // ==================== Pending Approvals ====================
 
   @Get(":id/pending")
-  @Roles(UserRole.INSTITUTION_ADMIN)
+  @Roles(ContextRole.INSTITUTION_EDUCATION_ADMIN)
   @ApiOperation({ summary: "Get pending approvals for an institution" })
   getPendingApprovals(@Param("id") institutionId: string) {
     return this.approvalService.findByInstitution(institutionId);
   }
 
   @Post(":id/pending/:approvalId")
-  @Roles(UserRole.INSTITUTION_ADMIN)
+  @Roles(ContextRole.INSTITUTION_EDUCATION_ADMIN)
   @ApiOperation({ summary: "Process a pending approval (approve or reject)" })
   @HttpCode(HttpStatus.OK)
   async processApproval(
@@ -231,28 +242,25 @@ export class InstitutionsController {
   // ==================== SSO Configuration ====================
 
   @Post(":id/sso")
-  @Roles(UserRole.INSTITUTION_ADMIN)
+  @Roles(ContextRole.INSTITUTION_EDUCATION_ADMIN)
   @ApiOperation({ summary: "Configure SSO for institution" })
   async createSSOConfig(
     @Param("id") institutionId: string,
     @Body() dto: any,
     @Request() req,
   ) {
-    return this.ssoService.createConfig(
-      { ...dto, institutionId },
-      req.user.id,
-    );
+    return this.ssoService.createConfig({ ...dto, institutionId }, req.user.id);
   }
 
   @Get(":id/sso")
-  @Roles(UserRole.INSTITUTION_ADMIN)
+  @Roles(ContextRole.INSTITUTION_EDUCATION_ADMIN)
   @ApiOperation({ summary: "Get SSO configuration" })
   async getSSOConfig(@Param("id") institutionId: string) {
     return this.ssoService.getConfig(institutionId);
   }
 
   @Patch(":id/sso")
-  @Roles(UserRole.INSTITUTION_ADMIN)
+  @Roles(ContextRole.INSTITUTION_EDUCATION_ADMIN)
   @ApiOperation({ summary: "Update SSO configuration" })
   async updateSSOConfig(
     @Param("id") institutionId: string,
@@ -263,14 +271,14 @@ export class InstitutionsController {
   }
 
   @Delete(":id/sso")
-  @Roles(UserRole.INSTITUTION_ADMIN)
+  @Roles(ContextRole.INSTITUTION_EDUCATION_ADMIN)
   @ApiOperation({ summary: "Delete SSO configuration" })
   async deleteSSOConfig(@Param("id") institutionId: string, @Request() req) {
     return this.ssoService.deleteConfig(institutionId, req.user.id);
   }
 
   @Post(":id/sso/test")
-  @Roles(UserRole.INSTITUTION_ADMIN)
+  @Roles(ContextRole.INSTITUTION_EDUCATION_ADMIN)
   @ApiOperation({ summary: "Test SSO configuration" })
   async testSSOConfig(@Param("id") institutionId: string) {
     // TODO: Implement test logic

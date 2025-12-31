@@ -22,11 +22,11 @@ describe("Institution Admin Dashboard (Integration)", () => {
     prisma = app.get<PrismaService>(PrismaService);
 
     // Clean up
-    await prisma.institutionMember.deleteMany({});
-    await prisma.institution.deleteMany({
+    await prisma.institution_members.deleteMany({});
+    await prisma.institutions.deleteMany({
       where: { name: { contains: "Test Institution Admin" } },
     });
-    await prisma.user.deleteMany({
+    await prisma.users.deleteMany({
       where: { email: { contains: "@inst-admin-test.com" } },
     });
   });
@@ -63,30 +63,33 @@ describe("Institution Admin Dashboard (Integration)", () => {
     });
 
     it("should create institution and assign admin", async () => {
-      const institution = await prisma.institution.create({
+      const institution = await prisma.institutions.create({
         data: {
+          id: `inst-admin-${Date.now()}`,
           name: "Test Institution Admin School",
           type: "SCHOOL",
           city: "Test City",
           state: "TC",
+          updated_at: new Date(),
         },
       });
       institutionId = institution.id;
 
-      // Make user an INSTITUTION_ADMIN
-      await prisma.institutionMember.create({
+      // Make user an INSTITUTION_EDUCATION_ADMIN
+      await prisma.institution_members.create({
         data: {
-          institution: { connect: { id: institutionId } },
-          user: { connect: { id: institutionAdminId } },
-          role: "INSTITUTION_ADMIN",
+          id: `mem-${Date.now()}`,
+          institutions: { connect: { id: institutionId } },
+          users: { connect: { id: institutionAdminId } },
+          role: "INSTITUTION_EDUCATION_ADMIN",
           status: "ACTIVE",
         },
       });
 
       // Update user role
-      await prisma.user.update({
+      await prisma.users.update({
         where: { id: institutionAdminId },
-        data: { role: "INSTITUTION_ADMIN" },
+        data: { last_context_role: "INSTITUTION_EDUCATION_ADMIN" },
       });
 
       expect(institution).toBeDefined();
@@ -96,23 +99,25 @@ describe("Institution Admin Dashboard (Integration)", () => {
   describe("GET /institutions/my-institution", () => {
     it("should return institution data with stats", async () => {
       // Add some test data
-      await prisma.institutionInvite.create({
+      await prisma.institution_invites.create({
         data: {
-          institution: { connect: { id: institutionId } },
+          id: `inv-${Date.now()}`,
+          institutions: { connect: { id: institutionId } },
           email: "invited@test.com",
           role: "TEACHER",
           token: "test-token-123",
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-          inviter: { connect: { id: institutionAdminId } },
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          users: { connect: { id: institutionAdminId } },
         },
       });
 
-      await prisma.institutionDomain.create({
+      await prisma.institution_domains.create({
         data: {
-          institutionId,
+          id: `dom-${Date.now()}`,
+          institution_id: institutionId,
           domain: "@test-admin.edu",
-          autoApprove: true,
-          defaultRole: "STUDENT",
+          auto_approve: true,
+          default_role: "STUDENT",
         },
       });
 

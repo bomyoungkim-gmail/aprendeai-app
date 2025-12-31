@@ -63,7 +63,10 @@ describe("EntitlementsService (Hierarchy Verification)", () => {
                 status: "ACTIVE",
                 plan: {
                   type: "INSTITUTION",
-                  entitlements: { limits: { seats: 100 }, features: { sso: true } },
+                  entitlements: {
+                    limits: { seats: 100 },
+                    features: { sso: true },
+                  },
                 },
               },
             ],
@@ -94,7 +97,10 @@ describe("EntitlementsService (Hierarchy Verification)", () => {
                 status: "ACTIVE",
                 plan: {
                   type: "FAMILY",
-                  entitlements: { limits: { members: 5 }, features: { kidsFields: true } },
+                  entitlements: {
+                    limits: { members: 5 },
+                    features: { kidsFields: true },
+                  },
                 },
               },
             ],
@@ -110,26 +116,45 @@ describe("EntitlementsService (Hierarchy Verification)", () => {
   });
 
   it("should prioritize ORG over FAMILY and INDIVIDUAL", async () => {
-     mockPrisma.user.findUnique.mockResolvedValue({
+    mockPrisma.user.findUnique.mockResolvedValue({
       id: "user-multi",
       institutionMemberships: [
         {
           status: "ACTIVE",
           institution: {
-            subscriptions: [{ status: "ACTIVE", plan: { type: "INSTITUTION", entitlements: { limits: { x: 999 } } } }],
+            subscriptions: [
+              {
+                status: "ACTIVE",
+                plan: {
+                  type: "INSTITUTION",
+                  entitlements: { limits: { x: 999 } },
+                },
+              },
+            ],
           },
         },
       ],
       memberships: [
         {
-           status: "ACTIVE",
-           family: {
-               subscriptions: [{ status: "ACTIVE", plan: { type: "FAMILY", entitlements: { limits: { x: 50 } } } }]
-           } 
-        }
+          status: "ACTIVE",
+          family: {
+            subscriptions: [
+              {
+                status: "ACTIVE",
+                plan: { type: "FAMILY", entitlements: { limits: { x: 50 } } },
+              },
+            ],
+          },
+        },
       ],
       subscriptions: [
-          { status: "ACTIVE", plan: { type: "INDIVIDUAL_PREMIUM", entitlements: { limits: { x: 10 } } } }
+        {
+          status: "ACTIVE",
+          plan: {
+            type: "INDIVIDUAL_PREMIUM",
+            entitlements: { limits: { x: 10 } },
+          },
+        },
       ],
     });
 

@@ -18,7 +18,7 @@ describe("Family Owner Dashboard (Integration)", () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix("api/v1");  // Required for routes to work
+    app.setGlobalPrefix("api/v1"); // Required for routes to work
     app.useGlobalPipes(new ValidationPipe());
     await app.init();
 
@@ -33,11 +33,29 @@ describe("Family Owner Dashboard (Integration)", () => {
   describe("Setup: Create Family Owner", () => {
     it("should register and login family owner user", async () => {
       // Clean up existing users
-      await prisma.family.deleteMany({
-        where: { owner: { email: { in: ["owner@family-test.com", "child@family-test.com", "invited@family-test.com"] } } },
+      await prisma.families.deleteMany({
+        where: {
+          users_owner: {
+            email: {
+              in: [
+                "owner@family-test.com",
+                "child@family-test.com",
+                "invited@family-test.com",
+              ],
+            },
+          },
+        },
       });
-      await prisma.user.deleteMany({
-        where: { email: { in: ["owner@family-test.com", "child@family-test.com", "invited@family-test.com"] } },
+      await prisma.users.deleteMany({
+        where: {
+          email: {
+            in: [
+              "owner@family-test.com",
+              "child@family-test.com",
+              "invited@family-test.com",
+            ],
+          },
+        },
       });
 
       // Register
@@ -66,14 +84,14 @@ describe("Family Owner Dashboard (Integration)", () => {
     });
 
     it("should create family and assign owner", async () => {
-      const family = await prisma.family.create({
+      const family = await prisma.families.create({
         data: {
           name: "Test Family Owner Family",
-          ownerId: familyOwnerId,
-          members: {
+          owner_user_id: familyOwnerId,
+          family_members: {
             create: {
-              user: { connect: { id: familyOwnerId } },
-              role: "OWNER",
+              user_id: familyOwnerId,
+              role: "OWNER" as any,
               status: "ACTIVE",
             },
           },
@@ -82,10 +100,10 @@ describe("Family Owner Dashboard (Integration)", () => {
       familyId = family.id;
 
       // Set as primary family
-      await prisma.user.update({
+      await prisma.users.update({
         where: { id: familyOwnerId },
         data: {
-          settings: { primaryFamilyId: familyId },
+          settings: { primaryFamilyId: familyId } as any,
         },
       });
 
@@ -96,41 +114,39 @@ describe("Family Owner Dashboard (Integration)", () => {
   describe("GET /families/my-family", () => {
     it("should return family data with stats", async () => {
       // Add additional members
-      const childUser = await prisma.user.create({
+      const childUser = await prisma.users.create({
         data: {
           email: "child@family-test.com",
           name: "Test Child",
-          passwordHash: "hashed",
-          role: "COMMON_USER",
-          schoolingLevel: "ELEMENTARY",
+          password_hash: "hashed",
+          schooling_level: "ELEMENTARY",
         },
       });
 
-      await prisma.familyMember.create({
+      await prisma.family_members.create({
         data: {
-          family: { connect: { id: familyId } },
-          user: { connect: { id: childUser.id } },
-          role: "CHILD",
+          family_id: familyId,
+          user_id: childUser.id,
+          role: "CHILD" as any,
           status: "ACTIVE",
         },
       });
 
       // Add invited member
-      const invitedUser = await prisma.user.create({
+      const invitedUser = await prisma.users.create({
         data: {
           email: "invited@family-test.com",
           name: "Invited Parent",
-          passwordHash: "hashed",
-          role: "COMMON_USER",
-          schoolingLevel: "ADULT",
+          password_hash: "hashed",
+          schooling_level: "ADULT",
         },
       });
 
-      await prisma.familyMember.create({
+      await prisma.family_members.create({
         data: {
-          family: { connect: { id: familyId } },
-          user: { connect: { id: invitedUser.id } },
-          role: "GUARDIAN",
+          family_id: familyId,
+          user_id: invitedUser.id,
+          role: "GUARDIAN" as any,
           status: "INVITED",
         },
       });
@@ -150,12 +166,14 @@ describe("Family Owner Dashboard (Integration)", () => {
     });
 
     it("should return 401 for unauthenticated requests", async () => {
-      await request(app.getHttpServer()).get(apiUrl(ROUTES.FAMILY.MY_FAMILY)).expect(401);
+      await request(app.getHttpServer())
+        .get(apiUrl(ROUTES.FAMILY.MY_FAMILY))
+        .expect(401);
     });
 
     it("should return null for user without family", async () => {
       // Clean up any existing test users
-      await prisma.user.deleteMany({
+      await prisma.users.deleteMany({
         where: { email: "nofamily@test.com" },
       });
 

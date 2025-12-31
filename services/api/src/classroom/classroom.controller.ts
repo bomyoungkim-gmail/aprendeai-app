@@ -10,14 +10,19 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { CurrentUser } from "../auth/current-user.decorator";
+import { JwtAuthGuard } from "../auth/infrastructure/jwt-auth.guard";
+import { CurrentUser } from "../auth/presentation/decorators/current-user.decorator";
 import { ClassroomService } from "./services/classroom.service";
 import { EnrollmentService } from "./services/enrollment.service";
 import { ClassPolicyService } from "./services/class-policy.service";
 import { ClassPlanService } from "./services/class-plan.service";
 import { ClassInterventionService } from "./services/class-intervention.service";
 import { ClassDashboardService } from "./services/class-dashboard.service";
+import { ClassGradebookService } from "./services/class-gradebook.service";
+import { ClassroomMapper } from "../mappers/classroom.mapper";
+import { EnrollmentMapper } from "../mappers/enrollment.mapper";
+import { ClassPolicyMapper } from "../mappers/class-policy.mapper";
+import { ClassPlanMapper } from "../mappers/class-plan.mapper";
 import {
   CreateClassroomDto,
   UpdateClassroomDto,
@@ -43,7 +48,9 @@ export class ClassroomController {
     private readonly classPolicyService: ClassPolicyService,
     private readonly classPlanService: ClassPlanService,
     private readonly classInterventionService: ClassInterventionService,
+
     private readonly classDashboardService: ClassDashboardService,
+    private readonly classGradebookService: ClassGradebookService,
   ) {}
 
   // CRUD Operations
@@ -52,20 +59,23 @@ export class ClassroomController {
   @UseGuards(TeacherVerifiedGuard) // Only verified teachers can create classrooms
   @ApiOperation({ summary: "Create a new classroom" })
   async create(@Body() dto: CreateClassroomDto) {
-    return this.classroomService.create(dto);
+    const classroom = await this.classroomService.create(dto);
+    return ClassroomMapper.toDto(classroom);
   }
 
   @Get(":id")
   @ApiOperation({ summary: "Get classroom by ID" })
   async getById(@Param("id") id: string) {
-    return this.classroomService.getById(id);
+    const classroom = await this.classroomService.getById(id);
+    return ClassroomMapper.toDto(classroom);
   }
 
   @Put(":id")
   @UseGuards(TeacherVerifiedGuard) // Only verified teachers can update classrooms
   @ApiOperation({ summary: "Update classroom" })
   async update(@Param("id") id: string, @Body() dto: UpdateClassroomDto) {
-    return this.classroomService.update(id, dto);
+    const classroom = await this.classroomService.update(id, dto);
+    return ClassroomMapper.toDto(classroom);
   }
 
   @Delete(":id")
@@ -93,13 +103,19 @@ export class ClassroomController {
     @Param("id") classroomId: string,
     @Body() dto: EnrollStudentDto,
   ) {
-    return this.enrollmentService.enroll({ ...dto, classroomId });
+    const enrollment = await this.enrollmentService.enroll({
+      ...dto,
+      classroomId,
+    });
+    return EnrollmentMapper.toDto(enrollment);
   }
 
   @Get(":id/enrollments")
   @ApiOperation({ summary: "Get all enrollments for classroom" })
   async getEnrollments(@Param("id") classroomId: string) {
-    return this.enrollmentService.getByClassroom(classroomId);
+    const enrollments =
+      await this.enrollmentService.getByClassroom(classroomId);
+    return EnrollmentMapper.toCollectionDto(enrollments);
   }
 
   // Policy
@@ -110,13 +126,18 @@ export class ClassroomController {
     @Param("id") classroomId: string,
     @Body() dto: CreateClassPolicyDto,
   ) {
-    return this.classPolicyService.upsert({ ...dto, classroomId });
+    const policy = await this.classPolicyService.upsert({
+      ...dto,
+      classroomId,
+    });
+    return ClassPolicyMapper.toDto(policy);
   }
 
   @Get(":id/policy")
   @ApiOperation({ summary: "Get classroom policy" })
   async getPolicy(@Param("id") classroomId: string) {
-    return this.classPolicyService.getByClassroom(classroomId);
+    const policy = await this.classPolicyService.getByClassroom(classroomId);
+    return ClassPolicyMapper.toDto(policy);
   }
 
   // Weekly Planning
@@ -128,19 +149,21 @@ export class ClassroomController {
     @Request() req,
     @Body() dto: CreateWeeklyPlanDto,
   ) {
-    return this.classPlanService.createWeeklyPlan(
+    const plan = await this.classPlanService.createWeeklyPlan(
       classroomId,
       dto.weekStart,
       req.user.id, // Get educator ID from authenticated user
       dto.items,
       dto.toolWords,
     );
+    return ClassPlanMapper.toDto(plan);
   }
 
   @Get(":id/plans/weekly")
   @ApiOperation({ summary: "Get current week plan" })
   async getCurrentWeekPlan(@Param("id") classroomId: string) {
-    return this.classPlanService.getCurrentWeekPlan(classroomId);
+    const plan = await this.classPlanService.getCurrentWeekPlan(classroomId);
+    return ClassPlanMapper.toDto(plan);
   }
 
   // Dashboard
@@ -208,5 +231,27 @@ export class ClassroomController {
       dto.activeCount,
       dto.avgComprehension,
     );
+  }
+  // Gradebook & Study Items (Script 6/8)
+
+  @Get(":id/gradebook")
+  @ApiOperation({ summary: "Get classroom gradebook grid" })
+  async getGradebook(@Param("id") classroomId: string) {
+    return this.classGradebookService.getGradebook(classroomId);
+  }
+
+  @Get(":id/gradebook/export")
+  @ApiOperation({ summary: "Export gradebook as CSV" })
+  async exportGradebook(@Param("id") classroomId: string) {
+    const csv =
+      await this.classGradebookService.exportGradebookCsv(classroomId);
+    return { csv };
+  }
+
+  @Get(":id/study-items")
+  @ApiOperation({ summary: "Get all study items (assignments) for classroom" })
+  async getStudyItems(@Param("id") classroomId: string) {
+    const plans = await this.classPlanService.getPlans(classroomId);
+    return { plans: ClassPlanMapper.toCollectionDto(plans) };
   }
 }
