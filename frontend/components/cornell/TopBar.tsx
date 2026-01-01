@@ -8,6 +8,7 @@ interface TopBarProps {
   title: string;
   mode: ViewMode;
   onModeToggle: () => void;
+  onLayoutChange?: () => void;
   saveStatus: SaveStatus;
   lastSaved?: Date | null;
 }
@@ -16,6 +17,7 @@ export function TopBar({
   title,
   mode,
   onModeToggle,
+  onLayoutChange,
   saveStatus,
   lastSaved,
 }: TopBarProps) {
@@ -56,6 +58,16 @@ export function TopBar({
 
       {/* Right side: Mode Toggle + Save Status */}
       <div className="flex items-center gap-6">
+        {/* Layout Switch */}
+        {onLayoutChange && (
+          <button
+            onClick={onLayoutChange}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+          >
+            <span>✨ Moderno</span>
+          </button>
+        )}
+
         {/* Mode Toggle */}
         <button
           onClick={onModeToggle}

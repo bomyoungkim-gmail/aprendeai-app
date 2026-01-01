@@ -129,6 +129,11 @@ export const API_ENDPOINTS = {
     PROMPT: (id: string) => `/sessions/${id}/prompt`,
     FINISH: (id: string) => `/sessions/${id}/finish`,
     EVENTS: (id: string) => `/sessions/${id}/events`,
+    GET_PROGRESS: (contentId: string) => `/contents/${contentId}/progress`,
+    UPDATE_PROGRESS: (contentId: string) => `/contents/${contentId}/progress`,
+    GET_BOOKMARKS: (contentId: string) => `/contents/${contentId}/bookmarks`,
+    CREATE_BOOKMARK: (contentId: string) => `/contents/${contentId}/bookmarks`,
+    DELETE_BOOKMARK: (id: string) => `/bookmarks/${id}`,
   },
   
   // Games

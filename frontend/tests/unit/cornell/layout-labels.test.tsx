@@ -2,10 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ModernCornellLayout } from '@/components/cornell/ModernCornellLayout';
 import { CORNELL_LABELS } from '@/lib/cornell/labels';
+import { ContentType } from '@/lib/constants/enums';
 
 describe('ModernCornellLayout - Label Integration', () => {
   const mockProps = {
     title: 'Test Document',
+    contentId: 'content-123',
+    targetType: ContentType.PDF,
     mode: 'view' as const,
     onModeToggle: () => {},
     saveStatus: 'saved' as const,

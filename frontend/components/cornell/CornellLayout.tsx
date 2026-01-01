@@ -25,8 +25,10 @@ interface CornellLayoutProps {
   viewer: React.ReactNode;
 
   // Optional callbacks
+  // Optional callbacks
   onCueClick?: (cue: CueItem) => void;
   onNoteClick?: (note: NoteItem) => void;
+  onLayoutChange?: () => void;
 }
 
 export function CornellLayout({
@@ -44,6 +46,7 @@ export function CornellLayout({
   viewer,
   onCueClick,
   onNoteClick,
+  onLayoutChange,
 }: CornellLayoutProps) {
   return (
     <div className="h-screen flex flex-col bg-gray-50" data-testid="cornell-layout">
@@ -54,6 +57,7 @@ export function CornellLayout({
         onModeToggle={onModeToggle}
         saveStatus={saveStatus}
         lastSaved={lastSaved}
+        onLayoutChange={onLayoutChange}
       />
 
       {/* Main Content: 3-Column Layout */}

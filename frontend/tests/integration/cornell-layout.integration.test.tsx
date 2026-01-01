@@ -3,6 +3,9 @@ import { ModernCornellLayout } from '@/components/cornell/ModernCornellLayout';
 import { ACTION_LABELS, CORNELL_LABELS } from '@/lib/cornell/labels';
 import * as useSuggestionsHook from '@/hooks/cornell/use-suggestions';
 
+import { ActionToolbar } from '@/components/cornell/ActionToolbar';
+import { ContentType } from '@/lib/constants/enums';
+
 jest.mock('@/hooks/cornell/use-suggestions');
 
 describe('ModernCornellLayout - Sprint 2 Integration', () => {
@@ -12,7 +15,7 @@ describe('ModernCornellLayout - Sprint 2 Integration', () => {
     mode: 'original' as const,
     onModeToggle: jest.fn(),
     saveStatus: 'saved' as const,
-    targetType: 'PDF' as const,
+    targetType: ContentType.PDF,
     viewer: <div data-testid="mock-viewer">PDF Viewer</div>,
     streamItems: [],
     cues: [],

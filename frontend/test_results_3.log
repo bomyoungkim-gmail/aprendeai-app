@@ -1,0 +1,104 @@
+
+Running 3 tests using 1 worker
+
+[1A[2K[1/3] [chromium] › tests\e2e\sprint2-ux-analytics.spec.ts:77:9 › Sprint 2: UX Core & Analytics E2E › UI should handle visibility toggling
+[1A[2K  1) [chromium] › tests\e2e\sprint2-ux-analytics.spec.ts:77:9 › Sprint 2: UX Core & Analytics E2E › UI should handle visibility toggling 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('header')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for locator('header')[22m
+
+
+      83 |         // Header initially visible
+      84 |         const header = page.locator('header');
+    > 85 |         await expect(header).toBeVisible({ timeout: 10000 });
+         |                              ^
+      86 |         await expect(header).toHaveClass(/translate-y-0/);
+      87 |
+      88 |         // Click content to toggle (hide)
+        at C:\projects\aprendeai-app\frontend\tests\e2e\sprint2-ux-analytics.spec.ts:85:30
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\sprint2-ux-analytics-Sprin-82f6c--handle-visibility-toggling-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\sprint2-ux-analytics-Sprin-82f6c--handle-visibility-toggling-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\sprint2-ux-analytics-Sprin-82f6c--handle-visibility-toggling-chromium\error-context.md
+
+
+[1A[2K[2/3] [chromium] › tests\e2e\sprint2-ux-analytics.spec.ts:100:9 › Sprint 2: UX Core & Analytics E2E › Undo/Redo should revert actions
+[1A[2K  2) [chromium] › tests\e2e\sprint2-ux-analytics.spec.ts:100:9 › Sprint 2: UX Core & Analytics E2E › Undo/Redo should revert actions 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Notas")')[22m
+
+
+      112 |         
+      113 |         // Open Stream Tab
+    > 114 |         await page.click('button:has-text("Notas")'); // "HIGHLIGHTS_NOTES" label
+          |                    ^
+      115 |         
+      116 |         // Add a Note
+      117 |         await page.fill('[placeholder="Adicionar nota..."]', 'Test Note 1');
+        at C:\projects\aprendeai-app\frontend\tests\e2e\sprint2-ux-analytics.spec.ts:114:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\sprint2-ux-analytics-Sprin-6ed7a--Redo-should-revert-actions-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\sprint2-ux-analytics-Sprin-6ed7a--Redo-should-revert-actions-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\sprint2-ux-analytics-Sprin-6ed7a--Redo-should-revert-actions-chromium\error-context.md
+
+
+[1A[2K[3/3] [chromium] › tests\e2e\sprint2-ux-analytics.spec.ts:143:9 › Sprint 2: UX Core & Analytics E2E › Analytics Dashboard should render metrics
+[1A[2K  3) [chromium] › tests\e2e\sprint2-ux-analytics.spec.ts:143:9 › Sprint 2: UX Core & Analytics E2E › Analytics Dashboard should render metrics 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Analytics")')[22m
+
+
+      145 |
+      146 |         // Switch to Analytics Tab
+    > 147 |         await page.click('button:has-text("Analytics")');
+          |                    ^
+      148 |
+      149 |         // Check Metrics from Mock
+      150 |         await expect(page.getByText('65000')).toBeHidden(); // Should be formatted as minutes
+        at C:\projects\aprendeai-app\frontend\tests\e2e\sprint2-ux-analytics.spec.ts:147:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\sprint2-ux-analytics-Sprin-40bb7-board-should-render-metrics-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\sprint2-ux-analytics-Sprin-40bb7-board-should-render-metrics-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\sprint2-ux-analytics-Sprin-40bb7-board-should-render-metrics-chromium\error-context.md
+
+
+[1A[2K  3 failed
+    [chromium] › tests\e2e\sprint2-ux-analytics.spec.ts:77:9 › Sprint 2: UX Core & Analytics E2E › UI should handle visibility toggling 
+    [chromium] › tests\e2e\sprint2-ux-analytics.spec.ts:100:9 › Sprint 2: UX Core & Analytics E2E › Undo/Redo should revert actions 
+    [chromium] › tests\e2e\sprint2-ux-analytics.spec.ts:143:9 › Sprint 2: UX Core & Analytics E2E › Analytics Dashboard should render metrics 
+
+[36m  Serving HTML report at http://localhost:50465. Press Ctrl+C to quit.[39m

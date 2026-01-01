@@ -6,6 +6,7 @@ import { useCreateHighlight } from '@/hooks/cornell/use-cornell-highlights';
 import { CreateHighlightDto } from '@/lib/types/cornell';
 import { cn } from '@/lib/utils';
 import { TAILWIND_COLORS } from '@/lib/constants/colors';
+import { TargetType } from '@/lib/constants/enums';
 
 interface CreateAnnotationFormProps {
   contentId: string;
@@ -14,7 +15,7 @@ interface CreateAnnotationFormProps {
   selectedText: string;
   onSuccess?: () => void;
   onCancel?: () => void;
-  targetType?: 'PDF' | 'IMAGE' | 'DOCX'; // Optional passed prop or default
+  targetType?: TargetType; // Optional passed prop or default
 }
 
 export function CreateAnnotationForm({
@@ -24,7 +25,7 @@ export function CreateAnnotationForm({
   selectedText,
   onSuccess,
   onCancel,
-  targetType = 'PDF',
+  targetType = TargetType.PDF,
 }: CreateAnnotationFormProps) {
   const [note, setNote] = useState('');
   const [color, setColor] = useState('yellow');
@@ -39,7 +40,7 @@ export function CreateAnnotationForm({
       kind: 'TEXT', // Default for text selection
       target_type: targetType,
       anchor_json: {
-        type: targetType === 'DOCX' ? 'DOCX_TEXT' : 'PDF_TEXT',
+        type: targetType === TargetType.DOCX ? 'DOCX_TEXT' : 'PDF_TEXT',
         position: {
             // Simplified placeholder - real implementation needs actual rects from selection
             pageNumber: 1, 

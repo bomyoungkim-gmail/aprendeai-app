@@ -3,15 +3,20 @@ import { PrismaService } from '../prisma/prisma.service';
 import { TrackEventDto } from './dto/track-event.dto';
 import { Prisma } from '@prisma/client';
 
+import { SanitizationService } from './sanitization.service'; // Added
+
 @Injectable()
 export class TelemetryService implements OnModuleDestroy {
   private readonly logger = new Logger(TelemetryService.name);
   private eventBuffer: Prisma.telemetry_eventsCreateManyInput[] = [];
   private readonly BATCH_SIZE = 100;
-  private readonly FLUSH_INTERVAL_MS = 10000; // 10 seconds
+  private readonly FLUSH_INTERVAL_MS = 10000;
   private flushInterval: NodeJS.Timeout;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sanitizer: SanitizationService // Injected
+  ) {
     this.startFlushInterval();
   }
 
@@ -24,16 +29,9 @@ export class TelemetryService implements OnModuleDestroy {
     }, this.FLUSH_INTERVAL_MS);
   }
 
-  /**
-   * Tracks a new telemetry event.
-   * Adds the event to an in-memory buffer. If buffer size exceeds BATCH_SIZE, triggers a flush.
-   * This method is designed to be non-blocking and fire-and-forget from the caller's perspective,
-   * though validation errors in DTO (at controller level) will block.
-   * 
-   * @param dto data transfer object containing event details
-   * @param userId id of the authenticated user
-   */
   async track(dto: TrackEventDto, userId: string): Promise<void> {
+    const scrubbedData = this.sanitizer.scrub(dto.data); // Scrub data
+
     const eventInput: Prisma.telemetry_eventsCreateManyInput = {
       user_id: userId,
       content_id: dto.contentId,
@@ -42,7 +40,7 @@ export class TelemetryService implements OnModuleDestroy {
       event_version: dto.eventVersion || '1.0.0',
       ui_policy_version: dto.uiPolicyVersion || null,
       mode: dto.mode || null,
-      data: dto.data ? (dto.data as any) : Prisma.JsonNull, // Cast to any to satisfy Prisma Json type
+      data: scrubbedData ? (scrubbedData as any) : Prisma.JsonNull, // Use scrubbed data
       created_at: new Date(),
     };
 

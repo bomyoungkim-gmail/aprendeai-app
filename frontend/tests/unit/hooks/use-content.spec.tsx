@@ -9,6 +9,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useContents, useContent, useCreateContent, useUpdateContent, useDeleteContent } from '@/hooks/content';
 import * as services from '@/services';
+import { ContentType } from '@/lib/constants/enums';
 
 // Mock contentService
 jest.mock('@/services/content/content.service', () => ({
@@ -44,8 +45,8 @@ describe('useContents', () => {
 
   it('should fetch all contents successfully', async () => {
     const mockContents = [
-      { id: '1', title: 'Content 1', type: 'PDF' },
-      { id: '2', title: 'Content 2', type: 'VIDEO' },
+      { id: '1', title: 'Content 1', type: ContentType.PDF },
+      { id: '2', title: 'Content 2', type: ContentType.VIDEO },
     ];
 
     (services.contentService.fetchAll as jest.Mock).mockResolvedValue(mockContents);
@@ -79,7 +80,7 @@ describe('useContent', () => {
   });
 
   it('should fetch single content by ID', async () => {
-    const mockContent = { id: '1', title: 'Content 1', type: 'PDF' };
+    const mockContent = { id: '1', title: 'Content 1', type: ContentType.PDF };
 
     (services.contentService.fetchById as jest.Mock).mockResolvedValue(mockContent);
 
@@ -109,8 +110,8 @@ describe('useCreateContent', () => {
   });
 
   it('should create content successfully', async () => {
-    const newContent = { id: '3', title: 'New Content', type: 'ARTICLE' };
-    const payload = { title: 'New Content', type: 'ARTICLE' as const };
+    const newContent = { id: '3', title: 'New Content', type: ContentType.ARTICLE };
+    const payload = { title: 'New Content', type: ContentType.ARTICLE };
 
     (services.contentService.create as jest.Mock).mockResolvedValue(newContent);
 
@@ -127,7 +128,7 @@ describe('useCreateContent', () => {
   });
 
   it('should handle creation error', async () => {
-    const payload = { title: '', type: 'PDF' as const };
+    const payload = { title: '', type: ContentType.PDF };
 
     (services.contentService.create as jest.Mock).mockRejectedValue(new Error('Title is required'));
 

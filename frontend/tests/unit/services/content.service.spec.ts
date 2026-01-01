@@ -6,6 +6,7 @@
 
 import { contentService } from '@/services/content/content.service';
 import { contentApi } from '@/services/api/content.api';
+import { ContentType } from '@/lib/constants/enums';
 
 // Mock contentApi
 jest.mock('@/services/api/content.api', () => ({
@@ -20,8 +21,8 @@ jest.mock('@/services/api/content.api', () => ({
 
 describe('ContentService', () => {
   const mockContents = [
-    { id: '1', title: 'Content 1', type: 'VIDEO' },
-    { id: '2', title: 'Content 2', type: 'PDF' },
+    { id: '1', title: 'Content 1', type: ContentType.VIDEO },
+    { id: '2', title: 'Content 2', type: ContentType.PDF },
   ];
 
   beforeEach(() => {
@@ -70,7 +71,7 @@ describe('ContentService', () => {
   });
 
   describe('create', () => {
-    const validPayload = { title: 'New Content', type: 'PDF' as const, content: 'test', originalFileName: 'test.pdf' };
+    const validPayload = { title: 'New Content', type: ContentType.PDF, content: 'test', originalFileName: 'test.pdf' };
 
     it('should create content successfully', async () => {
       const mockCreated = { id: '3', ...validPayload };
@@ -98,7 +99,7 @@ describe('ContentService', () => {
     const updatePayload = { title: 'Updated Title' };
 
     it('should update content successfully', async () => {
-      const mockUpdated = { id: '1', title: 'Updated Title', type: 'VIDEO' };
+      const mockUpdated = { id: '1', title: 'Updated Title', type: ContentType.VIDEO };
       (contentApi.updateContent as jest.Mock).mockResolvedValue(mockUpdated);
 
       const result = await contentService.update('1', updatePayload);

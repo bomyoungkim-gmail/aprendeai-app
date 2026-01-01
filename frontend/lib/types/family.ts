@@ -1,5 +1,10 @@
-export type FamilyRole = 'OWNER' | 'ADMIN' | 'MEMBER' | 'CHILD';
-export type FamilyMemberStatus = 'ACTIVE' | 'INVITED' | 'INACTIVE';
+// Family roles (hierarchical/ownership)
+export type FamilyRole = 'OWNER' | 'GUARDIAN' | 'CHILD';
+
+// Learning roles (pedagogical context) - optional field
+export type FamilyLearningRole = 'EDUCATOR' | 'LEARNER' | 'PEER';
+
+export type FamilyMemberStatus = 'INVITED' | 'ACTIVE' | 'REMOVED';
 
 export interface UsageMetric {
   quantity: number;
@@ -20,6 +25,7 @@ export interface FamilyMember {
   userId: string;
   familyId: string;
   role: FamilyRole;
+  learningRole?: FamilyLearningRole | null;
   status: FamilyMemberStatus;
   user?: {
     id: string;

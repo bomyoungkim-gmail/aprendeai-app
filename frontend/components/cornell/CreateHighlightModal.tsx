@@ -10,7 +10,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { useCreateHighlight } from '@/hooks/cornell/use-cornell-highlights';
 import { cn } from '@/lib/utils';
-import type { TargetType } from '@/lib/constants/enums';
+import { ContentType } from '@/lib/constants/enums';
 import { CORNELL_MODAL_LABELS } from '@/lib/cornell/labels';
 import { CORNELL_MODAL_CONSTANTS, CORNELL_MODAL_DEFAULTS } from '@/lib/cornell/constants';
 import { getVisibilityConfig } from '@/lib/cornell/visibility-config';
@@ -20,7 +20,7 @@ export interface CreateHighlightModalProps {
   isOpen: boolean;
   onClose: () => void;
   contentId: string;
-  targetType: TargetType;
+  targetType: ContentType;
   initialType?: CornellAnnotationType;
   initialPage?: number;
   initialTimestamp?: number;
@@ -52,8 +52,8 @@ export function CreateHighlightModal({
 
   const anchoringData = useMemo(
     () => ({
-      page_number: targetType === 'PDF' ? pageNumber : undefined,
-      timestamp_ms: ['VIDEO', 'AUDIO'].includes(targetType) ? timestamp : undefined,
+      page_number: targetType === ContentType.PDF ? pageNumber : undefined,
+      timestamp_ms: [ContentType.VIDEO, ContentType.AUDIO].includes(targetType) ? timestamp : undefined,
     }),
     [targetType, pageNumber, timestamp]
   );
@@ -75,7 +75,7 @@ export function CreateHighlightModal({
     try {
       await createHighlight.mutateAsync({
         kind: 'TEXT',
-        target_type: targetType as 'PDF' | 'IMAGE' | 'DOCX',
+        target_type: targetType,
         anchor_json: {
           type: 'PDF_TEXT',
           position: {

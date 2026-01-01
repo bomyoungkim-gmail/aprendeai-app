@@ -1,9 +1,10 @@
 // Cornell Reader Types
+import { ContentType, TargetType } from '../constants/enums';
 
 export interface Content {
   id: string;
   title: string;
-  contentType: 'PDF' | 'IMAGE' | 'DOCX' | 'ARTICLE' | 'VIDEO' | 'AUDIO';
+  contentType: ContentType;
   sourceUrl?: string;
   file?: {
     id: string;
@@ -15,6 +16,7 @@ export interface Content {
   createdAt: string;
   updatedAt: string;
   duration?: number;
+  text?: string;
 }
 
 export interface CornellNotes {
@@ -45,7 +47,7 @@ export interface Highlight {
   contentId: string;
   userId: string;
   kind: 'TEXT' | 'AREA';
-  targetType: 'PDF' | 'IMAGE' | 'DOCX';
+  targetType: TargetType;
   pageNumber?: number;
   anchorJson: PDFTextAnchor | PDFAreaAnchor | ImageAreaAnchor | DocxTextAnchor;
   colorKey: string;
@@ -111,7 +113,7 @@ export interface UpdateCornellDto {
 
 export interface CreateHighlightDto {
   kind: 'TEXT' | 'AREA';
-  target_type: 'PDF' | 'IMAGE' | 'DOCX';
+  target_type: TargetType;
   page_number?: number;
   anchor_json: PDFTextAnchor | PDFAreaAnchor | ImageAreaAnchor | DocxTextAnchor;
   color_key?: string;

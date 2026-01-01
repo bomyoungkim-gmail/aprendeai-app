@@ -6,6 +6,7 @@
 
 import { contentApi } from '@/services/api/content.api';
 import api from '@/lib/api';
+import { ContentType } from '@/lib/constants/enums';
 
 // Mock API
 jest.mock('@/lib/api', () => ({
@@ -49,7 +50,7 @@ describe('ContentApi', () => {
 
   describe('createContent', () => {
     it('should create content', async () => {
-      const payload = { title: 'New Content', type: 'PDF' as const };
+      const payload = { title: 'New Content', type: ContentType.PDF };
       const mockResponse = { id: '2', ...payload };
       (api.post as jest.Mock).mockResolvedValue({ data: mockResponse });
 

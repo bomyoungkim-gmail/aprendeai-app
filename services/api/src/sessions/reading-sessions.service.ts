@@ -29,6 +29,13 @@ import { GetSessionUseCase } from "./application/use-cases/get-session.use-case"
 import { UpdatePrePhaseUseCase, UpdatePrePhaseData } from "./application/use-cases/update-pre-phase.use-case";
 import { AdvancePhaseUseCase } from "./application/use-cases/advance-phase.use-case";
 import { RecordEventUseCase } from "./application/use-cases/record-event.use-case";
+import { UpdateReadingProgressUseCase } from "./application/use-cases/update-reading-progress.use-case";
+import { GetReadingProgressUseCase } from "./application/use-cases/get-reading-progress.use-case";
+import { CreateBookmarkUseCase } from "./application/use-cases/create-bookmark.use-case";
+import { GetBookmarksUseCase } from "./application/use-cases/get-bookmarks.use-case";
+import { DeleteBookmarkUseCase } from "./application/use-cases/delete-bookmark.use-case";
+import { UpdateReadingProgressDto } from "./dto/reading-progress.dto";
+import { CreateBookmarkDto } from "./dto/bookmarks.dto";
 
 @Injectable()
 export class ReadingSessionsService {
@@ -52,6 +59,11 @@ export class ReadingSessionsService {
     private updatePrePhaseUseCase: UpdatePrePhaseUseCase,
     private advancePhaseUseCase: AdvancePhaseUseCase,
     private recordEventUseCase: RecordEventUseCase,
+    private updateReadingProgressUseCase: UpdateReadingProgressUseCase,
+    private getReadingProgressUseCase: GetReadingProgressUseCase,
+    private createBookmarkUseCase: CreateBookmarkUseCase,
+    private getBookmarksUseCase: GetBookmarksUseCase,
+    private deleteBookmarkUseCase: DeleteBookmarkUseCase,
   ) {}
 
   async startSession(user_id: string, content_id: string) {
@@ -766,5 +778,37 @@ export class ReadingSessionsService {
       totalSessions: sessions.length,
       periodDays: days,
     };
+  }
+
+  // ============================================
+  // Phase 3: Resume Logic & Bookmarks
+  // ============================================
+
+  async getReadingProgress(user_id: string, content_id: string) {
+    return this.getReadingProgressUseCase.execute(user_id, content_id);
+  }
+
+  async updateReadingProgress(
+    user_id: string,
+    content_id: string,
+    dto: UpdateReadingProgressDto,
+  ) {
+    return this.updateReadingProgressUseCase.execute(user_id, content_id, dto);
+  }
+
+  async getBookmarks(user_id: string, content_id: string) {
+    return this.getBookmarksUseCase.execute(user_id, content_id);
+  }
+
+  async createBookmark(
+    user_id: string,
+    content_id: string,
+    dto: CreateBookmarkDto,
+  ) {
+    return this.createBookmarkUseCase.execute(user_id, content_id, dto);
+  }
+
+  async deleteBookmark(bookmarkId: string, user_id: string) {
+    return this.deleteBookmarkUseCase.execute(bookmarkId, user_id);
   }
 }

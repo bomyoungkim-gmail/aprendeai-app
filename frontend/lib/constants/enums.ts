@@ -4,6 +4,19 @@
  * These enums MUST match the Prisma schema enums exactly.
  * DO NOT use hard-coded strings - always import from here.
  * 
+ * TODO: [FUTURE IMPROVEMENTS]
+ * 1. Add CI/CD validation script to compare frontend enums with Prisma schema
+ *    - Script should fail build if enums diverge
+ *    - Run on pre-commit and in CI pipeline
+ * 2. Auto-generate frontend enums from Prisma using prisma-generator
+ *    - Install: prisma-generator-typescript-enums or similar
+ *    - Single source of truth in schema.prisma
+ *    - Eliminates manual sync errors
+ * 3. Consolidate TargetType into ContentType in database
+ *    - See: tech-debt-enum-unification.md for migration plan
+ *    - Remove redundant TargetType enum from Prisma
+ *    - Update highlights table to use ContentType
+ * 
  * @module lib/constants/enums
  */
 
@@ -33,31 +46,47 @@ export enum ContentType {
   IMAGE = 'IMAGE',
   ARTICLE = 'ARTICLE',
   DOCX = 'DOCX',
+  NEWS = 'NEWS',
+  ARXIV = 'ARXIV',
+  SCHOOL_MATERIAL = 'SCHOOL_MATERIAL',
+  WEB_CLIP = 'WEB_CLIP',
 }
 
 /**
  * Target types for highlights/annotations
- * Maps to: TargetType in schema.prisma
- * Note: Will be extended to include VIDEO and AUDIO
+ * Now unified with ContentType for frontend compatibility.
+ * 
+ * TODO: [TECH DEBT] Unify TargetType and ContentType in database schema
+ * Currently, TargetType exists as a separate enum in Prisma schema for historical reasons.
+ * Ideally, we should:
+ * 1. Create migration to change highlights.target_type column from TargetType to ContentType
+ * 2. Remove TargetType enum from schema.prisma entirely
+ * 3. Use ContentType everywhere (single source of truth)
+ * Risk: Migration requires updating existing highlight records and careful testing
+ * Benefit: Eliminates redundant enum and simplifies type system across entire stack
  */
-export enum TargetType {
-  PDF = 'PDF',
-  IMAGE = 'IMAGE',
-  DOCX = 'DOCX',
-  VIDEO = 'VIDEO',  // To be added in migration
-  AUDIO = 'AUDIO',  // To be added in migration
-}
+export type TargetType = ContentType;
+export const TargetType = ContentType;
 
 /**
- * Family member roles
+ * Family member roles (hierarchical/ownership)
  * Maps to: FamilyRole in schema.prisma
  */
 export enum FamilyRole {
   OWNER = 'OWNER',
   GUARDIAN = 'GUARDIAN',
   CHILD = 'CHILD',
+}
+
+/**
+ * Learning roles within family context (pedagogical)
+ * Maps to: FamilyLearningRole in schema.prisma
+ * This is an optional field in family_members table
+ */
+export enum FamilyLearningRole {
   EDUCATOR = 'EDUCATOR',
   LEARNER = 'LEARNER',
+  PEER = 'PEER',
 }
 
 /**
@@ -121,10 +150,10 @@ export enum AnnotationStatus {
 // ========================================
 
 /**
- * Check if a user role is an educator
+ * Check if a learning role is an educator
  */
 export function isEducatorRole(role: string): boolean {
-  return role === FamilyRole.EDUCATOR || role === 'EDUCATOR';
+  return role === FamilyLearningRole.EDUCATOR || role === 'EDUCATOR';
 }
 
 /**

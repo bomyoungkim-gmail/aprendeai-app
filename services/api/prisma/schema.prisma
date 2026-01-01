@@ -447,6 +447,8 @@ model contents {
   user_library_items user_library_items[]
   user_vocabularies  user_vocabularies[]
   telemetry_events   telemetry_events[]
+  reading_progress   reading_progress[]
+  bookmarks          bookmarks[]
 
   @@index([owner_user_id])
   @@index([title])
@@ -1677,6 +1679,8 @@ model users {
   user_vocabularies  user_vocabularies[]
   comments           comments[]
   telemetry_events   telemetry_events[]
+  reading_progress   reading_progress[]
+  bookmarks          bookmarks[]
 
   @@unique([oauth_provider, oauth_id])
 }
@@ -1693,6 +1697,49 @@ model vocab_attempts {
 
   @@index([created_at])
   @@index([vocab_id])
+}
+
+model reading_progress {
+  user_id    String
+  content_id String
+
+  last_page       Int      @default(0)
+  last_scroll_pct Float    @default(0)
+  device_info     String?
+  
+  updated_at DateTime @updatedAt
+  
+  users    users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  contents contents @relation(fields: [content_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, content_id])
+}
+
+model bookmarks {
+  id         String   @id @default(uuid())
+  user_id    String
+  content_id String
+
+  page_number Int
+  scroll_pct  Float?
+  label       String?
+  color       String?
+  
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  
+  users    users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  contents contents @relation(fields: [content_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, content_id])
+}
+
+model glossary_cache {
+  term       String   @id
+  definition Json
+  created_at DateTime @default(now())
+
+  @@index([term])
 }
 
 enum AnnotationShareMode {
@@ -1789,6 +1836,7 @@ enum ContentType {
   WEB_CLIP
   VIDEO
   AUDIO
+  TEXT
 }
 
 enum ContextRole {
@@ -2078,12 +2126,26 @@ enum SystemRole {
   OPS
 }
 
+// TODO: [TECH DEBT] Consolidate TargetType into ContentType
+// TargetType is semantically identical to ContentType and should be unified.
+// Migration plan:
+// 1. ALTER TABLE highlights ALTER COLUMN target_type TYPE ContentType
+// 2. Drop TargetType enum
+// 3. Update all references in codebase
+// Risk: Requires careful migration of existing highlight records
+// Benefit: Single source of truth, eliminates redundancy
 enum TargetType {
   PDF
   IMAGE
   DOCX
   VIDEO
   AUDIO
+  ARTICLE
+  TEXT
+  NEWS
+  ARXIV
+  SCHOOL_MATERIAL
+  WEB_CLIP
 }
 
 enum TeacherVerificationStatus {

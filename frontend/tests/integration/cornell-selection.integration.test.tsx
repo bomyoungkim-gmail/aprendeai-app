@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ModernCornellLayout } from '@/components/cornell/ModernCornellLayout';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ContentType } from '@/lib/constants/enums';
 import api from '@/lib/api';
 
 // Mock API
@@ -40,7 +41,7 @@ describe('ModernCornellLayout - Text Selection Integration', () => {
     mode: 'original' as const,
     onModeToggle: jest.fn(),
     saveStatus: 'saved' as const,
-    targetType: 'PDF' as const,
+    targetType: ContentType.PDF,
     viewer: <div data-testid="pdf-viewer">PDF Content with text to select</div>,
     streamItems: [],
     cues: [],

@@ -8,6 +8,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ToastProvider } from "@/components/providers/toast-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { SessionExpiredModal } from "@/components/auth/SessionExpiredModal";
+import { AccessibilityWrapper } from "@/components/accessibility/AccessibilityWrapper";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Use useRef for absolutely stable queryClient reference
@@ -51,9 +52,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <QueryClientProvider client={queryClient}>
             <WebSocketProvider>
-              <ToastProvider />
-              <SessionExpiredModal />
-              {children}
+              <AccessibilityWrapper>
+                <ToastProvider />
+                <SessionExpiredModal />
+                {children}
+              </AccessibilityWrapper>
             </WebSocketProvider>
           </QueryClientProvider>
         </ThemeProvider>

@@ -1,0 +1,135 @@
+
+Running 4 tests using 1 worker
+
+[1A[2K[1/4] [chromium] › tests\e2e\sprint3-reading-persistence.spec.ts:76:9 › Sprint 3: Persistence & Heuristics E2E › should show resume prompt and navigate on accept
+[1A[2K  1) [chromium] › tests\e2e\sprint3-reading-persistence.spec.ts:76:9 › Sprint 3: Persistence & Heuristics E2E › should show resume prompt and navigate on accept 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('Retomar de onde parou?')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for getByText('Retomar de onde parou?')[22m
+
+
+      79 |         // Check for Resume Toast
+      80 |         const resumeToast = page.getByText('Retomar de onde parou?');
+    > 81 |         await expect(resumeToast).toBeVisible({ timeout: 10000 });
+         |                                   ^
+      82 |         
+      83 |         // Click "Sim"
+      84 |         await page.click('button:has-text("Sim")');
+        at C:\projects\aprendeai-app\frontend\tests\e2e\sprint3-reading-persistence.spec.ts:81:35
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\sprint3-reading-persistenc-a2e1e-ompt-and-navigate-on-accept-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\sprint3-reading-persistenc-a2e1e-ompt-and-navigate-on-accept-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\sprint3-reading-persistenc-a2e1e-ompt-and-navigate-on-accept-chromium\error-context.md
+
+
+[1A[2K[2/4] [chromium] › tests\e2e\sprint3-reading-persistence.spec.ts:92:9 › Sprint 3: Persistence & Heuristics E2E › should create and navigate bookmarks
+[1A[2K  2) [chromium] › tests\e2e\sprint3-reading-persistence.spec.ts:92:9 › Sprint 3: Persistence & Heuristics E2E › should create and navigate bookmarks 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="tab-bookmarks"]')[22m
+
+
+      94 |         
+      95 |         // Open Bookmarks Tab
+    > 96 |         await page.click('[data-testid="tab-bookmarks"]');
+         |                    ^
+      97 |         
+      98 |         // Check existing bookmark
+      99 |         await expect(page.getByText('Página 2')).toBeVisible();
+        at C:\projects\aprendeai-app\frontend\tests\e2e\sprint3-reading-persistence.spec.ts:96:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\sprint3-reading-persistenc-f0574-eate-and-navigate-bookmarks-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\sprint3-reading-persistenc-f0574-eate-and-navigate-bookmarks-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\sprint3-reading-persistenc-f0574-eate-and-navigate-bookmarks-chromium\error-context.md
+
+
+[1A[2K[3/4] [chromium] › tests\e2e\sprint3-reading-persistence.spec.ts:113:9 › Sprint 3: Persistence & Heuristics E2E › should buffer telemetry events when offline and sync when online
+[1A[2K  3) [chromium] › tests\e2e\sprint3-reading-persistence.spec.ts:113:9 › Sprint 3: Persistence & Heuristics E2E › should buffer telemetry events when offline and sync when online 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="tab-toc"]')[22m
+
+
+      121 |         // but we can mock the track calls to fail.
+      122 |         
+    > 123 |         await page.route('**/api/telemetry/track', route => route.abort('failed'));
+          |                    ^
+      124 |         
+      125 |         // 2. Perform action to trigger telemetry (e.g. click a tab)
+      126 |         await page.click('[data-testid="tab-toc"]');
+        at C:\projects\aprendeai-app\frontend\tests\e2e\sprint3-reading-persistence.spec.ts:123:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\sprint3-reading-persistenc-bd421-ffline-and-sync-when-online-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\sprint3-reading-persistenc-bd421-ffline-and-sync-when-online-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\sprint3-reading-persistenc-bd421-ffline-and-sync-when-online-chromium\error-context.md
+
+
+[1A[2K[4/4] [chromium] › tests\e2e\sprint3-reading-persistence.spec.ts:146:9 › Sprint 3: Persistence & Heuristics E2E › should capture flow state via telemetry
+[1A[2K  4) [chromium] › tests\e2e\sprint3-reading-persistence.spec.ts:146:9 › Sprint 3: Persistence & Heuristics E2E › should capture flow state via telemetry 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="tab-stream"]')[22m
+
+
+      161 |         
+      162 |         // Wait for heuristics to kick in (Flow starts after stability)
+    > 163 |         await page.waitForTimeout(5000); 
+          |                    ^
+      164 |         
+      165 |         // Trigger a change or just wait for periodic flush
+      166 |         await page.click('[data-testid="tab-stream"]');
+        at C:\projects\aprendeai-app\frontend\tests\e2e\sprint3-reading-persistence.spec.ts:163:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\sprint3-reading-persistenc-b3c6d-re-flow-state-via-telemetry-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\sprint3-reading-persistenc-b3c6d-re-flow-state-via-telemetry-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\sprint3-reading-persistenc-b3c6d-re-flow-state-via-telemetry-chromium\error-context.md
+
+
+[1A[2K  4 failed
+    [chromium] › tests\e2e\sprint3-reading-persistence.spec.ts:76:9 › Sprint 3: Persistence & Heuristics E2E › should show resume prompt and navigate on accept 
+    [chromium] › tests\e2e\sprint3-reading-persistence.spec.ts:92:9 › Sprint 3: Persistence & Heuristics E2E › should create and navigate bookmarks 
+    [chromium] › tests\e2e\sprint3-reading-persistence.spec.ts:113:9 › Sprint 3: Persistence & Heuristics E2E › should buffer telemetry events when offline and sync when online 
+    [chromium] › tests\e2e\sprint3-reading-persistence.spec.ts:146:9 › Sprint 3: Persistence & Heuristics E2E › should capture flow state via telemetry 
+
+[36m  Serving HTML report at http://localhost:54807. Press Ctrl+C to quit.[39m

@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { BookOpen, FileText, Image, FileCheck } from 'lucide-react';
 import type { Content } from '@/lib/types/cornell';
 
+import { ContentType } from '@/lib/constants/enums';
+
 interface ContentItemProps {
   content: Content;
 }
@@ -11,14 +13,23 @@ interface ContentItemProps {
 export function ContentItem({ content }: ContentItemProps) {
   const getIcon = () => {
     switch (content.contentType) {
-      case 'PDF':
+      case ContentType.PDF:
         return <FileText className="h-5 w-5 text-red-600" />;
-      case 'IMAGE':
+      case ContentType.IMAGE:
         return <Image className="h-5 w-5 text-blue-600" />;
-      case 'DOCX':
+      case ContentType.DOCX:
         return <FileCheck className="h-5 w-5 text-blue-800" />;
-      case 'ARTICLE':
+      case ContentType.ARTICLE:
+      case ContentType.NEWS:
+      case ContentType.ARXIV:
+      case ContentType.WEB_CLIP:
         return <BookOpen className="h-5 w-5 text-green-600" />;
+      case ContentType.SCHOOL_MATERIAL:
+        return <BookOpen className="h-5 w-5 text-orange-600" />;
+      case ContentType.VIDEO:
+        return <FileText className="h-5 w-5 text-purple-600" />;
+      case ContentType.AUDIO:
+        return <FileText className="h-5 w-5 text-indigo-600" />;
       default:
         return <FileText className="h-5 w-5 text-gray-600" />;
     }

@@ -203,7 +203,12 @@ const PositionedMenu = forwardRef<HTMLDivElement, {
 
 PositionedMenu.displayName = 'PositionedMenu';
 
-export function PDFViewer({ 
+export interface PDFViewerRef {
+  jumpToPage: (page: number) => void;
+  jumpToHighlight: (highlightArea: any) => void;
+}
+
+export const PDFViewer = forwardRef<PDFViewerRef, PDFViewerProps>(({ 
   content, 
   mode, 
   highlights = [], 
@@ -211,7 +216,7 @@ export function PDFViewer({
   selectedColor = 'yellow',
   onSelectionAction,
   onPageChange: onPageChangeProp
-}: PDFViewerProps) {
+}, ref) => {
   const [pdfUrl, setPdfUrl] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -222,6 +227,23 @@ export function PDFViewer({
   const [selectedText, setSelectedText] = useState<string>('');
   const [activeSidebar, setActiveSidebar] = useState<'thumbnails' | 'bookmarks' | null>(null);
   const fileUrl = content.file?.viewUrl;
+
+  // Store viewer API reference
+  const viewerRef = React.useRef<any>(null);
+
+  // Expose methods to parent
+  React.useImperativeHandle(ref, () => ({
+    jumpToPage: (page: number) => {
+      if (viewerRef.current) {
+        viewerRef.current.jumpToPage(page - 1); // 0-indexed
+      }
+    },
+    jumpToHighlight: (highlightArea: any) => {
+      if (jumpToHighlightArea) {
+        jumpToHighlightArea(highlightArea);
+      }
+    }
+  }));
 
   // Fetch PDF with authentication and create blob URL
   useEffect(() => {
@@ -495,8 +517,8 @@ export function PDFViewer({
     ),
   });
 
-  // Store viewer API reference
-  const viewerRef = React.useRef<any>(null);
+  // No longer needed as we use ref from forwardRef
+  // const viewerRef = React.useRef<any>(null);
 
   // Page navigation handlers
   const handlePreviousPage = () => {
@@ -777,4 +799,4 @@ export function PDFViewer({
       `}</style>
     </div>
   );
-}
+});

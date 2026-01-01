@@ -1,7 +1,9 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { APP_INTERCEPTOR, APP_GUARD } from "@nestjs/core";
+import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler"; // Added
 import { EventEmitterModule } from "@nestjs/event-emitter";
+import { GlossaryModule } from "./glossary/glossary.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { QueueModule } from "./queue/queue.module";
 import { ExtractionModule } from "./extraction/extraction.module";
@@ -80,6 +82,10 @@ import { join } from "path";
       rootPath: join(process.cwd(), "uploads"),
       serveRoot: "/api/uploads",
     }),
+    ThrottlerModule.forRoot([{
+        ttl: 60000,
+        limit: 100,
+    }]),
     EventEmitterModule.forRoot({ global: true }),
     PrismaModule,
     QueueModule, // Global queue service
@@ -131,13 +137,18 @@ import { join } from "path";
     NotificationsModule,
     SessionTrackingModule,
     TelemetryModule,
+    GlossaryModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
     {
       provide: APP_GUARD,
-      useClass: JwtAuthGuard, // Global authentication - all routes protected by default
+      useClass: JwtAuthGuard, // Global authentication
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard, // Global rate limiting
     },
     {
       provide: APP_INTERCEPTOR,

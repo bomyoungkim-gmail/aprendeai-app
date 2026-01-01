@@ -15,6 +15,11 @@ import { GetSessionUseCase } from "./application/use-cases/get-session.use-case"
 import { UpdatePrePhaseUseCase } from "./application/use-cases/update-pre-phase.use-case";
 import { AdvancePhaseUseCase } from "./application/use-cases/advance-phase.use-case";
 import { RecordEventUseCase } from "./application/use-cases/record-event.use-case";
+import { UpdateReadingProgressUseCase } from "./application/use-cases/update-reading-progress.use-case";
+import { GetReadingProgressUseCase } from "./application/use-cases/get-reading-progress.use-case";
+import { CreateBookmarkUseCase } from "./application/use-cases/create-bookmark.use-case";
+import { GetBookmarksUseCase } from "./application/use-cases/get-bookmarks.use-case";
+import { DeleteBookmarkUseCase } from "./application/use-cases/delete-bookmark.use-case";
 import { QuickCommandParser } from "./parsers/quick-command.parser";
 import { AiServiceClient } from "../ai-service/ai-service.client";
 import { VocabCaptureListener } from "./listeners/vocab-capture.listener";
@@ -48,6 +53,11 @@ import { CornellModule } from "../cornell/cornell.module";
     UpdatePrePhaseUseCase,
     AdvancePhaseUseCase,
     RecordEventUseCase,
+    UpdateReadingProgressUseCase,
+    GetReadingProgressUseCase,
+    CreateBookmarkUseCase,
+    GetBookmarksUseCase,
+    DeleteBookmarkUseCase,
   ],
   exports: [ReadingSessionsService, ISessionsRepository],
 })

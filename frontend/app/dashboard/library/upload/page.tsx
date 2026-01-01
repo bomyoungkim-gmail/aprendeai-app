@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { cornellApi } from '@/lib/api/cornell';
 import { Loader2, Upload, Youtube, FileText, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { ContentType } from '@/lib/constants/enums';
 
 export default function UploadPage() {
   const router = useRouter();
@@ -27,7 +28,7 @@ export default function UploadPage() {
 
     try {
       await cornellApi.createManualContent({
-        type: 'VIDEO',
+        type: ContentType.VIDEO,
         sourceUrl: youtubeUrl,
         title: 'YouTube Import', // Backend will likely fetch metadata
       });

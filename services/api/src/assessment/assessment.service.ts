@@ -20,6 +20,10 @@ export class AssessmentService {
     return this.getUseCase.getUserAssessments(userId);
   }
 
+  findByContent(contentId: string) {
+    return this.getUseCase.getByContentId(contentId);
+  }
+
   async submitAssessment(
     userId: string,
     assessmentId: string,

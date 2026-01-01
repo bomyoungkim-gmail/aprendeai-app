@@ -1,16 +1,21 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { ModernCornellLayout } from '@/components/cornell/ModernCornellLayout';
+import { CornellLayout } from '@/components/cornell/CornellLayout'; // Added for Classic Mode
 // Dynamic imports to avoid SSR issues (canvas) and reduce bundle size
 const PDFViewer = dynamic(() => import('@/components/cornell/viewers/PDFViewerNew').then(mod => mod.PDFViewer), { ssr: false, loading: () => <div className="h-full flex items-center justify-center">Carregando PDF...</div> });
+// Import the ref type separately
+import type { PDFViewerRef } from '@/components/cornell/viewers/PDFViewerNew';
 const ImageViewer = dynamic(() => import('@/components/cornell/viewers/ImageViewer').then(mod => mod.ImageViewer), { ssr: false, loading: () => <div className="h-full flex items-center justify-center">Carregando Imagem...</div> });
 const DocxViewer = dynamic(() => import('@/components/cornell/viewers/DocxViewer').then(mod => mod.DocxViewer), { ssr: false, loading: () => <div className="h-full flex items-center justify-center">Carregando Documento...</div> });
 import { ReviewMode } from '@/components/cornell/review/ReviewMode';
 import { Toast, useToast } from '@/components/ui/Toast';
 import { VideoPlayer } from '@/components/media/VideoPlayer';
 import { AudioPlayer } from '@/components/media/AudioPlayer';
+import { ActionToolbar } from '@/components/cornell/ActionToolbar';
+import { TextViewer } from '@/components/cornell/viewers/TextViewer';
 import { AIChatPanel } from '@/components/cornell/AIChatPanel';
 import {
   useContent,
@@ -23,6 +28,7 @@ import {
 } from '@/hooks/cornell';
 import { useFocusTracking } from '@/hooks/ui';
 import { useAutoTrackReading } from '@/hooks/shared';
+import { useTelemetry } from '@/hooks/telemetry/use-telemetry';
 import type { ViewMode, UpdateCornellDto, CueItem } from '@/lib/types/cornell';
 import type { UnifiedStreamItem } from '@/lib/types/unified-stream';
 import { reactPDFToBackend } from '@/lib/adapters/highlight-adapter';
@@ -37,11 +43,13 @@ interface ReaderPageProps {
 
 export default function ReaderPage({ params }: ReaderPageProps) {
   const [mode, setMode] = useState<ViewMode>('study');
-  const { toast, show: showToast, hide: hideToast } = useToast();
+  const toastControls = useToast();
+  const viewerRef = useRef<PDFViewerRef>(null);
 
   // Activity tracking: Focus metrics and reading time
   const focusMetrics = useFocusTracking(true);
   useAutoTrackReading(params.contentId);
+  const { track } = useTelemetry(params.contentId);
 
   // Fetch data with unified stream
   const { data: content, isLoading: contentLoading } = useContent(params.contentId);
@@ -82,7 +90,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
       // Optionally show success toast
     },
     onError: (error) => {
-      showToast('error', 'Falha ao salvar alterações');
+      toastControls.error('Falha ao salvar alterações');
       console.error('Autosave error:', error);
     },
   });
@@ -92,13 +100,13 @@ export default function ReaderPage({ params }: ReaderPageProps) {
     async (highlightData: CreateHighlightDto) => {
       try {
         await createHighlight(highlightData);
-        showToast('success', 'Destaque criado!');
+        toastControls.success('Destaque criado!');
       } catch (error) {
-        showToast('error', 'Falha ao criar destaque');
+        toastControls.error('Falha ao criar destaque');
         throw error;
       }
     },
-    [createHighlight, showToast]
+    [createHighlight, toastControls]
   );
 
   // Handlers
@@ -128,9 +136,14 @@ export default function ReaderPage({ params }: ReaderPageProps) {
   const handleStreamItemClick = useCallback((item: UnifiedStreamItem) => {
     // Navigate to the item location in the viewer
     if (item.type === 'annotation' && item.pageNumber) {
-      // TODO: Implement scroll to page
-      console.log('Navigate to page:', item.pageNumber);
+      viewerRef.current?.jumpToPage(item.pageNumber);
+      toastControls.info(`Navegando para página ${item.pageNumber}`);
     }
+  }, [toastControls]);
+
+  const handleNavigate = useCallback((page: number, scrollPct?: number) => {
+    setCurrentPage(page);
+    viewerRef.current?.jumpToPage(page);
   }, []);
 
   const handleStreamItemEdit = useCallback(async (item: UnifiedStreamItem) => {
@@ -147,18 +160,18 @@ export default function ReaderPage({ params }: ReaderPageProps) {
         // Delete highlight
         try {
           await deleteHighlightMutation.mutateAsync(item.highlight.id);
-          showToast('success', 'Anotação excluída');
+          toastControls.success('Anotação excluída');
         } catch (error) {
-          showToast('error', 'Falha ao excluir anotação');
+          toastControls.error('Falha ao excluir anotação');
         }
       } else if (item.type === 'note') {
         // Remove note from Cornell notes
         const updatedNotes = (notes || []).filter((n) => n.id !== item.note.id);
         save({ notes_json: updatedNotes });
-        showToast('success', 'Nota excluída');
+        toastControls.success('Nota excluída');
       }
     },
-    [notes, save, showToast, deleteHighlightMutation]
+    [notes, save, toastControls, deleteHighlightMutation]
   );
 
   const handleStreamItemSaveEdit = useCallback(
@@ -170,9 +183,9 @@ export default function ReaderPage({ params }: ReaderPageProps) {
             id: item.highlight.id,
             updates: updates,
           });
-          showToast('success', 'Anotação atualizada');
+          toastControls.success('Anotação atualizada');
         } catch (error) {
-          showToast('error', 'Falha ao atualizar anotação');
+          toastControls.error('Falha ao atualizar anotação');
         }
       } else if (item.type === 'note') {
         // Update note in Cornell notes
@@ -180,10 +193,10 @@ export default function ReaderPage({ params }: ReaderPageProps) {
           n.id === item.note.id ? { ...n, ...updates } : n
         );
         save({ notes_json: updatedNotes });
-        showToast('success', 'Nota atualizada');
+        toastControls.success('Nota atualizada');
       }
     },
-    [notes, save, showToast, updateHighlightMutation]
+    [notes, save, toastControls, updateHighlightMutation]
   );
 
   // AI Chat Panel state
@@ -201,40 +214,46 @@ export default function ReaderPage({ params }: ReaderPageProps) {
         switch (type) {
           case 'note':
             const newNote = { id, body: text, linkedHighlightIds: [] };
-            await save({ notesJson: [...(notes || []), newNote] });
-            showToast('success', 'Nota criada');
+            await save({ notes_json: [...(notes || []), newNote] });
+            track('note_created', { note_id: id, text_length: text.length });
+            toastControls.success('Nota criada');
             break;
           case 'question':
             const newCue = { id, prompt: text, linkedHighlightIds: [] };
-            await save({ cuesJson: [...(cues || []), newCue] });
-            showToast('success', 'Dúvida criada');
+            await save({ cues_json: [...(cues || []), newCue] });
+            track('question_created', { cue_id: id });
+            toastControls.success('Dúvida criada');
             break;
           case 'star':
-            showToast('success', 'Marcado como Favorito');
+            track('star_added', { text: text.substring(0, 50) });
+            toastControls.success('Marcado como Favorito');
             break;
           case 'annotation':
             // For HTML content, we would create a highlight here.
             // For PDF, this is handled by viewer's internal menu usually.
             // If triggered from global menu (HTML), we need logic.
             // For now, simpler fallback:
-             showToast('success', 'Destaque criado');
+             track('highlight_created', { type: 'manual_fallback', text_length: text.length });
+             toastControls.success('Destaque criado');
             break;
           case 'ai':
             // Open AI chat panel with selected text as context
+            track('ai_chat_opened', { context_text: text.substring(0, 100) });
             setAiChatContext({ text, selection: data });
             setAiChatOpen(true);
             break;
            case 'triage':
             // Create highlight with 'triage' tag - To be implemented with proper tagging
-            showToast('info', 'Adicionado à triagem 📋');
+            track('definition_opened', { text: text.substring(0, 50) });
+            toastControls.info('Adicionado à triagem 📋');
             break;
         }
       } catch (error) {
         console.error('Failed to create item:', error);
-        showToast('error', 'Falha ao criar item');
+        toastControls.error('Falha ao criar item');
       }
     },
-    [save, notes, cues, showToast, setAiChatContext, setAiChatOpen]
+    [save, notes, cues, toastControls, setAiChatContext, setAiChatOpen]
   );
 
   const renderViewer = () => {
@@ -287,6 +306,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
       case 'PDF':
         return (
           <PDFViewer
+            ref={viewerRef}
             content={content}
             mode={mode}
             highlights={highlights || []}
@@ -307,6 +327,8 @@ export default function ReaderPage({ params }: ReaderPageProps) {
         );
       case 'DOCX':
         return <DocxViewer content={content} mode={mode} />;
+      case 'ARTICLE':
+        return <TextViewer content={content} />;
       default:
         return (
           <div className="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-950">
@@ -354,53 +376,105 @@ export default function ReaderPage({ params }: ReaderPageProps) {
           </button>
           <p className="mt-4 text-gray-600">Modo de revisão em desenvolvimento...</p>
         </div>
-        {toast && <Toast type={toast.type} message={toast.message} onClose={hideToast} />}
+        {toastControls.toast && <Toast type={toastControls.toast.type} message={toastControls.toast.message} onClose={toastControls.hide} />}
       </div>
     );
   }
 
-  // Add loading check
-  if (contentLoading || !content) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Carregando conteúdo...</p>
+  // Layout Toggle State (Sprint 6)
+  const [layoutMode, setLayoutMode] = useState<'modern' | 'classic'>('modern');
+
+  // Load preference from local storage on mount
+  useEffect(() => {
+    const savedLayout = localStorage.getItem('cornell-layout-preference');
+    if (savedLayout === 'classic') {
+      setLayoutMode('classic');
+    }
+  }, []);
+
+  const toggleLayout = useCallback(() => {
+    setLayoutMode((prev) => {
+      const newMode = prev === 'modern' ? 'classic' : 'modern';
+      localStorage.setItem('cornell-layout-preference', newMode);
+      toastControls.success(`Modo ${newMode === 'modern' ? 'Moderno' : 'Clássico'} ativado`);
+      return newMode;
+    });
+  }, [toastControls]);
+
+  // Loading state
+  const isLoading = contentLoading || streamLoading || !content;
+
+  if (isLoading) {
+      return (
+        <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-950">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Carregando Cornell Notes...</p>
+          </div>
         </div>
-      </div>
-    );
+      );
   }
+
+  // Common props
+  const commonProps = {
+    title: content.title,
+    mode,
+    onModeToggle: handleModeToggle,
+    saveStatus: status,
+    lastSaved: lastSaved,
+    viewer: renderViewer(),
+    onLayoutChange: toggleLayout
+  };
 
   return (
     <ErrorBoundary>
       <>
-        <ModernCornellLayout
-          contentId={params.contentId}
-          targetType={content.contentType as any}
-          currentPage={currentPage}
-          currentTimestamp={currentTimestamp}
-          title={content.title}
-          mode={mode}
-          onModeToggle={handleModeToggle}
-          saveStatus={status}
-          lastSaved={lastSaved}
-          viewer={renderViewer()}
-          streamItems={streamItems}
-          onStreamItemClick={handleStreamItemClick}
-          onStreamItemEdit={handleStreamItemEdit}
-          onStreamItemDelete={handleStreamItemDelete}
-          onStreamItemSaveEdit={handleStreamItemSaveEdit}
-          cues={cues}
-          onCuesChange={handleCuesChange}
-          onCueClick={(cue) => console.log('Cue clicked:', cue)}
-          summary={summaryText}
-          onSummaryChange={handleSummaryChange}
-          disableSelectionMenu={content.contentType === 'PDF'}
-          onCreateStreamItem={handleCreateStreamItem}
-          selectedColor={selectedColor}
-          onColorChange={setSelectedColor}
-        />
-        {toast && <Toast type={toast.type} message={toast.message} onClose={hideToast} />}
+        {layoutMode === 'modern' ? (
+          <ModernCornellLayout
+            {...commonProps}
+            contentId={params.contentId}
+            targetType={content.contentType}
+            currentPage={currentPage}
+            currentTimestamp={currentTimestamp}
+            streamItems={streamItems}
+            onStreamItemClick={handleStreamItemClick}
+            onStreamItemEdit={handleStreamItemEdit}
+            onStreamItemDelete={handleStreamItemDelete}
+            onStreamItemSaveEdit={handleStreamItemSaveEdit}
+            cues={cues}
+            onCuesChange={handleCuesChange}
+            onCueClick={(cue) => console.log('Cue clicked:', cue)}
+            summary={summaryText}
+            onSummaryChange={handleSummaryChange}
+            disableSelectionMenu={content.contentType === 'PDF'}
+            onCreateStreamItem={handleCreateStreamItem}
+            selectedColor={selectedColor}
+            onColorChange={setSelectedColor}
+            onNavigate={handleNavigate}
+            contentText={(content as any)?.text}
+            scrollPercentage={0}
+          />
+        ) : (
+          /* Classic Layout needs raw cues and notes, which we have from useUnifiedStream */
+          /* We need to import CornellLayout at the top! */
+          <div className="h-screen bg-white">
+             {/* Dynamic import CornellLayout to avoid circular dependencies if any, or just standard import */}
+             <CornellLayout 
+                {...commonProps}
+                cues={cues || []}
+                onCuesChange={handleCuesChange}
+                notes={notes || []}
+                onNotesChange={(newNotes: any[]) => save({ notes_json: newNotes })}
+                summary={summaryText}
+                onSummaryChange={handleSummaryChange}
+                onCueClick={(cue: any) => console.log('Classic Cue click:', cue)}
+                onNoteClick={(note: any) => console.log('Classic Note click:', note)}
+             />
+          </div>
+        )}
+        
+        {toastControls.toast && <Toast type={toastControls.toast.type} message={toastControls.toast.message} onClose={toastControls.hide} />}
+        
         <AIChatPanel 
           isOpen={aiChatOpen} 
           onClose={() => setAiChatOpen(false)}

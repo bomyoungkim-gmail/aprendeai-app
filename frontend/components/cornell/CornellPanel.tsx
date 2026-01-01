@@ -14,11 +14,11 @@ import { useOfflineSync } from '@/hooks/cornell/use-offline-sync';
 import { CornellHighlightList } from './CornellHighlightList';
 import { CreateHighlightModal } from './CreateHighlightModal';
 import { cn } from '@/lib/utils';
-import { TargetType } from '@/lib/constants/enums';
+import { TargetType, ContentType } from '@/lib/constants/enums';
 
 export interface CornellPanelProps {
   contentId: string;
-  targetType: TargetType;
+  targetType: ContentType;
   className?: string;
   onHighlightSelect?: (highlightId: string) => void;
 }

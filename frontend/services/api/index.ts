@@ -19,3 +19,8 @@ export * from './sessions.api';
 
 // Groups API (NEW)
 export * from './groups.api';
+
+// Default export of the axios instance
+import api from '@/lib/api';
+export default api;
+export { api };
