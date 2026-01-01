@@ -90,4 +90,31 @@ export class TelemetryService implements OnModuleDestroy {
     clearInterval(this.flushInterval);
     await this.flush();
   }
+
+  /**
+   * Retrieves basic statistics for a specific content.
+   * Returns the count of events grouped by event type.
+   */
+  async getStats(contentId: string) {
+    // Flush buffer first to include recent events in stats
+    await this.flush();
+
+    const stats = await this.prisma.telemetry_events.groupBy({
+      by: ['event_type'],
+      where: {
+        content_id: contentId,
+      },
+      _count: {
+        event_type: true,
+      },
+    });
+
+    // Format as { VIEW_CONTENT: 10, SCROLL: 50, ... }
+    const result: Record<string, number> = {};
+    stats.forEach(item => {
+      result[item.event_type] = item._count.event_type;
+    });
+
+    return result;
+  }
 }

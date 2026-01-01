@@ -34,6 +34,8 @@ import { ContentModeIndicator } from './ContentModeIndicator';
 import { ContentModeSelector } from './ContentModeSelector';
 import { useContentMode } from '@/hooks/content/use-content-mode';
 import { useTelemetry } from '@/hooks/telemetry/use-telemetry';
+import { useScrollTracking } from '@/hooks/telemetry/use-scroll-tracking';
+import { useTimeTracking } from '@/hooks/telemetry/use-time-tracking';
 
 
 interface ModernCornellLayoutProps {
@@ -115,9 +117,13 @@ export function ModernCornellLayout({
   const [activeTab, setActiveTab] = useState<SidebarTab>('stream');
   const [activeAction, setActiveAction] = useState<'highlight' | 'note' | 'question' | 'ai' | null>(null);
   
+  // Telemetry & Tracking
+  const { track } = useTelemetry(contentId);
+  useScrollTracking(contentId);
+  useTimeTracking(contentId);
+
   // Content Mode
   const { mode: contentModeData, isLoading: isContentModeLoading, updateMode } = useContentMode(contentId);
-  const { track } = useTelemetry(contentId);
   const [isModeSelectorOpen, setIsModeSelectorOpen] = useState(false);
 
   // Track initial view

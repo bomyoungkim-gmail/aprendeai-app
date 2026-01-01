@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards, Req, HttpCode, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, UseGuards, Req, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { TelemetryService } from './telemetry.service';
 import { TrackEventDto } from './dto/track-event.dto';
@@ -37,5 +37,12 @@ export class TelemetryController {
         }
     }
     return { success: true, count: dtos.length };
+  }
+
+  @Get('stats/:contentId')
+  @ApiOperation({ summary: 'Get telemetry stats for content' })
+  @ApiResponse({ status: 200, description: 'Statistics retrieved' })
+  async getStats(@Param('contentId') contentId: string) {
+    return this.telemetryService.getStats(contentId);
   }
 }
