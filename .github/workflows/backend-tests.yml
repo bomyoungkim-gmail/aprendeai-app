@@ -4,17 +4,17 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - 'services/**'
-      - '.github/workflows/backend-tests.yml'
+      - "services/**"
+      - ".github/workflows/backend-tests.yml"
   pull_request:
     branches: [main, develop]
     paths:
-      - 'services/**'
+      - "services/**"
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     services:
       postgres:
         image: postgres:15
@@ -37,8 +37,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: "3.11"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -50,6 +50,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aprendeai_test
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ALLOW_MOCK_LLM: "true"
         run: |
           cd services/ai
           pytest tests/ -v --cov=games --cov-report=xml --cov-report=html

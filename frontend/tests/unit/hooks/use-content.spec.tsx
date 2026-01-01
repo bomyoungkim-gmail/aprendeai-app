@@ -7,7 +7,7 @@
 import React from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useContents, useContent, useCreateContent, useUpdateContent, useDeleteContent } from '@/hooks/use-content';
+import { useContents, useContent, useCreateContent, useUpdateContent, useDeleteContent } from '@/hooks/content';
 import * as services from '@/services';
 
 // Mock contentService

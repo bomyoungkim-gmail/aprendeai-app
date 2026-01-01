@@ -246,8 +246,8 @@ model classrooms {
   class_policies    class_policies?
   institutions      institutions?      @relation(fields: [institution_id], references: [id])
 
-  users       users         @relation(fields: [owner_educator_id], references: [id])
-  enrollments enrollments[]
+  users             users              @relation(fields: [owner_educator_id], references: [id])
+  enrollments       enrollments[]
 }
 
 model co_reading_sessions {
@@ -419,12 +419,6 @@ model contents {
   owner_type     String?
   owner_id       String?
 
-  // Content Mode (Sprint 1)
-  mode        ContentMode?
-  mode_source String? // 'PRODUCER' | 'USER' | 'HEURISTIC'
-  mode_set_by String? // userId ou 'SYSTEM'
-  mode_set_at DateTime?
-
   annotations              annotations[]
   assessments              assessments[]
   content_chunks           content_chunks[]
@@ -446,11 +440,9 @@ model contents {
   reading_sessions   reading_sessions[]
   user_library_items user_library_items[]
   user_vocabularies  user_vocabularies[]
-  telemetry_events   telemetry_events[]
 
   @@index([owner_user_id])
   @@index([title])
-  @@index([mode])
 }
 
 model cornell_notes {
@@ -612,7 +604,7 @@ model families {
   id            String  @id @default(uuid())
   name          String?
   join_code     String? @unique
-  owner_user_id String  @map("owner_id")
+  owner_user_id String @map("owner_id")
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -944,6 +936,7 @@ model institutions {
   teacher_verifications     teacher_verifications[]
   classrooms                classrooms[]
 
+
   @@index([slug])
 }
 
@@ -1253,7 +1246,7 @@ model seat_allocation_events {
 model session_events {
   id                 String            @id @default(uuid())
   reading_session_id String?
-  event_type         EventType         @map("eventType")
+  event_type         EventType @map("eventType")
   payload_json       Json
   created_at         DateTime          @default(now())
   reading_sessions   reading_sessions? @relation(fields: [reading_session_id], references: [id], onDelete: Cascade)
@@ -1408,18 +1401,18 @@ model subscriptions {
 }
 
 model invoices {
-  id                  String        @id @default(uuid())
+  id                  String         @id @default(uuid())
   subscription_id     String
   amount              Float
-  currency            String        @default("BRL")
+  currency            String         @default("BRL")
   period_start        DateTime
   period_end          DateTime
-  status              String        @default("OPEN")
-  provider_invoice_id String?       @unique
+  status              String         @default("OPEN")
+  provider_invoice_id String?        @unique
   metadata            Json?
-  created_at          DateTime      @default(now())
-  updated_at          DateTime      @updatedAt
-  subscriptions       subscriptions @relation(fields: [subscription_id], references: [id], onDelete: Cascade)
+  created_at          DateTime       @default(now())
+  updated_at          DateTime       @updatedAt
+  subscriptions       subscriptions  @relation(fields: [subscription_id], references: [id], onDelete: Cascade)
 
   @@index([subscription_id])
   @@index([status])
@@ -1564,66 +1557,34 @@ model user_vocabularies {
   @@index([user_id, due_at])
 }
 
-model telemetry_events {
-  id String @id @default(cuid())
-
-  // Event Info
-  event_type        String // 'session_started', 'section_viewed', etc.
-  event_version     String  @default("1.0.0")
-  ui_policy_version String?
-
-  // Context
-  user_id    String
-  session_id String
-  content_id String?
-  mode       ContentMode?
-
-  // Payload (JSON)
-  data Json
-
-  // Metadata
-  created_at DateTime @default(now())
-
-  // Relations
-  user    users?    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  content contents? @relation(fields: [content_id], references: [id], onDelete: Cascade)
-
-  @@index([user_id, created_at])
-  @@index([session_id])
-  @@index([event_type, created_at])
-  @@index([content_id, created_at])
-  @@index([user_id, event_type, created_at])
-  @@index([session_id, event_type])
-}
-
 model users {
-  id                  String      @id @default(uuid())
-  name                String
-  email               String      @unique
-  password_hash       String?
-  system_role         SystemRole?
+  id             String      @id @default(uuid())
+  name           String
+  email          String      @unique
+  password_hash  String?
+  system_role    SystemRole?
   last_context_role   ContextRole @default(OWNER)
   last_institution_id String?
 
-  oauth_provider         String?
-  oauth_id               String?
-  oauth_picture          String?
-  schooling_level        String?
-  age                    Int?
-  sex                    String?
-  preferred_languages    Json      @default("[]")
-  created_at             DateTime  @default(now())
-  updated_at             DateTime  @updatedAt
-  last_login_at          DateTime?
-  status                 String    @default("ACTIVE")
-  avatar_url             String?
-  bio                    String?
-  settings               Json?     @default("{}")
-  sso_provider           String?
-  sso_subject            String?   @unique
-  address                String?
-  birthday               DateTime?
-  password_reset_token   String?   @unique
+  oauth_provider      String?
+  oauth_id            String?
+  oauth_picture       String?
+  schooling_level     String?
+  age                 Int?
+  sex                 String?
+  preferred_languages Json      @default("[]")
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
+  last_login_at       DateTime?
+  status              String    @default("ACTIVE")
+  avatar_url          String?
+  bio                 String?
+  settings            Json?     @default("{}")
+  sso_provider        String?
+  sso_subject         String?   @unique
+  address             String?
+  birthday            DateTime?
+  password_reset_token String?   @unique
   password_reset_expires DateTime?
 
   institutions          institutions?          @relation(fields: [last_institution_id], references: [id])
@@ -1676,7 +1637,6 @@ model users {
   user_topic_mastery user_topic_mastery[]
   user_vocabularies  user_vocabularies[]
   comments           comments[]
-  telemetry_events   telemetry_events[]
 
   @@unique([oauth_provider, oauth_id])
 }
@@ -2115,13 +2075,4 @@ enum FamilyLearningRole {
   EDUCATOR
   LEARNER
   PEER
-}
-
-enum ContentMode {
-  NARRATIVE
-  DIDACTIC
-  TECHNICAL
-  NEWS
-  SCIENTIFIC
-  LANGUAGE
 }

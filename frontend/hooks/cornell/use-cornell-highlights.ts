@@ -7,7 +7,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useOnlineStatus } from '@/hooks/use-online-status';
+import { useOnlineStatus } from '@/hooks/shared';
 import { offlineQueue } from '@/lib/cornell/offline-queue';
 import { cornellApi } from '@/lib/api/cornell';
 import type {
