@@ -23,8 +23,15 @@ import { useSuggestions } from '@/hooks/cornell/use-suggestions';
 import { useEntitlements } from '@/hooks/billing/use-entitlements';
 import { toast } from 'sonner';
 
+import { CornellHeader } from './CornellHeader';
+import { CornellContentArea } from './CornellContentArea';
+import { CornellSidebar } from './CornellSidebar';
+import { CornellModals } from './CornellModals';
 import { CreateHighlightModal } from './CreateHighlightModal';
-import { TextSelectionMenu, type SelectionAction } from './TextSelectionMenu'; 
+import { TextSelectionMenu, type SelectionAction } from './TextSelectionMenu';
+import { useCornellLayout } from '@/hooks/domain/use-cornell-layout';
+import { useCornellSession } from '@/hooks/domain/use-cornell-session';
+import { useCornellPedagogical } from '@/hooks/domain/use-cornell-pedagogical'; 
 import { useContentContext } from '@/hooks/cornell/use-content-context';
 import { useTextSelection } from '@/hooks/ui/use-text-selection';
 import { getColorForKey, getDefaultPalette, DEFAULT_COLOR } from '@/lib/constants/colors';
@@ -151,18 +158,33 @@ export function ModernCornellLayout({
   contentText,
   onLayoutChange,
 }: ModernCornellLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<SidebarTab>('toc'); 
-  const [activeAction, setActiveAction] = useState<'highlight' | 'note' | 'question' | 'ai' | 'bookmark' | null>(null);
   
-  // Telemetry & Tracking
+  // Telemetry & Tracking (needed by domain hooks)
   const { track } = useTelemetry(contentId);
   useScrollTracking(contentId);
   useTimeTracking(contentId);
 
-  // Content Mode
+  // Content Mode (needed by domain hooks)
   const contentModeData = useContentMode(contentId);
   const { updateMode, isLoading: isContentModeLoading } = contentModeData;
+  
+  // Domain Hooks - Manage UI state and business logic
+  const layout = useCornellLayout();
+  const session = useCornellSession(
+    contentId,
+    sessionId,
+    streamItems,
+    onNavigate,
+    onFinishSession
+  );
+  const pedagogical = useCornellPedagogical(
+    contentId,
+    contentModeData?.effectiveMode || ContentMode.NARRATIVE,
+    currentPage || 1,
+    layout.isUiVisible,
+    track
+  );
+  
   
   // Offline Sync (I2.1-I2.2)
   const { isOnline, pendingCount, isSyncing, manualSync } = useOfflineSync();
@@ -356,7 +378,7 @@ export function ModernCornellLayout({
     modeConfig,
     mode: currentMode || ContentMode.NARRATIVE,
     currentPage: currentPage || 0,
-    activeTab
+    activeTab: layout.activeTab,
   });
 
   // const { isInFlow } = useHeuristicsStore(); // Removed to avoid redeclaration, using hook value instead
@@ -447,7 +469,7 @@ export function ModernCornellLayout({
   const user = useAuthStore((state) => state.user);
 
   // Phase 5 State
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
   const finishSession = useFinishSession(sessionId || '');
 
   const handleFinish = async () => {
@@ -476,8 +498,8 @@ export function ModernCornellLayout({
   // Selection State
   const [contentElement, setContentElement] = useState<HTMLDivElement | null>(null);
   const { selection, clearSelection } = useTextSelection(contentElement);
-  const [chatInitialInput, setChatInitialInput] = useState('');
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+
   const [createModalType, setCreateModalType] = useState<'NOTE' | 'QUESTION' | 'STAR' | 'HIGHLIGHT' | 'SUMMARY'>('NOTE');
 
   // AI Suggestions & Entitlements
@@ -486,14 +508,14 @@ export function ModernCornellLayout({
   const hasAIAssistant = hasFeature('aiAssistant');
 
   // Search and filter state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<FilterType>('all');
+
+
   
   // Apply search and filter
   const { filteredItems, filteredCount, hasActiveFilter } = useStreamFilter(
     streamItems,
-    searchQuery,
-    filterType
+    layout.searchQuery,
+    layout.filterType
   );
 
   const handleSelectionAction = useCallback((action: SelectionAction, text: string) => {
@@ -538,508 +560,126 @@ export function ModernCornellLayout({
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className={`bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 md:px-4 py-2 md:py-3 flex items-center justify-between gap-2 md:gap-4 flex-shrink-0 fixed top-0 w-full z-50 transition-transform duration-300 ${isUiVisible ? 'translate-y-0' : '-translate-y-full'}`}>
-        {/* Left: Back button */}
-        <div className="flex items-center gap-2 md:gap-3 min-w-0">
-          <Link 
-            href="/dashboard" 
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0"
-          >
-            <ChevronRight className="w-5 h-5 rotate-180 text-gray-600 dark:text-gray-300" />
-          </Link>
-        </div>
-
-        {/* Center: Color Picker & Actions */}
-        <div className="flex items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar">
-           
-            <ContentModeIndicator 
-               mode={contentModeData?.mode ?? null}
-               source={contentModeData?.modeSource}
-               inferredMode={contentModeData?.inferredMode}
-               isLoading={isContentModeLoading}
-               onClick={() => {
-                 track('CLICK_MODE_INDICATOR');
-                 setIsModeSelectorOpen(true);
-               }}
-               className={`hidden sm:flex transition-all duration-500 ${isInFlow ? 'ring-2 ring-purple-400 ring-offset-2 scale-105 shadow-purple-200/50 shadow-lg' : ''}`}
-            />
-
-            {isInFlow && (
-              <span className="animate-pulse text-lg ml-[-12px] z-10" title="Estado de Flow Detectado">✨</span>
-            )}
-
-           <div className="h-4 w-px bg-gray-300 dark:bg-gray-600 shrink-0 hidden sm:block"></div>
-
-           {/* Color Picker */}
-           <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-full p-1 shrink-0">
-              {getDefaultPalette().map((color) => (
-                <button
-                  key={color}
-                  className={`w-6 h-6 rounded-full border-2 transition-all ${
-                    selectedColor === color ? 'border-gray-800 dark:border-gray-100 scale-110 shadow-sm' : 'border-transparent hover:scale-105'
-                  }`}
-                  style={{ backgroundColor: getColorForKey(color) }}
-                  onClick={() => onColorChange?.(color)}
-                  title={color.charAt(0).toUpperCase() + color.slice(1)}
-                  aria-label={`Select color ${color}`}
-                />
-              ))}
-           </div>
-
-           <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 shrink-0"></div>
-
-           {/* Action Buttons */}
-           <div className="flex items-center gap-2 shrink-0">
-              <button 
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                onClick={() => setIsShareModalOpen(true)}
-                title="Compartilhar"
-              >
-                <Share2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Compartilhar</span>
-              </button>
-
-      
-               {/* Layout Switch - Sprint 6 */}
-               {onLayoutChange && (
-                 <button 
-                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600"
-                   onClick={onLayoutChange}
-                   title="Alternar para visualização clássica"
-                 >
-                   <span className="text-lg">🏛️</span>
-                   <span className="hidden sm:inline">Clássico</span>
-                 </button>
-               )}
-
-              {sessionId && (
-                <button 
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg transition-colors shadow-sm"
-                  onClick={handleFinish}
-                  disabled={finishSession.isPending}
-                >
-                  <CheckIcon className="w-4 h-4" />
-                  <span>{finishSession.isPending ? 'Finalizando...' : 'Entregar'}</span>
-                </button>
-              )}
-
-              <button 
-                className={`flex items-center gap-1.5 px-2 md:px-3 py-1.5 text-sm font-medium rounded-lg transition-colors
-                  ${activeAction === 'ai'
-                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 ring-2 ring-purple-500'
-                    : 'bg-purple-50 text-purple-700 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50'
-                  }`}
-                onClick={() => setActiveAction(activeAction === 'ai' ? null : 'ai')}
-                title="IA Assistente"
-              >
-                <span className="text-lg">✨</span>
-                <span className="hidden md:inline">IA</span>
-              </button>
-              <button 
-                 className={`flex items-center gap-1.5 px-2 md:px-3 py-1.5 text-sm font-medium rounded-lg transition-colors
-                  ${activeAction === 'question'
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 ring-2 ring-blue-500'
-                    : 'bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50'
-                  }`}
-                 onClick={() => setActiveAction(activeAction === 'question' ? null : 'question')}
-                 title="Triagem"
-              >
-                <span className="text-lg">📖</span>
-                <span className="hidden md:inline">Triagem</span>
-              </button>
-           </div>
-        </div>
-
-        {/* Right: Menu */}
-        <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors lg:hidden"
-            aria-label="Menu"
-          >
-            {sidebarOpen ? (
-              <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-            ) : (
-              <Menu className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-            )}
-          </button>
-        </div>
-      </header>
+      <CornellHeader
+        title={title}
+        contentId={contentId}
+        mode={mode}
+        contentMode={contentModeData?.effectiveMode || ContentMode.NARRATIVE}
+        modeSource={(contentModeData?.modeSource as 'USER' | 'INFERRED' | 'DEFAULT' | undefined) || undefined}
+        inferredMode={contentModeData?.inferredMode}
+        isContentModeLoading={isContentModeLoading}
+        onModeClick={() => setIsModeSelectorOpen(true)}
+        selectedColor={selectedColor}
+        onColorChange={onColorChange}
+        onShareClick={() => layout.setIsShareModalOpen(true)}
+        onAIClick={() => layout.setActiveAction(layout.activeAction === 'ai' ? null : 'ai')}
+        onTriageClick={() => layout.setActiveAction(layout.activeAction === 'question' ? null : 'question')}
+        activeAction={layout.activeAction}
+        sessionId={sessionId}
+        onFinishSession={handleFinish}
+        isFinishing={finishSession.isPending}
+        onLayoutChange={onLayoutChange}
+        isInFlow={isInFlow}
+        isVisible={isUiVisible}
+        onTrack={track}
+      />
 
       {/* Main: PDF + Sidebar */}
-      <div className={`flex-1 flex overflow-hidden relative transition-[padding] duration-300 ${isUiVisible ? 'pt-16' : 'pt-0'}`}>
-        {/* PDF Viewer */}
-        <div 
-          className="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-950" 
-          ref={setContentElement}
-          onClick={(e) => {
-            const target = e.target as HTMLElement;
-            const text = window.getSelection()?.toString().trim();
-            
-            // SCIENTIFIC mode Glossary Trigger (G5.3)
-            if (contentModeData?.effectiveMode === ContentMode.SCIENTIFIC && !text) {
-              const clickedText = target.innerText;
-              if (clickedText && clickedText.length > 3) {
-                // List of scientific terms that trigger glossary
-                const scientificTerms = ['mitochondria', 'photosynthesis', 'enzyme'];
-                const lowerText = clickedText.toLowerCase();
-                
-                for (const term of scientificTerms) {
-                  if (lowerText.includes(term)) {
-                    handleTermClick(term, e as any);
-                    return;
-                  }
-                }
-              }
-            }
-
-            if (text) return;
-            toggleUi();
-          }}
-        >
-          {!disableSelectionMenu && (
-            <TextSelectionMenu 
-              selectionInfo={selection} 
-              onAction={handleSelectionAction} 
-            />
-          )}
-          
-          {viewer}
-        </div>
+      <div className="flex-1 flex overflow-hidden">
+        {/* Content Area */}
+        <CornellContentArea
+          viewer={viewer}
+          selection={selection}
+          onSelectionAction={handleSelectionAction}
+          disableSelectionMenu={disableSelectionMenu}
+          contentMode={contentModeData?.effectiveMode || ContentMode.NARRATIVE}
+          onTermClick={handleTermClick}
+          onContentClick={toggleUi}
+          onContentElementReady={setContentElement}
+          isVisible={isUiVisible}
+        />
 
         {/* Sidebar */}
-        <aside
-          className={`
-            fixed lg:relative inset-y-0 right-0 z-40
-            w-full sm:w-96 lg:w-[30%] max-w-md
-            bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700
-            transform transition-transform duration-300 ease-in-out
-            ${sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
-            flex flex-col
-          `}
-        >
-          {/* Tabs */}
-          <div className="flex border-b border-gray-200 dark:border-gray-700 shrink-0">
-            <button
-              onClick={() => setActiveTab('toc')}
-              data-testid="tab-toc"
-              className={`
-                flex-1 px-4 py-3 text-sm font-medium transition-colors
-                ${activeTab === 'toc' 
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' 
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                }
-              `}
-            >
-              Sumário
-            </button>
-            <button
-              onClick={() => setActiveTab('stream')}
-              data-testid="tab-stream"
-              className={`
-                flex-1 px-4 py-3 text-sm font-medium transition-colors
-                ${activeTab === 'stream' 
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' 
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                }
-              `}
-            >
-              {CORNELL_LABELS.HIGHLIGHTS_NOTES}
-            </button>
-            <button
-              onClick={() => setActiveTab('cues')}
-              data-testid="tab-bookmarks"
-              className={`
-                flex-1 px-4 py-3 text-sm font-medium transition-colors
-                ${activeTab === 'cues' 
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' 
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                }
-              `}
-            >
-              Favoritos
-            </button>
-            <button
-              onClick={() => setActiveTab('analytics')}
-              data-testid="tab-analytics"
-              className={`
-                flex-1 px-4 py-3 text-sm font-medium transition-colors
-                ${activeTab === 'analytics' 
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' 
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                }
-              `}
-            >
-              Analytics
-            </button>
-            <button
-              onClick={() => setActiveTab('synthesis')}
-              className={`
-                flex-1 px-4 py-3 text-sm font-medium transition-colors
-                ${activeTab === 'synthesis' 
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' 
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                }
-              `}
-            >
-              {CORNELL_LABELS.SYNTHESIS}
-            </button>
-            <button
-              onClick={() => setActiveTab('conversations')}
-              className={`
-                flex-1 px-4 py-3 text-sm font-medium transition-colors
-                ${activeTab === 'conversations' 
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' 
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                }
-              `}
-            >
-              Conversas
-            </button>
-          </div>
-
-          {/* Tab Content */}
-          <div className="flex-1 overflow-y-auto">
-             {activeTab === 'toc' && (
-                <TableOfContents 
-                   contentId={contentId}
-                   currentPage={currentPage}
-                   onNavigate={(page: number, id: string) => {
-                       toast.info(`Navegando para pág ${page}`);
-                       // Here we would call viewerRef.current.jumpToPage(page)
-                   }}
-                />
-             )}
-             {activeTab === 'analytics' && (
-                <div className="p-4">
-                  <AnalyticsDashboard contentId={contentId} />
-                </div>
-             )}
-
-              {activeTab === 'cues' && (
-                <div className="p-4 space-y-4">
-                   <div className="flex items-center justify-between mb-2">
-                       <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500">Marcadores</h3>
-                       <button 
-                        onClick={() => createBookmark({ page_number: currentPage || 1, scroll_pct: scrollPercentage })}
-                        data-testid="add-bookmark-button"
-                        className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200 flex items-center gap-1"
-                       >
-                         <Plus className="w-3 h-3" /> Novo
-                       </button>
-                   </div>
-                   {bookmarks?.length === 0 ? (
-                     <p className="text-sm text-gray-500 italic">Nenhum marcador salvo ainda.</p>
-                   ) : (
-                     <div className="space-y-2">
-                        {bookmarks?.map((b: any) => (
-                          <div key={b.id} className="group flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-gray-700 hover:border-purple-300 transition-all shadow-sm">
-                            <div 
-                              className="flex-1 cursor-pointer"
-                              onClick={() => onNavigate?.(b.page_number, b.scroll_pct)}
-                            >
-                              <div className="flex items-center gap-2">
-                                <BookmarkIcon className="w-4 h-4 text-purple-500" />
-                                <span className="font-medium text-sm">Página {b.page_number}</span>
-                              </div>
-                              {b.label && <p className="text-xs text-gray-500 mt-1">{b.label}</p>}
-                              <p className="text-[10px] text-gray-400 mt-1 italic">Salvo em {new Date(b.created_at).toLocaleDateString()}</p>
-                            </div>
-                            <button 
-                              onClick={() => deleteBookmark(b.id)}
-                              className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-opacity"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ))}
-                     </div>
-                   )}
-                </div>
-              )}
-
-            {activeTab === 'stream' && (
-              <div className="p-4 space-y-4">
-                {contentModeData?.effectiveMode === ContentMode.SCIENTIFIC && sections.length > 0 && (
-                  <SectionAnnotationsFilter
-                    sections={sections}
-                    selectedSection={selectedSectionId}
-                    annotationCounts={annotationCounts}
-                    onSectionSelect={setSelectedSectionId}
-                  />
-                )}
-                <SearchBar
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  onClear={() => setSearchQuery('')}
-                  activeFilter={filterType}
-                  onFilterChange={setFilterType}
-                  resultCount={filteredCount}
-                />
-                
-                <div className="space-y-3">
-                  {filteredItems.length === 0 ? (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                      {hasActiveFilter 
-                        ? 'Nenhum resultado encontrado' 
-                        : 'Nenhuma anotação ainda. Destaque texto no PDF para começar.'}
-                    </p>
-                  ) : (
-                    filteredItems
-                      .filter(item => !selectedSectionId || (item as any).section === selectedSectionId || (selectedSectionId === 'abstract')) // Soft match for MVP
-                      .map(item => (
-                      <StreamCard
-                        key={item.id}
-                        item={item}
-                        onClick={() => onStreamItemClick?.(item)}
-                        onEdit={() => onStreamItemEdit?.(item)}
-                        onDelete={() => onStreamItemDelete?.(item)}
-                        onSaveEdit={onStreamItemSaveEdit}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'cues' && (
-              <div className="p-4 space-y-3">
-                 <SearchBar
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  onClear={() => setSearchQuery('')}
-                  activeFilter={filterType}
-                  onFilterChange={setFilterType}
-                  resultCount={cues.filter(c => c.prompt.toLowerCase().includes(searchQuery.toLowerCase())).length}
-                />
-                
-                {cues.filter(c => c.prompt.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                    {searchQuery 
-                      ? 'Nenhuma dúvida encontrada' 
-                      : 'Nenhum tópico ainda. Adicione perguntas para estudar.'}
-                  </p>
-                ) : (
-                  cues
-                    .filter(c => c.prompt.toLowerCase().includes(searchQuery.toLowerCase()))
-                    .map(cue => (
-                    <div 
-                      key={cue.id} 
-                      onClick={() => onCueClick?.(cue)}
-                      className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer"
-                    >
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {cue.prompt}
-                      </p>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-
-
-            {activeTab === 'synthesis' && (
-              <div className="p-4 space-y-4">
-                <SearchBar
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  onClear={() => setSearchQuery('')}
-                  activeFilter={filterType}
-                  onFilterChange={setFilterType}
-                  resultCount={filteredItems.filter(i => {
-                      if (i.type === 'annotation') {
-                         return inferCornellType(i.highlight.colorKey, i.highlight.tagsJson) === 'SUMMARY';
-                      }
-                      return false;
-                   }).length}
-                />
-
-                 <div className="flex items-center justify-end">
-                   <button
-                     onClick={() => {
-                       setCreateModalType('SUMMARY');
-                       setIsCreateModalOpen(true);
-                     }}
-                     className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900"
-                     title="Adicionar Síntese"
-                   >
-                     <Plus className="w-5 h-5" />
-                   </button>
-                 </div>
-                
-                <div className="space-y-3">
-                   {filteredItems.filter(i => {
-                      if (i.type === 'annotation') {
-                         return inferCornellType(i.highlight.colorKey, i.highlight.tagsJson) === 'SUMMARY';
-                      }
-                      return false;
-                   }).length === 0 ? (
-                    <div className="text-center py-8">
-                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                         Nenhuma síntese encontrada.
-                       </p>
-                       <button
-                         onClick={() => {
-                           setCreateModalType('SUMMARY');
-                           setIsCreateModalOpen(true);
-                         }}
-                         className="text-sm text-blue-600 hover:underline"
-                       >
-                         Criar primeira síntese
-                       </button>
-                    </div>
-                  ) : (
-                    filteredItems.filter(i => {
-                      if (i.type === 'annotation') {
-                         return inferCornellType(i.highlight.colorKey, i.highlight.tagsJson) === 'SUMMARY';
-                      }
-                      return false;
-                   }).map(item => (
-                      <StreamCard
-                        key={item.id}
-                        item={item}
-                        onClick={() => onStreamItemClick?.(item)}
-                        onEdit={() => onStreamItemEdit?.(item)}
-                        onDelete={() => onStreamItemDelete?.(item)}
-                        onSaveEdit={onStreamItemSaveEdit}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'conversations' && (
-              <ThreadPanel 
-                query={{
-                  contextType: threadContext.type,
-                  contextId: threadContext.id,
-                  targetType: CommentTargetType.CONTENT,
-                  targetId: contentId
-                }}
-              />
-            )}
-          </div>
-        </aside>
+        <CornellSidebar
+          isOpen={layout.sidebarOpen}
+          onToggle={layout.toggleSidebar}
+          activeTab={layout.activeTab}
+          onTabChange={layout.setActiveTab}
+          tocProps={{
+            contentId,
+            currentPage,
+            onNavigate: (page: number, id: string) => {
+              toast.info(`Navegando para pág ${page}`);
+              // Here we would call viewerRef.current.jumpToPage(page)
+            },
+          }}
+          analyticsProps={{
+            contentId,
+          }}
+          bookmarksProps={{
+            bookmarks: bookmarks || [],
+            currentPage,
+            scrollPercentage,
+            onCreateBookmark: createBookmark,
+            onDeleteBookmark: deleteBookmark,
+            onNavigate,
+          }}
+          streamProps={{
+            streamItems,
+            filteredItems,
+            searchQuery: layout.searchQuery,
+            filterType: layout.filterType,
+            onSearchChange: layout.setSearchQuery,
+            onFilterChange: layout.setFilterType,
+            filteredCount,
+            hasActiveFilter,
+            contentMode: contentModeData?.effectiveMode || ContentMode.NARRATIVE,
+            sections,
+            selectedSectionId,
+            onSectionSelect: setSelectedSectionId,
+            annotationCounts,
+            onItemClick: onStreamItemClick,
+            onItemEdit: onStreamItemEdit,
+            onItemDelete: onStreamItemDelete,
+            onItemSaveEdit: onStreamItemSaveEdit,
+          }}
+          cuesProps={{
+            cues,
+            searchQuery: layout.searchQuery,
+            onSearchChange: layout.setSearchQuery,
+            onCueClick,
+          }}
+          synthesisProps={{
+            filteredItems,
+            searchQuery,
+            filterType,
+            onSearchChange: setSearchQuery,
+            onFilterChange: setFilterType,
+            onCreateSynthesis: () => {
+              setCreateModalType('SUMMARY');
+              layout.setIsCreateModalOpen(true);
+            },
+            onItemClick: onStreamItemClick,
+            onItemEdit: onStreamItemEdit,
+            onItemDelete: onStreamItemDelete,
+            onItemSaveEdit: onStreamItemSaveEdit,
+          }}
+          conversationsProps={{
+            contentId,
+            threadContext,
+          }}
+        />
 
         {/* Mobile Overlay */}
-        {sidebarOpen && (
+        {layout.sidebarOpen && (
           <div 
             className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
+            onClick={() => layout.setSidebarOpen(false)}
           />
         )}
       </div>
 
-       <CreateHighlightModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        contentId={contentId}
-        targetType={targetType as any}
-        initialType={createModalType}
-        initialPage={currentPage}
-        initialTimestamp={currentTimestamp}
-      />
+
 
       {/* Footer with Title and Status */}
       <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between flex-shrink-0">
@@ -1087,49 +727,63 @@ export function ModernCornellLayout({
           )}
         </div>
       </footer>
-      <ShareModal 
-        isOpen={isShareModalOpen} 
-        onClose={() => setIsShareModalOpen(false)} 
-        contentId={contentId} 
-        title={title} 
-      />
 
-      {activeAction === 'ai' && (
-        hasAIAssistant ? (
-          <SuggestionsPanel 
-            suggestions={suggestions} 
-            onAccept={acceptSuggestion} 
-            onDismiss={dismissSuggestion} 
-          />
-        ) : (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-all animate-in fade-in duration-300">
-            <div className="relative w-full max-w-md">
-              <button 
-                onClick={() => setActiveAction(null)} 
-                className="absolute -top-12 right-0 p-2 bg-white/20 hover:bg-white/40 rounded-full text-white transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-              <PremiumFeatureBlock 
-                featureName="IA Assistente Educator" 
-                description="Receba sugestões inteligentes, resumos automáticos e tire dúvidas sobre o conteúdo em tempo real com nossa IA avançada."
-                className="shadow-2xl"
-              />
-            </div>
-          </div>
-        )
-      )}
-
-      <ContentModeSelector
-        isOpen={isModeSelectorOpen}
-        onClose={() => setIsModeSelectorOpen(false)}
-        currentMode={contentModeData?.mode ?? null}
-        initialInferredMode={contentModeData?.inferredMode ?? null}
-        onSelect={(newMode) => {
-          updateMode({ mode: newMode, source: 'USER' });
-          track('CHANGE_MODE', { newMode, oldMode: contentModeData?.mode });
+      {/* Consolidated Modals */}
+      <CornellModals
+        // Create Highlight Modal
+        isCreateModalOpen={layout.isCreateModalOpen}
+        onCreateModalClose={() => layout.setIsCreateModalOpen(false)}
+        createModalType={layout.createModalType}
+        onCreateHighlight={onCreateStreamItem}
+        selectedColor={layout.selectedColor}
+        
+        // Mode Selector
+        isModeSelectorOpen={layout.isModeSelectorOpen}
+        onModeSelectorClose={() => layout.setIsModeSelectorOpen(false)}
+        contentMode={contentModeData?.mode ?? null}
+        inferredMode={contentModeData?.inferredMode}
+        modeSource={(contentModeData?.modeSource as 'USER' | 'INFERRED' | 'DEFAULT' | undefined) || undefined}
+        onModeChange={(mode, source) => {
+          updateMode({ mode, source });
+          track('CHANGE_MODE', { newMode: mode, oldMode: contentModeData?.mode });
         }}
+        contentId={contentId}
+        
+        // Share Modal
+        isShareModalOpen={layout.isShareModalOpen}
+        onShareModalClose={() => layout.setIsShareModalOpen(false)}
+        
+        // Glossary Popover
+        selectedTerm={selectedTerm}
+        glossaryDefinition={definition}
+        isGlossaryLoading={isGlossaryLoading}
+        glossaryPosition={popoverPosition}
+        onGlossaryClose={closePopover}
+        
+        // Suggestions Panel
+        showSuggestions={layout.activeAction === 'ai'}
+        suggestions={pedagogical.suggestions}
+        onAcceptSuggestion={pedagogical.acceptSuggestion}
+        onDismissSuggestion={pedagogical.dismissSuggestion}
+        hasAIAssistant={hasAIAssistant}
+        
+        // Action Toolbar
+        showActionToolbar={layout.activeAction !== null}
+        activeAction={layout.activeAction}
+        onActionChange={layout.setActiveAction}
+        chatInitialInput={layout.chatInitialInput}
+        onChatInputChange={layout.setChatInitialInput}
+        
+        // Premium Feature
+        showPremiumBlock={!hasAIAssistant && layout.activeAction === 'ai'}
+        featureName="IA Assistente Educator"
+        onPremiumDismiss={() => layout.setActiveAction(null)}
       />
+
+
+
+
+
       {/* Pedagogical Checkpoints (Sprint 4) */}
       {activeCheckpoint && (
         <PedagogicalCheckpoint
@@ -1168,15 +822,7 @@ export function ModernCornellLayout({
         onManualSync={manualSync}
       />
 
-      {selectedTerm && (
-        <GlossaryPopover
-          term={selectedTerm}
-          definition={definition || null}
-          isLoading={isGlossaryLoading}
-          onClose={closePopover}
-          position={popoverPosition}
-        />
-      )}
+
     </div>
   );
 }
