@@ -30,6 +30,9 @@ import { getColorForKey, getDefaultPalette, DEFAULT_COLOR } from '@/lib/constant
 import { inferCornellType } from '@/lib/cornell/type-color-map';
 import { filterSynthesisItems } from '@/lib/cornell/helpers';
 import { CORNELL_MODAL_LABELS } from '@/lib/cornell/labels';
+import { ContentModeIndicator } from './ContentModeIndicator';
+import { ContentModeSelector } from './ContentModeSelector';
+import { useContentMode } from '@/hooks/content/use-content-mode';
 
 
 interface ModernCornellLayoutProps {
@@ -110,6 +113,11 @@ export function ModernCornellLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<SidebarTab>('stream');
   const [activeAction, setActiveAction] = useState<'highlight' | 'note' | 'question' | 'ai' | null>(null);
+  
+  // Content Mode
+  const { mode: contentModeData, isLoading: isContentModeLoading, updateMode } = useContentMode(contentId);
+  const [isModeSelectorOpen, setIsModeSelectorOpen] = useState(false);
+
   const user = useAuthStore((state) => state.user);
 
   // Phase 5 State
@@ -210,6 +218,18 @@ export function ModernCornellLayout({
 
         {/* Center: Color Picker & Actions */}
         <div className="flex items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar">
+           
+           <ContentModeIndicator 
+              mode={contentModeData?.mode ?? null}
+              source={contentModeData?.modeSource}
+              inferredMode={contentModeData?.inferredMode}
+              isLoading={isContentModeLoading}
+              onClick={() => setIsModeSelectorOpen(true)}
+              className="hidden sm:flex"
+           />
+
+           <div className="h-4 w-px bg-gray-300 dark:bg-gray-600 shrink-0 hidden sm:block"></div>
+
            {/* Color Picker */}
            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-full p-1 shrink-0">
               {getDefaultPalette().map((color) => (
@@ -598,6 +618,14 @@ export function ModernCornellLayout({
           </div>
         )
       )}
+
+      <ContentModeSelector
+        isOpen={isModeSelectorOpen}
+        onClose={() => setIsModeSelectorOpen(false)}
+        currentMode={contentModeData?.mode ?? null}
+        initialInferredMode={contentModeData?.inferredMode ?? null}
+        onSelect={(newMode) => updateMode({ mode: newMode, source: 'USER' })}
+      />
     </div>
   );
 }
