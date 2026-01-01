@@ -4,6 +4,7 @@ import { PrismaModule } from "../prisma/prisma.module";
 import { CornellController, HighlightsController } from "./cornell.controller";
 import { FilesController } from "../common/files.controller";
 import { CornellService } from "./cornell.service";
+import { ContentModeService } from './content-mode.service';
 import { ContentService } from "./services/content.service";
 import { StorageService } from "./services/storage.service";
 import { ContentAccessService } from "./services/content-access.service";
@@ -67,6 +68,7 @@ import { GetHighlightsUseCase } from "./application/use-cases/get-highlights.use
     ContentAccessService,
     ContentPedagogicalService,
     CornellHighlightsService,
+    ContentModeService, // Sprint 1 - Content Mode
     // Content Providers (Previously Refactored)
     {
       provide: IContentRepository,
