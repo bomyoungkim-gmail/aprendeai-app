@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, IsIn } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ContentMode } from '@prisma/client';
 
@@ -9,6 +9,7 @@ export class UpdateContentModeDto {
     example: ContentMode.DIDACTIC,
   })
   @IsEnum(ContentMode)
+  @IsNotEmpty()
   mode: ContentMode;
 
   @ApiPropertyOptional({
@@ -18,5 +19,6 @@ export class UpdateContentModeDto {
   })
   @IsOptional()
   @IsString()
+  @IsIn(['PRODUCER', 'USER'])
   source?: 'PRODUCER' | 'USER';
 }
