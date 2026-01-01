@@ -21,6 +21,7 @@ import { ContentPedagogicalController } from "./controllers/content-pedagogical.
 import { ContentPedagogicalService } from "./services/content-pedagogical.service";
 import { CornellHighlightsController } from "./controllers/cornell-highlights.controller";
 import { CornellHighlightsService } from "./services/cornell-highlights.service";
+import { ContentModeController } from "./content-mode.controller";
 
 // Refactor Imports
 import { IContentRepository } from "./domain/content.repository.interface";
@@ -60,6 +61,7 @@ import { GetHighlightsUseCase } from "./application/use-cases/get-highlights.use
     FilesController,
     ContentPedagogicalController,
     CornellHighlightsController,
+    ContentModeController, // Sprint 1 - Content Mode
   ],
   providers: [
     CornellService,
