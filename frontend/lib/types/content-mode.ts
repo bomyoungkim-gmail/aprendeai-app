@@ -1,12 +1,6 @@
-// Content Mode Types
-export enum ContentMode {
-  NARRATIVE = 'NARRATIVE',
-  DIDACTIC = 'DIDACTIC',
-  TECHNICAL = 'TECHNICAL',
-  NEWS = 'NEWS',
-  SCIENTIFIC = 'SCIENTIFIC',
-  LANGUAGE = 'LANGUAGE',
-}
+// Re-export ContentMode from Prisma generated types (single source of truth)
+// This ensures frontend and backend use the exact same enum values
+export { ContentMode } from '@prisma/client';
 
 export type ContentModeSource = 'PRODUCER' | 'USER' | 'HEURISTIC';
 
@@ -19,5 +13,5 @@ export interface ContentModeInfo {
 
 export interface UpdateContentModePayload {
   mode: ContentMode;
-  source?: ContentModeSource;
+  source?: 'PRODUCER' | 'USER';
 }

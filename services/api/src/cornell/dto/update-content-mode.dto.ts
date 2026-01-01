@@ -1,14 +1,6 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
-export enum ContentMode {
-  NARRATIVE = 'NARRATIVE',
-  DIDACTIC = 'DIDACTIC',
-  TECHNICAL = 'TECHNICAL',
-  NEWS = 'NEWS',
-  SCIENTIFIC = 'SCIENTIFIC',
-  LANGUAGE = 'LANGUAGE',
-}
+import { ContentMode } from '@prisma/client';
 
 export class UpdateContentModeDto {
   @ApiProperty({

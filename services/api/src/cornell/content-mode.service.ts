@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { ContentMode } from './dto/update-content-mode.dto';
+import { ContentMode } from '@prisma/client';
 
 @Injectable()
 export class ContentModeService {

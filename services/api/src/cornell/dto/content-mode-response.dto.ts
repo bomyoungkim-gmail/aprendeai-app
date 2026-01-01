@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ContentMode } from './update-content-mode.dto';
+import { ContentMode } from '@prisma/client';
 
 export class ContentModeResponseDto {
   @ApiPropertyOptional({
