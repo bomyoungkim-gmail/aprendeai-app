@@ -28,6 +28,7 @@ export function ContentModeSelector({
         role="dialog"
         aria-modal="true"
         aria-labelledby="mode-selector-title"
+        data-testid="mode-selector-modal"
       >
         <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
           <h2 id="mode-selector-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -55,6 +56,7 @@ export function ContentModeSelector({
               return (
                 <button
                   key={modeKey}
+                  data-testid={`mode-option-${modeKey}`}
                   onClick={() => {
                     onSelect(modeKey);
                     onClose();
