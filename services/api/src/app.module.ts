@@ -51,6 +51,7 @@ import { ActionLoggerMiddleware } from "./common/middleware/logger.middleware";
 import { RouteValidationMiddleware } from "./common/middleware/route-validation.middleware";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { SessionTrackingModule } from "./analytics/session-tracking.module";
+import { TelemetryModule } from "./telemetry/telemetry.module";
 
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
@@ -129,6 +130,7 @@ import { join } from "path";
     // Real-time Notifications
     NotificationsModule,
     SessionTrackingModule,
+    TelemetryModule,
   ],
   controllers: [AppController],
   providers: [
