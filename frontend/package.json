@@ -32,6 +32,7 @@
     "@react-pdf-viewer/highlight": "^3.12.0",
     "@react-pdf-viewer/search": "^3.12.0",
     "@tanstack/react-query": "^5.62.8",
+    "@types/uuid": "^10.0.0",
     "axios": "^1.7.9",
     "buffer": "^6.0.3",
     "canvas-confetti": "^1.9.4",
@@ -59,6 +60,7 @@
     "tailwind-merge": "^2.2.2",
     "use-debounce": "^10.0.0",
     "use-image": "^1.1.1",
+    "uuid": "^13.0.0",
     "zod": "^4.2.1",
     "zustand": "^4.5.2"
   },

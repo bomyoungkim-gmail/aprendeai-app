@@ -1,5 +1,5 @@
 import React from 'react';
-import { ContentMode } from '@prisma/client';
+import { ContentMode } from '@/lib/types/content-mode';
 import { MODE_CONFIGS } from '@/lib/config/mode-config';
 import { cn } from '@/lib/utils';
 import { Check, X } from 'lucide-react';

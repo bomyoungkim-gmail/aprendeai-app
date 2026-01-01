@@ -4,6 +4,11 @@ import { ContentMode } from '../types/content-mode';
  * Configuração de comportamento por modo de conteúdo
  */
 export interface ModeConfig {
+  // UI Presentation
+  label: string;
+  description: string;
+  themeColor: string;
+
   // Flow detection
   flowDwellTimeMin: number;        // ms - tempo mínimo de permanência para considerar flow
   flowAlternationMax: number;      // count - máximo de alternâncias permitidas
@@ -29,6 +34,10 @@ export interface ModeConfig {
  */
 export const MODE_CONFIGS: Record<ContentMode, ModeConfig> = {
   [ContentMode.NARRATIVE]: {
+    label: 'Narrativo',
+    description: 'Focado em leitura linear e imersiva. Menos distrações.',
+    themeColor: '#A855F7', // Purple
+    
     // Flow detection - narrativas requerem leitura contínua
     flowDwellTimeMin: 3000,
     flowAlternationMax: 2,
@@ -50,6 +59,10 @@ export const MODE_CONFIGS: Record<ContentMode, ModeConfig> = {
   },
 
   [ContentMode.DIDACTIC]: {
+    label: 'Didático',
+    description: 'Otimizado para estudo e aprendizado. Ferramentas sempre à mão.',
+    themeColor: '#3B82F6', // Blue
+
     // Flow detection - permite mais interação
     flowDwellTimeMin: 5000,
     flowAlternationMax: 3,
@@ -71,6 +84,10 @@ export const MODE_CONFIGS: Record<ContentMode, ModeConfig> = {
   },
 
   [ContentMode.TECHNICAL]: {
+    label: 'Técnico',
+    description: 'Para documentação e manuais. Foco em busca e referência.',
+    themeColor: '#6B7280', // Gray
+
     // Flow detection - permite navegação não-linear
     flowDwellTimeMin: 7000,
     flowAlternationMax: 5,
@@ -92,6 +109,10 @@ export const MODE_CONFIGS: Record<ContentMode, ModeConfig> = {
   },
 
   [ContentMode.NEWS]: {
+    label: 'Notícias',
+    description: 'Leitura rápida e dinâmica.',
+    themeColor: '#F59E0B', // Amber
+
     // Flow detection - leitura rápida
     flowDwellTimeMin: 2000,
     flowAlternationMax: 2,
@@ -113,6 +134,10 @@ export const MODE_CONFIGS: Record<ContentMode, ModeConfig> = {
   },
 
   [ContentMode.SCIENTIFIC]: {
+    label: 'Científico',
+    description: 'Análise profunda. Detecção de termos complexos aumentada.',
+    themeColor: '#10B981', // Emerald
+
     // Flow detection - leitura profunda
     flowDwellTimeMin: 8000,
     flowAlternationMax: 4,
@@ -134,6 +159,10 @@ export const MODE_CONFIGS: Record<ContentMode, ModeConfig> = {
   },
 
   [ContentMode.LANGUAGE]: {
+    label: 'Idiomas',
+    description: 'Foco em vocabulário e tradução. Imersão controlada.',
+    themeColor: '#EC4899', // Pink
+
     // Flow detection - permite pausas para vocabulário
     flowDwellTimeMin: 4000,
     flowAlternationMax: 3,

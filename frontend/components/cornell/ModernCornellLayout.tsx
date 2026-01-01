@@ -33,6 +33,7 @@ import { CORNELL_MODAL_LABELS } from '@/lib/cornell/labels';
 import { ContentModeIndicator } from './ContentModeIndicator';
 import { ContentModeSelector } from './ContentModeSelector';
 import { useContentMode } from '@/hooks/content/use-content-mode';
+import { useTelemetry } from '@/hooks/telemetry/use-telemetry';
 
 
 interface ModernCornellLayoutProps {
@@ -116,7 +117,15 @@ export function ModernCornellLayout({
   
   // Content Mode
   const { mode: contentModeData, isLoading: isContentModeLoading, updateMode } = useContentMode(contentId);
+  const { track } = useTelemetry(contentId);
   const [isModeSelectorOpen, setIsModeSelectorOpen] = useState(false);
+
+  // Track initial view
+  React.useEffect(() => {
+    track('VIEW_CONTENT', {
+      timestamp: Date.now(),
+    });
+  }, [track]);
 
   const user = useAuthStore((state) => state.user);
 
@@ -224,7 +233,10 @@ export function ModernCornellLayout({
               source={contentModeData?.modeSource}
               inferredMode={contentModeData?.inferredMode}
               isLoading={isContentModeLoading}
-              onClick={() => setIsModeSelectorOpen(true)}
+              onClick={() => {
+                track('CLICK_MODE_INDICATOR');
+                setIsModeSelectorOpen(true);
+              }}
               className="hidden sm:flex"
            />
 
@@ -624,7 +636,10 @@ export function ModernCornellLayout({
         onClose={() => setIsModeSelectorOpen(false)}
         currentMode={contentModeData?.mode ?? null}
         initialInferredMode={contentModeData?.inferredMode ?? null}
-        onSelect={(newMode) => updateMode({ mode: newMode, source: 'USER' })}
+        onSelect={(newMode) => {
+          updateMode({ mode: newMode, source: 'USER' });
+          track('CHANGE_MODE', { newMode, oldMode: contentModeData?.mode });
+        }}
       />
     </div>
   );

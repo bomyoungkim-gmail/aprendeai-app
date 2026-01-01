@@ -1,6 +1,6 @@
 import React from 'react';
 import { Brain, Book, FileText, Globe, Newspaper, FlaskConical, HelpCircle } from 'lucide-react';
-import { ContentMode } from '@prisma/client';
+import { ContentMode } from '@/lib/types/content-mode';
 import { MODE_CONFIGS } from '@/lib/config/mode-config';
 import { cn } from '@/lib/utils';
 
