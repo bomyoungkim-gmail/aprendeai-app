@@ -13,8 +13,10 @@ import { CreateAssessmentUseCase } from "./application/use-cases/create-assessme
 import { GetAssessmentUseCase } from "./application/use-cases/get-assessment.use-case";
 import { SubmitAssessmentUseCase } from "./application/use-cases/submit-assessment.use-case";
 
+import { ContentAccessModule } from "../cornell/content-access.module";
+
 @Module({
-  imports: [PrismaModule, TopicMasteryModule],
+  imports: [PrismaModule, TopicMasteryModule, ContentAccessModule],
   controllers: [AssessmentController],
   providers: [
     AssessmentService,

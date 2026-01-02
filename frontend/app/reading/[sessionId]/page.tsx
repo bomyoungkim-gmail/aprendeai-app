@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ViewMode } from '@/lib/types/cornell';
-import { CornellLayout } from '@/components/cornell/CornellLayout';
+import { CornellLayout } from '@/components/cornell/classic/CornellLayout';
 import { PromptConsole } from '@/components/reading/PromptConsole';
 import { PromptDrawer } from '@/components/reading/PromptDrawer';
 import { useReadingSession } from '@/hooks/sessions/reading/use-reading-session';

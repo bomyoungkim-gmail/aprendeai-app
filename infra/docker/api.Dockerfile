@@ -6,7 +6,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Install build dependencies for native modules (bcrypt needs Python, make, g++)
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ libc6-compat openssl
 
 # Copy package files
 COPY services/api/package*.json ./
@@ -16,7 +16,7 @@ RUN npm install --legacy-peer-deps
 
 # Copy Prisma schema
 RUN mkdir -p /app/prisma
-COPY db/schema.prisma /app/prisma/schema.prisma
+COPY services/api/prisma/schema.prisma /app/prisma/schema.prisma
 
 # Generate Prisma Client
 RUN npx prisma generate --schema=/app/prisma/schema.prisma
@@ -33,6 +33,9 @@ COPY services/api/nest-cli.json ./
 FROM node:20-alpine
 
 WORKDIR /app
+
+# Install runtime dependencies for Prisma
+RUN apk add --no-cache libc6-compat openssl
 
 # Copy package files
 COPY services/api/package*.json ./

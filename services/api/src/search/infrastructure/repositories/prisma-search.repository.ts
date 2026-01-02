@@ -16,7 +16,13 @@ export class PrismaSearchRepository implements ISearchRepository {
 
     if (filters.contentType) where.type = filters.contentType;
     if (filters.language) where.original_language = filters.language;
-    if (filters.ownerId) where.owner_user_id = filters.ownerId;
+    
+    // NEW: Use standardized owner filter if provided
+    if (filters.ownerFilter) {
+      where.OR = (where.OR || []).concat(filters.ownerFilter);
+    } else if (filters.ownerId) {
+      where.owner_user_id = filters.ownerId;
+    }
     if (filters.startDate || filters.endDate) {
       where.created_at = {};
       if (filters.startDate) where.created_at.gte = new Date(filters.startDate);
@@ -46,15 +52,26 @@ export class PrismaSearchRepository implements ISearchRepository {
     }));
   }
 
-  async searchTranscripts(query: string): Promise<SearchResult[]> {
-    const contents = await this.prisma.contents.findMany({
-      where: {
-        type: { in: ['VIDEO', 'AUDIO'] as any },
-        metadata: {
-          path: ['transcription', 'text'],
-          string_contains: query,
-        },
+  async searchTranscripts(query: string, userId?: string): Promise<SearchResult[]> {
+    const where: any = {
+      type: { in: ['VIDEO', 'AUDIO'] as any },
+      metadata: {
+        path: ['transcription', 'text'],
+        string_contains: query,
       },
+    };
+
+    if (userId) {
+      // Simplified ownership check for transcripts (must own the content)
+      where.OR = [
+        { owner_user_id: userId },
+        { created_by: userId },
+        { owner_type: 'USER', owner_id: userId }
+      ];
+    }
+
+    const contents = await this.prisma.contents.findMany({
+      where,
       include: {
         users_owner: { select: { id: true, name: true } },
       },

@@ -4,6 +4,8 @@ import {
   UnauthorizedException,
   Inject,
 } from "@nestjs/common";
+import { Transactional, TransactionHost } from "@nestjs-cls/transactional";
+import { TransactionalAdapterPrisma } from "@nestjs-cls/transactional-adapter-prisma";
 import * as bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { PrismaService } from "../../prisma/prisma.service";
@@ -18,6 +20,7 @@ import { RegisterDto } from "../dto/auth.dto";
 @Injectable()
 export class RegisterUseCase {
   constructor(
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
     private readonly prisma: PrismaService,
     @Inject(IUsersRepository)
     private readonly usersRepository: IUsersRepository,
@@ -75,106 +78,109 @@ export class RegisterUseCase {
       throw new UnauthorizedException("Email does not match invite");
     }
 
-    const user = await this.prisma.$transaction(async (tx) => {
-      const passwordHash = await bcrypt.hash(registerDto.password, 10);
-      const newUser = await tx.users.create({
-        data: {
-          id: uuidv4(),
-          name: registerDto.name,
-          email: registerDto.email,
-          password_hash: passwordHash,
-          last_institution_id: String(invite.institutionId),
-          schooling_level: "ADULT",
-          status: "ACTIVE",
-          updated_at: new Date(),
-        } as any,
-      });
-
-      await tx.institution_members.create({
-        data: {
-          id: uuidv4(),
-          institution_id: String(invite.institutionId),
-          user_id: newUser.id,
-          role: invite.role as any,
-          status: "ACTIVE",
-        },
-      });
-
-      await this.subscriptionService.createFreeSubscription(newUser.id);
-
-      await tx.institution_invites.update({
-        where: { id: invite.id },
-        data: { used_at: new Date() },
-      });
-
-      return newUser;
-    });
+    const user = await this.registerWithInviteTransaction(registerDto, invite);
 
     this.sendWelcomeEmail(user.email, user.name);
     return user;
+  }
+
+  @Transactional()
+  private async registerWithInviteTransaction(registerDto: RegisterDto, invite: any) {
+    const passwordHash = await bcrypt.hash(registerDto.password, 10);
+    const newUser = await this.usersRepository.create({
+      id: uuidv4(),
+      name: registerDto.name,
+      email: registerDto.email,
+      password_hash: passwordHash,
+      last_institution_id: invite.institutionId,
+      schooling_level: "ADULT",
+      status: "ACTIVE",
+      updated_at: new Date(),
+    } as any);
+
+    await this.txHost.tx.institution_members.create({
+      data: {
+        id: uuidv4(),
+        institution_id: invite.institutionId,
+        user_id: newUser.id,
+        role: invite.role as any,
+        status: "ACTIVE",
+      },
+    });
+
+    await this.subscriptionService.createFreeSubscription(newUser.id);
+
+    await (this.txHost.tx as PrismaService).institution_invites.update({ // Cast needed? txHost.tx is usually typed if generic provided.
+        // Actually generic is TransactionalAdapterPrisma. But tx property needs to be cast or we trust it.
+        // Let's use a helper getter or just cast.
+      where: { id: invite.id },
+      data: { used_at: new Date() },
+    });
+
+    return newUser;
   }
 
   private async registerWithInstitution(
     registerDto: RegisterDto,
     domainConfig: any,
   ) {
-    const user = await this.prisma.$transaction(async (tx) => {
-      const passwordHash = await bcrypt.hash(registerDto.password, 10);
-      const newUser = await tx.users.create({
-        data: {
-          id: uuidv4(),
-          name: registerDto.name,
-          email: registerDto.email,
-          password_hash: passwordHash,
-          last_institution_id: domainConfig.institutionId,
-          schooling_level: "ADULT",
-          status: "ACTIVE",
-          updated_at: new Date(),
-        } as any,
-      });
-
-      await tx.institution_members.create({
-        data: {
-          id: uuidv4(),
-          institution_id: domainConfig.institutionId,
-          user_id: newUser.id,
-          role: domainConfig.defaultRole as any,
-          status: "ACTIVE",
-        },
-      });
-
-      await this.subscriptionService.createFreeSubscription(newUser.id);
-
-      return newUser;
-    });
-
+    const user = await this.registerWithInstitutionTransaction(registerDto, domainConfig);
     this.sendWelcomeEmail(user.email, user.name);
     return user;
   }
 
-  private async registerNormalUser(registerDto: RegisterDto) {
-    const user = await this.prisma.$transaction(async (tx) => {
-      const passwordHash = await bcrypt.hash(registerDto.password, 10);
-      const newUser = await tx.users.create({
-        data: {
-          id: uuidv4(),
-          name: registerDto.name,
-          email: registerDto.email,
-          password_hash: passwordHash,
-          last_context_role: "OWNER",
-          schooling_level: "ADULT",
-          status: "ACTIVE",
-          updated_at: new Date(),
-        } as any,
-      });
+  @Transactional()
+  private async registerWithInstitutionTransaction(registerDto: RegisterDto, domainConfig: any) {
+    const passwordHash = await bcrypt.hash(registerDto.password, 10);
+    const newUser = await this.usersRepository.create({
+      id: uuidv4(),
+      name: registerDto.name,
+      email: registerDto.email,
+      password_hash: passwordHash,
+      last_institution_id: domainConfig.institutionId,
+      schooling_level: "ADULT",
+      status: "ACTIVE",
+      updated_at: new Date(),
+    } as any);
 
-      await this.subscriptionService.createFreeSubscription(newUser.id);
-
-      return newUser;
+    await this.txHost.tx.institution_members.create({
+      data: {
+        id: uuidv4(),
+        institution_id: domainConfig.institutionId,
+        user_id: newUser.id,
+        role: domainConfig.defaultRole as any,
+        status: "ACTIVE",
+      },
     });
 
+    await this.subscriptionService.createFreeSubscription(newUser.id);
+
+    return newUser;
+  }
+
+  private async registerNormalUser(registerDto: RegisterDto) {
+    const user = await this.registerNormalUserTransaction(registerDto);
     this.sendWelcomeEmail(user.email, user.name);
     return user;
+  }
+
+  @Transactional()
+  private async registerNormalUserTransaction(registerDto: RegisterDto) {
+    const passwordHash = await bcrypt.hash(registerDto.password, 10);
+    const newUser = await this.usersRepository.create({
+      id: uuidv4(),
+      name: registerDto.name,
+      email: registerDto.email,
+      password_hash: passwordHash,
+      last_context_role: "OWNER",
+      schooling_level: "ADULT",
+      status: "ACTIVE",
+      updated_at: new Date(),
+    } as any);
+
+    await this.subscriptionService.createFreeSubscription(newUser.id);
+
+    return newUser;
   }
 
   private sendWelcomeEmail(email: string, name: string) {

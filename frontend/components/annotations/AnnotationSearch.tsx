@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Search, Filter, Star, Download, X } from 'lucide-react';
-import { useSearchAnnotations, useToggleFavorite } from '@/hooks/use-annotations';
+import { useSearchAnnotations, useToggleFavorite } from '@/hooks/content/use-annotations';
 export type AnnotationType = 'HIGHLIGHT' | 'NOTE' | 'COMMENT';
 
 interface Filters {

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+// Replaced vitest import with global jest
 import * as fs from 'fs';
 import * as path from 'path';
 

@@ -6,11 +6,11 @@
  */
 
 import { highlightsService } from '@/services/cornell/highlights.service';
-import { cornellApi } from '@/services/api/cornell.api';
+import { cornellApi } from '@/lib/api/cornell';
 import { offlineQueue } from '@/lib/cornell/offline-queue';
 
 // Mock dependencies
-jest.mock('@/services/api/cornell.api', () => ({
+jest.mock('@/lib/api/cornell', () => ({
   cornellApi: {
     createHighlight: jest.fn(),
     updateHighlight: jest.fn(),

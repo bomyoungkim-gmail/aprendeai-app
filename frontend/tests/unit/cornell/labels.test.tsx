@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+// Replaced vitest import with global jest
 import { render, screen } from '@testing-library/react';
 import { StreamCard } from '@/components/cornell/StreamCard';
 import { ITEM_TYPE_LABELS, CORNELL_LABELS } from '@/lib/cornell/labels';
@@ -12,6 +12,8 @@ describe('StreamCard - Label Integration', () => {
         id: 'note-1',
         body: 'Test note content',
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        note: { id: 'note-1', body: 'Test note content', linkedHighlightIds: [] }
       };
 
       render(<StreamCard item={mockNoteItem} />);
@@ -35,6 +37,8 @@ describe('StreamCard - Label Integration', () => {
         id: 'test-id',
         body: 'Test',
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        note: { id: 'test-id', body: 'Test', linkedHighlightIds: [] }
       };
 
       const { container } = render(<StreamCard item={noteItem} />);

@@ -25,6 +25,9 @@ import {
 import { StartSessionDto, FinishSessionDto } from "./dto/start-session.dto";
 import { PromptMessageDto } from "./dto/prompt-message.dto";
 import { SessionsQueryDto } from "./dto/sessions-query.dto";
+import { UpdateReadingProgressDto } from "./dto/reading-progress.dto";
+import { CreateBookmarkDto } from "./dto/bookmarks.dto";
+import { Delete } from "@nestjs/common";
 
 @ApiTags("sessions")
 @Controller() // Empty base - routes define full paths
@@ -250,5 +253,42 @@ export class ReadingSessionsController {
     @Request() req,
   ) {
     return this.sessionService.advancePhase(id, req.user.id, dto.toPhase);
+  }
+
+  // ============================================
+  // Phase 3: Resume Logic & Bookmarks
+  // ============================================
+
+  @Get("contents/:id/progress")
+  async getReadingProgress(@Param("id") contentId: string, @Request() req) {
+    return this.sessionService.getReadingProgress(req.user.id, contentId);
+  }
+
+  @Post("contents/:id/progress")
+  async updateReadingProgress(
+    @Param("id") contentId: string,
+    @Body() dto: UpdateReadingProgressDto,
+    @Request() req,
+  ) {
+    return this.sessionService.updateReadingProgress(req.user.id, contentId, dto);
+  }
+
+  @Get("contents/:id/bookmarks")
+  async getBookmarks(@Param("id") contentId: string, @Request() req) {
+    return this.sessionService.getBookmarks(req.user.id, contentId);
+  }
+
+  @Post("contents/:id/bookmarks")
+  async createBookmark(
+    @Param("id") contentId: string,
+    @Body() dto: CreateBookmarkDto,
+    @Request() req,
+  ) {
+    return this.sessionService.createBookmark(req.user.id, contentId, dto);
+  }
+
+  @Delete("bookmarks/:id")
+  async deleteBookmark(@Param("id") id: string, @Request() req) {
+    return this.sessionService.deleteBookmark(id, req.user.id);
   }
 }

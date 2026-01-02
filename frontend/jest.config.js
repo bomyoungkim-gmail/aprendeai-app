@@ -12,6 +12,12 @@ const customJestConfig = {
   
   // Module paths
   moduleNameMapper: {
+    '^@/components/(.*)$': '<rootDir>/components/$1',
+    '^@/hooks/(.*)$': '<rootDir>/hooks/$1',
+    '^@/lib/(.*)$': '<rootDir>/lib/$1',
+    '^@/stores/(.*)$': '<rootDir>/stores/$1',
+    '^@/contexts/(.*)$': '<rootDir>/contexts/$1',
+    '^@/app/(.*)$': '<rootDir>/app/$1',
     '^@/(.*)$': '<rootDir>/$1',
   },
   
@@ -35,14 +41,7 @@ const customJestConfig = {
     '!**/.next/**',
   ],
   
-  // Transform
-  transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: {
-        jsx: 'react',
-      },
-    }],
-  },
+
   
   // Module file extensions
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],

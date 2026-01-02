@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 
 import { TextInputPlayer } from './TextInputPlayer';
-import { GameQuestion } from '@/lib/api/games';
+import { GameQuestion } from '@/services/api/games.api';
 
 interface SocraticDefenseProps {
   onComplete: (score: number, won: boolean) => void;

@@ -7,6 +7,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { QueueService } from "../queue/queue.service";
 import { EntitlementsService } from "../billing/entitlements.service";
 import { UsageTrackingService } from "../billing/usage-tracking.service";
+import { ContentAccessService } from "../cornell/services/content-access.service";
 
 @Injectable()
 export class ExtractionService {
@@ -15,6 +16,7 @@ export class ExtractionService {
     private queue: QueueService,
     private entitlements: EntitlementsService,
     private usageTracking: UsageTrackingService,
+    private contentAccess: ContentAccessService,
   ) {}
 
   async requestExtraction(contentId: string, userId: string) {
@@ -27,8 +29,9 @@ export class ExtractionService {
       throw new NotFoundException("Content not found");
     }
 
-    // Simple ownership check (can be expanded later)
-    if (content.owner_user_id !== userId && content.created_by !== userId) {
+    // Use centralized access check
+    const hasContentAccess = await this.contentAccess.canAccessContent(contentId, userId);
+    if (!hasContentAccess) {
       throw new ForbiddenException("No access to this content");
     }
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useOnlineStatus } from '../use-online-status';
+import { useOnlineStatus } from '@/hooks/shared/use-online-status';
 import { offlineQueue, type QueuedOperation } from '@/lib/cornell/offline-queue';
 import { cornellApi } from '@/lib/api/cornell';
 import { cornellKeys } from './use-cornell-highlights';

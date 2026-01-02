@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useContents } from '@/hooks/use-content';
+import { useContents } from '@/hooks/content';
 import { useCreateWeeklyPlan } from '@/hooks/content/use-weekly-plan';
 import { Book, Check, Search, Calendar, Loader2 } from 'lucide-react';
 

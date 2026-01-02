@@ -48,7 +48,7 @@ test.describe('Admin Analytics - AI Token Tracking', () => {
     // Verify response is not empty
     const aiResponse = await page.locator('[data-testid="ai-message"]').first().textContent();
     expect(aiResponse).toBeTruthy();
-    expect(aiResponse.length).toBeGreaterThan(10);
+    expect(aiResponse?.length || 0).toBeGreaterThan(10);
     
     // Logout student
     await page.click('[data-testid="user-menu"]');
@@ -74,13 +74,13 @@ test.describe('Admin Analytics - AI Token Tracking', () => {
     const totalTokensElement = page.locator('[data-testid="total-tokens"]');
     await expect(totalTokensElement).toBeVisible();
     
-    const totalTokensText = await totalTokensElement.textContent();
+    const totalTokensText = await totalTokensElement.textContent() || '0';
     const totalTokens = parseInt(totalTokensText.replace(/\D/g, ''));
     expect(totalTokens).toBeGreaterThan(0); // Should have tracked tokens from student's chat
     
     // Verify Total Requests
     const totalRequestsElement = page.locator('[data-testid="total-requests"]');
-    const totalRequestsText = await totalRequestsElement.textContent();
+    const totalRequestsText = await totalRequestsElement.textContent() || '0';
     const totalRequests = parseInt(totalRequestsText.replace(/\D/g, ''));
     expect(totalRequests).toBeGreaterThanOrEqual(1); // At least 1 request
     
@@ -101,7 +101,7 @@ test.describe('Admin Analytics - AI Token Tracking', () => {
     const educatorChatRow = page.locator('[data-testid="feature-educator_chat"]');
     await expect(educatorChatRow).toBeVisible();
     
-    const educatorChatTokens = await educatorChatRow.locator('[data-testid="tokens"]').textContent();
+    const educatorChatTokens = await educatorChatRow.locator('[data-testid="tokens"]').textContent() || '0';
     expect(parseInt(educatorChatTokens)).toBeGreaterThan(0);
     
     // ========================================
@@ -137,7 +137,7 @@ test.describe('Admin Analytics - AI Token Tracking', () => {
     const studentRow = page.locator(`[data-testid="consumer-row"]`).filter({ hasText: STUDENT_EMAIL });
     await expect(studentRow).toBeVisible();
     
-    const studentTokens = await studentRow.locator('[data-testid="tokens"]').textContent();
+    const studentTokens = await studentRow.locator('[data-testid="tokens"]').textContent() || '0';
     expect(parseInt(studentTokens)).toBeGreaterThan(0);
   });
 
@@ -200,7 +200,7 @@ test.describe('Admin Analytics - AI Token Tracking', () => {
     
     // Verify metrics show zero
     const totalTokensElement = page.locator('[data-testid="total-tokens"]');
-    const totalTokensText = await totalTokensElement.textContent();
+    const totalTokensText = await totalTokensElement.textContent() || '0';
     expect(totalTokensText).toContain('0');
   });
 });

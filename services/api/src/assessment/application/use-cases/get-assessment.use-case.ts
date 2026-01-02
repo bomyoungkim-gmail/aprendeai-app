@@ -13,6 +13,10 @@ export class GetAssessmentUseCase {
     return this.assessmentRepository.findAllByUser(userId);
   }
 
+  async getByContentId(contentId: string): Promise<Assessment[]> {
+    return this.assessmentRepository.findByContentId(contentId);
+  }
+
   async getById(id: string): Promise<Assessment> {
     const assessment = await this.assessmentRepository.findById(id);
     if (!assessment) {

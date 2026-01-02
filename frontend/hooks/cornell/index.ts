@@ -1,6 +1,7 @@
 // Cornell Hooks Barrel File
 // Centralized exports for all Cornell Notes hooks
 
+export * from './use-api-client';
 export * from './use-autosave';
 export * from './use-content-context';
 export * from './use-data';

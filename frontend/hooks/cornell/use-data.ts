@@ -7,6 +7,7 @@ import type {
   UpdateCornellDto,
   CreateHighlightDto,
   UpdateHighlightDto,
+  CreateHighlightPayload,
 } from '@/lib/types/cornell';
 import { logger } from '@/lib/utils/logger';
 
@@ -65,8 +66,21 @@ export function useCreateHighlight(contentId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (highlight: CreateHighlightDto) =>
-      cornellApi.createHighlight(contentId, highlight),
+    mutationFn: (highlight: CreateHighlightDto) => {
+      const payload: CreateHighlightPayload = {
+        type: highlight.tags_json?.[0] || 'HIGHLIGHT',
+        target_type: highlight.target_type,
+        page_number: highlight.page_number,
+        timestamp_ms: highlight.timestamp_ms,
+        anchor_json: highlight.anchor_json,
+        comment_text: highlight.comment_text,
+        visibility: highlight.visibility,
+        visibility_scope: highlight.visibility_scope,
+        context_type: highlight.context_type,
+        context_id: highlight.context_id,
+      };
+      return cornellApi.createHighlight(contentId, payload);
+    },
     onSuccess: () => {
       // Invalidate highlights to refetch and show new highlight
       queryClient.invalidateQueries({ queryKey: cornellKeys.highlights(contentId) });

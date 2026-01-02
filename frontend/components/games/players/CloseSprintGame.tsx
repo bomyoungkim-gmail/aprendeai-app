@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { GameTimer } from '../shared/GameTimer';
-import { GameQuestion } from '@/lib/api/games';
+import { GameQuestion } from '@/services/api/games.api';
 
 interface ClozeSprintGameProps {
   onComplete: (score: number, won: boolean) => void;

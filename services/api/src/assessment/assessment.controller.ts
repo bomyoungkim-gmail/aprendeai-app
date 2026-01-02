@@ -5,6 +5,7 @@ import {
   Get,
   UseGuards,
   Request,
+  Query,
 } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { AssessmentService } from "./assessment.service";
@@ -21,7 +22,10 @@ export class AssessmentController {
   }
 
   @Get()
-  findAll(@Request() req: any) {
+  findAll(@Request() req: any, @Query('contentId') contentId?: string) {
+    if (contentId) {
+      return this.assessmentService.findByContent(contentId);
+    }
     return this.assessmentService.findAllByUser(req.user.id);
   }
 }

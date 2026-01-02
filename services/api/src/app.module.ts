@@ -1,7 +1,9 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { APP_INTERCEPTOR, APP_GUARD } from "@nestjs/core";
+import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler"; // Added
 import { EventEmitterModule } from "@nestjs/event-emitter";
+import { GlossaryModule } from "./glossary/glossary.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { QueueModule } from "./queue/queue.module";
 import { ExtractionModule } from "./extraction/extraction.module";
@@ -51,12 +53,29 @@ import { ActionLoggerMiddleware } from "./common/middleware/logger.middleware";
 import { RouteValidationMiddleware } from "./common/middleware/route-validation.middleware";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { SessionTrackingModule } from "./analytics/session-tracking.module";
+import { TelemetryModule } from "./telemetry/telemetry.module";
 
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
+import { ClsModule } from "nestjs-cls";
+import { ClsPluginTransactional } from "@nestjs-cls/transactional";
+import { TransactionalAdapterPrisma } from "@nestjs-cls/transactional-adapter-prisma";
+import { PrismaService } from "./prisma/prisma.service";
 
 @Module({
   imports: [
+    ClsModule.forRoot({
+      global: true,
+      middleware: { mount: true },
+      plugins: [
+        new ClsPluginTransactional({
+          imports: [PrismaModule],
+          adapter: new TransactionalAdapterPrisma({
+            prismaInjectionToken: PrismaService,
+          }),
+        }),
+      ],
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath:
@@ -79,6 +98,10 @@ import { join } from "path";
       rootPath: join(process.cwd(), "uploads"),
       serveRoot: "/api/uploads",
     }),
+    ThrottlerModule.forRoot([{
+        ttl: 60000,
+        limit: 100,
+    }]),
     EventEmitterModule.forRoot({ global: true }),
     PrismaModule,
     QueueModule, // Global queue service
@@ -129,13 +152,19 @@ import { join } from "path";
     // Real-time Notifications
     NotificationsModule,
     SessionTrackingModule,
+    TelemetryModule,
+    GlossaryModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
     {
       provide: APP_GUARD,
-      useClass: JwtAuthGuard, // Global authentication - all routes protected by default
+      useClass: JwtAuthGuard, // Global authentication
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard, // Global rate limiting
     },
     {
       provide: APP_INTERCEPTOR,

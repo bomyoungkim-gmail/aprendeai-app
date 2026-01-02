@@ -1,4 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
+import { ContentAccessService } from '../../../cornell/services/content-access.service';
 import { ISearchRepository, SearchResult } from '../../domain/interfaces/search.repository.interface';
 import { SearchDto } from '../../dto/search.dto';
 
@@ -7,6 +8,7 @@ export class SearchUseCase {
   constructor(
     @Inject(ISearchRepository)
     private readonly searchRepo: ISearchRepository,
+    private readonly contentAccess: ContentAccessService,
   ) {}
 
   async execute(userId: string, dto: SearchDto): Promise<SearchResult[]> {
@@ -15,7 +17,12 @@ export class SearchUseCase {
     const searchPromises = [];
 
     if (!dto.searchIn || dto.searchIn === 'content') {
-      searchPromises.push(this.searchRepo.searchContent(dto.query, dto));
+      const filters: any = { ...dto };
+      if (userId) {
+        // Automatically inject the user's ownership filter
+        filters.ownerFilter = this.contentAccess.getOwnerFilter(userId);
+      }
+      searchPromises.push(this.searchRepo.searchContent(dto.query, filters));
     }
 
     if (!dto.searchIn || dto.searchIn === 'annotation') {
@@ -27,7 +34,7 @@ export class SearchUseCase {
     }
 
     if (!dto.searchIn || dto.searchIn === 'transcript') {
-      searchPromises.push(this.searchRepo.searchTranscripts(dto.query));
+      searchPromises.push(this.searchRepo.searchTranscripts(dto.query, userId));
     }
 
     const resolvedResults = await Promise.all(searchPromises);

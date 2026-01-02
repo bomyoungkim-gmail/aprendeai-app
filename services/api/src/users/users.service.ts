@@ -9,9 +9,14 @@ import * as bcrypt from "bcrypt";
 import { UpdateProfileDto, UpdateSettingsDto } from "./dto/user.dto";
 import { v4 as uuidv4 } from "uuid";
 
+import { ContentAccessService } from "../cornell/services/content-access.service";
+
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private contentAccessService: ContentAccessService,
+  ) {}
 
   async findOne(email: string): Promise<users | null> {
     return this.prisma.users.findUnique({
@@ -113,7 +118,11 @@ export class UsersService {
 
   async getStats(userId: string) {
     const [contentsCount, annotationsCount, groupsCount] = await Promise.all([
-      this.prisma.contents.count({ where: { owner_user_id: userId } }),
+      this.prisma.contents.count({ 
+        where: { 
+          OR: this.contentAccessService.getOwnerFilter(userId)
+        } 
+      }),
       this.prisma.annotations.count({ where: { user_id: userId } }),
       this.prisma.study_group_members.count({ where: { user_id: userId } }),
     ]);

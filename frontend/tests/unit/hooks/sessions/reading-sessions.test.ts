@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+// Replaced vitest import with global jest
 import { renderHook, act } from '@testing-library/react';
-import { useSession } from '../reading/use-session';
+import { useSession } from '@/hooks/sessions/reading/use-session';
 
 describe('Reading Sessions Hooks', () => {
   beforeEach(() => {

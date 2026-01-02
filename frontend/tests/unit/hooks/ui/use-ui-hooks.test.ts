@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+// Replaced vitest import with global jest
 import { renderHook, act } from '@testing-library/react';
 import { useDebounce } from '@/hooks/ui/use-debounce';
 import { useOnlineStatus } from '@/hooks/ui/use-online-status';

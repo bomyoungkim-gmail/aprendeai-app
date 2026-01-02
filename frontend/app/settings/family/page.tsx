@@ -126,7 +126,7 @@ function FamilyCard({
   
   // Am I an Admin/Owner?
   const myMembership = family.members.find(m => m.userId === currentUserId);
-  const canManage = myMembership?.role === 'OWNER' || myMembership?.role === 'ADMIN';
+  const canManage = myMembership?.role === 'OWNER';
   
   // Is this my Primary Family?
   const isPrimary = (user?.settings as any)?.primaryFamilyId === family.id;

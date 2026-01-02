@@ -8,8 +8,9 @@ import {
   Star, 
   BookOpen 
 } from 'lucide-react';
+import type { UnifiedStreamItemType } from '@/lib/types/unified-stream';
 
-export type SelectionAction = 'highlight' | 'note' | 'question' | 'ai' | 'star' | 'triage';
+export type SelectionAction = UnifiedStreamItemType;
 
 interface TextSelectionMenuProps {
   selectionInfo: {
@@ -59,7 +60,7 @@ export function TextSelectionMenu({ selectionInfo, onAction }: TextSelectionMenu
     >
       {/* Highlight - 🎨 */}
       <button 
-        onClick={() => onAction('highlight', selectionInfo.text)}
+        onClick={() => onAction('annotation', selectionInfo.text)}
         className={buttonClass}
         aria-label={ACTION_LABELS.HIGHLIGHT}
         title="Atalho: H"

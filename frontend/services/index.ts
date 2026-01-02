@@ -18,7 +18,8 @@ export * from './api';
 export * from './cornell/highlights.service';
 
 // Domain Services - Games (existing)
-export * from './games/questions.service';
+// Removed duplicate GameQuestion export to avoid conflict with services/api
+export { questionsService } from './games/questions.service';
 
 // Domain Services - Content (Fase 2.2 - NEW)
 export * from './content/content.service';

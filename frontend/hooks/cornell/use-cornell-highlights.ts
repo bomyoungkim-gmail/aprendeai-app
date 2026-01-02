@@ -7,7 +7,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useOnlineStatus } from '@/hooks/use-online-status';
+import { useOnlineStatus } from '@/hooks/shared';
 import { offlineQueue } from '@/lib/cornell/offline-queue';
 import { cornellApi } from '@/lib/api/cornell';
 import type {
@@ -172,12 +172,14 @@ export function useCreateHighlight(contentId: string) {
 
       // Transform CreateHighlightDto to CreateHighlightPayload expected by API
       const apiPayload: import('@/lib/types/cornell').CreateHighlightPayload = {
-        type: (data.tags_json?.[0] as any) || 'HIGHLIGHT', // Extract Cornell type from tags
-        target_type: data.target_type as any,
+        type: (data.tags_json?.[0]) || 'HIGHLIGHT', // Extract Cornell type from tags
+        target_type: data.target_type,
         page_number: data.page_number,
-        timestamp_ms: (data as any).timestamp_ms,
-        anchor_json: data.anchor_json as any,
+        anchor_json: data.anchor_json,
         comment_text: data.comment_text,
+        // These are extra fields in Payload but not in CreateHighlightDto theoretically, 
+        // but they are present in the passed object in practice.
+        timestamp_ms: (data as any).timestamp_ms,
         visibility: (data as any).visibility,
         visibility_scope: (data as any).visibility_scope,
         context_type: (data as any).context_type,

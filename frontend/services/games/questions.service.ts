@@ -4,22 +4,10 @@
  * Business logic for game questions.
  */
 
-import { gamesApi, type FetchQuestionsPayload } from '../api/games.api';
+import { gamesApi, type FetchQuestionsPayload, type GameQuestion } from '@/services/api/games.api';
 
-// ========================================
-// TYPES
-// ========================================
+// Local interface removed - using shared type from games.api/schema
 
-export interface GameQuestion {
-  id: string;
-  gameId: string;
-  type: string;
-  question: string;
-  options?: string[];
-  correctAnswer?: string;
-  difficulty?: string;
-  topic?: string;
-}
 
 // ========================================
 // BUSINESS LOGIC

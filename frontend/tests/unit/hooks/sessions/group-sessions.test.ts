@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+// Replaced vitest import with global jest
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 
 // Import from barrel files
-import { useSession, useCreateSession, useStartSession } from '../group/use-sessions';
-import { useSessionEvents } from '../group/use-session-events';
+import { useSession, useCreateSession, useStartSession } from '@/hooks/sessions/group/use-sessions';
+import { useSessionEvents } from '@/hooks/sessions/group/use-session-events';
 
 describe('Group Sessions Hooks', () => {
   let queryClient: QueryClient;

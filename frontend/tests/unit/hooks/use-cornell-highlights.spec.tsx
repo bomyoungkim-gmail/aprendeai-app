@@ -13,7 +13,7 @@ import {
   useDeleteHighlight,
   useCreateComment,
 } from '@/hooks/cornell/use-cornell-highlights';
-import { AnnotationVisibility } from '@/lib/constants/enums';
+import { AnnotationVisibility, TargetType } from '@/lib/constants/enums';
 
 // Mock API client
 jest.mock('@/hooks/use-api-client', () => ({
@@ -73,8 +73,16 @@ describe('useCreateHighlight', () => {
     );
 
     const highlightData = {
-      type: 'NOTE' as const,
-      target_type: 'PDF' as any,
+      kind: 'TEXT' as const,
+      target_type: TargetType.PDF,
+      anchor_json: { 
+        type: 'PDF_TEXT' as const, 
+        position: { 
+          boundingRect: { x1: 0, y1: 0, x2: 10, y2: 10, width: 100, height: 100 },
+          rects: [], 
+          pageNumber: 1 
+        } 
+      },
       page_number: 1,
       comment_text: 'Test note',
     };

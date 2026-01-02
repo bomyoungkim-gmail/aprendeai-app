@@ -12,6 +12,7 @@ import {
   AnnotationStatus,
   TargetType,
   FamilyRole,
+  FamilyLearningRole,
   isEducatorRole,
   canEditAnnotation,
   getAvailableScopes,
@@ -62,12 +63,12 @@ describe('Cornell Notes Enums', () => {
 describe('Helper Functions', () => {
   describe('isEducatorRole', () => {
     it('should identify EDUCATOR role', () => {
-      expect(isEducatorRole(FamilyRole.EDUCATOR)).toBe(true);
+      expect(isEducatorRole(FamilyLearningRole.EDUCATOR)).toBe(true);
       expect(isEducatorRole('EDUCATOR')).toBe(true);
     });
 
     it('should return false for non-educator roles', () => {
-      expect(isEducatorRole(FamilyRole.LEARNER)).toBe(false);
+      expect(isEducatorRole(FamilyLearningRole.LEARNER)).toBe(false);
       expect(isEducatorRole(FamilyRole.GUARDIAN)).toBe(false);
     });
   });

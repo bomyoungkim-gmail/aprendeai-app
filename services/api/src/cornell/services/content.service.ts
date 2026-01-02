@@ -410,6 +410,8 @@ export class ContentService {
       OR: [
         { owner_type: "USER", owner_id: userId },
         { owner_type: "FAMILY", owner_id: { in: familyIds } },
+        { owner_user_id: userId },
+        { created_by: userId }
       ],
     };
 
@@ -614,35 +616,37 @@ export class ContentService {
   async canAccessContent(contentId: string, userId: string): Promise<boolean> {
     const content = await this.prisma.contents.findUnique({
       where: { id: contentId },
-      select: { owner_type: true, owner_id: true },
+      select: { 
+        owner_type: true, 
+        owner_id: true, 
+        owner_user_id: true, 
+        created_by: true,
+        scope_type: true,
+        institution_id: true
+      },
     });
 
     if (!content) return false;
 
-    // NEW: Check ownerType/ownerId first (if present)
-    if (content.owner_type && content.owner_id) {
-      switch (content.owner_type) {
-        case "USER":
-          return content.owner_id === userId;
+    // Direct User Ownership (Standardized)
+    if (
+        content.owner_user_id === userId ||
+        content.created_by === userId ||
+        (content.owner_type === "USER" && content.owner_id === userId)
+    ) return true;
 
-        case "FAMILY":
-          // Check if user is family member
-          const familyMember = await this.prisma.family_members.findFirst({
-            where: { family_id: content.owner_id, user_id: userId },
-          });
-          return !!familyMember;
+    // Shared Ownership (Basic check for legacy service compatibility)
+    if (content.owner_type === "FAMILY") {
+      const familyMember = await this.prisma.family_members.findFirst({
+        where: { family_id: content.owner_id, user_id: userId, status: 'ACTIVE' },
+      });
+      return !!familyMember;
+    }
 
-        case "INSTITUTION":
-          // Check if user is institution member
-          const institutionMember =
-            await this.prisma.institution_members.findFirst({
-              where: { institution_id: content.owner_id, user_id: userId },
-            });
-          return !!institutionMember;
-
-        default:
-          return false;
-      }
+    if (content.owner_type === "INSTITUTION" || content.scope_type === "INSTITUTION") {
+        const instId = content.owner_id || content.institution_id;
+        const user = await this.prisma.users.findUnique({ where: { id: userId }, select: { last_institution_id: true } });
+        return user?.last_institution_id === instId;
     }
 
     return false;
@@ -656,10 +660,11 @@ export class ContentService {
   }
 
   async updateContent(id: string, userId: string, dto: any): Promise<Content> {
+    const hasAccess = await this.canAccessContent(id, userId);
+    if (!hasAccess) throw new ForbiddenException("Access denied");
+
     const content = await this.prisma.contents.findUnique({ where: { id } });
     if (!content) throw new NotFoundException("Content not found");
-    if (content.owner_user_id !== userId)
-      throw new ForbiddenException("Access denied");
 
     const updatedMetadata = {
       ...((content.metadata as any) || {}),

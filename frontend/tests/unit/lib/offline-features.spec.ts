@@ -4,7 +4,7 @@
 
 import { renderHook, act } from '@testing-library/react';
 import { offlineQueue } from '@/lib/cornell/offline-queue';
-import { useOnlineStatus } from '@/hooks/use-online-status';
+import { useOnlineStatus } from '@/hooks/shared';
 
 describe('OfflineQueue', () => {
   beforeEach(() => {

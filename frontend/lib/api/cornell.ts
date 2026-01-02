@@ -6,8 +6,10 @@ import type {
   UpdateCornellDto,
   CreateHighlightDto,
   UpdateHighlightDto,
+  CreateHighlightPayload
 } from '../types/cornell';
 import { API_ENDPOINTS } from '@/lib/config/api';
+import { ContentType } from '../constants/enums';
 
 // Cornell Reader API
 export const cornellApi = {
@@ -58,7 +60,7 @@ export const cornellApi = {
 
   async createHighlight(
     contentId: string,
-    highlight: CreateHighlightDto | any
+    highlight: CreateHighlightPayload
   ): Promise<Highlight> {
     const { data } = await api.post(API_ENDPOINTS.HIGHLIGHTS(contentId), highlight);
     return data;
@@ -86,7 +88,7 @@ export const cornellApi = {
   },
 
   // Content Creation
-  async createManualContent(data: { type: 'VIDEO' | 'TEXT' | 'PDF'; sourceUrl?: string; text?: string; title: string }): Promise<Content> {
+  async createManualContent(data: { type: ContentType; sourceUrl?: string; text?: string; title: string }): Promise<Content> {
     const { data: response } = await api.post(API_ENDPOINTS.CONTENTS.CREATE_MANUAL, data);
     return response;
   },

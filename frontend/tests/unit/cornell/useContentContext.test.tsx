@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+const vi = jest;
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useContentContext } from '@/hooks/cornell/useContentContext';
+import { useContentContext } from '@/hooks/cornell/use-content-context';
 import { api } from '@/lib/api';
 
 vi.mock('@/lib/api');

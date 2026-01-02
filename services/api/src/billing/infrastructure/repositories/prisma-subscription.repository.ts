@@ -4,13 +4,20 @@ import { ISubscriptionRepository } from '../../domain/interfaces/subscription.re
 import { Subscription } from '../../domain/entities/subscription.entity';
 import { Plan } from '../../domain/entities/plan.entity';
 import { SubscriptionStatus, ScopeType } from '@prisma/client';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 
 @Injectable()
 export class PrismaSubscriptionRepository implements ISubscriptionRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+    private prisma: PrismaService
+  ) {}
 
   async create(subscription: Subscription): Promise<Subscription> {
-    const created = await this.prisma.subscriptions.create({
+    const prisma = this.txHost.tx as PrismaService;
+    console.log(`[PrismaSubscriptionRepository] Creating sub for user ${subscription.userId}. Has TX via CLS? ${!!this.txHost.tx}`);
+    const created = await prisma.subscriptions.create({
       data: {
         id: subscription.id,
         user_id: subscription.userId,

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { GameQuestion } from '@/lib/api/games';
+import { GameQuestion } from '@/services/api/games.api';
 
 interface BossFightGameProps {
   onComplete: (score: number, won: boolean) => void;

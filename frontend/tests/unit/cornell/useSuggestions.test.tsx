@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+const vi = jest;
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useSuggestions } from '@/hooks/cornell/useSuggestions';
+import { useSuggestions } from '@/hooks/cornell/use-suggestions';
 import { api } from '@/lib/api';
 
 vi.mock('@/lib/api');

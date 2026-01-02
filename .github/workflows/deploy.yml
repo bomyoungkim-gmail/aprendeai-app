@@ -108,4 +108,4 @@ jobs:
           text: 'Deployment to production ${{ job.status }}'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-        if: always()
+        if: always() && env.SLACK_WEBHOOK_URL != ''

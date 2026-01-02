@@ -4,16 +4,23 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { SubscriptionService } from "../../billing/subscription.service";
 import { IUsersRepository } from "../../users/domain/users.repository.interface";
 import { TokenGeneratorService } from "../infrastructure/token-generator.service";
+import { Transactional, TransactionHost } from "@nestjs-cls/transactional";
+import { TransactionalAdapterPrisma } from "@nestjs-cls/transactional-adapter-prisma";
 
 @Injectable()
 export class ValidateOAuthUseCase {
   constructor(
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
     private readonly prisma: PrismaService,
     private readonly subscriptionService: SubscriptionService,
     @Inject(IUsersRepository)
     private readonly usersRepository: IUsersRepository,
     private readonly tokenGenerator: TokenGeneratorService,
   ) {}
+
+  private get db() {
+    return (this.txHost.tx as PrismaService) || this.prisma;
+  }
 
   async execute(oauthData: {
     oauthId: string;
@@ -23,7 +30,7 @@ export class ValidateOAuthUseCase {
     picture?: string;
   }) {
     // Check if user exists with this OAuth ID
-    let user = await this.prisma.users.findFirst({
+    let user = await this.db.users.findFirst({
       where: {
         oauth_provider: oauthData.oauthProvider,
         oauth_id: oauthData.oauthId,
@@ -32,7 +39,7 @@ export class ValidateOAuthUseCase {
 
     if (user) {
       if (oauthData.picture && user.oauth_picture !== oauthData.picture) {
-        user = await this.prisma.users.update({
+        user = await this.db.users.update({
           where: { id: user.id },
           data: { oauth_picture: oauthData.picture },
         });
@@ -41,13 +48,13 @@ export class ValidateOAuthUseCase {
     }
 
     // Check if user exists with this email
-    user = await this.prisma.users.findUnique({
+    user = await this.db.users.findUnique({
       where: { email: oauthData.email },
     });
 
     if (user) {
       // Link OAuth to existing account
-      return this.prisma.users.update({
+      return this.db.users.update({
         where: { id: user.id },
         data: {
           oauth_provider: oauthData.oauthProvider,
@@ -58,25 +65,26 @@ export class ValidateOAuthUseCase {
     }
 
     // Create new user with OAuth
-    return this.prisma.$transaction(async (tx) => {
-      const newUser = await tx.users.create({
-        data: {
-          id: uuidv4(),
-          email: oauthData.email,
-          name: oauthData.name || oauthData.email.split("@")[0],
-          oauth_provider: oauthData.oauthProvider,
-          oauth_id: oauthData.oauthId,
-          oauth_picture: oauthData.picture,
-          schooling_level: "ADULT",
-          status: "ACTIVE",
-          password_hash: null, // No password for OAuth users
-          updated_at: new Date(),
-        } as any,
-      });
+    return this.createOAuthUserTransaction(oauthData);
+  }
 
-      await this.subscriptionService.createFreeSubscription(newUser.id);
+  @Transactional()
+  private async createOAuthUserTransaction(oauthData: any) {
+    const newUser = await this.usersRepository.create({
+      id: uuidv4(),
+      email: oauthData.email,
+      name: oauthData.name || oauthData.email.split("@")[0],
+      oauth_provider: oauthData.oauthProvider,
+      oauth_id: oauthData.oauthId,
+      oauth_picture: oauthData.picture,
+      schooling_level: "ADULT",
+      status: "ACTIVE",
+      password_hash: null, // No password for OAuth users
+      updated_at: new Date(),
+    } as any);
 
-      return newUser;
-    });
+    await this.subscriptionService.createFreeSubscription(newUser.id);
+
+    return newUser;
   }
 }

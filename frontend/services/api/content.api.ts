@@ -7,6 +7,7 @@
 
 import api from '@/lib/api';
 import { API_ENDPOINTS } from '@/lib/config/api';
+import { ContentType } from '@/lib/constants/enums';
 
 // ========================================
 // TYPES
@@ -14,7 +15,7 @@ import { API_ENDPOINTS } from '@/lib/config/api';
 
 export interface CreateContentPayload {
   title: string;
-  type: 'PDF' | 'VIDEO' | 'ARTICLE';
+  type: ContentType;
   url?: string;
   filePath?: string;
 }
@@ -32,7 +33,7 @@ export const contentApi = {
    * Get all my contents
    */
   getMyContents: async () => {
-    const { data } = await api.get(API_ENDPOINTS.MY_CONTENTS);
+    const { data } = await api.get(API_ENDPOINTS.CONTENTS.MY_CONTENTS);
     return data;
   },
 
@@ -40,7 +41,7 @@ export const contentApi = {
    * Get single content by ID
    */
   getContent: async (id: string) => {
-    const { data } = await api.get(API_ENDPOINTS.CONTENT(id));
+    const { data } = await api.get(API_ENDPOINTS.CONTENTS.GET(id));
     return data;
   },
 
@@ -48,7 +49,7 @@ export const contentApi = {
    * Create new content
    */
   createContent: async (payload: CreateContentPayload) => {
-    const { data } = await api.post(API_ENDPOINTS.CONTENTS, payload);
+    const { data } = await api.post(API_ENDPOINTS.CONTENTS.LIST, payload);
     return data;
   },
 
@@ -56,7 +57,7 @@ export const contentApi = {
    * Update content
    */
   updateContent: async (id: string, payload: UpdateContentPayload) => {
-    const { data } = await api.patch(API_ENDPOINTS.CONTENT(id), payload);
+    const { data } = await api.patch(API_ENDPOINTS.CONTENTS.GET(id), payload);
     return data;
   },
 
@@ -64,7 +65,7 @@ export const contentApi = {
    * Delete content
    */
   deleteContent: async (id: string) => {
-    const { data } = await api.delete(API_ENDPOINTS.CONTENT(id));
+    const { data } = await api.delete(API_ENDPOINTS.CONTENTS.DELETE(id));
     return data;
   },
 };

@@ -47,7 +47,7 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-  localStorageMock.clear();
+  (localStorageMock as any).clear();
 });
 
 describe('StorageService', () => {

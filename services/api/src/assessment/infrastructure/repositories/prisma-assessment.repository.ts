@@ -5,10 +5,14 @@ import { Assessment } from "../../domain/entities/assessment.entity";
 import { AssessmentAttempt } from "../../domain/entities/assessment-attempt.entity";
 import { AssessmentQuestion } from "../../domain/entities/assessment-question.entity";
 import { QuestionType } from "@prisma/client";
+import { ContentAccessService } from "../../../cornell/services/content-access.service";
 
 @Injectable()
 export class PrismaAssessmentRepository implements IAssessmentRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private contentAccess: ContentAccessService,
+  ) {}
 
   async create(assessment: Assessment): Promise<Assessment> {
     const created = await this.prisma.assessments.create({
@@ -48,11 +52,23 @@ export class PrismaAssessmentRepository implements IAssessmentRepository {
     return this.mapToDomain(found);
   }
 
+  async findByContentId(contentId: string): Promise<Assessment[]> {
+    const found = await this.prisma.assessments.findMany({
+      where: { content_id: contentId },
+      include: {
+        assessment_questions: true,
+      },
+      orderBy: { created_at: "desc" },
+    });
+
+    return found.map((a) => this.mapToDomain(a));
+  }
+
   async findAllByUser(userId: string): Promise<Assessment[]> {
     const found = await this.prisma.assessments.findMany({
       where: {
         contents: {
-          owner_user_id: userId,
+          OR: this.contentAccess.getOwnerFilter(userId),
         },
       },
       include: {

@@ -6,8 +6,10 @@ import { PrismaSearchRepository } from "./infrastructure/repositories/prisma-sea
 import { SearchUseCase } from "./application/use-cases/search.use-case";
 import { ISearchRepository } from "./domain/interfaces/search.repository.interface";
 
+import { ContentAccessModule } from "../cornell/content-access.module";
+
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, ContentAccessModule],
   controllers: [SearchController],
   providers: [
     SearchService,

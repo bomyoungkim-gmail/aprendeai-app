@@ -52,7 +52,7 @@ describe('useStreamFilter', () => {
     );
 
     expect(result.current.filteredItems).toHaveLength(1);
-    expect(result.current.filteredItems[0].quote).toContain('Quote');
+    expect((result.current.filteredItems[0] as any).quote).toContain('Quote');
     expect(result.current.hasActiveFilter).toBe(true);
   });
 

@@ -9,7 +9,7 @@
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { CornellLayout } from '@/components/cornell/CornellLayout';
+import { CornellLayout } from '@/components/cornell/classic/CornellLayout';
 
 describe('CornellLayout Component', () => {
   const mockCues = [
