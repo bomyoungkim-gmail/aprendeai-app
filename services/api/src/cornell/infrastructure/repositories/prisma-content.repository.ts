@@ -17,6 +17,8 @@ export class PrismaContentRepository implements IContentRepository {
         raw_text: data.rawText,
         owner_type: data.ownerType!,
         owner_id: data.ownerId!,
+        owner_user_id: data.ownerType === "USER" ? data.ownerId : undefined,
+        institution_id: data.scopeType === "INSTITUTION" ? data.scopeId : undefined,
         scope_type: data.scopeType!,
         scope_id: data.scopeId,
         metadata: data.metadata || {},

@@ -6,7 +6,12 @@
  */
 
 import { cornellApi } from '@/lib/api/cornell';
-import type { CreateHighlightDto as CreateHighlightPayload, UpdateHighlightDto as UpdateHighlightPayload } from '@/lib/types/cornell';
+import type { 
+  CreateHighlightDto, 
+  UpdateHighlightDto, 
+  CreateHighlightPayload,
+  UpdateHighlightPayload
+} from '@/lib/types/cornell';
 import { offlineQueue } from '@/lib/cornell/offline-queue';
 import type { VisibilityConfig } from '@/lib/cornell/visibility-config';
 
@@ -28,7 +33,7 @@ export const highlightsService = {
    */
   async createHighlight(
     contentId: string,
-    payload: CreateHighlightPayload,
+    payload: CreateHighlightDto,
     options: CreateHighlightOptions
   ) {
     // Offline mode: queue for later
@@ -48,7 +53,20 @@ export const highlightsService = {
     }
 
     // Online mode: call API
-    const result = await cornellApi.createHighlight(contentId, payload);
+    const apiPayload: CreateHighlightPayload = {
+      type: (payload.tags_json?.[0]) || 'HIGHLIGHT',
+      target_type: payload.target_type,
+      page_number: payload.page_number,
+      timestamp_ms: payload.timestamp_ms,
+      anchor_json: payload.anchor_json,
+      comment_text: payload.comment_text,
+      visibility: payload.visibility,
+      visibility_scope: payload.visibility_scope,
+      context_type: payload.context_type,
+      context_id: payload.context_id,
+    };
+
+    const result = await cornellApi.createHighlight(contentId, apiPayload);
     return result;
   },
 

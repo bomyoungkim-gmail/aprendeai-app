@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { ModernCornellLayout } from '@/components/cornell/ModernCornellLayout';
-import { CornellLayout } from '@/components/cornell/CornellLayout'; // Added for Classic Mode
+import { CornellLayout } from '@/components/cornell/classic/CornellLayout'; // Added for Classic Mode
 // Dynamic imports to avoid SSR issues (canvas) and reduce bundle size
 const PDFViewer = dynamic(() => import('@/components/cornell/viewers/PDFViewerNew').then(mod => mod.PDFViewer), { ssr: false, loading: () => <div className="h-full flex items-center justify-center">Carregando PDF...</div> });
 // Import the ref type separately
@@ -30,7 +30,7 @@ import { useFocusTracking } from '@/hooks/ui';
 import { useAutoTrackReading } from '@/hooks/shared';
 import { useTelemetry } from '@/hooks/telemetry/use-telemetry';
 import type { ViewMode, UpdateCornellDto, CueItem } from '@/lib/types/cornell';
-import type { UnifiedStreamItem } from '@/lib/types/unified-stream';
+import type { UnifiedStreamItem, UnifiedStreamItemType } from '@/lib/types/unified-stream';
 import { reactPDFToBackend } from '@/lib/adapters/highlight-adapter';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import type { CreateHighlightDto } from '@/lib/types/cornell';
@@ -61,6 +61,26 @@ export default function ReaderPage({ params }: ReaderPageProps) {
   const deleteHighlightMutation = useDeleteHighlight();
   const updateHighlightMutation = useUpdateHighlight();
 
+  // Layout Toggle State (Sprint 6)
+  const [layoutMode, setLayoutMode] = useState<'modern' | 'classic'>('modern');
+
+  // Load preference from local storage on mount
+  useEffect(() => {
+    const savedLayout = localStorage.getItem('cornell-layout-preference');
+    if (savedLayout === 'classic') {
+      setLayoutMode('classic');
+    }
+  }, []);
+
+  const toggleLayout = useCallback(() => {
+    setLayoutMode((prev) => {
+      const newMode = prev === 'modern' ? 'classic' : 'modern';
+      localStorage.setItem('cornell-layout-preference', newMode);
+      toastControls.success(`Modo ${newMode === 'modern' ? 'Moderno' : 'Clássico'} ativado`);
+      return newMode;
+    });
+  }, [toastControls]);
+
   // Summary state from Cornell notes (sync with fetch)
   const [summaryText, setSummaryText] = useState('');
   
@@ -80,10 +100,10 @@ export default function ReaderPage({ params }: ReaderPageProps) {
   const [currentTimestamp, setCurrentTimestamp] = useState(0);
 
   // Autosave
-  const { save, status, lastSaved } = useCornellAutosave({
+  const { save, status, lastSaved } = useCornellAutosave<UpdateCornellDto>({
     onSave: async (data) => {
       console.log('📝 Autosave payload:', JSON.stringify(data, null, 2));
-      await updateMutation.mutateAsync(data as UpdateCornellDto);
+      await updateMutation.mutateAsync(data);
     },
     delay: 1000,
     onSuccess: () => {
@@ -206,7 +226,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
   // Render viewer based on content type
   // Handle creating stream items from viewers (PDF/Text)
   const handleCreateStreamItem = useCallback(
-    async (type: 'note' | 'question' | 'ai' | 'star' | 'triage' | 'annotation', text: string, data?: any) => {
+    async (type: UnifiedStreamItemType, text: string, data?: unknown) => {
       console.log('Create stream item action:', type, text);
       const id = crypto.randomUUID();
 
@@ -340,84 +360,10 @@ export default function ReaderPage({ params }: ReaderPageProps) {
     }
   };
 
-  // Loading state
-  if (contentLoading || streamLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-950">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Carregando Cornell Notes...</p>
-        </div>
-      </div>
-    );
-  }
 
-  // No content
-  if (!content) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-950">
-        <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400 text-lg">Conteúdo não encontrado</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Review mode (TODO: Pass unified data to ReviewMode)
-  if (mode === 'review') {
-    return (
-      <div className="h-screen flex flex-col">
-        <div className="p-4">
-          <button
-            onClick={() => setMode('study')}
-            className="text-blue-600 hover:text-blue-700"
-          >
-            ← Voltar ao Estudo
-          </button>
-          <p className="mt-4 text-gray-600">Modo de revisão em desenvolvimento...</p>
-        </div>
-        {toastControls.toast && <Toast type={toastControls.toast.type} message={toastControls.toast.message} onClose={toastControls.hide} />}
-      </div>
-    );
-  }
-
-  // Layout Toggle State (Sprint 6)
-  const [layoutMode, setLayoutMode] = useState<'modern' | 'classic'>('modern');
-
-  // Load preference from local storage on mount
-  useEffect(() => {
-    const savedLayout = localStorage.getItem('cornell-layout-preference');
-    if (savedLayout === 'classic') {
-      setLayoutMode('classic');
-    }
-  }, []);
-
-  const toggleLayout = useCallback(() => {
-    setLayoutMode((prev) => {
-      const newMode = prev === 'modern' ? 'classic' : 'modern';
-      localStorage.setItem('cornell-layout-preference', newMode);
-      toastControls.success(`Modo ${newMode === 'modern' ? 'Moderno' : 'Clássico'} ativado`);
-      return newMode;
-    });
-  }, [toastControls]);
-
-  // Loading state
-  const isLoading = contentLoading || streamLoading || !content;
-
-  if (isLoading) {
-      return (
-        <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-950">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Carregando Cornell Notes...</p>
-          </div>
-        </div>
-      );
-  }
-
-  // Common props
+  // Common props calculated safely
   const commonProps = {
-    title: content.title,
+    title: content?.title || 'Carregando...',
     mode,
     onModeToggle: handleModeToggle,
     saveStatus: status,
@@ -428,38 +374,61 @@ export default function ReaderPage({ params }: ReaderPageProps) {
 
   return (
     <ErrorBoundary>
-      <>
-        {layoutMode === 'modern' ? (
-          <ModernCornellLayout
-            {...commonProps}
-            contentId={params.contentId}
-            targetType={content.contentType}
-            currentPage={currentPage}
-            currentTimestamp={currentTimestamp}
-            streamItems={streamItems}
-            onStreamItemClick={handleStreamItemClick}
-            onStreamItemEdit={handleStreamItemEdit}
-            onStreamItemDelete={handleStreamItemDelete}
-            onStreamItemSaveEdit={handleStreamItemSaveEdit}
-            cues={cues}
-            onCuesChange={handleCuesChange}
-            onCueClick={(cue) => console.log('Cue clicked:', cue)}
-            summary={summaryText}
-            onSummaryChange={handleSummaryChange}
-            disableSelectionMenu={content.contentType === 'PDF'}
-            onCreateStreamItem={handleCreateStreamItem}
-            selectedColor={selectedColor}
-            onColorChange={setSelectedColor}
-            onNavigate={handleNavigate}
-            contentText={(content as any)?.text}
-            scrollPercentage={0}
-          />
+      <div className="h-screen w-full overflow-hidden flex flex-col relative bg-gray-50 dark:bg-gray-900">
+        {/* Main Render Logic - Single Return Path */}
+        {(!content || contentLoading || streamLoading) ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600 dark:text-gray-400">Carregando conteúdo...</p>
+            </div>
+          </div>
+        ) : mode === 'review' ? (
+          <div className="h-full flex flex-col">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+              <button
+                onClick={() => setMode('study')}
+                className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2"
+              >
+                ← Voltar ao Estudo
+              </button>
+            </div>
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-gray-600 dark:text-gray-400 text-lg italic">
+                Modo de revisão em desenvolvimento...
+              </p>
+            </div>
+          </div>
         ) : (
-          /* Classic Layout needs raw cues and notes, which we have from useUnifiedStream */
-          /* We need to import CornellLayout at the top! */
-          <div className="h-screen bg-white">
-             {/* Dynamic import CornellLayout to avoid circular dependencies if any, or just standard import */}
-             <CornellLayout 
+          /* Cornell Study Layouts */
+          layoutMode === 'modern' ? (
+            <ModernCornellLayout
+              {...commonProps}
+              contentId={params.contentId}
+              targetType={content.contentType}
+              currentPage={currentPage}
+              currentTimestamp={currentTimestamp}
+              streamItems={streamItems}
+              onStreamItemClick={handleStreamItemClick}
+              onStreamItemEdit={handleStreamItemEdit}
+              onStreamItemDelete={handleStreamItemDelete}
+              onStreamItemSaveEdit={handleStreamItemSaveEdit}
+              cues={cues}
+              onCuesChange={handleCuesChange}
+              onCueClick={(cue) => console.log('Cue clicked:', cue)}
+              summary={summaryText}
+              onSummaryChange={handleSummaryChange}
+              disableSelectionMenu={content.contentType === 'PDF'}
+              onCreateStreamItem={handleCreateStreamItem}
+              selectedColor={selectedColor}
+              onColorChange={setSelectedColor}
+              onNavigate={handleNavigate}
+              contentText={content?.text}
+              scrollPercentage={0}
+            />
+          ) : (
+            <div className="h-full bg-white">
+              <CornellLayout 
                 {...commonProps}
                 cues={cues || []}
                 onCuesChange={handleCuesChange}
@@ -469,11 +438,19 @@ export default function ReaderPage({ params }: ReaderPageProps) {
                 onSummaryChange={handleSummaryChange}
                 onCueClick={(cue: any) => console.log('Classic Cue click:', cue)}
                 onNoteClick={(note: any) => console.log('Classic Note click:', note)}
-             />
-          </div>
+              />
+            </div>
+          )
         )}
         
-        {toastControls.toast && <Toast type={toastControls.toast.type} message={toastControls.toast.message} onClose={toastControls.hide} />}
+        {/* Global UI Elements */}
+        {toastControls.toast && (
+          <Toast 
+            type={toastControls.toast.type} 
+            message={toastControls.toast.message} 
+            onClose={toastControls.hide} 
+          />
+        )}
         
         <AIChatPanel 
           isOpen={aiChatOpen} 
@@ -481,7 +458,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
           initialInput={aiChatContext.text}
           selection={aiChatContext.selection}
         />
-      </>
+      </div>
     </ErrorBoundary>
   );
 }

@@ -42,6 +42,7 @@ export class ContentAccessService {
         id: true,
         owner_type: true,
         owner_id: true,
+        owner_user_id: true,
         created_by: true,
         scope_type: true,
         scope_id: true,
@@ -67,7 +68,24 @@ export class ContentAccessService {
   }
 
   private isOwner(content: any, userId: string): boolean {
-    return content.owner_user_id === userId || content.created_by === userId;
+    const isDirectUserOwner = content.owner_type === "USER" && content.owner_id === userId;
+    return (
+      content.owner_user_id === userId ||
+      isDirectUserOwner ||
+      content.created_by === userId
+    );
+  }
+
+  /**
+   * Returns a Prisma 'OR' filter that covers all ways a user might own content.
+   * Use this for 'My Contents' lists or similar filtered queries.
+   */
+  getOwnerFilter(userId: string) {
+    return [
+      { owner_type: "USER", owner_id: userId },
+      { owner_user_id: userId },
+      { created_by: userId },
+    ];
   }
 
   /**

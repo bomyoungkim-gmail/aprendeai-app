@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { InterventionManager, InterventionState, InterventionType } from '@/lib/pedagogical/intervention-manager';
-import { MODE_PEDAGOGICAL_CONFIGS, ContentMode } from '@/lib/pedagogical/mode-configs';
+import { MODE_PEDAGOGICAL_CONFIGS } from '@/lib/pedagogical/mode-configs';
+import { ContentMode } from '@/lib/types/content-mode';
 import { useTelemetry } from '../telemetry/use-telemetry';
 
 interface UseInterventionsProps {

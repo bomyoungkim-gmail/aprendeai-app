@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+const vi = jest;
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ActionToolbar } from '@/components/cornell/ActionToolbar';
 import { ACTION_LABELS, KEYBOARD_SHORTCUTS } from '@/lib/cornell/labels';
@@ -154,7 +154,7 @@ describe('ActionToolbar', () => {
   describe('Active State Styling', () => {
     it('should highlight active action button', () => {
       const { container } = render(
-        <ActionToolbar {...mockHandlers} activeAction="highlight" />
+        <ActionToolbar {...mockHandlers} activeAction="annotation" />
       );
 
       const highlightButton = screen.getByLabelText(ACTION_LABELS.HIGHLIGHT);
@@ -165,7 +165,7 @@ describe('ActionToolbar', () => {
 
     it('should not highlight inactive buttons', () => {
       const { container } = render(
-        <ActionToolbar {...mockHandlers} activeAction="highlight" />
+        <ActionToolbar {...mockHandlers} activeAction="annotation" />
       );
 
       const noteButton = screen.getByLabelText(ACTION_LABELS.NOTE);

@@ -14,7 +14,7 @@ interface InviteMemberModalProps {
 
 export function InviteMemberModal({ familyId, isOpen, onClose }: InviteMemberModalProps) {
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<FamilyRole>('MEMBER');
+  const [role, setRole] = useState<FamilyRole>('GUARDIAN');
   const [error, setError] = useState<string | null>(null);
   const inviteMember = useInviteMember();
 
@@ -25,7 +25,7 @@ export function InviteMemberModal({ familyId, isOpen, onClose }: InviteMemberMod
     try {
       await inviteMember.mutateAsync({ familyId, dto: { email, role } });
       setEmail('');
-      setRole('MEMBER');
+      setRole('GUARDIAN');
       onClose();
     } catch (error: any) {
       console.error('Failed to invite member:', error);
@@ -96,8 +96,7 @@ export function InviteMemberModal({ familyId, isOpen, onClose }: InviteMemberMod
                     onChange={(e) => setRole(e.target.value as FamilyRole)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="MEMBER">Member (Standard Access)</option>
-                    <option value="ADMIN">Admin (Can manage members)</option>
+                    <option value="GUARDIAN">Guardian (Standard Access)</option>
                     <option value="CHILD">Child (Restricted)</option>
                     <option value="OWNER">Owner (Transfer Ownership)</option>
                   </select>

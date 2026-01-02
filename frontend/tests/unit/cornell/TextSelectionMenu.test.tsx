@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+const vi = jest;
 import { render, screen, fireEvent } from '@testing-library/react';
 import { TextSelectionMenu, SelectionAction } from '@/components/cornell/TextSelectionMenu';
 import { ACTION_LABELS } from '@/lib/cornell/labels';

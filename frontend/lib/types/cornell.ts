@@ -1,5 +1,6 @@
-// Cornell Reader Types
 import { ContentType, TargetType } from '../constants/enums';
+
+export type CornellType = 'NOTE' | 'QUESTION' | 'STAR' | 'HIGHLIGHT' | 'SUMMARY';
 
 export interface Content {
   id: string;
@@ -50,11 +51,24 @@ export interface Highlight {
   targetType: TargetType;
   pageNumber?: number;
   anchorJson: PDFTextAnchor | PDFAreaAnchor | ImageAreaAnchor | DocxTextAnchor;
+  timestampMs?: number;
+  durationMs?: number;
   colorKey: string;
-  commentText?: string;
   tagsJson: string[];
+  commentText?: string;
+  visibility?: string;
+  visibilityScope?: string;
+  contextType?: string;
+  contextId?: string;
+  learnerId?: string;
+  status?: 'ACTIVE' | 'DELETED';
   createdAt: string;
   updatedAt: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 // Anchor types
@@ -115,10 +129,15 @@ export interface CreateHighlightDto {
   kind: 'TEXT' | 'AREA';
   target_type: TargetType;
   page_number?: number;
+  timestamp_ms?: number;
   anchor_json: PDFTextAnchor | PDFAreaAnchor | ImageAreaAnchor | DocxTextAnchor;
   color_key?: string;
   comment_text?: string;
   tags_json?: string[];
+  visibility?: string;
+  visibility_scope?: string;
+  context_type?: string;
+  context_id?: string;
 }
 
 export interface UpdateHighlightDto {
@@ -127,22 +146,32 @@ export interface UpdateHighlightDto {
   tags_json?: string[];
 }
 
-// UI State
-export type ViewMode = 'original' | 'study' | 'review';
-export type SaveStatus = 'saved' | 'saving' | 'offline' | 'error';
-
-// Re-export color types from centralized location
-export type { ColorKey as HighlightColor } from '@/lib/constants/colors';
+export interface UpdateHighlightPayload {
+  color_key?: string;
+  comment_text?: string;
+  tags_json?: string[];
+  visibility?: string;
+  visibility_scope?: string;
+  context_type?: string;
+  context_id?: string;
+}
 
 export interface CreateHighlightPayload {
   type: string;
-  target_type: string;
+  target_type: TargetType;
   page_number?: number;
   timestamp_ms?: number;
-  anchor_json?: any;
+  anchor_json: PDFTextAnchor | PDFAreaAnchor | ImageAreaAnchor | DocxTextAnchor;
   comment_text?: string;
   visibility?: string;
   visibility_scope?: string;
   context_type?: string;
   context_id?: string;
 }
+
+// UI State
+export type ViewMode = 'original' | 'study' | 'review';
+export type SaveStatus = 'saved' | 'saving' | 'offline' | 'error';
+
+// Re-export color types from centralized location
+export type { ColorKey as HighlightColor } from '@/lib/constants/colors';

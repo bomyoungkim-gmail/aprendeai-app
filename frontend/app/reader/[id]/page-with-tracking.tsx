@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { useAutoTrackReading } from '@/hooks/use-auto-track';
+import { useAutoTrackReading } from '@/hooks/shared/use-auto-track';
 
 export default function ReaderPage() {
   const params = useParams();

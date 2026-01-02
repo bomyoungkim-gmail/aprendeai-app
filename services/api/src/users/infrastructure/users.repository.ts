@@ -3,29 +3,38 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { IUsersRepository } from "../domain/users.repository.interface";
 import { User } from "../domain/user.entity";
 import { UserMapper } from "./user.mapper";
+import { TransactionHost } from "@nestjs-cls/transactional";
+import { TransactionalAdapterPrisma } from "@nestjs-cls/transactional-adapter-prisma";
 
 @Injectable()
 export class UsersRepository implements IUsersRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+    private prisma: PrismaService
+  ) {}
+
+  private get db() {
+    return (this.txHost.tx as PrismaService) || this.prisma;
+  }
 
   async findById(id: string): Promise<User | null> {
-    const raw = await this.prisma.users.findUnique({ where: { id } });
+    const raw = await this.db.users.findUnique({ where: { id } });
     return raw ? UserMapper.toDomain(raw as any) : null;
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const raw = await this.prisma.users.findUnique({ where: { email } });
+    const raw = await this.db.users.findUnique({ where: { email } });
     return raw ? UserMapper.toDomain(raw as any) : null;
   }
 
   async findAll(): Promise<User[]> {
-    const raw = await this.prisma.users.findMany();
+    const raw = await this.db.users.findMany();
     // return raw.map(UserMapper.toDomain);
     return [];
   }
 
   async create(data: any): Promise<User> {
-    const raw = await this.prisma.users.create({
+    const raw = await this.db.users.create({
       data: {
         ...data,
         updated_at: new Date(),
@@ -36,7 +45,7 @@ export class UsersRepository implements IUsersRepository {
   }
 
   async update(id: string, data: Partial<User>): Promise<User> {
-    const updated = await this.prisma.users.update({
+    const updated = await this.db.users.update({
       where: { id },
       data: {
         name: data.name,
@@ -51,18 +60,18 @@ export class UsersRepository implements IUsersRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await this.prisma.users.delete({ where: { id } });
+    await this.db.users.delete({ where: { id } });
   }
 
   async updateSettings(id: string, settings: any): Promise<void> {
-    await this.prisma.users.update({
+    await this.db.users.update({
       where: { id },
       data: { settings },
     });
   }
 
   async countUsersByDomain(domainSuffix: string, institutionId: string): Promise<number> {
-    return this.prisma.users.count({
+    return this.db.users.count({
       where: {
         email: { endsWith: domainSuffix },
         last_institution_id: institutionId,

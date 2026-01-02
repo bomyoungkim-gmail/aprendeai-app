@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+// Replaced vitest import with global jest
 import { renderHook } from '@testing-library/react';
 import { useGameAnimation } from '@/hooks/games/use-game-animation';
 import { useGameProgress } from '@/hooks/games/use-game-progress';

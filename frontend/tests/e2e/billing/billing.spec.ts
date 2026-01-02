@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { LoginPage } from './../pages/login-page'; // Assuming similar structure
+
 
 test.describe('Billing UI (E2E)', () => {
   test('should display Free Plan badge on dashboard', async ({ page }) => {

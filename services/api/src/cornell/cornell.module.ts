@@ -7,6 +7,7 @@ import { CornellService } from "./cornell.service";
 import { ContentModeService } from './content-mode.service';
 import { ContentService } from "./services/content.service";
 import { StorageService } from "./services/storage.service";
+import { ContentAccessModule } from "./content-access.module";
 import { ContentAccessService } from "./services/content-access.service";
 import { VideoModule } from "../video/video.module";
 import { TranscriptionModule } from "../transcription/transcription.module";
@@ -54,6 +55,7 @@ import { GetHighlightsUseCase } from "./application/use-cases/get-highlights.use
     ActivityModule,
     TopicMasteryModule,
     NotificationsModule,
+    ContentAccessModule,
   ],
   controllers: [
     CornellController,
@@ -67,7 +69,6 @@ import { GetHighlightsUseCase } from "./application/use-cases/get-highlights.use
     CornellService,
     ContentService,
     StorageService,
-    ContentAccessService,
     ContentPedagogicalService,
     CornellHighlightsService,
     ContentModeService, // Sprint 1 - Content Mode
@@ -103,7 +104,7 @@ import { GetHighlightsUseCase } from "./application/use-cases/get-highlights.use
     CornellService,
     ContentService,
     StorageService,
-    ContentAccessService,
+    ContentAccessModule,
     // Export Content Use Cases
     IContentRepository,
     CreateContentUseCase,

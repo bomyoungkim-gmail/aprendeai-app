@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+const vi = jest;
 import { render, screen } from '@testing-library/react';
 import { StreamCard } from '@/components/cornell/StreamCard';
 import { ITEM_TYPE_LABELS } from '@/lib/cornell/labels';

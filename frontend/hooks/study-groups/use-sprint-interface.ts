@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useRoundTimer } from '@/hooks/games/use-round-timer';
 import { useStartSession, useAdvanceRound, useSharedCards } from '@/hooks/sessions/group/use-sessions';
 import { useSessionEvents } from '@/hooks/sessions/group/use-session-events';
+import { isInputLike } from '@/lib/utils/dom';
 
 export function useSprintInterface(session: GroupSession) {
   const { user } = useAuthStore();
@@ -89,8 +90,7 @@ export function useSprintInterface(session: GroupSession) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if user is typing in an input/textarea
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+      if (isInputLike(e.target)) {
         return;
       }
 

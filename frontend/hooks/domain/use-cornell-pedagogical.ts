@@ -9,21 +9,16 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { InterventionType } from '@/lib/pedagogical/intervention-manager';
 import { useFlowDetection } from '@/hooks/heuristics/use-flow-detection';
 import { useInterventions } from '@/hooks/pedagogical/use-interventions';
-import { useDidacticFlow } from '@/hooks/pedagogical/use-didactic-flow';
+import { useDidacticFlow, DidacticPhase } from '@/hooks/pedagogical/use-didactic-flow';
 import { useScaffolding } from '@/hooks/pedagogical/use-scaffolding';
 import { useSuggestions } from '@/hooks/cornell/use-suggestions';
+import { Suggestion } from '@/hooks/cornell/use-content-context';
 import { MODE_CONFIGS } from '@/lib/config/mode-config';
 import { MODE_PEDAGOGICAL_CONFIGS } from '@/lib/pedagogical/mode-configs';
 import { ContentMode } from '@/lib/types/content-mode';
-
-export interface Suggestion {
-  id: string;
-  type: string;
-  message: string;
-  action?: () => void;
-}
 
 export interface Checkpoint {
   type: 'CHECKPOINT' | 'SCAFFOLDING';
@@ -36,17 +31,17 @@ export interface UseCornellPedagogicalReturn {
   
   // Interventions
   shouldShowIntervention: () => boolean;
-  handleInterventionShown: (type: string) => void;
-  handleInterventionDismissed: (type: string) => void;
-  handleInterventionCompleted: (type: string) => void;
+  handleInterventionShown: (type: InterventionType) => void;
+  handleInterventionDismissed: (type: InterventionType) => void;
+  handleInterventionCompleted: (type: InterventionType) => void;
   
   // Didactic Flow
-  didacticPhase: 'PRE' | 'DURING' | 'POST' | null;
+  didacticPhase: DidacticPhase | null;
   completeActivation: () => void;
   
   // Scaffolding
   currentDelay: number | null;
-  adjustScaffolding: (success: boolean) => void;
+  adjustScaffolding: (score: number) => void;
   isScaffolding: boolean;
   
   // Checkpoints

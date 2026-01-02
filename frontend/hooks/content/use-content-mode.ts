@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { ContentMode, ContentModeInfo, UpdateContentModePayload } from '@/lib/types/content-mode';
+import { ContentMode, ContentModeInfo, UpdateContentModePayload, ContentModeSource } from '@/lib/types/content-mode';
 
 interface ContentModeResponse {
   mode: ContentMode | null;
-  modeSource: string | null;
+  modeSource: ContentModeSource | null;
   modeSetBy: string | null;
   modeSetAt: string | null;
   inferredMode?: ContentMode;

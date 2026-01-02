@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { PlanBadge } from '@/components/billing/PlanBadge';
-import { useEntitlements } from '@/hooks/use-entitlements';
+import { useEntitlements } from '@/hooks/billing/use-entitlements';
 
 // Mock hook
-jest.mock('@/hooks/use-entitlements', () => ({
+jest.mock('@/hooks/billing/use-entitlements', () => ({
   useEntitlements: jest.fn(),
   PlanType: {
     FREE: 'FREE',

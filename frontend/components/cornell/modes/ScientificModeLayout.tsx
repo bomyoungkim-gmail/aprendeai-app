@@ -94,7 +94,7 @@ export function ScientificModeLayout({ contentId, children }: ScientificModeLayo
     if (!checkpointSection) return;
 
     // Mark section as completed
-    setCompletedSections(prev => new Set([...prev, checkpointSection.id]));
+    setCompletedSections(prev => new Set([...Array.from(prev), checkpointSection.id]));
     
     // Track checkpoint
     track('scientific_checkpoint_completed', {

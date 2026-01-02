@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { ContentAccessService } from "../cornell/services/content-access.service";
 
 export interface PlanLimits {
   highlightsPerMonth: number;
@@ -9,7 +10,10 @@ export interface PlanLimits {
 
 @Injectable()
 export class PlanLimitsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private contentAccess: ContentAccessService,
+  ) {}
 
   // Define limits per plan type
   private readonly PLAN_LIMITS: Record<string, PlanLimits> = {
@@ -109,7 +113,7 @@ export class PlanLimitsService {
       case "contents":
         return this.prisma.contents.count({
           where: {
-            owner_user_id: userId,
+            OR: this.contentAccess.getOwnerFilter(userId),
             created_at: { gte: startDate },
           },
         });

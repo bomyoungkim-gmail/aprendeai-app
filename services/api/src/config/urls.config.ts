@@ -92,7 +92,7 @@ export const URL_CONFIG = {
 
   // API URL (for webhooks, callbacks)
   api: {
-    base: getWithFallback("API_URL", "http://localhost:4000"),
+    base: getWithFallback("API_URL", "http://localhost:4000/api/v1"),
 
     get health(): string {
       return `${this.base}/health`;

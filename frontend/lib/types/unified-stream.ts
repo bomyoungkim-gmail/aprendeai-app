@@ -10,9 +10,11 @@ export type UnifiedStreamItemType =
   | 'annotation' 
   | 'note' 
   | 'ai-suggestion'
-  | 'question'      // NEW - User-generated question
-  | 'star'          // NEW - Starred highlight
-  | 'ai-response';  // NEW - AI's answer to a question
+  | 'question'      // User-generated question
+  | 'star'          // Starred highlight
+  | 'ai-response'   // AI's answer to a question
+  | 'triage'        // Item for triage/review
+  | 'ai';           // Generic AI request type
 
 export interface BaseStreamItem {
   id: string;
@@ -139,3 +141,5 @@ export function sortStreamItems(items: UnifiedStreamItem[]): UnifiedStreamItem[]
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 }
+
+export type SidebarTab = 'toc' | 'stream' | 'analytics' | 'cues' | 'synthesis' | 'conversations';

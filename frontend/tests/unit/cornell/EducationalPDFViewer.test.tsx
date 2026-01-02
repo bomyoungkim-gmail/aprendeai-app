@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+// Replaced vitest import with global jest
 import { render, screen, fireEvent } from '@testing-library/react';
 import { EducationalPDFViewer } from '@/components/cornell/EducationalPDFViewer';
 import { ReadingProgressBar } from '@/components/cornell/ReadingProgressBar';

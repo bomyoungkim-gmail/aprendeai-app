@@ -36,7 +36,7 @@ export default function FamilyDashboard({ params }: { params: { id: string } }) 
 
   // ===== CALCULATIONS (after early returns is fine) =====
   const myMembership = family.members.find(m => m.userId === user?.id);
-  const canManage = myMembership?.role === 'OWNER' || myMembership?.role === 'ADMIN';
+  const canManage = myMembership?.role === 'OWNER' || myMembership?.role === 'GUARDIAN';
   
   const handleRemove = async (userId: string) => {
     if (confirm('Are you sure you want to remove this member?')) {

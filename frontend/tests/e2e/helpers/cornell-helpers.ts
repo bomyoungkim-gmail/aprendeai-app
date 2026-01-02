@@ -5,6 +5,7 @@
  */
 
 import { Page, expect } from '@playwright/test';
+import type { CornellType } from '../../../lib/types/cornell';
 
 /**
  * Login helper
@@ -32,7 +33,7 @@ export async function navigateToContent(page: Page, contentId: string) {
  */
 export async function createHighlight(
   page: Page,
-  type: 'NOTE' | 'QUESTION' | 'STAR' | 'HIGHLIGHT',
+  type: CornellType,
   comment: string,
   visibility = 'PRIVATE'
 ) {

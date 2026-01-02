@@ -1,23 +1,27 @@
 import React from 'react';
-import { ContentMode } from '@/lib/types/content-mode';
+import { ContentMode, ContentModeSource } from '@/lib/types/content-mode';
 import { MODE_CONFIGS } from '@/lib/config/mode-config';
 import { cn } from '@/lib/utils';
 import { Check, X } from 'lucide-react';
 
 interface ContentModeSelectorProps {
   currentMode: ContentMode | null;
-  initialInferredMode: ContentMode | null;
-  onSelect: (mode: ContentMode) => void;
+  inferredMode?: ContentMode | null;
+  modeSource?: ContentModeSource;
+  onModeSelect: (mode: ContentMode, source: ContentModeSource) => void;
   onClose: () => void;
   isOpen: boolean;
+  contentId: string;
 }
 
 export function ContentModeSelector({
   currentMode,
-  initialInferredMode,
-  onSelect,
+  inferredMode,
+  modeSource,
+  onModeSelect,
   onClose,
   isOpen,
+  contentId,
 }: ContentModeSelectorProps) {
   if (!isOpen) return null;
 
@@ -51,14 +55,14 @@ export function ContentModeSelector({
             {(Object.keys(MODE_CONFIGS) as ContentMode[]).map((modeKey) => {
               const config = MODE_CONFIGS[modeKey];
               const isSelected = currentMode === modeKey;
-              const isRecommended = !currentMode && initialInferredMode === modeKey;
+              const isRecommended = !currentMode && inferredMode === modeKey;
 
               return (
                 <button
                   key={modeKey}
                   data-testid={`mode-option-${modeKey}`}
                   onClick={() => {
-                    onSelect(modeKey);
+                    onModeSelect(modeKey, 'USER');
                     onClose();
                   }}
                   className={cn(
@@ -73,9 +77,6 @@ export function ContentModeSelector({
                     className="mt-1 p-1.5 rounded-md text-white shadow-sm"
                     style={{ backgroundColor: config.themeColor }}
                   >
-                    {/* Hack to render icon dynamically since we don't have the icon component here directly, just config */}
-                    {/* We can reproduce the icons or pass them in config, but config is pure data. */}
-                    {/* Ideally config should handle presentation logic or we map here. */}
                     <div className="w-4 h-4 bg-white/20 rounded-sm" /> 
                   </div>
                   

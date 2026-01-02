@@ -5,8 +5,10 @@ import { BillingModule } from "../billing/billing.module";
 import { ExtractionService } from "./extraction.service";
 import { ExtractionController } from "./extraction.controller";
 
+import { ContentAccessModule } from "../cornell/content-access.module";
+
 @Module({
-  imports: [PrismaModule, QueueModule, BillingModule],
+  imports: [PrismaModule, QueueModule, BillingModule, ContentAccessModule],
   controllers: [ExtractionController],
   providers: [ExtractionService],
   exports: [ExtractionService],

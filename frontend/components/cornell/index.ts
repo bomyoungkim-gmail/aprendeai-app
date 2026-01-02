@@ -2,11 +2,13 @@
 // Usage: import { StreamCard, ModernCornellLayout } from '@/components/cornell';
 
 // Main Layouts
-export { CornellLayout } from './CornellLayout';
+// @deprecated Use ModernCornellLayout instead
+export { CornellLayout } from './classic/CornellLayout';
 export { ModernCornellLayout } from './ModernCornellLayout';
 
 // UI Components
-export { TopBar } from './TopBar';
+// @deprecated Part of classic layout
+export { TopBar } from './classic/TopBar';
 export { SaveStatusIndicator } from './SaveStatusIndicator';
 export { ActionToolbar } from './ActionToolbar';
 export { SearchBar } from './SearchBar';
@@ -16,9 +18,12 @@ export { AIChatPanel } from './AIChatPanel';
 export { ReadingProgressBar } from './ReadingProgressBar';
 
 // Editors
-export { CuesEditor } from './CuesEditor';
-export { NotesEditor } from './NotesEditor';
-export { SummaryEditor } from './SummaryEditor';
+// @deprecated Part of classic layout
+export { CuesEditor } from './classic/CuesEditor';
+// @deprecated Part of classic layout
+export { NotesEditor } from './classic/NotesEditor';
+// @deprecated Part of classic layout
+export { SummaryEditor } from './classic/SummaryEditor';
 export { AnnotationEditor, NoteEditor } from './InlineEditor';
 
 // Cards

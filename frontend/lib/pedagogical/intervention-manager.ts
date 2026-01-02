@@ -42,7 +42,7 @@ export class InterventionManager {
     if (timeSinceLast < this.config.interventionCooldownMs) return false;
 
     // E1.3: Check session limit (adapted by aggressiveness)
-    const adaptedLimit = this.config.maxInterventionsPerSession * this.state.aggressivenessFactor;
+    const adaptedLimit = this.config.interventionMaxPerSession * this.state.aggressivenessFactor;
     if (this.state.interventionCount >= adaptedLimit) return false;
 
     return true;

@@ -3,8 +3,9 @@
 import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { Menu, X, ChevronRight, Plus, Share2, Check as CheckIcon } from 'lucide-react';
-import type { ViewMode, SaveStatus, CueItem } from '@/lib/types/cornell';
-import type { UnifiedStreamItem } from '@/lib/types/unified-stream';
+import type { ViewMode, SaveStatus, CueItem, CornellType } from '@/lib/types/cornell';
+import type { UnifiedStreamItem, UnifiedStreamItemType, SidebarTab } from '@/lib/types/unified-stream';
+import type { HistoryEntityType } from '@/hooks/cornell/use-undo-redo';
 import { SaveStatusIndicator } from './SaveStatusIndicator';
 import { StreamCard } from './StreamCard';
 import { SearchBar, type FilterType } from './SearchBar';
@@ -105,8 +106,7 @@ interface ModernCornellLayoutProps {
   onSummaryChange: (summary: string) => void;
 
   // Creation
-  // Creation
-  onCreateStreamItem?: (type: 'annotation' | 'note' | 'question' | 'star' | 'ai' | 'triage', content: string, context?: any) => void;
+  onCreateStreamItem?: (type: UnifiedStreamItemType, content: string, context?: unknown) => void;
 
   // Highlight Controls
   selectedColor?: string;
@@ -124,7 +124,7 @@ interface ModernCornellLayoutProps {
   onLayoutChange?: () => void;
 }
 
-type SidebarTab = 'toc' | 'stream' | 'analytics' | 'cues' | 'synthesis' | 'conversations';
+
 
 export function ModernCornellLayout({
   title,
@@ -455,9 +455,21 @@ export function ModernCornellLayout({
           // Item added
           const newItem = streamItems[0]; 
           if (newItem) {
+              // Map stream item type to history entity type
+              const entityMap: Record<UnifiedStreamItemType, HistoryEntityType> = {
+                  'annotation': 'HIGHLIGHT',
+                  'note': 'NOTE',
+                  'question': 'CUE',
+                  'star': 'STAR',
+                  'ai': 'AI',
+                  'ai-suggestion': 'AI',
+                  'ai-response': 'AI',
+                  'triage': 'TRIAGE'
+              };
+
               registerAction({
                   type: 'CREATE',
-                  entity: newItem.type === 'annotation' ? 'HIGHLIGHT' : 'NOTE',
+                  entity: entityMap[newItem.type] || 'NOTE',
                   data: { id: newItem.id },
                   description: `Created ${newItem.type}`
               });
@@ -500,7 +512,7 @@ export function ModernCornellLayout({
   const { selection, clearSelection } = useTextSelection(contentElement);
 
 
-  const [createModalType, setCreateModalType] = useState<'NOTE' | 'QUESTION' | 'STAR' | 'HIGHLIGHT' | 'SUMMARY'>('NOTE');
+  const [createModalType, setCreateModalType] = useState<CornellType>('NOTE');
 
   // AI Suggestions & Entitlements
   const { suggestions, acceptSuggestion, dismissSuggestion } = useSuggestions(contentId);
@@ -522,7 +534,7 @@ export function ModernCornellLayout({
     if (!onCreateStreamItem) return;
 
     switch (action) {
-      case 'highlight':
+      case 'annotation':
         onCreateStreamItem('annotation', text, { color: selectedColor });
         track('HIGHLIGHT_CREATED', {
             color: selectedColor,
@@ -651,10 +663,10 @@ export function ModernCornellLayout({
           }}
           synthesisProps={{
             filteredItems,
-            searchQuery,
-            filterType,
-            onSearchChange: setSearchQuery,
-            onFilterChange: setFilterType,
+            searchQuery: layout.searchQuery,
+            filterType: layout.filterType,
+            onSearchChange: layout.setSearchQuery,
+            onFilterChange: layout.setFilterType,
             onCreateSynthesis: () => {
               setCreateModalType('SUMMARY');
               layout.setIsCreateModalOpen(true);
@@ -734,20 +746,20 @@ export function ModernCornellLayout({
         isCreateModalOpen={layout.isCreateModalOpen}
         onCreateModalClose={() => layout.setIsCreateModalOpen(false)}
         createModalType={layout.createModalType}
-        onCreateHighlight={onCreateStreamItem}
         selectedColor={layout.selectedColor}
         
         // Mode Selector
         isModeSelectorOpen={layout.isModeSelectorOpen}
         onModeSelectorClose={() => layout.setIsModeSelectorOpen(false)}
         contentMode={contentModeData?.mode ?? null}
-        inferredMode={contentModeData?.inferredMode}
-        modeSource={(contentModeData?.modeSource as 'USER' | 'INFERRED' | 'DEFAULT' | undefined) || undefined}
+        modeSource={contentModeData?.modeSource || undefined}
         onModeChange={(mode, source) => {
           updateMode({ mode, source });
           track('CHANGE_MODE', { newMode: mode, oldMode: contentModeData?.mode });
         }}
         contentId={contentId}
+        title={title}
+        targetType={targetType}
         
         // Share Modal
         isShareModalOpen={layout.isShareModalOpen}
@@ -755,7 +767,7 @@ export function ModernCornellLayout({
         
         // Glossary Popover
         selectedTerm={selectedTerm}
-        glossaryDefinition={definition}
+        glossaryDefinition={definition ?? null}
         isGlossaryLoading={isGlossaryLoading}
         glossaryPosition={popoverPosition}
         onGlossaryClose={closePopover}
@@ -771,8 +783,6 @@ export function ModernCornellLayout({
         showActionToolbar={layout.activeAction !== null}
         activeAction={layout.activeAction}
         onActionChange={layout.setActiveAction}
-        chatInitialInput={layout.chatInitialInput}
-        onChatInputChange={layout.setChatInitialInput}
         
         // Premium Feature
         showPremiumBlock={!hasAIAssistant && layout.activeAction === 'ai'}

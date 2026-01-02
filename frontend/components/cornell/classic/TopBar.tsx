@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Eye, BookOpen, Brain, ArrowLeft } from 'lucide-react';
-import { SaveStatusIndicator } from './SaveStatusIndicator';
+import { SaveStatusIndicator } from '../SaveStatusIndicator';
 import type { ViewMode, SaveStatus } from '@/lib/types/cornell';
 
 interface TopBarProps {
@@ -13,6 +13,9 @@ interface TopBarProps {
   lastSaved?: Date | null;
 }
 
+/**
+ * @deprecated Part of the classic layout. Use ModernCornellLayout components instead.
+ */
 export function TopBar({
   title,
   mode,

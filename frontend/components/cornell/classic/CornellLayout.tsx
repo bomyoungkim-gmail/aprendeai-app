@@ -31,6 +31,10 @@ interface CornellLayoutProps {
   onLayoutChange?: () => void;
 }
 
+/**
+ * @deprecated Use ModernCornellLayout instead.
+ * This component is maintained only for legacy support (classic mode).
+ */
 export function CornellLayout({
   title,
   mode,

@@ -69,7 +69,7 @@ export function ContextSwitcher() {
         {/* Helper text for current role */ }
         {activeInstitutionId && (
             <div className="text-xs text-gray-400 mt-1 px-1">
-                Atuando como: <span className="font-medium text-gray-600">{user?.contextRole || user?.role}</span>
+                Atuando como: <span className="font-medium text-gray-600">{user?.contextRole || user?.systemRole}</span>
             </div>
         )}
     </div>

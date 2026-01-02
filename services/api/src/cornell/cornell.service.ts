@@ -126,18 +126,31 @@ export class CornellService {
     }
     const contents = await this.prisma.contents.findMany({
       where: { id: { in: contentIds } },
-      select: { id: true, owner_user_id: true, created_by: true },
+      select: { id: true },
     });
-    const ownedContentIds = contents
-      .filter((c) => c.owner_user_id === userId || c.created_by === userId)
-      .map((c) => c.id);
+
+    // Use centralized access check
+    const accessChecks = await Promise.all(
+      contents.map(async (c) => ({
+        id: c.id,
+        hasAccess: await this.contentAccessService.canAccessContent(c.id, userId),
+      })),
+    );
+
+    const ownedContentIds = accessChecks
+      .filter((check) => check.hasAccess)
+      .map((check) => check.id);
 
     if (ownedContentIds.length === 0) {
-      throw new ForbiddenException("You do not own any of the selected contents");
+      throw new ForbiddenException(
+        "You do not have permission to delete any of the selected contents",
+      );
     }
+
     await this.prisma.contents.deleteMany({
       where: { id: { in: ownedContentIds } },
     });
+
     return {
       success: true,
       deleted: ownedContentIds.length,

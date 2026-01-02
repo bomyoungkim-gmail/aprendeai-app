@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { CornellLayout } from '@/components/cornell';
+import { CornellLayout } from '@/components/cornell/classic/CornellLayout';
 import { PDFViewer, ImageViewer, DocxViewer } from '@/components/cornell/viewers';
 import { ReviewMode } from '@/components/cornell/review/ReviewMode';
 import { Toast, useToast } from '@/components/ui/Toast';

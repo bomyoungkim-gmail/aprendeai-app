@@ -26,7 +26,8 @@ export class SubscriptionService {
   /**
    * Create FREE subscription for new user (MVP: FORCE FREE)
    */
-  async createFreeSubscription(userId: string) { // tx removed
+  async createFreeSubscription(userId: string) {
+    console.log(`[SubscriptionService] createFreeSubscription for ${userId}. (Using CLS TX if active)`);
     // Ensure FREE plan exists
     let freePlan = await this.plansRepository.findByCode("FREE");
     if (!freePlan) {

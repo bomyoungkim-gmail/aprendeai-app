@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import api from '@/lib/api';
 import { API_ENDPOINTS } from '@/lib/config/api';
-import { gamesApi } from '@/lib/api/games';
+import { useSubmitGameResult } from '@/hooks/domain';
 import { GamePlayer } from '@/components/games/GamePlayer';
 import { 
   Zap, 
@@ -139,6 +139,9 @@ export default function GamesPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'solo' | 'multiplayer' | 'ai-chat'>('all');
+  
+  // Use domain hook for submitting results
+  const { submitResult, isSubmitting } = useSubmitGameResult();
 
   useEffect(() => {
     // Fetch games dynamically from API
@@ -282,20 +285,12 @@ export default function GamesPage() {
           gameName={games.find(g => g.id === selectedGame)?.name || 'Jogo'}
           onClose={() => setSelectedGame(null)}
           onComplete={async (score: number, won: boolean) => {
-            console.log('Game completed:', { score, won });
-            try {
-              // Validar se selectedGame ainda existe
-              if (selectedGame) {
-                 await gamesApi.submitResult(selectedGame, {
-                   score,
-                   totalQuestions: 0, // Indeterminado por enquanto
-                   correctCount: 0,
-                   timeSpentSeconds: 0 
-                 });
-                 console.log('✅ Resultado salvo com sucesso');
-              }
-            } catch (err) {
-              console.error('❌ Erro ao salvar resultado:', err);
+            if (selectedGame) {
+              await submitResult({
+                gameId: selectedGame,
+                score,
+                won,
+              });
             }
             setSelectedGame(null);
           }}

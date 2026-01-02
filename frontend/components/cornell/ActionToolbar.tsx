@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { BookOpen, Highlighter, MessageSquare, HelpCircle, Sparkles } from 'lucide-react';
 import { ACTION_LABELS, KEYBOARD_SHORTCUTS } from '@/lib/cornell/labels';
+import { isInputLike } from '@/lib/utils/dom';
+
+import type { SelectionAction } from './TextSelectionMenu';
 
 interface ActionToolbarProps {
   onTriageClick: () => void;
@@ -9,7 +12,7 @@ interface ActionToolbarProps {
   onQuestionClick: () => void;
   onAIClick: () => void;
   hasUnseenSuggestions?: boolean;
-  activeAction?: 'highlight' | 'note' | 'question' | 'ai' | null;
+  activeAction?: SelectionAction | null;
 }
 
 export function ActionToolbar({
@@ -26,12 +29,7 @@ export function ActionToolbar({
   // Track if user is typing in an input/textarea
   useEffect(() => {
     const handleFocus = (e: FocusEvent) => {
-      const target = e.target as HTMLElement;
-      setIsInputFocused(
-        target.tagName === 'INPUT' || 
-        target.tagName === 'TEXTAREA' || 
-        target.isContentEditable
-      );
+      setIsInputFocused(isInputLike(e.target));
     };
 
     const handleBlur = () => setIsInputFocused(false);
@@ -92,7 +90,7 @@ export function ActionToolbar({
       {/* Highlight Button */}
       <button
         onClick={onHighlightClick}
-        className={buttonClass(activeAction === 'highlight')}
+        className={buttonClass(activeAction === 'annotation')}
         title={`${ACTION_LABELS.HIGHLIGHT} (${KEYBOARD_SHORTCUTS.HIGHLIGHT.toUpperCase()})`}
         aria-label={ACTION_LABELS.HIGHLIGHT}
       >

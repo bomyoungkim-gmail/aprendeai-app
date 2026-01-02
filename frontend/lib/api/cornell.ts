@@ -6,6 +6,7 @@ import type {
   UpdateCornellDto,
   CreateHighlightDto,
   UpdateHighlightDto,
+  CreateHighlightPayload
 } from '../types/cornell';
 import { API_ENDPOINTS } from '@/lib/config/api';
 import { ContentType } from '../constants/enums';
@@ -59,7 +60,7 @@ export const cornellApi = {
 
   async createHighlight(
     contentId: string,
-    highlight: CreateHighlightDto | any
+    highlight: CreateHighlightPayload
   ): Promise<Highlight> {
     const { data } = await api.post(API_ENDPOINTS.HIGHLIGHTS(contentId), highlight);
     return data;

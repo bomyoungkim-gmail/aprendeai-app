@@ -12,7 +12,7 @@
 import React from 'react';
 import { X, BookOpen, ExternalLink } from 'lucide-react';
 
-interface Definition {
+export interface Definition {
   term: string;
   definition: string;
   source: 'PubMed' | 'Wikipedia' | 'Wiktionary';

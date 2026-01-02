@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+// Replaced vitest import with global jest
 import { render, screen } from '@testing-library/react';
 import { ModernCornellLayout } from '@/components/cornell/ModernCornellLayout';
 import { CORNELL_LABELS } from '@/lib/cornell/labels';
@@ -9,7 +9,7 @@ describe('ModernCornellLayout - Label Integration', () => {
     title: 'Test Document',
     contentId: 'content-123',
     targetType: ContentType.PDF,
-    mode: 'view' as const,
+    mode: 'study' as const,
     onModeToggle: () => {},
     saveStatus: 'saved' as const,
     viewer: <div>Mock Viewer</div>,

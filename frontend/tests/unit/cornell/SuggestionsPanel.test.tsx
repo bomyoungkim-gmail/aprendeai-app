@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+const vi = jest;
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SuggestionsPanel } from '@/components/cornell/SuggestionsPanel';
-import type { Suggestion } from '@/hooks/cornell/useContentContext';
+import type { Suggestion } from '@/hooks/cornell/use-content-context';
 
 describe('SuggestionsPanel', () => {
   const mockSuggestions: Suggestion[] = [

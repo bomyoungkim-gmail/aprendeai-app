@@ -7,8 +7,10 @@ import { GetProfileUseCase } from "./application/get-profile.use-case";
 import { UpdateProfileUseCase } from "./application/update-profile.use-case";
 import { IUsersRepository } from "./domain/users.repository.interface";
 
+import { ContentAccessModule } from "../cornell/content-access.module";
+
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, ContentAccessModule],
   controllers: [UsersController],
   providers: [
     UsersService,

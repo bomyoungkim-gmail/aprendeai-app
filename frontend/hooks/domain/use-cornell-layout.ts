@@ -9,12 +9,10 @@
  */
 
 import { useState, useCallback } from 'react';
-import type { SidebarTab } from '@/components/cornell/CornellTabNavigation';
+import type { CornellType } from '@/lib/types/cornell';
+import type { SidebarTab, UnifiedStreamItemType as SelectionAction } from '@/lib/types/unified-stream';
 import type { FilterType } from '@/components/cornell/SearchBar';
-import type { SelectionAction } from '@/components/cornell/TextSelectionMenu';
 import { DEFAULT_COLOR } from '@/lib/constants/colors';
-
-export type CornellType = 'NOTE' | 'QUESTION' | 'STAR' | 'HIGHLIGHT' | 'SUMMARY';
 
 export interface UseCornellLayoutReturn {
   // Sidebar
@@ -27,9 +25,9 @@ export interface UseCornellLayoutReturn {
   setActiveTab: (tab: SidebarTab) => void;
   
   // Actions
-  activeAction: 'ai' | 'question' | null;
-  setActiveAction: (action: 'ai' | 'question' | null) => void;
-  toggleAction: (action: 'ai' | 'question') => void;
+  activeAction: SelectionAction | null;
+  setActiveAction: (action: SelectionAction | null) => void;
+  toggleAction: (action: SelectionAction) => void;
   
   // Color
   selectedColor: string;
@@ -77,8 +75,8 @@ export function useCornellLayout(): UseCornellLayoutReturn {
   const [activeTab, setActiveTab] = useState<SidebarTab>('toc');
   
   // Action state
-  const [activeAction, setActiveAction] = useState<'ai' | 'question' | null>(null);
-  const toggleAction = useCallback((action: 'ai' | 'question') => {
+  const [activeAction, setActiveAction] = useState<SelectionAction | null>(null);
+  const toggleAction = useCallback((action: SelectionAction) => {
     setActiveAction(prev => prev === action ? null : action);
   }, []);
   
@@ -107,7 +105,7 @@ export function useCornellLayout(): UseCornellLayoutReturn {
   // Selection action handler
   const handleSelectionAction = useCallback((action: SelectionAction, text: string) => {
     switch (action) {
-      case 'highlight':
+      case 'annotation':
         setCreateModalType('HIGHLIGHT');
         setIsCreateModalOpen(true);
         break;

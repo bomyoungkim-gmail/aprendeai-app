@@ -1,4 +1,5 @@
 import { Injectable, Inject } from "@nestjs/common";
+import { ContentAccessService } from "../../services/content-access.service";
 import { IContentRepository } from "../../domain/content.repository.interface";
 import { Content } from "../../domain/content.entity";
 import { ContentType, Language } from "@prisma/client";
@@ -15,6 +16,7 @@ export interface ListContentFilters {
 export class ListContentUseCase {
   constructor(
     @Inject(IContentRepository) private readonly contentRepository: IContentRepository,
+    private readonly contentAccessService: ContentAccessService,
   ) {}
 
   async execute(userId: string, filters: ListContentFilters): Promise<{ results: Content[]; total: number }> {
@@ -23,14 +25,7 @@ export class ListContentUseCase {
     const skip = (page - 1) * limit;
 
     const where: any = {
-        OR: [
-            { owner_id: userId },
-            { created_by: userId }
-            // Note: In strict clean architecture, 'created_by' is infra detail? 
-            // Content Entity has 'ownerId'. But DB has 'created_by'. 
-            // Ideally Repository handles this mapping. 
-            // For now passing Prisma-like where clause to repository is a pragmatic shortcut.
-        ]
+        OR: this.contentAccessService.getOwnerFilter(userId)
     };
     
     if (filters.type) where.type = filters.type;

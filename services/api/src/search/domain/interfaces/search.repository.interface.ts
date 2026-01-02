@@ -12,7 +12,7 @@ export interface ISearchRepository {
   searchContent(query: string, filters: any): Promise<SearchResult[]>;
   searchAnnotations(userId: string, query: string): Promise<SearchResult[]>;
   searchNotes(userId: string, query: string): Promise<SearchResult[]>;
-  searchTranscripts(query: string): Promise<SearchResult[]>;
+  searchTranscripts(query: string, userId?: string): Promise<SearchResult[]>;
 }
 
 export const ISearchRepository = Symbol("ISearchRepository");

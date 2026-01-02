@@ -37,7 +37,7 @@ export function useTelemetry(contentId?: string) {
       sessionId: globalSessionId,
       userId: user.id || undefined,
       contentId: targetContentId,
-      mode: contentModeData?.mode || undefined, // Capture active mode if available
+      mode: contentModeData || undefined, // Capture active mode if available
       data,
       timestamp: Date.now(),
     });

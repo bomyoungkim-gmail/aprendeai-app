@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+const vi = jest;
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AIChatPanel } from '@/components/cornell/AIChatPanel';
 import { CHAT_LABELS } from '@/lib/cornell/labels';

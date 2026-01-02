@@ -11,24 +11,25 @@
  * - Premium Feature Block
  */
 
+import type { SelectionAction } from '@/components/cornell/TextSelectionMenu';
 import React from 'react';
 import { CreateHighlightModal } from './CreateHighlightModal';
 import { ContentModeSelector } from './ContentModeSelector';
 import { ShareModal } from '../sharing/ShareModal';
-import { GlossaryPopover } from './GlossaryPopover';
+import { GlossaryPopover } from '../glossary/GlossaryPopover';
 import { SuggestionsPanel } from './SuggestionsPanel';
 import { ActionToolbar } from './ActionToolbar';
 import { PremiumFeatureBlock } from '../billing/PremiumFeatureBlock';
-import { ContentMode } from '@/lib/types/content-mode';
-import type { CornellType } from '@/hooks/domain/use-cornell-layout';
-import type { Suggestion } from '@/hooks/domain/use-cornell-pedagogical';
+import { ContentMode, ContentModeSource } from '@/lib/types/content-mode';
+import { Definition } from '../glossary/GlossaryPopover';
+import type { CornellType } from '@/lib/types/cornell';
+import type { Suggestion } from '@/hooks/cornell/use-content-context';
 
 export interface CornellModalsProps {
   // Create Highlight Modal
   isCreateModalOpen: boolean;
   onCreateModalClose: () => void;
   createModalType: CornellType;
-  onCreateHighlight: (data: any) => void;
   selectedColor: string;
   
   // Mode Selector
@@ -36,9 +37,11 @@ export interface CornellModalsProps {
   onModeSelectorClose: () => void;
   contentMode: ContentMode | null;
   inferredMode?: ContentMode | null;
-  modeSource?: 'USER' | 'INFERRED' | 'DEFAULT';
-  onModeChange: (mode: ContentMode, source: 'USER' | 'INFERRED') => void;
+  modeSource?: ContentModeSource;
+  onModeChange: (mode: ContentMode, source: ContentModeSource) => void;
   contentId: string;
+  targetType: any; 
+  title: string;  // Added title
   
   // Share Modal
   isShareModalOpen: boolean;
@@ -46,7 +49,7 @@ export interface CornellModalsProps {
   
   // Glossary Popover
   selectedTerm: string | null;
-  glossaryDefinition: string | null;
+  glossaryDefinition: Definition | null;
   isGlossaryLoading: boolean;
   glossaryPosition: { x: number; y: number } | null;
   onGlossaryClose: () => void;
@@ -60,10 +63,8 @@ export interface CornellModalsProps {
   
   // Action Toolbar
   showActionToolbar: boolean;
-  activeAction: 'ai' | 'question' | null;
-  onActionChange: (action: 'ai' | 'question' | null) => void;
-  chatInitialInput: string;
-  onChatInputChange: (input: string) => void;
+  activeAction: SelectionAction | null;
+  onActionChange: (action: SelectionAction | null) => void;
   
   // Premium Feature
   showPremiumBlock: boolean;
@@ -79,7 +80,6 @@ export function CornellModals({
   isCreateModalOpen,
   onCreateModalClose,
   createModalType,
-  onCreateHighlight,
   selectedColor,
   
   // Mode Selector
@@ -90,6 +90,8 @@ export function CornellModals({
   modeSource,
   onModeChange,
   contentId,
+  targetType,
+  title, // Destructure title
   
   // Share Modal
   isShareModalOpen,
@@ -113,8 +115,6 @@ export function CornellModals({
   showActionToolbar,
   activeAction,
   onActionChange,
-  chatInitialInput,
-  onChatInputChange,
   
   // Premium Feature
   showPremiumBlock,
@@ -127,9 +127,9 @@ export function CornellModals({
       <CreateHighlightModal
         isOpen={isCreateModalOpen}
         onClose={onCreateModalClose}
-        onSubmit={onCreateHighlight}
-        selectedColor={selectedColor}
         initialType={createModalType}
+        contentId={contentId}
+        targetType={targetType}
       />
       
       {/* Content Mode Selector Modal */}
@@ -147,8 +147,8 @@ export function CornellModals({
       <ShareModal 
         isOpen={isShareModalOpen} 
         onClose={onShareModalClose} 
-        targetId={contentId}
-        targetType="CONTENT"
+        contentId={contentId}
+        title={title}
       />
       
       {/* Glossary Popover */}
@@ -175,18 +175,30 @@ export function CornellModals({
       {showActionToolbar && (
         <ActionToolbar
           activeAction={activeAction}
-          onActionChange={onActionChange}
-          chatInitialInput={chatInitialInput}
-          onChatInputChange={onChatInputChange}
+          onTriageClick={() => {}} // No-op as per current interface logic or add specific handler
+          onHighlightClick={() => onActionChange(activeAction === 'annotation' ? null : 'annotation')}
+          onNoteClick={() => onActionChange(activeAction === 'note' ? null : 'note')}
+          onQuestionClick={() => onActionChange(activeAction === 'question' ? null : 'question')}
+          onAIClick={() => onActionChange(activeAction === 'ai' ? null : 'ai')}
         />
       )}
       
       {/* Premium Feature Block */}
       {showPremiumBlock && (
-        <PremiumFeatureBlock
-          featureName={featureName}
-          onDismiss={onPremiumDismiss}
-        />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-md">
+            <button 
+               onClick={onPremiumDismiss}
+               className="absolute top-2 right-2 p-1 bg-white/50 rounded-full hover:bg-white transition-colors"
+            >
+              ✕
+            </button>
+            <PremiumFeatureBlock
+              featureName={featureName}
+              description="Atualize para o Premium para desbloquear este recurso exclusivo e potencialize seus estudos."
+            />
+          </div>
+        </div>
       )}
     </>
   );

@@ -29,9 +29,11 @@ import { AddPaymentMethodUseCase } from "./application/use-cases/add-payment-met
 import { SetDefaultPaymentMethodUseCase } from "./application/use-cases/set-default-payment-method.use-case";
 import { GenerateInvoiceUseCase } from "./application/use-cases/generate-invoice.use-case";
 
+import { ContentAccessModule } from "../cornell/content-access.module";
+
 @Global()
 @Module({
-  imports: [PrismaModule, AdminModule, ConfigModule],
+  imports: [PrismaModule, AdminModule, ConfigModule, ContentAccessModule],
   controllers: [BillingController, UserBillingController],
   providers: [
     BillingService,

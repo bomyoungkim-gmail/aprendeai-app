@@ -7,6 +7,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import type { SelectionAction } from '@/components/cornell/TextSelectionMenu';
 import { ChevronRight, Share2, Check as CheckIcon } from 'lucide-react';
 import { getColorForKey, getDefaultPalette } from '@/lib/constants/colors';
 import { ContentModeIndicator } from './ContentModeIndicator';
@@ -34,7 +35,7 @@ export interface CornellHeaderProps {
   onShareClick: () => void;
   onAIClick: () => void;
   onTriageClick: () => void;
-  activeAction: 'ai' | 'question' | null;
+  activeAction: SelectionAction | null;
   
   // Session
   sessionId?: string;

@@ -7,7 +7,7 @@ export enum ContentMode {
   LANGUAGE = 'LANGUAGE'
 }
 
-export type ContentModeSource = 'PRODUCER' | 'USER' | 'HEURISTIC';
+export type ContentModeSource = 'PRODUCER' | 'USER' | 'HEURISTIC' | 'INFERRED' | 'DEFAULT';
 
 export interface ContentModeInfo {
   mode: ContentMode | null;
@@ -18,5 +18,5 @@ export interface ContentModeInfo {
 
 export interface UpdateContentModePayload {
   mode: ContentMode;
-  source?: 'PRODUCER' | 'USER';
+  source?: ContentModeSource;
 }

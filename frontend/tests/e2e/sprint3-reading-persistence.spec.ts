@@ -155,7 +155,7 @@ test.describe('Sprint 3: Persistence & Heuristics E2E', () => {
         let flowEventCaptured = false;
         await page.route('**/api/telemetry/batch', async (route) => {
             const postData = route.request().postDataJSON();
-            if (postData.events.some(e => e.eventType === 'flow_state_changed')) {
+            if (postData.events.some((e: any) => e.eventType === 'flow_state_changed')) {
                 flowEventCaptured = true;
             }
             await route.fulfill({ status: 201, body: JSON.stringify({ status: 'ok' }) });

@@ -57,9 +57,25 @@ import { TelemetryModule } from "./telemetry/telemetry.module";
 
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
+import { ClsModule } from "nestjs-cls";
+import { ClsPluginTransactional } from "@nestjs-cls/transactional";
+import { TransactionalAdapterPrisma } from "@nestjs-cls/transactional-adapter-prisma";
+import { PrismaService } from "./prisma/prisma.service";
 
 @Module({
   imports: [
+    ClsModule.forRoot({
+      global: true,
+      middleware: { mount: true },
+      plugins: [
+        new ClsPluginTransactional({
+          imports: [PrismaModule],
+          adapter: new TransactionalAdapterPrisma({
+            prismaInjectionToken: PrismaService,
+          }),
+        }),
+      ],
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath:
