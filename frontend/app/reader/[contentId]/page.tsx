@@ -3,7 +3,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { ModernCornellLayout } from '@/components/cornell/ModernCornellLayout';
-import { CornellLayout } from '@/components/cornell/classic/CornellLayout'; // Added for Classic Mode
 // Dynamic imports to avoid SSR issues (canvas) and reduce bundle size
 const PDFViewer = dynamic(() => import('@/components/cornell/viewers/PDFViewerNew').then(mod => mod.PDFViewer), { ssr: false, loading: () => <div className="h-full flex items-center justify-center">Carregando PDF...</div> });
 // Import the ref type separately
@@ -16,7 +15,7 @@ import { VideoPlayer } from '@/components/media/VideoPlayer';
 import { AudioPlayer } from '@/components/media/AudioPlayer';
 import { ActionToolbar } from '@/components/cornell/ActionToolbar';
 import { TextViewer } from '@/components/cornell/viewers/TextViewer';
-import { AIChatPanel } from '@/components/cornell/AIChatPanel';
+
 import {
   useContent,
   useUnifiedStream,
@@ -61,26 +60,6 @@ export default function ReaderPage({ params }: ReaderPageProps) {
   const deleteHighlightMutation = useDeleteHighlight();
   const updateHighlightMutation = useUpdateHighlight();
 
-  // Layout Toggle State (Sprint 6)
-  const [layoutMode, setLayoutMode] = useState<'modern' | 'classic'>('modern');
-
-  // Load preference from local storage on mount
-  useEffect(() => {
-    const savedLayout = localStorage.getItem('cornell-layout-preference');
-    if (savedLayout === 'classic') {
-      setLayoutMode('classic');
-    }
-  }, []);
-
-  const toggleLayout = useCallback(() => {
-    setLayoutMode((prev) => {
-      const newMode = prev === 'modern' ? 'classic' : 'modern';
-      localStorage.setItem('cornell-layout-preference', newMode);
-      toastControls.success(`Modo ${newMode === 'modern' ? 'Moderno' : 'Clássico'} ativado`);
-      return newMode;
-    });
-  }, [toastControls]);
-
   // Summary state from Cornell notes (sync with fetch)
   const [summaryText, setSummaryText] = useState('');
   
@@ -109,7 +88,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
     onSuccess: () => {
       // Optionally show success toast
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toastControls.error('Falha ao salvar alterações');
       console.error('Autosave error:', error);
     },
@@ -161,7 +140,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
     }
   }, [toastControls]);
 
-  const handleNavigate = useCallback((page: number, scrollPct?: number) => {
+  const handleNavigate = useCallback((page: number, _scrollPct?: number) => {
     setCurrentPage(page);
     viewerRef.current?.jumpToPage(page);
   }, []);
@@ -219,9 +198,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
     [notes, save, toastControls, updateHighlightMutation]
   );
 
-  // AI Chat Panel state
-  const [aiChatOpen, setAiChatOpen] = useState(false);
-  const [aiChatContext, setAiChatContext] = useState<{ text: string; selection?: any }>({ text: '' });
+
 
   // Render viewer based on content type
   // Handle creating stream items from viewers (PDF/Text)
@@ -259,8 +236,8 @@ export default function ReaderPage({ params }: ReaderPageProps) {
           case 'ai':
             // Open AI chat panel with selected text as context
             track('ai_chat_opened', { context_text: text.substring(0, 100) });
-            setAiChatContext({ text, selection: data });
-            setAiChatOpen(true);
+            // TODO: Wire to Sidebar Chat Tab
+            toastControls.info('Abrindo chat (TODO: Integrar com Sidebar)');
             break;
            case 'triage':
             // Create highlight with 'triage' tag - To be implemented with proper tagging
@@ -273,7 +250,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
         toastControls.error('Falha ao criar item');
       }
     },
-    [save, notes, cues, toastControls, setAiChatContext, setAiChatOpen]
+    [save, notes, cues, toastControls, track]
   );
 
   const renderViewer = () => {
@@ -326,7 +303,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
       case 'PDF':
         return (
           <PDFViewer
-            ref={viewerRef}
+            forwardedRef={viewerRef}
             content={content}
             mode={mode}
             highlights={highlights || []}
@@ -368,13 +345,12 @@ export default function ReaderPage({ params }: ReaderPageProps) {
     onModeToggle: handleModeToggle,
     saveStatus: status,
     lastSaved: lastSaved,
-    viewer: renderViewer(),
-    onLayoutChange: toggleLayout
+    viewer: renderViewer()
   };
 
   return (
     <ErrorBoundary>
-      <div className="h-screen w-full overflow-hidden flex flex-col relative bg-gray-50 dark:bg-gray-900">
+      <div className="h-screen w-full overflow-hidden flex flex-col relative">
         {/* Main Render Logic - Single Return Path */}
         {(!content || contentLoading || streamLoading) ? (
           <div className="flex items-center justify-center h-full">
@@ -400,47 +376,31 @@ export default function ReaderPage({ params }: ReaderPageProps) {
             </div>
           </div>
         ) : (
-          /* Cornell Study Layouts */
-          layoutMode === 'modern' ? (
-            <ModernCornellLayout
-              {...commonProps}
-              contentId={params.contentId}
-              targetType={content.contentType}
-              currentPage={currentPage}
-              currentTimestamp={currentTimestamp}
-              streamItems={streamItems}
-              onStreamItemClick={handleStreamItemClick}
-              onStreamItemEdit={handleStreamItemEdit}
-              onStreamItemDelete={handleStreamItemDelete}
-              onStreamItemSaveEdit={handleStreamItemSaveEdit}
-              cues={cues}
-              onCuesChange={handleCuesChange}
-              onCueClick={(cue) => console.log('Cue clicked:', cue)}
-              summary={summaryText}
-              onSummaryChange={handleSummaryChange}
-              disableSelectionMenu={content.contentType === 'PDF'}
-              onCreateStreamItem={handleCreateStreamItem}
-              selectedColor={selectedColor}
-              onColorChange={setSelectedColor}
-              onNavigate={handleNavigate}
-              contentText={content?.text}
-              scrollPercentage={0}
-            />
-          ) : (
-            <div className="h-full bg-white">
-              <CornellLayout 
-                {...commonProps}
-                cues={cues || []}
-                onCuesChange={handleCuesChange}
-                notes={notes || []}
-                onNotesChange={(newNotes: any[]) => save({ notes_json: newNotes })}
-                summary={summaryText}
-                onSummaryChange={handleSummaryChange}
-                onCueClick={(cue: any) => console.log('Classic Cue click:', cue)}
-                onNoteClick={(note: any) => console.log('Classic Note click:', note)}
-              />
-            </div>
-          )
+          /* Cornell Study Layout - Only Modern remains */
+          <ModernCornellLayout
+            {...commonProps}
+            contentId={params.contentId}
+            targetType={content.contentType}
+            currentPage={currentPage}
+            currentTimestamp={currentTimestamp}
+            streamItems={streamItems}
+            onStreamItemClick={handleStreamItemClick}
+            onStreamItemEdit={handleStreamItemEdit}
+            onStreamItemDelete={handleStreamItemDelete}
+            onStreamItemSaveEdit={handleStreamItemSaveEdit}
+            cues={cues}
+            onCuesChange={handleCuesChange}
+            onCueClick={(cue) => console.log('Cue clicked:', cue)}
+            summary={summaryText}
+            onSummaryChange={handleSummaryChange}
+            disableSelectionMenu={content.contentType === 'PDF'}
+            onCreateStreamItem={handleCreateStreamItem}
+            selectedColor={selectedColor}
+            onColorChange={setSelectedColor}
+            onNavigate={handleNavigate}
+            contentText={content?.text}
+            scrollPercentage={0}
+          />
         )}
         
         {/* Global UI Elements */}
@@ -452,12 +412,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
           />
         )}
         
-        <AIChatPanel 
-          isOpen={aiChatOpen} 
-          onClose={() => setAiChatOpen(false)}
-          initialInput={aiChatContext.text}
-          selection={aiChatContext.selection}
-        />
+
       </div>
     </ErrorBoundary>
   );

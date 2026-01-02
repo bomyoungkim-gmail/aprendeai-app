@@ -3,7 +3,7 @@
 import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { Menu, X, ChevronRight, Plus, Share2, Check as CheckIcon } from 'lucide-react';
-import type { ViewMode, SaveStatus, CueItem, CornellType } from '@/lib/types/cornell';
+import type { ViewMode, SaveStatus, CueItem, CornellType, CornellExtendedType } from '@/lib/types/cornell';
 import type { UnifiedStreamItem, UnifiedStreamItemType, SidebarTab } from '@/lib/types/unified-stream';
 import type { HistoryEntityType } from '@/hooks/cornell/use-undo-redo';
 import { SaveStatusIndicator } from './SaveStatusIndicator';
@@ -47,6 +47,7 @@ import { useScrollTracking } from '@/hooks/telemetry/use-scroll-tracking';
 import { useTimeTracking } from '@/hooks/telemetry/use-time-tracking';
 import { useUiBehavior } from '@/hooks/cornell/use-ui-behavior'; 
 import { useUndoRedo } from '@/hooks/cornell/use-undo-redo';
+import { useScrollDirection } from '@/hooks/ui/use-scroll-direction';
 import { MODE_CONFIGS } from '@/lib/config/mode-config';
 import { TableOfContents } from './TableOfContents';
 import { AnalyticsDashboard } from '../analytics/AnalyticsDashboard'; 
@@ -55,7 +56,7 @@ import { useConfusionDetection } from '@/hooks/heuristics/use-confusion-detectio
 import { useHeuristicsStore } from '@/stores/heuristics-store'; 
 import { ContentMode } from '@/lib/types/content-mode';
 import { useReadingPersistence } from '@/hooks/sessions/reading/use-reading-persistence';
-import { Bookmark as BookmarkIcon, History, Save, Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { Bookmark as BookmarkIcon, History, Save, Wifi, WifiOff, RefreshCw, PanelBottom, ChevronDown } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/shared/use-online-status';
 import { telemetryClient } from '@/lib/telemetry/telemetry-client';
 
@@ -121,10 +122,7 @@ interface ModernCornellLayoutProps {
   onNavigate?: (page: number, scrollPct?: number) => void;
   scrollPercentage?: number;
   contentText?: string;
-  onLayoutChange?: () => void;
 }
-
-
 
 export function ModernCornellLayout({
   title,
@@ -156,7 +154,6 @@ export function ModernCornellLayout({
   onNavigate,
   scrollPercentage = 0,
   contentText,
-  onLayoutChange,
 }: ModernCornellLayoutProps) {
   
   // Telemetry & Tracking (needed by domain hooks)
@@ -185,6 +182,10 @@ export function ModernCornellLayout({
     track
   );
   
+  // Auto-hide header on scroll - Global capture but exclude sidebar
+  const sidebarRef = useRef<HTMLElement>(null);
+  const scrollDirection = useScrollDirection({ threshold: 10, excludeRef: sidebarRef });
+  const isHeaderVisible = scrollDirection !== 'down';
   
   // Offline Sync (I2.1-I2.2)
   const { isOnline, pendingCount, isSyncing, manualSync } = useOfflineSync();
@@ -330,8 +331,6 @@ export function ModernCornellLayout({
     }
   }, [currentDelay, isScaffolding, pedagogicalConfig, contentModeData?.effectiveMode, track]);
 
-  const [isModeSelectorOpen, setIsModeSelectorOpen] = useState(false);
-
   // Adaptive UI
   const currentMode = contentModeData?.mode || contentModeData?.inferredMode;
   const modeConfig = currentMode ? MODE_CONFIGS[currentMode] : null;
@@ -460,7 +459,8 @@ export function ModernCornellLayout({
                   'annotation': 'HIGHLIGHT',
                   'note': 'NOTE',
                   'question': 'CUE',
-                  'star': 'STAR',
+                  'important': 'IMPORTANT',
+                  'synthesis': 'NOTE', // Synthesis maps to NOTE in history for now
                   'ai': 'AI',
                   'ai-suggestion': 'AI',
                   'ai-response': 'AI',
@@ -512,7 +512,7 @@ export function ModernCornellLayout({
   const { selection, clearSelection } = useTextSelection(contentElement);
 
 
-  const [createModalType, setCreateModalType] = useState<CornellType>('NOTE');
+  const [createModalType, setCreateModalType] = useState<CornellExtendedType>('NOTE');
 
   // AI Suggestions & Entitlements
   const { suggestions, acceptSuggestion, dismissSuggestion } = useSuggestions(contentId);
@@ -550,8 +550,8 @@ export function ModernCornellLayout({
         onCreateStreamItem('question', text);
         track('NOTE_CREATED', { type: 'QUESTION', length: text.length });
         break;
-      case 'star':
-        onCreateStreamItem('star', text);
+      case 'important':
+        onCreateStreamItem('important', text);
         break;
       case 'ai':
         onCreateStreamItem('ai', text);
@@ -570,8 +570,8 @@ export function ModernCornellLayout({
   );
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900 selection:bg-blue-100 selection:text-blue-900 overflow-hidden">
+      {/* Header - Fixed Overlay */}
       <CornellHeader
         title={title}
         contentId={contentId}
@@ -580,7 +580,7 @@ export function ModernCornellLayout({
         modeSource={(contentModeData?.modeSource as 'USER' | 'INFERRED' | 'DEFAULT' | undefined) || undefined}
         inferredMode={contentModeData?.inferredMode}
         isContentModeLoading={isContentModeLoading}
-        onModeClick={() => setIsModeSelectorOpen(true)}
+        onModeClick={() => layout.setIsModeSelectorOpen(true)}
         selectedColor={selectedColor}
         onColorChange={onColorChange}
         onShareClick={() => layout.setIsShareModalOpen(true)}
@@ -590,113 +590,118 @@ export function ModernCornellLayout({
         sessionId={sessionId}
         onFinishSession={handleFinish}
         isFinishing={finishSession.isPending}
-        onLayoutChange={onLayoutChange}
         isInFlow={isInFlow}
-        isVisible={isUiVisible}
+        isVisible={isHeaderVisible}
+        isOpen={layout.sidebarOpen}
+        onMenuClick={layout.toggleSidebar}
         onTrack={track}
       />
 
-      {/* Main: PDF + Sidebar */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Content Area */}
-        <CornellContentArea
-          viewer={viewer}
-          selection={selection}
-          onSelectionAction={handleSelectionAction}
-          disableSelectionMenu={disableSelectionMenu}
-          contentMode={contentModeData?.effectiveMode || ContentMode.NARRATIVE}
-          onTermClick={handleTermClick}
-          onContentClick={toggleUi}
-          onContentElementReady={setContentElement}
-          isVisible={isUiVisible}
-        />
-
-        {/* Sidebar */}
-        <CornellSidebar
-          isOpen={layout.sidebarOpen}
-          onToggle={layout.toggleSidebar}
-          activeTab={layout.activeTab}
-          onTabChange={layout.setActiveTab}
-          tocProps={{
-            contentId,
-            currentPage,
-            onNavigate: (page: number, id: string) => {
-              toast.info(`Navegando para pág ${page}`);
-              // Here we would call viewerRef.current.jumpToPage(page)
-            },
-          }}
-          analyticsProps={{
-            contentId,
-          }}
-          bookmarksProps={{
-            bookmarks: bookmarks || [],
-            currentPage,
-            scrollPercentage,
-            onCreateBookmark: createBookmark,
-            onDeleteBookmark: deleteBookmark,
-            onNavigate,
-          }}
-          streamProps={{
-            streamItems,
-            filteredItems,
-            searchQuery: layout.searchQuery,
-            filterType: layout.filterType,
-            onSearchChange: layout.setSearchQuery,
-            onFilterChange: layout.setFilterType,
-            filteredCount,
-            hasActiveFilter,
-            contentMode: contentModeData?.effectiveMode || ContentMode.NARRATIVE,
-            sections,
-            selectedSectionId,
-            onSectionSelect: setSelectedSectionId,
-            annotationCounts,
-            onItemClick: onStreamItemClick,
-            onItemEdit: onStreamItemEdit,
-            onItemDelete: onStreamItemDelete,
-            onItemSaveEdit: onStreamItemSaveEdit,
-          }}
-          cuesProps={{
-            cues,
-            searchQuery: layout.searchQuery,
-            onSearchChange: layout.setSearchQuery,
-            onCueClick,
-          }}
-          synthesisProps={{
-            filteredItems,
-            searchQuery: layout.searchQuery,
-            filterType: layout.filterType,
-            onSearchChange: layout.setSearchQuery,
-            onFilterChange: layout.setFilterType,
-            onCreateSynthesis: () => {
-              setCreateModalType('SUMMARY');
-              layout.setIsCreateModalOpen(true);
-            },
-            onItemClick: onStreamItemClick,
-            onItemEdit: onStreamItemEdit,
-            onItemDelete: onStreamItemDelete,
-            onItemSaveEdit: onStreamItemSaveEdit,
-          }}
-          conversationsProps={{
-            contentId,
-            threadContext,
-          }}
-        />
-
-        {/* Mobile Overlay */}
-        {layout.sidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-            onClick={() => layout.setSidebarOpen(false)}
+      {/* Main Container - Adjusted to NOT leave a gap when header is hidden */}
+      <div 
+        className={`flex-1 flex overflow-hidden transition-all duration-300 ease-in-out ${
+          isHeaderVisible ? 'pt-[52px] md:pt-[60px]' : 'pt-0'
+        }`}
+      >
+        <div className="flex-1 flex md:grid md:grid-cols-[1fr_auto] relative overflow-hidden">
+          {/* Content Area */}
+          <CornellContentArea
+            viewer={viewer}
+            selection={selection}
+            onSelectionAction={handleSelectionAction}
+            disableSelectionMenu={disableSelectionMenu}
+            contentMode={contentModeData?.effectiveMode || ContentMode.NARRATIVE}
+            onTermClick={handleTermClick}
+            onContentClick={toggleUi}
+            onContentElementReady={setContentElement}
+            isVisible={isUiVisible}
           />
-        )}
+
+
+
+          {/* Sidebar */}
+          {/* Sidebar */}
+          <CornellSidebar
+            containerRef={sidebarRef}
+            isOpen={layout.sidebarOpen}
+            onToggle={layout.toggleSidebar}
+            activeTab={layout.activeTab}
+            onTabChange={layout.setActiveTab}
+            tocProps={{
+              contentId,
+              currentPage,
+              onNavigate: (page: number, id: string) => {
+                toast.info(`Navegando para pág ${page}`);
+                // Here we would call viewerRef.current.jumpToPage(page)
+              },
+            }}
+            analyticsProps={{
+              contentId,
+            }}
+            bookmarksProps={{
+              bookmarks: bookmarks || [],
+              currentPage,
+              scrollPercentage,
+              onCreateBookmark: createBookmark,
+              onDeleteBookmark: deleteBookmark,
+              onNavigate,
+            }}
+            streamProps={{
+              streamItems,
+              filteredItems,
+              searchQuery: layout.searchQuery,
+              filterType: layout.filterType,
+              onSearchChange: layout.setSearchQuery,
+              onFilterChange: layout.setFilterType,
+              filteredCount,
+              hasActiveFilter,
+              contentMode: contentModeData?.effectiveMode || ContentMode.NARRATIVE,
+              sections,
+              selectedSectionId,
+              onSectionSelect: setSelectedSectionId,
+              annotationCounts,
+              onItemClick: onStreamItemClick,
+              onItemEdit: onStreamItemEdit,
+              onItemDelete: onStreamItemDelete,
+              onItemSaveEdit: onStreamItemSaveEdit,
+            }}
+            cuesProps={{
+              cues,
+              searchQuery: layout.searchQuery,
+              onSearchChange: layout.setSearchQuery,
+              onCueClick,
+            }}
+            synthesisProps={{
+              filteredItems,
+              searchQuery: layout.searchQuery,
+              filterType: layout.filterType,
+              onSearchChange: layout.setSearchQuery,
+              onFilterChange: layout.setFilterType,
+              onCreateSynthesis: () => {
+                setCreateModalType('SYNTHESIS');
+                layout.setIsCreateModalOpen(true);
+              },
+              onItemClick: onStreamItemClick,
+              onItemEdit: onStreamItemEdit,
+              onItemDelete: onStreamItemDelete,
+              onItemSaveEdit: onStreamItemSaveEdit,
+            }}
+            conversationsProps={{
+              contentId,
+              threadContext,
+            }}
+          />
+        </div>
       </div>
+
+
 
 
 
       {/* Footer with Title and Status */}
       <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <h1 className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+          <h1 className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate hidden sm:block">
             {title}
           </h1>
         </div>
@@ -725,7 +730,20 @@ export function ModernCornellLayout({
                 <span>Conectado</span>
               </div>
             )}
+
           </div>
+
+          <button
+            onClick={() => layout.setSidebarOpen(!layout.sidebarOpen)}
+            className="md:hidden p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-600 dark:text-gray-300"
+            title={layout.sidebarOpen ? "Fechar Gaveta" : "Abrir Menu"}
+          >
+            {layout.sidebarOpen ? (
+              <ChevronDown className="w-4 h-4" />
+            ) : (
+              <PanelBottom className="w-4 h-4" />
+            )}
+          </button>
 
           {lastSaved && (
             <div className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">

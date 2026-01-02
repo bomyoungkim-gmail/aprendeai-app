@@ -8,7 +8,7 @@
 import React from 'react';
 import Link from 'next/link';
 import type { SelectionAction } from '@/components/cornell/TextSelectionMenu';
-import { ChevronRight, Share2, Check as CheckIcon } from 'lucide-react';
+import { ArrowLeft, Save, PanelBottom, ChevronDown, ChevronRight, Check as CheckIcon, Share2 } from 'lucide-react';
 import { getColorForKey, getDefaultPalette } from '@/lib/constants/colors';
 import { ContentModeIndicator } from './ContentModeIndicator';
 import type { ViewMode } from '@/lib/types/cornell';
@@ -42,14 +42,15 @@ export interface CornellHeaderProps {
   onFinishSession?: () => void;
   isFinishing: boolean;
   
-  // Layout
-  onLayoutChange?: () => void;
-  
   // Flow state
   isInFlow: boolean;
   
   // UI visibility
   isVisible: boolean;
+  
+  // Sidebar
+  isOpen?: boolean;
+  onMenuClick?: () => void;
   
   // Telemetry
   onTrack: (event: string, data?: any) => void;
@@ -73,14 +74,15 @@ export function CornellHeader({
   sessionId,
   onFinishSession,
   isFinishing,
-  onLayoutChange,
   isInFlow,
   isVisible,
+  isOpen,
+  onMenuClick,
   onTrack,
 }: CornellHeaderProps) {
   return (
     <header 
-      className={`bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 md:px-4 py-2 md:py-3 flex items-center justify-between gap-2 md:gap-4 flex-shrink-0 fixed top-0 w-full z-50 transition-transform duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 md:px-4 py-2 md:py-3 flex items-center justify-between gap-2 md:gap-4 flex-shrink-0 transition-transform duration-300 shadow-sm ${
         isVisible ? 'translate-y-0' : '-translate-y-full'
       }`}
     >
@@ -95,7 +97,7 @@ export function CornellHeader({
       </div>
 
       {/* Center: Color Picker & Actions */}
-      <div className="flex items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar flex-1 justify-center">
         <ContentModeIndicator 
           mode={contentMode}
           source={modeSource}
@@ -114,27 +116,7 @@ export function CornellHeader({
           <span className="animate-pulse text-lg ml-[-12px] z-10" title="Estado de Flow Detectado">✨</span>
         )}
 
-        <div className="h-4 w-px bg-gray-300 dark:bg-gray-600 shrink-0 hidden sm:block"></div>
 
-        {/* Color Picker */}
-        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-full p-1 shrink-0">
-          {getDefaultPalette().map((color) => (
-            <button
-              key={color}
-              className={`w-6 h-6 rounded-full border-2 transition-all ${
-                selectedColor === color 
-                  ? 'border-gray-800 dark:border-gray-100 scale-110 shadow-sm' 
-                  : 'border-transparent hover:scale-105'
-              }`}
-              style={{ backgroundColor: getColorForKey(color) }}
-              onClick={() => onColorChange?.(color)}
-              title={color.charAt(0).toUpperCase() + color.slice(1)}
-              aria-label={`Select color ${color}`}
-            />
-          ))}
-        </div>
-
-        <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 shrink-0"></div>
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 shrink-0">
@@ -147,18 +129,6 @@ export function CornellHeader({
             <span className="hidden sm:inline">Compartilhar</span>
           </button>
 
-          {/* Layout Switch - Sprint 6 */}
-          {onLayoutChange && (
-            <button 
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors border border-gray-200 dark:border-gray-600"
-              onClick={onLayoutChange}
-              title="Alternar para visualização clássica"
-            >
-              <span className="text-lg">🏛️</span>
-              <span className="hidden sm:inline">Clássico</span>
-            </button>
-          )}
-
           {sessionId && (
             <button 
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg transition-colors shadow-sm"
@@ -170,18 +140,7 @@ export function CornellHeader({
             </button>
           )}
 
-          <button 
-            className={`flex items-center gap-1.5 px-2 md:px-3 py-1.5 text-sm font-medium rounded-lg transition-colors
-              ${activeAction === 'ai'
-                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 ring-2 ring-purple-500'
-                : 'bg-purple-50 text-purple-700 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50'
-              }`}
-            onClick={onAIClick}
-            title="IA Assistente"
-          >
-            <span className="text-lg">✨</span>
-            <span className="hidden md:inline">IA</span>
-          </button>
+
 
           <button 
             className={`flex items-center gap-1.5 px-2 md:px-3 py-1.5 text-sm font-medium rounded-lg transition-colors
@@ -198,10 +157,7 @@ export function CornellHeader({
         </div>
       </div>
 
-      {/* Right: Placeholder for future menu */}
-      <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
-        {/* Menu button will be added in sidebar component */}
-      </div>
+  
     </header>
   );
 }

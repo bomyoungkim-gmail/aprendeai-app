@@ -11,15 +11,13 @@ export interface ChatMessage {
 }
 
 interface AIChatPanelProps {
-  isOpen: boolean;
-  onClose: () => void;
   onSendMessage?: (message: string) => Promise<void>;
-
   initialInput?: string;
-  selection?: string; // NEW: Context for the AI
+  selection?: string;
+  className?: string;
 }
 
-export function AIChatPanel({ isOpen, onClose, onSendMessage, initialInput = '', selection = '' }: AIChatPanelProps) {
+export function AIChatPanel({ onSendMessage, initialInput = '', selection = '', className = '' }: AIChatPanelProps) {
   const [input, setInput] = useState(initialInput);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -38,14 +36,14 @@ export function AIChatPanel({ isOpen, onClose, onSendMessage, initialInput = '',
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isOpen]);
+  }, [messages]);
 
   // Update input when initialInput changes (e.g. from selection)
   useEffect(() => {
-    if (isOpen && initialInput) {
+    if (initialInput) {
       setInput(initialInput);
     }
-  }, [isOpen, initialInput]);
+  }, [initialInput]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,29 +110,14 @@ export function AIChatPanel({ isOpen, onClose, onSendMessage, initialInput = '',
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div 
-      className="fixed inset-y-0 right-0 w-full sm:w-96 bg-white dark:bg-gray-800 shadow-2xl z-50 flex flex-col border-l border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out"
-      role="dialog"
-      aria-label={CHAT_LABELS.TITLE}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-        <div className="flex items-center gap-2">
-          <Bot className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-          <h2 className="font-semibold text-gray-900 dark:text-gray-100">
-            {CHAT_LABELS.TITLE}
-          </h2>
-        </div>
-        <button 
-          onClick={onClose}
-          className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition"
-          aria-label={CHAT_LABELS.CLOSE}
-        >
-          <X className="h-5 w-5 text-gray-500" />
-        </button>
+    <div className={`flex flex-col h-full bg-white dark:bg-gray-800 ${className}`}>
+      {/* Header - Optional or Simplified */}
+      <div className="flex items-center gap-2 p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+        <Bot className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+          {CHAT_LABELS.TITLE}
+        </span>
       </div>
 
       {/* Messages */}
