@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { CreateBookmarkDto } from '../../dto/bookmarks.dto';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
+import { CreateBookmarkDto } from "../../dto/bookmarks.dto";
 
 @Injectable()
 export class CreateBookmarkUseCase {
@@ -9,8 +9,10 @@ export class CreateBookmarkUseCase {
   constructor(private prisma: PrismaService) {}
 
   async execute(user_id: string, content_id: string, dto: CreateBookmarkDto) {
-    this.logger.log(`Creating bookmark for user ${user_id}, content ${content_id} at page ${dto.page_number}`);
-    
+    this.logger.log(
+      `Creating bookmark for user ${user_id}, content ${content_id} at page ${dto.page_number}`,
+    );
+
     return this.prisma.bookmarks.create({
       data: {
         user_id,

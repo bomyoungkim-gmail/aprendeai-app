@@ -22,7 +22,7 @@ export class AssessmentController {
   }
 
   @Get()
-  findAll(@Request() req: any, @Query('contentId') contentId?: string) {
+  findAll(@Request() req: any, @Query("contentId") contentId?: string) {
     if (contentId) {
       return this.assessmentService.findByContent(contentId);
     }

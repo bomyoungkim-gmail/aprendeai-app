@@ -1,4 +1,3 @@
-
 export class AssessmentQuestion {
   id: string;
   assessmentId?: string;

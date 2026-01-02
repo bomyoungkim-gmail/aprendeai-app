@@ -5,7 +5,9 @@ export { RecommendationContent } from "./domain/interfaces/recommendation.reposi
 
 @Injectable()
 export class RecommendationService {
-  constructor(private readonly getRecommendationsUseCase: GetRecommendationsUseCase) {}
+  constructor(
+    private readonly getRecommendationsUseCase: GetRecommendationsUseCase,
+  ) {}
 
   /**
    * Get all recommendations for user

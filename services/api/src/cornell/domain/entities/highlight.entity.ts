@@ -1,4 +1,3 @@
-
 export class Highlight {
   id: string;
   contentId: string;
@@ -12,7 +11,7 @@ export class Highlight {
   tags: string[]; // JSON
   timestampMs?: number;
   durationMs?: number;
-  
+
   // Social / RBAC fields
   visibility?: string; // AnnotationVisibility
   visibilityScope?: string; // VisibilityScope

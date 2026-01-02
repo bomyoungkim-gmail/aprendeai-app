@@ -24,8 +24,8 @@ export class FamilyMember {
   displayName?: string | null;
   joinedAt: Date;
   user?: {
-      email: string;
-      name: string;
+    email: string;
+    name: string;
   };
 
   constructor(partial: Partial<FamilyMember>) {

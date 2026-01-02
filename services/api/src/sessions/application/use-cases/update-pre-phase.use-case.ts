@@ -1,4 +1,10 @@
-import { Injectable, Inject, BadRequestException, NotFoundException, ForbiddenException } from "@nestjs/common";
+import {
+  Injectable,
+  Inject,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { ISessionsRepository } from "../../domain/sessions.repository.interface";
 import { ReadingSession } from "../../domain/reading-session.entity";
 import { ProfileService } from "../../../profiles/profile.service";
@@ -12,15 +18,21 @@ export interface UpdatePrePhaseData {
 @Injectable()
 export class UpdatePrePhaseUseCase {
   constructor(
-    @Inject(ISessionsRepository) private readonly sessionsRepository: ISessionsRepository,
+    @Inject(ISessionsRepository)
+    private readonly sessionsRepository: ISessionsRepository,
     private readonly profileService: ProfileService,
   ) {}
 
-  async execute(sessionId: string, userId: string, data: UpdatePrePhaseData): Promise<ReadingSession> {
+  async execute(
+    sessionId: string,
+    userId: string,
+    data: UpdatePrePhaseData,
+  ): Promise<ReadingSession> {
     const session = await this.sessionsRepository.findById(sessionId);
 
     if (!session) throw new NotFoundException("Session not found");
-    if (session.userId !== userId) throw new ForbiddenException("Access denied");
+    if (session.userId !== userId)
+      throw new ForbiddenException("Access denied");
 
     if (session.phase !== "PRE") {
       throw new BadRequestException("Session not in PRE phase");
@@ -38,10 +50,10 @@ export class UpdatePrePhaseUseCase {
     }
 
     const updated = await this.sessionsRepository.update(sessionId, {
-        goalStatement: data.goalStatement,
-        predictionText: data.predictionText,
-        targetWordsJson: data.targetWordsJson,
-        phase: 'DURING',
+      goalStatement: data.goalStatement,
+      predictionText: data.predictionText,
+      targetWordsJson: data.targetWordsJson,
+      phase: "DURING",
     });
 
     return updated;

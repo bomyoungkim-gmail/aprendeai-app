@@ -6,7 +6,8 @@ import { UpdateProfileDto } from "../../dto/profile.dto";
 @Injectable()
 export class UpdateProfileUseCase {
   constructor(
-    @Inject(IProfileRepository) private readonly profileRepository: IProfileRepository,
+    @Inject(IProfileRepository)
+    private readonly profileRepository: IProfileRepository,
   ) {}
 
   async execute(userId: string, dto: UpdateProfileDto): Promise<Profile> {
@@ -21,16 +22,16 @@ export class UpdateProfileUseCase {
 
     // Check if profile exists, if not create? Prisma update fails if not found.
     // For safety, let's just attempt update.
-    
+
     // In strict Domain, we should find -> update -> save.
     // But leveraging Repo update for efficiency.
-    
+
     return this.profileRepository.update(userId, {
-        educationLevel: dto.educationLevel as any, // Cast DTO string to Enum
-        dailyTimeBudgetMin: dto.dailyTimeBudgetMin,
-        readingLevelScore: dto.readingLevelScore,
-        listeningLevelScore: dto.listeningLevelScore,
-        writingLevelScore: dto.writingLevelScore,
+      educationLevel: dto.educationLevel as any, // Cast DTO string to Enum
+      dailyTimeBudgetMin: dto.dailyTimeBudgetMin,
+      readingLevelScore: dto.readingLevelScore,
+      listeningLevelScore: dto.listeningLevelScore,
+      writingLevelScore: dto.writingLevelScore,
     });
   }
 }

@@ -1,4 +1,9 @@
-import { Injectable, Inject, BadRequestException, ForbiddenException } from "@nestjs/common";
+import {
+  Injectable,
+  Inject,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { IStudyGroupsRepository } from "../../domain/study-groups.repository.interface";
 import { StudyGroupMember } from "../../domain/study-group.entity";
 import { InviteGroupMemberDto } from "../../dto/invite-member.dto";
@@ -8,10 +13,15 @@ import { v4 as uuidv4 } from "uuid";
 @Injectable()
 export class InviteGroupMemberUseCase {
   constructor(
-    @Inject(IStudyGroupsRepository) private readonly repository: IStudyGroupsRepository,
+    @Inject(IStudyGroupsRepository)
+    private readonly repository: IStudyGroupsRepository,
   ) {}
 
-  async execute(groupId: string, inviterId: string, dto: InviteGroupMemberDto): Promise<void> {
+  async execute(
+    groupId: string,
+    inviterId: string,
+    dto: InviteGroupMemberDto,
+  ): Promise<void> {
     const inviter = await this.repository.findMember(groupId, inviterId);
     if (!inviter || inviter.status !== "ACTIVE") {
       throw new ForbiddenException("Access denied: not an active member");

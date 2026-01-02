@@ -1,4 +1,4 @@
-import { OpsTask } from './ops-task.entity';
+import { OpsTask } from "./ops-task.entity";
 
 export class OpsSnapshot {
   constructor(
@@ -13,7 +13,7 @@ export class OpsSnapshot {
     },
     public readonly goals: {
       dailyMinutes: number;
-      goalType: 'MINUTES';
+      goalType: "MINUTES";
     },
     public readonly nextTasks: OpsTask[],
   ) {}

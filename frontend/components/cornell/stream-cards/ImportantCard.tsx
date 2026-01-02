@@ -1,15 +1,15 @@
 import React from 'react';
 import { Star, Trash2, MapPin } from 'lucide-react';
-import type { StarStreamItem } from '@/lib/types/unified-stream';
+import type { ImportantStreamItem } from '@/lib/types/unified-stream';
 import { ITEM_TYPE_LABELS } from '@/lib/cornell/labels';
 
-interface StarCardProps {
-  item: StarStreamItem;
+interface ImportantCardProps {
+  item: ImportantStreamItem;
   onClick?: () => void;
   onDelete?: () => void;
 }
 
-export function StarCard({ item, onClick, onDelete }: StarCardProps) {
+export function ImportantCard({ item, onClick, onDelete }: ImportantCardProps) {
   return (
     <div 
       className="group relative p-3 rounded-lg border-2 border-yellow-300 dark:border-yellow-600 bg-yellow-50/50 dark:bg-yellow-900/10 hover:shadow-md transition-all cursor-pointer"
@@ -20,7 +20,7 @@ export function StarCard({ item, onClick, onDelete }: StarCardProps) {
         <div className="flex items-center gap-2">
           <Star className="h-4 w-4 shrink-0 text-yellow-600 dark:text-yellow-400 fill-yellow-600 dark:fill-yellow-400" />
           <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-            {ITEM_TYPE_LABELS.STAR}
+            {ITEM_TYPE_LABELS.IMPORTANT}
           </span>
           {item.pageNumber && (
             <span className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
@@ -37,7 +37,7 @@ export function StarCard({ item, onClick, onDelete }: StarCardProps) {
             onDelete?.();
           }}
           className="p-1 rounded hover:bg-yellow-100 dark:hover:bg-yellow-800/40 opacity-0 group-hover:opacity-100 transition-opacity"
-          title="Unstar"
+          title="Remover"
         >
           <Trash2 className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400" />
         </button>

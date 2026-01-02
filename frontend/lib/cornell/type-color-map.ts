@@ -1,74 +1,68 @@
 /**
- * Cornell Notes - Type to Color Mapping
+ * Cornell Type to Color Mapping
  * 
- * Maps Cornell annotation types to fixed colors and semantic tags.
- * This allows visual differentiation without creating new backend enums.
+ * Maps Cornell annotation types to their visual colors.
  * 
- * Color Strategy:
+ * Color Scheme:
  * - HIGHLIGHT (blue): General highlighting
  * - NOTE (green): Detailed notes/annotations
- * - STAR/Important (yellow): Key concepts
+ * - IMPORTANT (yellow): Key concepts (renamed from STAR)
  * - QUESTION (red): Questions/doubts
- * 
- * @module lib/cornell/type-color-map
+ * - SYNTHESIS (purple): Synthesis/summary
  */
 
-import { ColorKey } from '@/lib/constants/colors';
-import { HighlightType } from '@/lib/cornell/labels';
+import { CORNELL_EXTENDED_TYPES } from './constants';
 
-/**
- * Maps Cornell annotation types to their designated colors
- */
-export const CORNELL_TYPE_COLOR_MAP: Record<Exclude<HighlightType, 'AI_RESPONSE'>, ColorKey> = {
-  HIGHLIGHT: 'blue',    // 🔵💙 General highlighting
-  NOTE: 'green',        // 🟢💚 Detailed annotations
-  STAR: 'yellow',       // 🟡💛 Important/key concepts
-  QUESTION: 'red',      // 🔴❤️ Questions/doubts
-  SUMMARY: 'yellow',    // 🟡💛 Anchored partial synthesis
+const TYPE_TO_COLOR: Record<string, string> = {
+  HIGHLIGHT: 'blue',
+  NOTE: 'green',
+  IMPORTANT: 'yellow',  // ✅ Renamed from STAR
+  QUESTION: 'red',
+  SYNTHESIS: 'purple',  // ✅ Renamed from SUMMARY
+  AI: 'purple',
 };
 
-/**
- * Maps Cornell annotation types to semantic tags for filtering/querying
- */
-export const CORNELL_TYPE_TAGS: Record<HighlightType, string[]> = {
+const TYPE_TO_TAGS: Record<string, string[]> = {
   HIGHLIGHT: ['highlight'],
   NOTE: ['note'],
-  STAR: ['star', 'important'],
+  IMPORTANT: ['important'],
   QUESTION: ['question'],
-  SUMMARY: ['summary'],
-  AI_RESPONSE: ['ai-response'],
+  SYNTHESIS: ['synthesis'],
+  AI: ['ai'],
 };
+
 
 /**
  * Get color for a given Cornell type
  */
-export function getColorForCornellType(type: HighlightType): ColorKey {
-  return CORNELL_TYPE_COLOR_MAP[type as Exclude<HighlightType, 'AI_RESPONSE'>] || 'blue';
+export function getColorForCornellType(type: string): string {
+  return TYPE_TO_COLOR[type] || 'blue';
 }
 
 /**
  * Get tags for a given Cornell type
  */
-export function getTagsForCornellType(type: HighlightType): string[] {
-  return CORNELL_TYPE_TAGS[type] || [];
+export function getTagsForCornellType(type: string): string[] {
+  return TYPE_TO_TAGS[type] || [];
 }
 
 /**
  * Infer Cornell type from color and tags
- * Used when reading existing highlights
+ * Used when reading existing highlights (with backward compatibility)
  */
-export function inferCornellType(colorKey: string, tags: string[]): HighlightType {
+export function inferCornellType(colorKey: string, tags: string[]): string {
   // Check tags first (more reliable)
   if (tags.includes('question')) return 'QUESTION';
-  if (tags.includes('star') || tags.includes('important')) return 'STAR';
+  if (tags.includes('important')) return 'IMPORTANT';
   if (tags.includes('note')) return 'NOTE';
-  if (tags.includes('summary')) return 'SUMMARY';
-  if (tags.includes('ai-response')) return 'AI_RESPONSE';
+  if (tags.includes('synthesis')) return 'SYNTHESIS';
+  if (tags.includes('ai')) return 'AI';
   
   // Fall back to color
   if (colorKey === 'red') return 'QUESTION';
-  if (colorKey === 'yellow') return 'STAR';
+  if (colorKey === 'yellow') return 'IMPORTANT';
   if (colorKey === 'green') return 'NOTE';
+  if (colorKey === 'purple') return 'SYNTHESIS';
   
   return 'HIGHLIGHT';
 }

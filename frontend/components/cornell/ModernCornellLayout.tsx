@@ -12,7 +12,6 @@ import { SearchBar, type FilterType } from './SearchBar';
 import { TargetType, ContentType } from '@/lib/constants/enums';
 import { useStreamFilter } from '@/hooks/cornell/use-stream-filter';
 import { CORNELL_LABELS } from '@/lib/cornell/labels';
-import { ActionToolbar } from './ActionToolbar';
 import { SuggestionsPanel } from './SuggestionsPanel';
 import { ThreadPanel } from '../sharing/ThreadPanel';
 import { ShareModal } from '../sharing/ShareModal';
@@ -30,7 +29,6 @@ import { CornellSidebar } from './CornellSidebar';
 import { CornellModals } from './CornellModals';
 import { CreateHighlightModal } from './CreateHighlightModal';
 import { TextSelectionMenu, type SelectionAction } from './TextSelectionMenu';
-import { useCornellLayout } from '@/hooks/domain/use-cornell-layout';
 import { useCornellSession } from '@/hooks/domain/use-cornell-session';
 import { useCornellPedagogical } from '@/hooks/domain/use-cornell-pedagogical'; 
 import { useContentContext } from '@/hooks/cornell/use-content-context';
@@ -51,6 +49,7 @@ import { useScrollDirection } from '@/hooks/ui/use-scroll-direction';
 import { MODE_CONFIGS } from '@/lib/config/mode-config';
 import { TableOfContents } from './TableOfContents';
 import { AnalyticsDashboard } from '../analytics/AnalyticsDashboard'; 
+import { CornellLayoutProvider, useCornellLayout } from '@/contexts/CornellLayoutContext';
 import { useFlowDetection } from '@/hooks/heuristics/use-flow-detection'; 
 import { useConfusionDetection } from '@/hooks/heuristics/use-confusion-detection'; 
 import { useHeuristicsStore } from '@/stores/heuristics-store'; 
@@ -124,7 +123,15 @@ interface ModernCornellLayoutProps {
   contentText?: string;
 }
 
-export function ModernCornellLayout({
+export function ModernCornellLayout(props: ModernCornellLayoutProps) {
+  return (
+    <CornellLayoutProvider>
+      <ModernCornellLayoutInternal {...props} />
+    </CornellLayoutProvider>
+  );
+}
+
+function ModernCornellLayoutInternal({
   title,
   mode,
   onModeToggle,
@@ -146,7 +153,7 @@ export function ModernCornellLayout({
   summary,
   onSummaryChange,
   onCreateStreamItem,
-  selectedColor = DEFAULT_COLOR,
+  selectedColor: propSelectedColor = DEFAULT_COLOR,
   onColorChange,
   disableSelectionMenu = false,
   sessionId,
@@ -167,6 +174,14 @@ export function ModernCornellLayout({
   
   // Domain Hooks - Manage UI state and business logic
   const layout = useCornellLayout();
+  
+  // Sync prop color to context if it changes
+  useEffect(() => {
+    if (propSelectedColor) {
+      layout.setSelectedColor(propSelectedColor);
+    }
+  }, [propSelectedColor, layout.setSelectedColor]);
+
   const session = useCornellSession(
     contentId,
     sessionId,
@@ -530,14 +545,16 @@ export function ModernCornellLayout({
     layout.filterType
   );
 
+  // AI Context for Sidebar Chat is now in context (layout.aiContext)
+
   const handleSelectionAction = useCallback((action: SelectionAction, text: string) => {
     if (!onCreateStreamItem) return;
 
     switch (action) {
       case 'annotation':
-        onCreateStreamItem('annotation', text, { color: selectedColor });
+        onCreateStreamItem('annotation', text, { color: layout.selectedColor });
         track('HIGHLIGHT_CREATED', {
-            color: selectedColor,
+            color: layout.selectedColor,
             length: text.length,
             hasComment: false // Initial creation usually no comment
         });
@@ -554,14 +571,16 @@ export function ModernCornellLayout({
         onCreateStreamItem('important', text);
         break;
       case 'ai':
-        onCreateStreamItem('ai', text);
+        // Instead of creating stream item, send to chat context
+        layout.handleAISelection(text);
+        track('AI_CONTEXT_SET', { length: text.length });
         break;
       case 'triage':
         onCreateStreamItem('triage', text);
         break;
     }
     clearSelection();
-  }, [onCreateStreamItem, selectedColor, clearSelection]);
+  }, [onCreateStreamItem, propSelectedColor, clearSelection, layout, track]);
 
   // Memoize synthesis items to avoid repeated filtering
   const synthesisItems = useMemo(
@@ -581,11 +600,15 @@ export function ModernCornellLayout({
         inferredMode={contentModeData?.inferredMode}
         isContentModeLoading={isContentModeLoading}
         onModeClick={() => layout.setIsModeSelectorOpen(true)}
-        selectedColor={selectedColor}
+        selectedColor={layout.selectedColor}
         onColorChange={onColorChange}
         onShareClick={() => layout.setIsShareModalOpen(true)}
         onAIClick={() => layout.setActiveAction(layout.activeAction === 'ai' ? null : 'ai')}
-        onTriageClick={() => layout.setActiveAction(layout.activeAction === 'question' ? null : 'question')}
+        onTriageClick={() => {
+          // TODO: Implement direct AI-powered triage via chat service
+          layout.handleAISelection("Por favor, realize a triagem de vocabulário e conceitos chave deste texto.");
+          track?.('TRIAGE_CLICKED_CHAT');
+        }}
         activeAction={layout.activeAction}
         sessionId={sessionId}
         onFinishSession={handleFinish}
@@ -796,11 +819,6 @@ export function ModernCornellLayout({
         onAcceptSuggestion={pedagogical.acceptSuggestion}
         onDismissSuggestion={pedagogical.dismissSuggestion}
         hasAIAssistant={hasAIAssistant}
-        
-        // Action Toolbar
-        showActionToolbar={layout.activeAction !== null}
-        activeAction={layout.activeAction}
-        onActionChange={layout.setActiveAction}
         
         // Premium Feature
         showPremiumBlock={!hasAIAssistant && layout.activeAction === 'ai'}

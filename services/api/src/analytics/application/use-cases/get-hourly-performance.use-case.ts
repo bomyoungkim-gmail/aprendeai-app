@@ -1,5 +1,5 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { IAnalyticsRepository } from '../../domain/analytics.repository.interface';
+import { Injectable, Inject } from "@nestjs/common";
+import { IAnalyticsRepository } from "../../domain/analytics.repository.interface";
 
 @Injectable()
 export class GetHourlyPerformanceUseCase {
@@ -10,7 +10,10 @@ export class GetHourlyPerformanceUseCase {
 
   async execute(userId: string, days: number = 30) {
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-    const hourlyData = await this.repository.getHourlyPerformance(userId, since);
+    const hourlyData = await this.repository.getHourlyPerformance(
+      userId,
+      since,
+    );
 
     const transformed = hourlyData.map((row) => ({
       hour: row.hour,

@@ -42,7 +42,7 @@ export function AnalyticsDashboard({ contentId }: AnalyticsDashboardProps) {
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Analytics de Aprendizagem</h2>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <StatCard 
           title="Tempo Total" 
           value={`${timeMinutes} min`} 
@@ -69,7 +69,7 @@ export function AnalyticsDashboard({ contentId }: AnalyticsDashboardProps) {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-4">
         {/* Interaction Chart */}
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm">
           <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">Engajamento</h3>

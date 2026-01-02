@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { IClassroomRepository } from '../../domain/interfaces/classroom.repository.interface';
-import { Classroom } from '../../domain/entities/classroom.entity';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
+import { IClassroomRepository } from "../../domain/interfaces/classroom.repository.interface";
+import { Classroom } from "../../domain/entities/classroom.entity";
 
 @Injectable()
 export class PrismaClassroomRepository implements IClassroomRepository {
@@ -36,7 +36,7 @@ export class PrismaClassroomRepository implements IClassroomRepository {
       where: { owner_educator_id: educatorId },
     });
 
-    return classrooms.map(c => this.mapToEntity(c));
+    return classrooms.map((c) => this.mapToEntity(c));
   }
 
   async update(classroom: Classroom): Promise<Classroom> {
@@ -60,9 +60,9 @@ export class PrismaClassroomRepository implements IClassroomRepository {
 
   async countEnrollments(classroomId: string): Promise<number> {
     return this.prisma.enrollments.count({
-      where: { 
+      where: {
         classroom_id: classroomId,
-        status: 'ACTIVE'
+        status: "ACTIVE",
       },
     });
   }

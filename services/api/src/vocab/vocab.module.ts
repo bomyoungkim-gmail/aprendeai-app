@@ -19,6 +19,11 @@ import { AddVocabListUseCase } from "./application/use-cases/add-vocab-list.use-
       useClass: PrismaVocabRepository,
     },
   ],
-  exports: [VocabService, GetVocabListUseCase, AddVocabListUseCase, IVocabRepository],
+  exports: [
+    VocabService,
+    GetVocabListUseCase,
+    AddVocabListUseCase,
+    IVocabRepository,
+  ],
 })
 export class VocabModule {}

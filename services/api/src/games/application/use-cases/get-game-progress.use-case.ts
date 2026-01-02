@@ -9,7 +9,10 @@ export class GetGameProgressUseCase {
     private readonly repository: IGameProgressRepository,
   ) {}
 
-  async execute(userId: string, gameId: string): Promise<GameProgressDto | null> {
+  async execute(
+    userId: string,
+    gameId: string,
+  ): Promise<GameProgressDto | null> {
     const progress = await this.repository.findByUserAndGame(userId, gameId);
     if (!progress) return null;
 

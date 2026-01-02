@@ -51,7 +51,10 @@ export class PrismaInvitesRepository implements IInvitesRepository {
     return all.map(this.mapToDomain);
   }
 
-  async update(id: string, updates: Partial<InstitutionInvite>): Promise<InstitutionInvite> {
+  async update(
+    id: string,
+    updates: Partial<InstitutionInvite>,
+  ): Promise<InstitutionInvite> {
     const updated = await this.prisma.institution_invites.update({
       where: { id },
       data: {
@@ -76,7 +79,10 @@ export class PrismaInvitesRepository implements IInvitesRepository {
     });
   }
 
-  async invalidatePrevious(institutionId: string, email: string): Promise<void> {
+  async invalidatePrevious(
+    institutionId: string,
+    email: string,
+  ): Promise<void> {
     await this.prisma.institution_invites.updateMany({
       where: {
         institution_id: institutionId,

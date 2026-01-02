@@ -44,9 +44,7 @@ export function CornellContentArea({
 }: CornellContentAreaProps) {
   return (
     <div 
-      className={`flex-1 overflow-hidden bg-gray-100 dark:bg-gray-950 transition-[padding] duration-300 ${
-        isVisible ? 'pt-16' : 'pt-0'
-      }`}
+      className="flex-1 overflow-hidden"
       ref={onContentElementReady}
       onClick={(e) => {
         const target = e.target as HTMLElement;

@@ -1,6 +1,6 @@
 export interface SearchResult {
   id: string;
-  type: 'content' | 'annotation' | 'note' | 'transcript';
+  type: "content" | "annotation" | "note" | "transcript";
   title: string;
   snippet: string;
   relevance: number;

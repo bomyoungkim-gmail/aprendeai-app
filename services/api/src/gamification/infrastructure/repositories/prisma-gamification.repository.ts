@@ -25,7 +25,10 @@ export class PrismaGamificationRepository implements IGamificationRepository {
     return this.mapGameResultToDomain(created);
   }
 
-  async findGameResultsByUser(userId: string, limit = 10): Promise<GameResult[]> {
+  async findGameResultsByUser(
+    userId: string,
+    limit = 10,
+  ): Promise<GameResult[]> {
     const results = await this.prisma.game_results.findMany({
       where: { user_id: userId },
       orderBy: { played_at: "desc" },

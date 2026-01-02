@@ -231,6 +231,25 @@ sequenceDiagram
 
 ---
 
+### 🎭 2.5 Adaptabilidade por Modo de Leitura
+
+O comportamento do **Educator Agent** muda drasticamente dependendo do **Modo de Leitura** selecionado na interface (Técnico, Narrativo, Didático, etc.). Isso é alcançado através da injeção de instruções de sistema específicas no `ContextPack`.
+
+| Modo          | Perfil da IA ("Persona")           | Comportamento do Agente                                                                                                                                                                               |
+| :------------ | :--------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Técnico**   | _Especialista Sênior / Consultor_  | • Prioriza definições exatas e concisas<br>• Evita perguntas socráticas longas<br>• Foco em recuperação de informação (RAG)<br>• Checkpoints apenas em conceitos chave complexos                      |
+| **Narrativo** | _Contador de Histórias / Mediador_ | • Mantém a imersão ("flow")<br>• Evita interrupções desnecessárias<br>• Foco na compreensão do enredo e personagens<br>• Responde dúvidas sem quebrar a "quarta parede" se possível                   |
+| **Didático**  | _Professor / Tutor Socrático_      | • Maximiza o scaffolding (andaimes cognitivos)<br>• Verifica compreensão frequentemente (checkpoints curtos)<br>• Incentiva conexões com conhecimento prévio<br>• Explica o "porquê" antes do "o quê" |
+| **Idiomas**   | _Instrutor de Línguas_             | • Simplifica vocabulário complexo<br>• Oferece traduções contextuais<br>• Foca em aquisição de vocabulário (target words)<br>• Corrige gramática suavemente nas respostas do aluno                    |
+
+**Como funciona tecnicamente:**
+
+1. O Frontend envia o `uiMode` no `metadata` do prompt.
+2. O `ContextBuilder` traduz esse modo em um bloco de instruções de sistema ("System Instructions").
+3. O LLM utiliza essas instruções para modular o tom, a complexidade e a proatividade da resposta.
+
+---
+
 ### Roteamento Inteligente
 
 **Função:** `route_by_phase(state)`
@@ -668,36 +687,42 @@ stats = token_tracker.get_stats()
 **Chains Disponíveis:**
 
 ```python
-# 1. Geração de checkpoints
-checkpoint_chain = create_checkpoint_generator()
-checkpoints = checkpoint_chain.invoke({
+# 1. Summarize Chain (Resumo/Simplificação)
+# Nível: Premium (GPT-4)
+summarize_chain.invoke({
     "text": full_text,
-    "num_checkpoints": 3
+    "layer": "L1", # Nível de complexidade
+    "education_level": "MEDIO"
 })
 
-# 2. Simplificação de texto
-simplify_chain = create_text_simplifier()
-simplified = simplify_chain.invoke({
-    "text": complex_text,
-    "schooling_level": "5_EF"
+# 2. Extract Words Chain (Extração de Vocabulário)
+# Nível: Cheap (Gemini Flash)
+extract_words_chain.invoke({
+    "text": text,
+    "education_level": "MEDIO"
 })
 
-# 3. Tradução adaptada
-translate_chain = create_adaptive_translator()
-translated = translate_chain.invoke({
-    "text": original,
-    "from_lang": "EN",
-    "to_lang": "PT_BR",
-    "schooling_level": "7_EF"
+# 3. Glossary Chain (Definições Contextuais)
+# Nível: Cheap (Gemini Flash)
+glossary_chain.invoke({
+    "words": ["mitocôndria", "atp"],
+    "text": context_text
 })
 
-# 4. Geração de perguntas
-question_chain = create_question_generator()
-questions = question_chain.invoke({
-    "text": content,
-    "question_type": "comprehension",  # ou "critical_thinking"
-    "num_questions": 5
+# 4. Cornell Cues Chain (Perguntas de Estudo)
+# Nível: Balanced (Claude Sonnet)
+cues_chain.invoke({
+    "text": text,
+    "target_words": [...]
 })
+
+# 5. Checkpoints Chain (Verificação de Leitura)
+# Nível: Balanced (Claude Sonnet)
+checkpoints.invoke({...})
+
+# 6. Quiz Chain (Geração de Quiz Múltipla Escolha)
+# Nível: Premium (GPT-4)
+quiz_chain.invoke({...})
 ```
 
 ---

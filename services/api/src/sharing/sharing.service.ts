@@ -1,10 +1,17 @@
 import { Injectable } from "@nestjs/common";
-import { ShareContentRequest, ShareAnnotationRequest, ShareContextType } from "./dto/sharing.dto";
+import {
+  ShareContentRequest,
+  ShareAnnotationRequest,
+  ShareContextType,
+} from "./dto/sharing.dto";
 import { ShareContentUseCase } from "./application/use-cases/share-content.use-case";
 import { RevokeContentShareUseCase } from "./application/use-cases/revoke-content-share.use-case";
 import { ShareAnnotationUseCase } from "./application/use-cases/share-annotation.use-case";
 import { RevokeAnnotationShareUseCase } from "./application/use-cases/revoke-annotation-share.use-case";
-import { ShareContextType as DomainShareContextType, SharePermission } from "./domain/entities/content-share.entity";
+import {
+  ShareContextType as DomainShareContextType,
+  SharePermission,
+} from "./domain/entities/content-share.entity";
 import { AnnotationShareMode } from "./domain/entities/annotation-share.entity";
 
 @Injectable()
@@ -19,7 +26,11 @@ export class SharingService {
   /**
    * Share content with a context
    */
-  async shareContent(userId: string, contentId: string, dto: ShareContentRequest) {
+  async shareContent(
+    userId: string,
+    contentId: string,
+    dto: ShareContentRequest,
+  ) {
     return this.shareContentUseCase.execute(userId, contentId, {
       contextType: dto.contextType as unknown as DomainShareContextType,
       contextId: dto.contextId,
@@ -30,14 +41,23 @@ export class SharingService {
   /**
    * Revoke content share
    */
-  async revokeContentShare(userId: string, contentId: string, contextType: ShareContextType, contextId: string) {
+  async revokeContentShare(
+    userId: string,
+    contentId: string,
+    contextType: ShareContextType,
+    contextId: string,
+  ) {
     return this.revokeContentUseCase.execute(contentId, contextType, contextId);
   }
 
   /**
    * Share annotation
    */
-  async shareAnnotation(userId: string, annotationId: string, dto: ShareAnnotationRequest) {
+  async shareAnnotation(
+    userId: string,
+    annotationId: string,
+    dto: ShareAnnotationRequest,
+  ) {
     return this.shareAnnotationUseCase.execute(userId, annotationId, {
       contextType: dto.contextType as unknown as DomainShareContextType,
       contextId: dto.contextId,
@@ -48,7 +68,16 @@ export class SharingService {
   /**
    * Revoke annotation share
    */
-  async revokeAnnotationShare(userId: string, annotationId: string, contextType: ShareContextType, contextId: string) {
-    return this.revokeAnnotationUseCase.execute(annotationId, contextType, contextId);
+  async revokeAnnotationShare(
+    userId: string,
+    annotationId: string,
+    contextType: ShareContextType,
+    contextId: string,
+  ) {
+    return this.revokeAnnotationUseCase.execute(
+      annotationId,
+      contextType,
+      contextId,
+    );
   }
 }

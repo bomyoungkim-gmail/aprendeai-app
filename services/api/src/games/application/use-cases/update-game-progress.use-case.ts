@@ -1,7 +1,10 @@
 import { Injectable, Inject, Logger } from "@nestjs/common";
 import { IGameProgressRepository } from "../../domain/interfaces/game-progress.repository.interface";
 import { GamificationService } from "../../../gamification/gamification.service";
-import { UpdateGameProgressDto, GameProgressDto } from "../../dto/game-progress.dto";
+import {
+  UpdateGameProgressDto,
+  GameProgressDto,
+} from "../../dto/game-progress.dto";
 import { GameProgress } from "../../domain/entities/game-progress.entity";
 import * as crypto from "crypto";
 
@@ -31,8 +34,8 @@ export class UpdateGameProgressUseCase {
     const newStars =
       update.stars !== undefined
         ? update.stars
-        : this.calculateStars(newBestScore); // Or calculate based on update.score if bestScore not relevant for stars? 
-        // Original logic: calculateStars(newBestScore).
+        : this.calculateStars(newBestScore); // Or calculate based on update.score if bestScore not relevant for stars?
+    // Original logic: calculateStars(newBestScore).
 
     const progress = new GameProgress({
       id: existing?.id || crypto.randomUUID(),
@@ -54,7 +57,7 @@ export class UpdateGameProgressUseCase {
     );
 
     // Sync with Gamification
-    const timeSpent = 5; 
+    const timeSpent = 5;
     const qualityScore = Math.min((newStars / 3) * 100, 100);
 
     this.gamificationService

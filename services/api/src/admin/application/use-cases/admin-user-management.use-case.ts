@@ -10,7 +10,8 @@ export class AdminUserManagementUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    @Inject(IAuditLogsRepository) private readonly auditRepo: IAuditLogsRepository,
+    @Inject(IAuditLogsRepository)
+    private readonly auditRepo: IAuditLogsRepository,
   ) {}
 
   async searchUsers(params: {
@@ -72,7 +73,7 @@ export class AdminUserManagementUseCase {
     userId: string,
     status: string,
     reason: string,
-    actor: { userId: string; role: string }
+    actor: { userId: string; role: string },
   ) {
     const user = await this.prisma.users.findUnique({ where: { id: userId } });
     if (!user) throw new Error("User not found");
@@ -82,7 +83,8 @@ export class AdminUserManagementUseCase {
       data: { status },
     });
 
-    await this.auditRepo.create(new AuditLog({
+    await this.auditRepo.create(
+      new AuditLog({
         id: uuidv4(),
         actorUserId: actor.userId,
         actorRole: actor.role,
@@ -92,7 +94,8 @@ export class AdminUserManagementUseCase {
         beforeJson: { status: user.status },
         afterJson: { status },
         reason,
-    }));
+      }),
+    );
 
     return updated;
   }
@@ -117,62 +120,66 @@ export class AdminUserManagementUseCase {
     reason: string,
     durationMinutes: number,
   ) {
-      const targetUser = await this.prisma.users.findUnique({
-          where: { id: targetUserId },
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            last_context_role: true,
-            system_role: true,
-          },
-        });
-    
-        if (!targetUser) {
-          throw new Error("Target user not found");
-        }
-    
-        const expiresAt = new Date(Date.now() + durationMinutes * 60 * 1000);
-    
-        const payload = {
-          userId: targetUser.id,
-          email: targetUser.email,
-          context_role: targetUser.system_role ? "ADMIN" : targetUser.last_context_role,
-          system_role: targetUser.system_role,
-          impersonatedBy: actor.userId,
-          impersonatedByRole: actor.role,
-          reason,
-          expiresAt: expiresAt.toISOString(),
-          type: "impersonation",
-        };
-    
-        const token = this.jwtService.sign(payload, {
-          expiresIn: `${durationMinutes}m`,
-        });
+    const targetUser = await this.prisma.users.findUnique({
+      where: { id: targetUserId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        last_context_role: true,
+        system_role: true,
+      },
+    });
 
-        await this.auditRepo.create(new AuditLog({
-            id: uuidv4(),
-            actorUserId: actor.userId,
-            actorRole: actor.role,
-            action: "USER_IMPERSONATION_STARTED",
-            resourceType: "USER",
-            resourceId: targetUserId,
-            reason,
-            afterJson: {
-                targetUser: targetUser.email,
-                durationMinutes,
-                expiresAt,
-            },
-        }));
+    if (!targetUser) {
+      throw new Error("Target user not found");
+    }
 
-        return {
-            impersonationToken: token,
-            expiresAt,
-            targetUser: {
-              id: targetUser.id,
-              name: targetUser.name,
-              email: targetUser.email,
-            },
-          };
+    const expiresAt = new Date(Date.now() + durationMinutes * 60 * 1000);
+
+    const payload = {
+      userId: targetUser.id,
+      email: targetUser.email,
+      context_role: targetUser.system_role
+        ? "ADMIN"
+        : targetUser.last_context_role,
+      system_role: targetUser.system_role,
+      impersonatedBy: actor.userId,
+      impersonatedByRole: actor.role,
+      reason,
+      expiresAt: expiresAt.toISOString(),
+      type: "impersonation",
+    };
+
+    const token = this.jwtService.sign(payload, {
+      expiresIn: `${durationMinutes}m`,
+    });
+
+    await this.auditRepo.create(
+      new AuditLog({
+        id: uuidv4(),
+        actorUserId: actor.userId,
+        actorRole: actor.role,
+        action: "USER_IMPERSONATION_STARTED",
+        resourceType: "USER",
+        resourceId: targetUserId,
+        reason,
+        afterJson: {
+          targetUser: targetUser.email,
+          durationMinutes,
+          expiresAt,
+        },
+      }),
+    );
+
+    return {
+      impersonationToken: token,
+      expiresAt,
+      targetUser: {
+        id: targetUser.id,
+        name: targetUser.name,
+        email: targetUser.email,
+      },
+    };
   }
 }

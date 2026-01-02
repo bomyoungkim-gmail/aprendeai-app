@@ -68,7 +68,8 @@ export class ContentAccessService {
   }
 
   private isOwner(content: any, userId: string): boolean {
-    const isDirectUserOwner = content.owner_type === "USER" && content.owner_id === userId;
+    const isDirectUserOwner =
+      content.owner_type === "USER" && content.owner_id === userId;
     return (
       content.owner_user_id === userId ||
       isDirectUserOwner ||

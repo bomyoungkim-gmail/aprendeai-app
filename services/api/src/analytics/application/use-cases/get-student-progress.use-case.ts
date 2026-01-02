@@ -5,7 +5,8 @@ import { ProgressStatsDto } from "../../dto/analytics.dto";
 @Injectable()
 export class GetStudentProgressUseCase {
   constructor(
-    @Inject(IAnalyticsRepository) private readonly repository: IAnalyticsRepository,
+    @Inject(IAnalyticsRepository)
+    private readonly repository: IAnalyticsRepository,
   ) {}
 
   async execute(userId: string): Promise<ProgressStatsDto> {

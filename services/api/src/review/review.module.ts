@@ -22,6 +22,11 @@ import { SubmitReviewUseCase } from "./application/use-cases/submit-review.use-c
       useClass: PrismaReviewRepository,
     },
   ],
-  exports: [ReviewService, GetReviewQueueUseCase, SubmitReviewUseCase, IReviewRepository],
+  exports: [
+    ReviewService,
+    GetReviewQueueUseCase,
+    SubmitReviewUseCase,
+    IReviewRepository,
+  ],
 })
 export class ReviewModule {}

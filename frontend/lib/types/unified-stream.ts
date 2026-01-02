@@ -11,7 +11,8 @@ export type UnifiedStreamItemType =
   | 'note' 
   | 'ai-suggestion'
   | 'question'      // User-generated question
-  | 'star'          // Starred highlight
+  | 'important'     // Important highlight (renamed from star)
+  | 'synthesis'     // Synthesis/summary
   | 'ai-response'   // AI's answer to a question
   | 'triage'        // Item for triage/review
   | 'ai';           // Generic AI request type
@@ -70,10 +71,10 @@ export interface QuestionStreamItem extends BaseStreamItem {
 }
 
 /**
- * Star Stream Item - represents a starred/important highlight
+ * Important Stream Item - represents an important highlight
  */
-export interface StarStreamItem extends BaseStreamItem {
-  type: 'star';
+export interface ImportantStreamItem extends BaseStreamItem {
+  type: 'important';
   quote: string;
   section?: string;
   pageNumber?: number;
@@ -95,7 +96,7 @@ export type UnifiedStreamItem =
   | NoteStreamItem 
   | AISuggestionStreamItem
   | QuestionStreamItem
-  | StarStreamItem
+  | ImportantStreamItem
   | AIResponseStreamItem;
 
 /**
@@ -142,4 +143,4 @@ export function sortStreamItems(items: UnifiedStreamItem[]): UnifiedStreamItem[]
   );
 }
 
-export type SidebarTab = 'toc' | 'stream' | 'analytics' | 'cues' | 'synthesis' | 'conversations';
+export type SidebarTab = 'toc' | 'stream' | 'synthesis' | 'analytics' | 'chat';

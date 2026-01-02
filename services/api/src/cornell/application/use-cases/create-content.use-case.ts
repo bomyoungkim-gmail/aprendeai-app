@@ -1,4 +1,4 @@
-import { Injectable, Inject, BadRequestException } from "@nestjs/common";
+import { Injectable, Inject, Logger, BadRequestException } from "@nestjs/common";
 import { IContentRepository } from "../../domain/content.repository.interface";
 import { Content } from "../../domain/content.entity";
 import { StorageService } from "../../services/storage.service";
@@ -6,26 +6,31 @@ import { VideoService } from "../../../video/video.service";
 import { UploadContentDto } from "../../dto/upload-content.dto";
 import { v4 as uuidv4 } from "uuid";
 import * as path from "path";
-import { ContentType, Environment } from "@prisma/client";
-
-// NOTE: Ideally these services (Storage, Video) should also be behind interfaces in Domain/Infra
-// For this step, we inject them directly to minimize scope creep, but eventually they should be IStorageService etc.
+import * as mammoth from "mammoth";
+import { ContentType } from "@prisma/client";
+import { PrismaService } from "../../../prisma/prisma.service";
 
 @Injectable()
 export class CreateContentUseCase {
+  private readonly logger = new Logger(CreateContentUseCase.name);
+
   constructor(
-    @Inject(IContentRepository) private readonly contentRepository: IContentRepository,
+    @Inject(IContentRepository)
+    private readonly contentRepository: IContentRepository,
     private readonly storageService: StorageService,
     private readonly videoService: VideoService,
-    // Add other services as needed (Billing, Family etc for enforcement - skipping for brevity in this initial refactor step, 
-    // but in real app they belong here or in a separate specific UseCase/Service wrapper)
+    private readonly prisma: PrismaService,
   ) {}
 
-  async execute(file: Express.Multer.File, dto: UploadContentDto, userId: string): Promise<Content> {
-    // 1. File Processing Logic (Simulated move from Service)
+  async execute(
+    file: Express.Multer.File,
+    dto: UploadContentDto,
+    userId: string,
+  ): Promise<Content> {
     const isVideo = this.videoService.isVideoFile(file.mimetype);
     const isAudio = this.videoService.isAudioFile(file.mimetype);
-    
+
+    // 1. Save file to storage
     const storageKey = await this.storageService.saveFile(file);
     const filePath = path.join("./uploads", storageKey);
 
@@ -34,26 +39,40 @@ export class CreateContentUseCase {
     let thumbnailUrl: string | undefined;
 
     if (isVideo || isAudio) {
-         // Video/Audio processing logic
-         if (isVideo) {
-            const metadata = await this.videoService.extractVideoMetadata(filePath);
-            duration = metadata.duration;
-            try {
-                const thumbnailPath = await this.videoService.generateThumbnail(filePath);
-                thumbnailUrl = `/uploads/thumbnails/${path.basename(thumbnailPath)}`;
-            } catch (e) {
-                // Log warning
-            }
-         }
-         rawText = "(Transcription Pending)";
-         // Trigger background job here (omitted for brevity)
+      if (isVideo) {
+        const metadata = await this.videoService.extractVideoMetadata(filePath);
+        duration = metadata.duration;
+        try {
+          const thumbnailPath = await this.videoService.generateThumbnail(filePath);
+          thumbnailUrl = `/uploads/thumbnails/${path.basename(thumbnailPath)}`;
+        } catch (e) {
+          this.logger.warn(`Failed to generate thumbnail: ${e.message}`);
+        }
+      }
+      rawText = "(Transcription Pending)";
     } else {
-        // Text extraction logic (Simplified for this refactor, ideally delegated)
-        rawText = "Extracted Text Placeholder"; 
-        // In real refactor, extractText would be a helper or injected service method
+      // 2. Extract text from document
+      try {
+        rawText = await this.extractText(file);
+      } catch (error) {
+        this.logger.error(`Text extraction failed: ${error.message}`);
+        rawText = "(Text extraction failed)";
+      }
     }
 
-    // 2. Owner Resolution
+    // 3. Create File record in DB
+    const fileRecord = await this.prisma.files.create({
+      data: {
+        id: uuidv4(),
+        originalFilename: file.originalname,
+        mimeType: file.mimetype,
+        sizeBytes: file.size,
+        storageKey,
+        storageProvider: "LOCAL",
+      },
+    });
+
+    // 4. Owner Resolution
     let ownerType = "USER";
     let ownerId = userId;
     if (dto.scopeType === "FAMILY" || dto.scopeType === "INSTITUTION") {
@@ -61,25 +80,64 @@ export class CreateContentUseCase {
       ownerId = dto.scopeId || userId;
     }
 
-    // 3. Create Entity
+    // 5. Create Content Entity via Repository
     const content = await this.contentRepository.create({
-        id: uuidv4(),
-        title: dto.title,
-        type: this.getContentType(file.mimetype),
-        originalLanguage: dto.originalLanguage,
-        rawText,
-        ownerType,
-        ownerId,
-        scopeType: dto.scopeType,
-        scopeId: dto.scopeId,
-        metadata: {
-            duration,
-            thumbnailUrl,
-            storageKey // Important to keep this reference
-        }
+      id: uuidv4(),
+      title: dto.title,
+      type: this.getContentType(file.mimetype),
+      originalLanguage: dto.originalLanguage,
+      rawText,
+      ownerType,
+      ownerId,
+      scopeType: dto.scopeType,
+      scopeId: dto.scopeId,
+      file: {
+        id: fileRecord.id,
+        originalFilename: fileRecord.originalFilename!,
+        mimeType: fileRecord.mimeType,
+        sizeBytes: Number(fileRecord.sizeBytes),
+      },
+      metadata: {
+        duration,
+        thumbnailUrl,
+        storageKey,
+      },
     });
 
     return content;
+  }
+
+  private async extractText(file: Express.Multer.File): Promise<string> {
+    if (file.mimetype === "application/pdf") {
+      return this.extractPdfText(file.buffer);
+    }
+    if (file.mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+      return this.extractDocxText(file.buffer);
+    }
+    if (file.mimetype === "text/plain") {
+      return file.buffer.toString("utf-8");
+    }
+    return "";
+  }
+
+  private async extractPdfText(buffer: Buffer): Promise<string> {
+    try {
+      const { extractText } = await import("unpdf");
+      const uint8Array = new Uint8Array(buffer);
+      const { text } = await extractText(uint8Array, { mergePages: true });
+      return (text || "").replace(/\0/g, "");
+    } catch (error) {
+      throw new Error(`PDF extraction failed: ${error.message}`);
+    }
+  }
+
+  private async extractDocxText(buffer: Buffer): Promise<string> {
+    try {
+      const result = await mammoth.extractRawText({ buffer });
+      return result.value;
+    } catch (error) {
+      throw new Error(`DOCX extraction failed: ${error.message}`);
+    }
   }
 
   private getContentType(mimeType: string): ContentType {

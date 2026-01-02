@@ -9,8 +9,14 @@ import { EncryptionService } from "./services/encryption.service";
 import { SecretService } from "./services/secret.service";
 import { ConfigService } from "./services/config.service";
 import { AiAnalyticsController } from "./ai-analytics.controller";
-import { IFeatureFlagsRepository, IAuditLogsRepository } from "./domain/admin.repository.interface";
-import { PrismaFeatureFlagsRepository, PrismaAuditLogsRepository } from "./infrastructure/repositories/prisma-admin.repository";
+import {
+  IFeatureFlagsRepository,
+  IAuditLogsRepository,
+} from "./domain/admin.repository.interface";
+import {
+  PrismaFeatureFlagsRepository,
+  PrismaAuditLogsRepository,
+} from "./infrastructure/repositories/prisma-admin.repository";
 import { ManageFeatureFlagsUseCase } from "./application/use-cases/manage-feature-flags.use-case";
 import { GetPlatformStatsUseCase } from "./application/use-cases/get-platform-stats.use-case";
 import { AdminUserManagementUseCase } from "./application/use-cases/admin-user-management.use-case";
@@ -41,7 +47,10 @@ import { AnalyticsModule } from "../analytics/analytics.module";
     ManageFeatureFlagsUseCase,
     GetPlatformStatsUseCase,
     AdminUserManagementUseCase,
-    { provide: IFeatureFlagsRepository, useClass: PrismaFeatureFlagsRepository },
+    {
+      provide: IFeatureFlagsRepository,
+      useClass: PrismaFeatureFlagsRepository,
+    },
     { provide: IAuditLogsRepository, useClass: PrismaAuditLogsRepository },
   ],
   exports: [AdminService, EncryptionService, SecretService, ConfigService],

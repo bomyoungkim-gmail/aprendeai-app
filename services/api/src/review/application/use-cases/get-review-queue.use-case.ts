@@ -5,7 +5,8 @@ import { ProfileService } from "../../../profiles/profile.service";
 @Injectable()
 export class GetReviewQueueUseCase {
   constructor(
-    @Inject(IReviewRepository) private readonly reviewRepository: IReviewRepository,
+    @Inject(IReviewRepository)
+    private readonly reviewRepository: IReviewRepository,
     private readonly profileService: ProfileService,
   ) {}
 
@@ -13,8 +14,8 @@ export class GetReviewQueueUseCase {
     // 1. Determine cap
     let cap = limit;
     if (!cap) {
-        const profile = await this.profileService.get(userId);
-        cap = profile?.dailyReviewCap || 20;
+      const profile = await this.profileService.get(userId);
+      cap = profile?.dailyReviewCap || 20;
     }
 
     // 2. Fetch Review Items (Vocab)

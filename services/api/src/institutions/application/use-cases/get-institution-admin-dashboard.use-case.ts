@@ -7,14 +7,19 @@ import { IDomainsRepository } from "../../domain/domains.repository.interface";
 @Injectable()
 export class GetInstitutionAdminDashboardUseCase {
   constructor(
-    @Inject(IInstitutionsRepository) private readonly institutionsRepository: IInstitutionsRepository,
-    @Inject(IApprovalsRepository) private readonly approvalsRepository: IApprovalsRepository,
-    @Inject(IInvitesRepository) private readonly invitesRepository: IInvitesRepository,
-    @Inject(IDomainsRepository) private readonly domainsRepository: IDomainsRepository,
+    @Inject(IInstitutionsRepository)
+    private readonly institutionsRepository: IInstitutionsRepository,
+    @Inject(IApprovalsRepository)
+    private readonly approvalsRepository: IApprovalsRepository,
+    @Inject(IInvitesRepository)
+    private readonly invitesRepository: IInvitesRepository,
+    @Inject(IDomainsRepository)
+    private readonly domainsRepository: IDomainsRepository,
   ) {}
 
   async execute(userId: string) {
-    const adminMember = await this.institutionsRepository.findAdminMember(userId);
+    const adminMember =
+      await this.institutionsRepository.findAdminMember(userId);
 
     if (!adminMember) {
       throw new ForbiddenException("Insufficient permissions");

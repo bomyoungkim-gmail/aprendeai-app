@@ -28,11 +28,17 @@ export class PrismaVocabRepository implements IVocabRepository {
   }
 
   async findById(id: string): Promise<Vocabulary | null> {
-    const found = await this.prisma.user_vocabularies.findUnique({ where: { id } });
+    const found = await this.prisma.user_vocabularies.findUnique({
+      where: { id },
+    });
     return found ? this.mapToDomain(found) : null;
   }
 
-  async findByUserAndWord(userId: string, word: string, language: Language): Promise<Vocabulary | null> {
+  async findByUserAndWord(
+    userId: string,
+    word: string,
+    language: Language,
+  ): Promise<Vocabulary | null> {
     const found = await this.prisma.user_vocabularies.findUnique({
       where: {
         user_id_word_language: {
@@ -50,7 +56,7 @@ export class PrismaVocabRepository implements IVocabRepository {
     word: string,
     language: Language,
     createData: Partial<Vocabulary>,
-    updateData: Partial<Vocabulary>
+    updateData: Partial<Vocabulary>,
   ): Promise<Vocabulary> {
     const upserted = await this.prisma.user_vocabularies.upsert({
       where: {
@@ -80,7 +86,10 @@ export class PrismaVocabRepository implements IVocabRepository {
     return this.mapToDomain(upserted);
   }
 
-  async findAll(userId: string, filters?: { language?: Language; srsStage?: SrsStage; dueOnly?: boolean }): Promise<Vocabulary[]> {
+  async findAll(
+    userId: string,
+    filters?: { language?: Language; srsStage?: SrsStage; dueOnly?: boolean },
+  ): Promise<Vocabulary[]> {
     const results = await this.prisma.user_vocabularies.findMany({
       where: {
         user_id: userId,
@@ -95,7 +104,7 @@ export class PrismaVocabRepository implements IVocabRepository {
 
   async countCreatedInBatch(ids: string[]): Promise<number> {
     // Ideally we would inspect creation time, but for now we trust the use case to manage this logic
-    // or we assume all are valid. 
+    // or we assume all are valid.
     // In legacy code, it checked `created_at` timestamp.
     // For now, this helper might be redundant if the entity has createdAt.
     return 0; // Placeholder, logic might move to Use Case

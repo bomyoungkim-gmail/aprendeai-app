@@ -10,8 +10,13 @@ export interface IInstitutionsRepository {
 
   // Members
   addMember(member: InstitutionMember): Promise<InstitutionMember>;
-  findMember(institutionId: string, userId: string): Promise<InstitutionMember | null>;
-  findAdminMember(userId: string): Promise<(InstitutionMember & { institutions: Institution }) | null>;
+  findMember(
+    institutionId: string,
+    userId: string,
+  ): Promise<InstitutionMember | null>;
+  findAdminMember(
+    userId: string,
+  ): Promise<(InstitutionMember & { institutions: Institution }) | null>;
   countMembers(institutionId: string, status?: string): Promise<number>;
 }
 

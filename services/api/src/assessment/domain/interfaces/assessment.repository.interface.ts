@@ -6,7 +6,10 @@ export interface IAssessmentRepository {
   findById(id: string): Promise<Assessment | null>;
   findByContentId(contentId: string): Promise<Assessment[]>;
   findAllByUser(userId: string): Promise<Assessment[]>;
-  createAttempt(attempt: AssessmentAttempt, answers: any[]): Promise<AssessmentAttempt>;
+  createAttempt(
+    attempt: AssessmentAttempt,
+    answers: any[],
+  ): Promise<AssessmentAttempt>;
 }
 
 export const IAssessmentRepository = Symbol("IAssessmentRepository");

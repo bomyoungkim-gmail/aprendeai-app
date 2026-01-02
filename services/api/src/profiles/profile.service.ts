@@ -1,5 +1,4 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../prisma/prisma.service";
 import { UpdateProfileDto } from "./dto/profile.dto";
 
 import { GetProfileUseCase } from "./application/use-cases/get-profile.use-case";

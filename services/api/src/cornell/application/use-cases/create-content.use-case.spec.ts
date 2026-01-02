@@ -20,9 +20,9 @@ describe("CreateContentUseCase", () => {
   };
 
   const mockFile = {
-      mimetype: 'application/pdf',
-      originalname: 'test.pdf',
-      buffer: Buffer.from('test')
+    mimetype: "application/pdf",
+    originalname: "test.pdf",
+    buffer: Buffer.from("test"),
   } as Express.Multer.File;
 
   const mockContent = new Content({
@@ -76,10 +76,12 @@ describe("CreateContentUseCase", () => {
 
     expect(result).toBe(mockContent);
     expect(storageService.saveFile).toHaveBeenCalledWith(mockFile);
-    expect(repository.create).toHaveBeenCalledWith(expect.objectContaining({
-      title: "New Content",
-      type: "PDF",
-      ownerId: "user-1"
-    }));
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "New Content",
+        type: "PDF",
+        ownerId: "user-1",
+      }),
+    );
   });
 });

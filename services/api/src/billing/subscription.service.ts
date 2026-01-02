@@ -18,8 +18,10 @@ export class SubscriptionService {
   private readonly logger = new Logger(SubscriptionService.name);
 
   constructor(
-    @Inject(ISubscriptionRepository) private readonly subscriptionRepository: ISubscriptionRepository,
-    @Inject(IPlansRepository) private readonly plansRepository: IPlansRepository,
+    @Inject(ISubscriptionRepository)
+    private readonly subscriptionRepository: ISubscriptionRepository,
+    @Inject(IPlansRepository)
+    private readonly plansRepository: IPlansRepository,
     private billingService: BillingService,
   ) {}
 
@@ -27,12 +29,14 @@ export class SubscriptionService {
    * Create FREE subscription for new user (MVP: FORCE FREE)
    */
   async createFreeSubscription(userId: string) {
-    console.log(`[SubscriptionService] createFreeSubscription for ${userId}. (Using CLS TX if active)`);
+    console.log(
+      `[SubscriptionService] createFreeSubscription for ${userId}. (Using CLS TX if active)`,
+    );
     // Ensure FREE plan exists
     let freePlan = await this.plansRepository.findByCode("FREE");
     if (!freePlan) {
       this.logger.warn("FREE plan not found, seeding...");
-      
+
       const newPlan = new Plan({
         id: uuidv4(),
         code: "FREE",
@@ -55,7 +59,10 @@ export class SubscriptionService {
     // Check existing
     // Logic: find active by user.
     // Repo: findActiveByScope('USER', userId)
-    const existing = await this.subscriptionRepository.findActiveByScope("USER", userId);
+    const existing = await this.subscriptionRepository.findActiveByScope(
+      "USER",
+      userId,
+    );
     if (existing) return existing;
 
     // Create Subscription
@@ -70,7 +77,7 @@ export class SubscriptionService {
       "", // stripe id
       undefined, // end date
       undefined, // metadata
-      freePlan // optional plan
+      freePlan, // optional plan
     );
 
     return this.subscriptionRepository.create(newSub);
@@ -79,10 +86,7 @@ export class SubscriptionService {
   /**
    * Create initial subscription for any scope
    */
-  async createInitialSubscription(
-    scopeType: ScopeType,
-    scopeId: string,
-  ) {
+  async createInitialSubscription(scopeType: ScopeType, scopeId: string) {
     if (scopeType === "USER") return this.createFreeSubscription(scopeId);
     // For others, do nothing for now or create generic free
     return null;
@@ -95,7 +99,10 @@ export class SubscriptionService {
     scopeType: ScopeType,
     scopeId: string,
   ): Promise<boolean> {
-    return this.subscriptionRepository.hasActiveSubscription(scopeType, scopeId);
+    return this.subscriptionRepository.hasActiveSubscription(
+      scopeType,
+      scopeId,
+    );
   }
 
   /**
@@ -130,7 +137,10 @@ export class SubscriptionService {
    * Get active subscription (Specific scope)
    */
   async getActiveSubscription(scopeType: ScopeType, scopeId: string) {
-    const subscription = await this.subscriptionRepository.findActiveByScope(scopeType, scopeId);
+    const subscription = await this.subscriptionRepository.findActiveByScope(
+      scopeType,
+      scopeId,
+    );
 
     if (!subscription) {
       throw new InternalServerErrorException({

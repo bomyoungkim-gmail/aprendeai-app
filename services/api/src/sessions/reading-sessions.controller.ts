@@ -270,7 +270,11 @@ export class ReadingSessionsController {
     @Body() dto: UpdateReadingProgressDto,
     @Request() req,
   ) {
-    return this.sessionService.updateReadingProgress(req.user.id, contentId, dto);
+    return this.sessionService.updateReadingProgress(
+      req.user.id,
+      contentId,
+      dto,
+    );
   }
 
   @Get("contents/:id/bookmarks")

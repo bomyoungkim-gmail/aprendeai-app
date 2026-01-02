@@ -7,15 +7,27 @@ export interface IFeatureFlagsRepository {
   delete(id: string): Promise<void>;
   findById(id: string): Promise<FeatureFlag | null>;
   findByKey(key: string): Promise<FeatureFlag | null>;
-  findMany(filter?: { environment?: FeatureFlagEnvironment; enabled?: boolean }): Promise<FeatureFlag[]>;
-  evaluate(key: string, environment: FeatureFlagEnvironment, userId?: string, institutionId?: string): Promise<FeatureFlag | null>;
+  findMany(filter?: {
+    environment?: FeatureFlagEnvironment;
+    enabled?: boolean;
+  }): Promise<FeatureFlag[]>;
+  evaluate(
+    key: string,
+    environment: FeatureFlagEnvironment,
+    userId?: string,
+    institutionId?: string,
+  ): Promise<FeatureFlag | null>;
 }
 
 export const IFeatureFlagsRepository = Symbol("IFeatureFlagsRepository");
 
 export interface IAuditLogsRepository {
   create(log: AuditLog): Promise<AuditLog>;
-  findMany(params: { skip?: number; take?: number; where?: any }): Promise<AuditLog[]>;
+  findMany(params: {
+    skip?: number;
+    take?: number;
+    where?: any;
+  }): Promise<AuditLog[]>;
 }
 
 export const IAuditLogsRepository = Symbol("IAuditLogsRepository");

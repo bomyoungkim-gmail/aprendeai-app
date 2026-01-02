@@ -98,10 +98,12 @@ import { PrismaService } from "./prisma/prisma.service";
       rootPath: join(process.cwd(), "uploads"),
       serveRoot: "/api/uploads",
     }),
-    ThrottlerModule.forRoot([{
+    ThrottlerModule.forRoot([
+      {
         ttl: 60000,
         limit: 100,
-    }]),
+      },
+    ]),
     EventEmitterModule.forRoot({ global: true }),
     PrismaModule,
     QueueModule, // Global queue service

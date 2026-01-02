@@ -1,5 +1,5 @@
-export type TaskPriority = 'HIGH' | 'MEDIUM' | 'LOW';
-export type TaskType = 'REVIEW' | 'CO_READING' | 'LESSON' | 'PLANNING';
+export type TaskPriority = "HIGH" | "MEDIUM" | "LOW";
+export type TaskType = "REVIEW" | "CO_READING" | "LESSON" | "PLANNING";
 
 export class OpsTask {
   constructor(

@@ -1,6 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { IRecommendationRepository, RecommendationContent } from '../../domain/interfaces/recommendation.repository.interface';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
+import {
+  IRecommendationRepository,
+  RecommendationContent,
+} from "../../domain/interfaces/recommendation.repository.interface";
 
 @Injectable()
 export class PrismaRecommendationRepository implements IRecommendationRepository {
@@ -21,7 +24,7 @@ export class PrismaRecommendationRepository implements IRecommendationRepository
           },
         },
       },
-      orderBy: { started_at: 'desc' },
+      orderBy: { started_at: "desc" },
       take: 3,
     });
 
@@ -46,7 +49,7 @@ export class PrismaRecommendationRepository implements IRecommendationRepository
           },
         },
       },
-      orderBy: { finished_at: 'desc' },
+      orderBy: { finished_at: "desc" },
       take: 10,
     });
 
@@ -61,7 +64,10 @@ export class PrismaRecommendationRepository implements IRecommendationRepository
     return unique.map((session) => session.contents as any);
   }
 
-  async getPopularInGroups(userId: string, groupIds: string[]): Promise<RecommendationContent[]> {
+  async getPopularInGroups(
+    userId: string,
+    groupIds: string[],
+  ): Promise<RecommendationContent[]> {
     if (groupIds.length === 0) return [];
 
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -69,7 +75,7 @@ export class PrismaRecommendationRepository implements IRecommendationRepository
     const popularContent = await this.prisma.contents.findMany({
       where: {
         content_shares: {
-          some: { context_id: { in: groupIds }, context_type: 'STUDY_GROUP' },
+          some: { context_id: { in: groupIds }, context_type: "STUDY_GROUP" },
         },
         reading_sessions: {
           some: {
@@ -106,7 +112,12 @@ export class PrismaRecommendationRepository implements IRecommendationRepository
     })) as any;
   }
 
-  async getSimilarContent(userId: string, types: string[], languages: string[], readIds: string[]): Promise<RecommendationContent[]> {
+  async getSimilarContent(
+    userId: string,
+    types: string[],
+    languages: string[],
+    readIds: string[],
+  ): Promise<RecommendationContent[]> {
     const similar = await this.prisma.contents.findMany({
       where: {
         type: { in: types as any[] },
@@ -118,14 +129,17 @@ export class PrismaRecommendationRepository implements IRecommendationRepository
           select: { id: true, name: true },
         },
       },
-      orderBy: { created_at: 'desc' },
+      orderBy: { created_at: "desc" },
       take: 5,
     });
 
     return similar as any;
   }
 
-  async getTrending(userId: string, readIds: string[]): Promise<RecommendationContent[]> {
+  async getTrending(
+    userId: string,
+    readIds: string[],
+  ): Promise<RecommendationContent[]> {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
     const trending = await this.prisma.contents.findMany({

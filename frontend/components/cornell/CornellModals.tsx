@@ -18,7 +18,6 @@ import { ContentModeSelector } from './ContentModeSelector';
 import { ShareModal } from '../sharing/ShareModal';
 import { GlossaryPopover } from '../glossary/GlossaryPopover';
 import { SuggestionsPanel } from './SuggestionsPanel';
-import { ActionToolbar } from './ActionToolbar';
 import { PremiumFeatureBlock } from '../billing/PremiumFeatureBlock';
 import { ContentMode, ContentModeSource } from '@/lib/types/content-mode';
 import { Definition } from '../glossary/GlossaryPopover';
@@ -54,17 +53,12 @@ export interface CornellModalsProps {
   glossaryPosition: { x: number; y: number } | null;
   onGlossaryClose: () => void;
   
-  // Suggestions Panel
+  // AI Suggestions Panel
   showSuggestions: boolean;
   suggestions: Suggestion[];
   onAcceptSuggestion: (id: string) => void;
   onDismissSuggestion: (id: string) => void;
   hasAIAssistant: boolean;
-  
-  // Action Toolbar
-  showActionToolbar: boolean;
-  activeAction: SelectionAction | null;
-  onActionChange: (action: SelectionAction | null) => void;
   
   // Premium Feature
   showPremiumBlock: boolean;
@@ -110,11 +104,6 @@ export function CornellModals({
   onAcceptSuggestion,
   onDismissSuggestion,
   hasAIAssistant,
-  
-  // Action Toolbar
-  showActionToolbar,
-  activeAction,
-  onActionChange,
   
   // Premium Feature
   showPremiumBlock,
@@ -168,18 +157,6 @@ export function CornellModals({
           suggestions={suggestions}
           onAccept={onAcceptSuggestion}
           onDismiss={onDismissSuggestion}
-        />
-      )}
-      
-      {/* Action Toolbar (AI/Question) */}
-      {showActionToolbar && (
-        <ActionToolbar
-          activeAction={activeAction}
-          onTriageClick={() => {}} // No-op as per current interface logic or add specific handler
-          onHighlightClick={() => onActionChange(activeAction === 'annotation' ? null : 'annotation')}
-          onNoteClick={() => onActionChange(activeAction === 'note' ? null : 'note')}
-          onQuestionClick={() => onActionChange(activeAction === 'question' ? null : 'question')}
-          onAIClick={() => onActionChange(activeAction === 'ai' ? null : 'ai')}
         />
       )}
       

@@ -15,10 +15,7 @@ export class PrismaReviewRepository implements IReviewRepository {
         user_id: userId,
         due_at: { lte: new Date() },
       },
-      orderBy: [
-        { due_at: "asc" },
-        { lapses_count: "desc" },
-      ],
+      orderBy: [{ due_at: "asc" }, { lapses_count: "desc" }],
       take: limit,
       include: {
         contents: {
@@ -46,7 +43,7 @@ export class PrismaReviewRepository implements IReviewRepository {
       dueAt: Date;
       lapsesIncrement: number;
       masteryDelta: number;
-    }
+    },
   ): Promise<Vocabulary> {
     const { id, srsStage, dueAt, lapsesIncrement, masteryDelta } = vocabUpdate;
     const { dimension } = attempt;
@@ -59,7 +56,7 @@ export class PrismaReviewRepository implements IReviewRepository {
     // Let's rely on the service to calculate the NEW TOTAL mastery, OR fetch here.
     // The previous code did: mastery_form: Math.max(0, Math.min(100, vocab.mastery_form + delta))
     // This implies we need the current value.
-    // I will fetch the current item inside the transaction to ensure consistency? 
+    // I will fetch the current item inside the transaction to ensure consistency?
     // Or assume the UseCase already fetched it (optimistic concurrency).
     // Let's implement the atomic logic here.
 
@@ -76,9 +73,11 @@ export class PrismaReviewRepository implements IReviewRepository {
       });
 
       // 2. Fetch current for mastery calculation
-      const current = await tx.user_vocabularies.findUniqueOrThrow({ where: { id } });
-      
-      let newDetails: any = {
+      const current = await tx.user_vocabularies.findUniqueOrThrow({
+        where: { id },
+      });
+
+      const newDetails: any = {
         srs_stage: srsStage,
         due_at: dueAt,
         lapses_count: { increment: lapsesIncrement },
@@ -86,19 +85,28 @@ export class PrismaReviewRepository implements IReviewRepository {
       };
 
       if (dimension === "FORM") {
-        newDetails.mastery_form = Math.max(0, Math.min(100, current.mastery_form + masteryDelta));
+        newDetails.mastery_form = Math.max(
+          0,
+          Math.min(100, current.mastery_form + masteryDelta),
+        );
       } else if (dimension === "MEANING") {
-        newDetails.mastery_meaning = Math.max(0, Math.min(100, current.mastery_meaning + masteryDelta));
+        newDetails.mastery_meaning = Math.max(
+          0,
+          Math.min(100, current.mastery_meaning + masteryDelta),
+        );
       } else if (dimension === "USE") {
-        newDetails.mastery_use = Math.max(0, Math.min(100, current.mastery_use + masteryDelta));
+        newDetails.mastery_use = Math.max(
+          0,
+          Math.min(100, current.mastery_use + masteryDelta),
+        );
       }
 
       const updated = await tx.user_vocabularies.update({
         where: { id },
         data: newDetails,
         include: {
-            contents: { select: { id: true, title: true } }
-        }
+          contents: { select: { id: true, title: true } },
+        },
       });
       return updated;
     });

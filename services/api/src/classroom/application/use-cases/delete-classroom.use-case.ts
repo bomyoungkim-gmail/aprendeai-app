@@ -1,10 +1,16 @@
-import { Injectable, Inject, BadRequestException, NotFoundException } from '@nestjs/common';
-import { IClassroomRepository } from '../../domain/interfaces/classroom.repository.interface';
+import {
+  Injectable,
+  Inject,
+  BadRequestException,
+  NotFoundException,
+} from "@nestjs/common";
+import { IClassroomRepository } from "../../domain/interfaces/classroom.repository.interface";
 
 @Injectable()
 export class DeleteClassroomUseCase {
   constructor(
-    @Inject(IClassroomRepository) private readonly classroomRepo: IClassroomRepository,
+    @Inject(IClassroomRepository)
+    private readonly classroomRepo: IClassroomRepository,
   ) {}
 
   async execute(id: string): Promise<void> {
@@ -15,7 +21,9 @@ export class DeleteClassroomUseCase {
 
     const enrollmentCount = await this.classroomRepo.countEnrollments(id);
     if (enrollmentCount > 0) {
-      throw new BadRequestException('Cannot delete classroom with active enrollments. Remove all students first.');
+      throw new BadRequestException(
+        "Cannot delete classroom with active enrollments. Remove all students first.",
+      );
     }
 
     await this.classroomRepo.delete(id);

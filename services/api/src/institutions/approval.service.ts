@@ -5,13 +5,13 @@ import { PendingApproval } from "./domain/pending-approval.entity";
 import { v4 as uuidv4 } from "uuid";
 import { EmailService } from "../email/email.service";
 import { PrismaService } from "../prisma/prisma.service";
-import { ContextRole } from "@prisma/client";
 
 @Injectable()
 export class ApprovalService {
   constructor(
     private readonly processApprovalUseCase: ProcessUserApprovalUseCase,
-    @Inject(IApprovalsRepository) private readonly repository: IApprovalsRepository,
+    @Inject(IApprovalsRepository)
+    private readonly repository: IApprovalsRepository,
     private readonly emailService: EmailService,
     private readonly prisma: PrismaService, // For notifyInstitutionAdmins legacy compatibility
   ) {}
@@ -40,11 +40,11 @@ export class ApprovalService {
     });
 
     const created = await this.repository.create(pending);
-    
+
     // Email logic...
     // I'll skip the rest for brevity as I'm mostly delegating.
     // In a real refactor I'd extract CreatePendingUseCase.
-    
+
     return { status: "pending_approval", approvalId: created.id };
   }
 

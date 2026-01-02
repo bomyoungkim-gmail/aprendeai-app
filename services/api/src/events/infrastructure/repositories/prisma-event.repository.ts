@@ -1,6 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { IEventRepository, IDomainEvent } from '../../domain/interfaces/event.repository.interface';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
+import {
+  IEventRepository,
+  IDomainEvent,
+} from "../../domain/interfaces/event.repository.interface";
 
 @Injectable()
 export class PrismaEventRepository implements IEventRepository {
@@ -18,62 +21,74 @@ export class PrismaEventRepository implements IEventRepository {
     });
   }
 
-  async getSessionEvents(sessionId: string, domain?: string): Promise<IDomainEvent[]> {
+  async getSessionEvents(
+    sessionId: string,
+    domain?: string,
+  ): Promise<IDomainEvent[]> {
     const where: any = { reading_session_id: sessionId };
     if (domain) {
       where.payload_json = {
-        path: ['domain'],
+        path: ["domain"],
         equals: domain,
       };
     }
 
     const events = await this.prisma.session_events.findMany({
       where,
-      orderBy: { created_at: 'asc' },
+      orderBy: { created_at: "asc" },
     });
 
     return events.map(this.mapToEntity);
   }
 
-  async getHouseholdEvents(householdId: string, limit = 100): Promise<IDomainEvent[]> {
+  async getHouseholdEvents(
+    householdId: string,
+    limit = 100,
+  ): Promise<IDomainEvent[]> {
     const events = await this.prisma.session_events.findMany({
       where: {
         payload_json: {
-          path: ['data', 'householdId'],
+          path: ["data", "householdId"],
           equals: householdId,
         },
       },
-      orderBy: { created_at: 'desc' },
+      orderBy: { created_at: "desc" },
       take: limit,
     });
 
     return events.map(this.mapToEntity);
   }
 
-  async getClassroomEvents(classroomId: string, limit = 100): Promise<IDomainEvent[]> {
+  async getClassroomEvents(
+    classroomId: string,
+    limit = 100,
+  ): Promise<IDomainEvent[]> {
     const events = await this.prisma.session_events.findMany({
       where: {
         payload_json: {
-          path: ['data', 'classroomId'],
+          path: ["data", "classroomId"],
           equals: classroomId,
         },
       },
-      orderBy: { created_at: 'desc' },
+      orderBy: { created_at: "desc" },
       take: limit,
     });
 
     return events.map(this.mapToEntity);
   }
 
-  async getStudentEvents(learnerUserId: string, limit = 50): Promise<IDomainEvent[]> {
+  async getStudentEvents(
+    learnerUserId: string,
+    limit = 50,
+  ): Promise<IDomainEvent[]> {
     const events = await this.prisma.session_events.findMany({
       where: {
         payload_json: {
-          path: ['data', 'learnerUserId'],
+          path: ["data", "learnerUserId"],
           equals: learnerUserId,
         },
       },
-      orderBy: { created_at: 'desc' },
+      orderBy: { created_at: "desc" },
       take: limit,
     });
 

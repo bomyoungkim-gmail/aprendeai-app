@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { IPaymentMethodRepository } from '../../domain/interfaces/payment-method.repository.interface';
-import { PaymentMethod } from '../../domain/entities/payment-method.entity';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
+import { IPaymentMethodRepository } from "../../domain/interfaces/payment-method.repository.interface";
+import { PaymentMethod } from "../../domain/entities/payment-method.entity";
 
 @Injectable()
 export class PrismaPaymentMethodRepository implements IPaymentMethodRepository {
@@ -38,7 +38,7 @@ export class PrismaPaymentMethodRepository implements IPaymentMethodRepository {
   async findByUser(userId: string): Promise<PaymentMethod[]> {
     const methods = await this.prisma.payment_methods.findMany({
       where: { user_id: userId },
-      orderBy: { created_at: 'desc' },
+      orderBy: { created_at: "desc" },
     });
 
     return methods.map((m) => this.mapToEntity(m));

@@ -1,4 +1,4 @@
-import { Classroom } from '../entities/classroom.entity';
+import { Classroom } from "../entities/classroom.entity";
 
 export interface IClassroomRepository {
   create(classroom: Classroom): Promise<Classroom>;

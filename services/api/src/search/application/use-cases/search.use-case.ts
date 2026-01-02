@@ -1,7 +1,10 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { ContentAccessService } from '../../../cornell/services/content-access.service';
-import { ISearchRepository, SearchResult } from '../../domain/interfaces/search.repository.interface';
-import { SearchDto } from '../../dto/search.dto';
+import { Injectable, Inject } from "@nestjs/common";
+import { ContentAccessService } from "../../../cornell/services/content-access.service";
+import {
+  ISearchRepository,
+  SearchResult,
+} from "../../domain/interfaces/search.repository.interface";
+import { SearchDto } from "../../dto/search.dto";
 
 @Injectable()
 export class SearchUseCase {
@@ -16,7 +19,7 @@ export class SearchUseCase {
 
     const searchPromises = [];
 
-    if (!dto.searchIn || dto.searchIn === 'content') {
+    if (!dto.searchIn || dto.searchIn === "content") {
       const filters: any = { ...dto };
       if (userId) {
         // Automatically inject the user's ownership filter
@@ -25,15 +28,15 @@ export class SearchUseCase {
       searchPromises.push(this.searchRepo.searchContent(dto.query, filters));
     }
 
-    if (!dto.searchIn || dto.searchIn === 'annotation') {
+    if (!dto.searchIn || dto.searchIn === "annotation") {
       searchPromises.push(this.searchRepo.searchAnnotations(userId, dto.query));
     }
 
-    if (!dto.searchIn || dto.searchIn === 'note') {
+    if (!dto.searchIn || dto.searchIn === "note") {
       searchPromises.push(this.searchRepo.searchNotes(userId, dto.query));
     }
 
-    if (!dto.searchIn || dto.searchIn === 'transcript') {
+    if (!dto.searchIn || dto.searchIn === "transcript") {
       searchPromises.push(this.searchRepo.searchTranscripts(dto.query, userId));
     }
 

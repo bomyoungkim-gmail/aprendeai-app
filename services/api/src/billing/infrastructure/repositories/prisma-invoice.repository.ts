@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { IInvoiceRepository } from '../../domain/interfaces/invoice.repository.interface';
-import { Invoice } from '../../domain/entities/invoice.entity';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
+import { IInvoiceRepository } from "../../domain/interfaces/invoice.repository.interface";
+import { Invoice } from "../../domain/entities/invoice.entity";
 
 @Injectable()
 export class PrismaInvoiceRepository implements IInvoiceRepository {
@@ -38,7 +38,7 @@ export class PrismaInvoiceRepository implements IInvoiceRepository {
   async findBySubscription(subscriptionId: string): Promise<Invoice[]> {
     const invoices = await this.prisma.invoices.findMany({
       where: { subscription_id: subscriptionId },
-      orderBy: { created_at: 'desc' },
+      orderBy: { created_at: "desc" },
     });
 
     return invoices.map((i) => this.mapToEntity(i));
@@ -66,7 +66,7 @@ export class PrismaInvoiceRepository implements IInvoiceRepository {
       model.period_start,
       model.period_end,
       model.status as any,
-      model.provider_invoice_id || '',
+      model.provider_invoice_id || "",
       model.metadata as Record<string, any>,
     );
   }

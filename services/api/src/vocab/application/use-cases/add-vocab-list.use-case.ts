@@ -21,22 +21,26 @@ export interface AddVocabListOutput {
 @Injectable()
 export class AddVocabListUseCase {
   constructor(
-    @Inject(IVocabRepository) private readonly vocabRepository: IVocabRepository,
+    @Inject(IVocabRepository)
+    private readonly vocabRepository: IVocabRepository,
   ) {}
 
-  async execute(userId: string, items: AddVocabItem[]): Promise<AddVocabListOutput> {
+  async execute(
+    userId: string,
+    items: AddVocabItem[],
+  ): Promise<AddVocabListOutput> {
     const createdIds: string[] = [];
     const updatedIds: string[] = [];
     const resultItems: Vocabulary[] = [];
 
     for (const item of items) {
       const normalized = this.normalizeWord(item.word);
-      
+
       // Check existing to decide if it's effectively a "create" or "update" for reporting
       // Note: The repo upsert handles the DB operation efficiently, but to return accurate "created/updated" counts
       // we might need to know beforehand or infer from the result.
       // For simplicity/performance, we might assume if created_at ~= now, it's new. Use repository logic for that.
-      
+
       const result = await this.vocabRepository.upsert(
         userId,
         normalized,
@@ -54,19 +58,19 @@ export class AddVocabListUseCase {
         {
           // Update Data (just metadata updates usually)
           // current service updates last_seen_at and updated_at
-        }
+        },
       );
 
       // Heuristic check for "Created vs Updated"
       // If created_at is very recent, it's created.
-      const isNew = result.createdAt.getTime() > (Date.now() - 2000); // within last 2 seconds
-      
+      const isNew = result.createdAt.getTime() > Date.now() - 2000; // within last 2 seconds
+
       if (isNew) {
         createdIds.push(result.id);
       } else {
         updatedIds.push(result.id);
       }
-      
+
       resultItems.push(result);
     }
 

@@ -63,6 +63,15 @@ export class ClassroomController {
     return ClassroomMapper.toDto(classroom);
   }
 
+  // Teacher's Classrooms (for Browser Extension)
+
+  @Get("mine")
+  @ApiOperation({ summary: "Get my classrooms (for teacher)" })
+  async getMyClassrooms(@CurrentUser() user: any) {
+    // Get classrooms where user is the owner/educator
+    return this.classroomService.getByEducator(user.id);
+  }
+
   @Get(":id")
   @ApiOperation({ summary: "Get classroom by ID" })
   async getById(@Param("id") id: string) {
@@ -83,15 +92,6 @@ export class ClassroomController {
   @ApiOperation({ summary: "Delete classroom" })
   async delete(@Param("id") id: string) {
     return this.classroomService.delete(id);
-  }
-
-  // Teacher's Classrooms (for Browser Extension)
-
-  @Get("mine")
-  @ApiOperation({ summary: "Get my classrooms (for teacher)" })
-  async getMyClassrooms(@CurrentUser() user: any) {
-    // Get classrooms where user is the owner/educator
-    return this.classroomService.getByEducator(user.id);
   }
 
   // Enrollment

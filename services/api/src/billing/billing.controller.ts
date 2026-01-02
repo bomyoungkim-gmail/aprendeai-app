@@ -146,7 +146,7 @@ export class BillingController {
     const result = await this.billingService.createSubscription(
       req.user.id, // Or target scope/user id
       "plan-id-placeholder", // Should be resolved from planCode
-      "price-id-placeholder" // Should be resolved from planCode
+      "price-id-placeholder", // Should be resolved from planCode
     );
 
     // Audit log

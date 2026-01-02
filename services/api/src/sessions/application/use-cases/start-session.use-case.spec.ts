@@ -64,7 +64,10 @@ describe("StartSessionUseCase", () => {
   });
 
   it("should start a session successfully", async () => {
-    profileService.getOrCreate.mockResolvedValue({ educationLimit: "MEDIO", educationLevel: "MEDIO" } as any);
+    profileService.getOrCreate.mockResolvedValue({
+      educationLimit: "MEDIO",
+      educationLevel: "MEDIO",
+    } as any);
     contentRepository.findById.mockResolvedValue({ id: "content-1" } as any);
     gatingService.determineLayer.mockResolvedValue(AssetLayer.L1);
     repository.create.mockResolvedValue(mockSession);
@@ -73,17 +76,23 @@ describe("StartSessionUseCase", () => {
 
     expect(result.id).toBe("session-1");
     expect(result.minTargetWords).toBe(6); // MEDIO level
-    expect(repository.create).toHaveBeenCalledWith(expect.objectContaining({
-      userId: "user-1",
-      contentId: "content-1",
-      phase: "PRE"
-    }));
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user-1",
+        contentId: "content-1",
+        phase: "PRE",
+      }),
+    );
   });
 
   it("should throw NotFoundException if content does not exist", async () => {
-    profileService.getOrCreate.mockResolvedValue({ educationLimit: "MEDIO" } as any);
+    profileService.getOrCreate.mockResolvedValue({
+      educationLimit: "MEDIO",
+    } as any);
     contentRepository.findById.mockResolvedValue(null);
 
-    await expect(useCase.execute("user-1", "content-999")).rejects.toThrow(NotFoundException);
+    await expect(useCase.execute("user-1", "content-999")).rejects.toThrow(
+      NotFoundException,
+    );
   });
 });

@@ -1,11 +1,12 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { IEnrollmentRepository } from '../../domain/interfaces/enrollment.repository.interface';
-import { Enrollment } from '../../domain/entities/enrollment.entity';
+import { Injectable, Inject, NotFoundException } from "@nestjs/common";
+import { IEnrollmentRepository } from "../../domain/interfaces/enrollment.repository.interface";
+import { Enrollment } from "../../domain/entities/enrollment.entity";
 
 @Injectable()
 export class RemoveStudentUseCase {
   constructor(
-    @Inject(IEnrollmentRepository) private readonly enrollmentRepo: IEnrollmentRepository,
+    @Inject(IEnrollmentRepository)
+    private readonly enrollmentRepo: IEnrollmentRepository,
   ) {}
 
   async execute(enrollmentId: string): Promise<void> {
@@ -19,7 +20,7 @@ export class RemoveStudentUseCase {
       existing.classroomId,
       existing.learnerUserId,
       existing.nickname,
-      'REMOVED',
+      "REMOVED",
       existing.enrolledAt,
     );
 

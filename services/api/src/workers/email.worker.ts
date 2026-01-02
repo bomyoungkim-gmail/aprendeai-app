@@ -8,7 +8,8 @@ export class EmailWorker {
   private readonly logger = new Logger(EmailWorker.name);
 
   constructor(
-    @Inject(IFamilyRepository) private readonly familyRepository: IFamilyRepository,
+    @Inject(IFamilyRepository)
+    private readonly familyRepository: IFamilyRepository,
     private readonly emailService: EmailService,
   ) {}
 

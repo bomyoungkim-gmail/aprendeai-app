@@ -28,7 +28,8 @@ export function SearchBar({
     { type: 'all', label: 'Todos', icon: '📚' },
     { type: 'annotation', label: 'Destaques', icon: '🖍️' },
     { type: 'note', label: 'Notas', icon: '📝' },
-    { type: 'ai-suggestion', label: 'IA', icon: '✨' },
+    { type: 'important', label: 'Importantes', icon: '⭐' },
+    { type: 'question', label: 'Dúvidas', icon: '❓' },
   ];
 
   return (

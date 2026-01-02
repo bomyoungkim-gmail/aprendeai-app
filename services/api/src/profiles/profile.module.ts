@@ -17,6 +17,6 @@ import { UpdateProfileUseCase } from "./application/use-cases/update-profile.use
       useClass: PrismaProfileRepository,
     },
   ],
-  exports: [ProfileService, GetProfileUseCase, IProfileRepository], 
+  exports: [ProfileService, GetProfileUseCase, IProfileRepository],
 })
 export class ProfileModule {}

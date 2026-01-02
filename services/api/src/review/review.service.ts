@@ -29,10 +29,10 @@ export class ReviewService {
     sessionId?: string,
   ) {
     return this.submitReviewUseCase.execute(userId, {
-        vocabId,
-        dimension,
-        result,
-        sessionId
+      vocabId,
+      dimension,
+      result,
+      sessionId,
     });
   }
 

@@ -1,5 +1,5 @@
-export type FeatureFlagEnvironment = 'DEV' | 'STAGE' | 'PROD';
-export type FeatureFlagScopeType = 'GLOBAL' | 'INSTITUTION' | 'USER';
+export type FeatureFlagEnvironment = "DEV" | "STAGE" | "PROD";
+export type FeatureFlagScopeType = "GLOBAL" | "INSTITUTION" | "USER";
 
 export class FeatureFlag {
   id: string;

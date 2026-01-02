@@ -29,7 +29,10 @@ export class PrismaApprovalsRepository implements IApprovalsRepository {
     return found ? this.mapToDomain(found) : null;
   }
 
-  async findByInstitution(institutionId: string, status?: string): Promise<PendingApproval[]> {
+  async findByInstitution(
+    institutionId: string,
+    status?: string,
+  ): Promise<PendingApproval[]> {
     const all = await this.prisma.pending_user_approvals.findMany({
       where: { institution_id: institutionId, status: status as any },
       orderBy: { created_at: "asc" },
@@ -37,7 +40,10 @@ export class PrismaApprovalsRepository implements IApprovalsRepository {
     return all.map(this.mapToDomain);
   }
 
-  async update(id: string, updates: Partial<PendingApproval>): Promise<PendingApproval> {
+  async update(
+    id: string,
+    updates: Partial<PendingApproval>,
+  ): Promise<PendingApproval> {
     const updated = await this.prisma.pending_user_approvals.update({
       where: { id },
       data: {

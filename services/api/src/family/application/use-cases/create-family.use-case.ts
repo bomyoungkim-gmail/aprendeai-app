@@ -1,6 +1,6 @@
 import { Injectable, Inject } from "@nestjs/common";
 import { IFamilyRepository } from "../../domain/family.repository.interface";
-import { Family, FamilyMember } from "../../domain/family.entity";
+import { Family } from "../../domain/family.entity";
 import { CreateFamilyDto } from "../../dto/create-family.dto";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { SubscriptionService } from "../../../billing/subscription.service";
@@ -18,14 +18,14 @@ export class CreateFamilyUseCase {
   async execute(userId: string, dto: CreateFamilyDto): Promise<Family> {
     return this.prisma.$transaction(async (tx) => {
       const familyId = uuidv4();
-      
+
       const created = await tx.families.create({
         data: {
           id: familyId,
           name: dto.name,
           owner_user_id: userId,
           updated_at: new Date(),
-        }
+        },
       });
 
       await tx.family_members.create({
@@ -35,7 +35,7 @@ export class CreateFamilyUseCase {
           user_id: userId,
           role: "OWNER",
           status: "ACTIVE",
-        }
+        },
       });
 
       // Initial subscription

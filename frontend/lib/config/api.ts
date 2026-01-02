@@ -9,7 +9,7 @@
  * Base API URL - includes version prefix
  * Falls back to local development if env var not set
  */
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4000/api/v1';
 
 /**
  * WebSocket URL - uses same base as REST API
@@ -75,6 +75,7 @@ export const API_ENDPOINTS = {
   
   // Cornell Notes
   CORNELL_NOTES: (contentId: string) => `/contents/${contentId}/cornell`,
+  CORNELL_CONFIG: '/contents/config',
   HIGHLIGHTS: (contentId: string) => `/contents/${contentId}/highlights`,
   HIGHLIGHT: (id: string) => `/highlights/${id}`,
   HIGHLIGHT_VISIBILITY: (contentId: string, highlightId: string) => `/contents/${contentId}/highlights/${highlightId}/visibility`,

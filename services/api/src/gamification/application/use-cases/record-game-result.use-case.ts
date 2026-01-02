@@ -13,18 +13,19 @@ export interface RecordGameResultInput {
 @Injectable()
 export class RecordGameResultUseCase {
   constructor(
-    @Inject(IGamificationRepository) private readonly gamificationRepository: IGamificationRepository,
+    @Inject(IGamificationRepository)
+    private readonly gamificationRepository: IGamificationRepository,
   ) {}
 
   async execute(input: RecordGameResultInput): Promise<GameResult> {
     // In future: Add validation logic, Badge Awarding triggers, etc.
     return this.gamificationRepository.createGameResult({
-        userId: input.userId,
-        contentId: input.contentId,
-        gameType: input.gameType,
-        score: input.score,
-        metadata: input.metadata,
-        playedAt: new Date()
+      userId: input.userId,
+      contentId: input.contentId,
+      gameType: input.gameType,
+      score: input.score,
+      metadata: input.metadata,
+      playedAt: new Date(),
     });
   }
 }

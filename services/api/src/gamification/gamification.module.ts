@@ -17,6 +17,6 @@ import { PrismaModule } from "../prisma/prisma.module";
       useClass: PrismaGamificationRepository,
     },
   ],
-  exports: [GamificationService, RecordGameResultUseCase], 
+  exports: [GamificationService, RecordGameResultUseCase],
 })
 export class GamificationModule {}

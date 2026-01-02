@@ -1,14 +1,18 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { IClassroomRepository } from '../../domain/interfaces/classroom.repository.interface';
-import { Classroom } from '../../domain/entities/classroom.entity';
+import { Injectable, Inject, NotFoundException } from "@nestjs/common";
+import { IClassroomRepository } from "../../domain/interfaces/classroom.repository.interface";
+import { Classroom } from "../../domain/entities/classroom.entity";
 
 @Injectable()
 export class UpdateClassroomUseCase {
   constructor(
-    @Inject(IClassroomRepository) private readonly classroomRepo: IClassroomRepository,
+    @Inject(IClassroomRepository)
+    private readonly classroomRepo: IClassroomRepository,
   ) {}
 
-  async execute(id: string, dto: { name?: string; gradeLevel?: string }): Promise<Classroom> {
+  async execute(
+    id: string,
+    dto: { name?: string; gradeLevel?: string },
+  ): Promise<Classroom> {
     const existing = await this.classroomRepo.findById(id);
     if (!existing) {
       throw new NotFoundException(`Classroom with ID ${id} not found`);

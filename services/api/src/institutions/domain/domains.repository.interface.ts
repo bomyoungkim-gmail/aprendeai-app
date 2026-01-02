@@ -18,7 +18,10 @@ export interface IDomainsRepository {
   findByInstitution(institutionId: string): Promise<InstitutionDomain[]>;
   findById(id: string): Promise<InstitutionDomain | null>;
   delete(id: string): Promise<void>;
-  update(id: string, updates: Partial<InstitutionDomain>): Promise<InstitutionDomain>;
+  update(
+    id: string,
+    updates: Partial<InstitutionDomain>,
+  ): Promise<InstitutionDomain>;
 }
 
 export const IDomainsRepository = Symbol("IDomainsRepository");

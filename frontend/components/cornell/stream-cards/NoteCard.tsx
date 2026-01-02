@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Trash2, Edit2 } from 'lucide-react';
+import { BookOpen, Trash2, Edit2 } from 'lucide-react';
 import type { NoteStreamItem, UnifiedStreamItem } from '@/lib/types/unified-stream';
 import { NoteEditor } from '../InlineEditor';
 import { ITEM_TYPE_LABELS } from '@/lib/cornell/labels';
@@ -40,7 +40,7 @@ export function NoteCard({ item, onClick, onEdit, onDelete, onSaveEdit }: NoteCa
       {/* Header */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
+          <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
           <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{ITEM_TYPE_LABELS.NOTE}</span>
         </div>
         
@@ -52,7 +52,7 @@ export function NoteCard({ item, onClick, onEdit, onDelete, onSaveEdit }: NoteCa
               setIsEditing(true);
             }}
             className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-            title="Edit note"
+            title="Editar vocabulário"
           >
             <Edit2 className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400" />
           </button>

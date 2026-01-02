@@ -18,10 +18,8 @@ export type FilterType =
   | 'all' 
   | 'annotation'      // Highlights/annotations
   | 'note'            // Notes
-  | 'ai-suggestion'   // AI suggestions
-  | 'ai-response'     // AI responses  
-  | 'question'        // Questions
-  | 'star';           // Starred items
+  | 'important'       // Important items (renamed from star)
+  | 'question';       // Questions
 
 /**
  * Sort types for content ordering

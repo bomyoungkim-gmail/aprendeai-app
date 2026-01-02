@@ -1,6 +1,6 @@
 import { Injectable, Inject } from "@nestjs/common";
 import { IGameProgressRepository } from "../../domain/interfaces/game-progress.repository.interface";
-import { GameProgressSummary, GameProgressDto } from "../../dto/game-progress.dto";
+import { GameProgressSummary } from "../../dto/game-progress.dto";
 
 @Injectable()
 export class GetUserProgressUseCase {

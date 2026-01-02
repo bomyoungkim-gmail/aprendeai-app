@@ -1,7 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { IEnrollmentRepository } from '../../domain/interfaces/enrollment.repository.interface';
-import { Enrollment, EnrollmentStatus } from '../../domain/entities/enrollment.entity';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
+import { IEnrollmentRepository } from "../../domain/interfaces/enrollment.repository.interface";
+import {
+  Enrollment,
+  EnrollmentStatus,
+} from "../../domain/entities/enrollment.entity";
 
 @Injectable()
 export class PrismaEnrollmentRepository implements IEnrollmentRepository {
@@ -21,7 +24,10 @@ export class PrismaEnrollmentRepository implements IEnrollmentRepository {
     return this.mapToEntity(created);
   }
 
-  async find(classroomId: string, learnerUserId: string): Promise<Enrollment | null> {
+  async find(
+    classroomId: string,
+    learnerUserId: string,
+  ): Promise<Enrollment | null> {
     const enrollment = await this.prisma.enrollments.findFirst({
       where: {
         classroom_id: classroomId,
@@ -58,22 +64,22 @@ export class PrismaEnrollmentRepository implements IEnrollmentRepository {
     const enrollments = await this.prisma.enrollments.findMany({
       where: {
         classroom_id: classroomId,
-        status: 'ACTIVE',
+        status: "ACTIVE",
       },
     });
 
-    return enrollments.map(e => this.mapToEntity(e));
+    return enrollments.map((e) => this.mapToEntity(e));
   }
 
   async findByStudent(learnerUserId: string): Promise<Enrollment[]> {
     const enrollments = await this.prisma.enrollments.findMany({
       where: {
         learner_user_id: learnerUserId,
-        status: 'ACTIVE',
+        status: "ACTIVE",
       },
     });
 
-    return enrollments.map(e => this.mapToEntity(e));
+    return enrollments.map((e) => this.mapToEntity(e));
   }
 
   private mapToEntity(data: any): Enrollment {

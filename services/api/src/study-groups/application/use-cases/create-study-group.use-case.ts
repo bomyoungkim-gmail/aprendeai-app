@@ -1,6 +1,6 @@
 import { Injectable, Inject } from "@nestjs/common";
 import { IStudyGroupsRepository } from "../../domain/study-groups.repository.interface";
-import { StudyGroup, StudyGroupMember } from "../../domain/study-group.entity";
+import { StudyGroup } from "../../domain/study-group.entity";
 import { CreateGroupDto } from "../../dto/create-group.dto";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { v4 as uuidv4 } from "uuid";
@@ -8,7 +8,8 @@ import { v4 as uuidv4 } from "uuid";
 @Injectable()
 export class CreateStudyGroupUseCase {
   constructor(
-    @Inject(IStudyGroupsRepository) private readonly repository: IStudyGroupsRepository,
+    @Inject(IStudyGroupsRepository)
+    private readonly repository: IStudyGroupsRepository,
     private readonly prisma: PrismaService, // For transaction
   ) {}
 
@@ -27,7 +28,7 @@ export class CreateStudyGroupUseCase {
       // Since repository doesn't take 'tx' yet, I'll use tx directly for atomicity if needed,
       // or I'll just use the repository calls if they were part of a tx manager.
       // For now, I'll use tx directly as the previous service did.
-      
+
       const created = await tx.study_groups.create({
         data: {
           id: group.id,
@@ -48,11 +49,11 @@ export class CreateStudyGroupUseCase {
       });
 
       return new StudyGroup({
-          id: created.id,
-          name: created.name,
-          scopeId: created.scope_id,
-          scopeType: created.scope_type,
-          ownerId: userId,
+        id: created.id,
+        name: created.name,
+        scopeId: created.scope_id,
+        scopeType: created.scope_type,
+        ownerId: userId,
       });
     });
   }

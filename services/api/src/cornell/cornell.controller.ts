@@ -52,6 +52,11 @@ export class CornellController {
     return this.contentService.createManualContent(req.user.id, dto);
   }
 
+  @Get("config")
+  async getConfig() {
+    return this.cornellService.getConfig();
+  }
+
   @Patch(":id/update")
   async updateContent(
     @Param("id") id: string,
@@ -129,56 +134,6 @@ export class CornellController {
 
   // Skipping searchContent, proxyFile, getContent, etc. to minimize diff.
 
-  @Post(":id/simplify")
-  async triggerSimplify(
-    @Param("id") id: string,
-    @Body() body: { text: string; level?: string; lang?: string },
-  ) {
-    try {
-      const payload = {
-        action: "SIMPLIFY",
-        contentId: id,
-        text: body.text,
-        level: body.level || DEFAULTS.SCHOOL_LEVEL.ELEMENTARY_5,
-        targetLang: body.lang || DEFAULTS.LANGUAGE.PT_BR,
-      };
-
-      await this.queueService.publish(QUEUES.CONTENT_PROCESS, payload);
-
-      return { message: "Simplification task queued" };
-    } catch (err) {
-      console.error(err);
-      throw new HttpException(
-        "Failed to queue task",
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  @Post(":id/assessment")
-  async triggerAssessment(
-    @Param("id") id: string,
-    @Body() body: { text: string; level?: string },
-  ) {
-    try {
-      const payload = {
-        action: "ASSESSMENT",
-        contentId: id,
-        text: body.text,
-        level: body.level || DEFAULTS.SCHOOL_LEVEL.HIGH_SCHOOL_1,
-      };
-
-      await this.queueService.publish(QUEUES.CONTENT_PROCESS, payload);
-
-      return { message: "Assessment task queued" };
-    } catch (err) {
-      console.error(err);
-      throw new HttpException(
-        "Failed to queue task",
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
 
   @Get(":id/highlights")
   async getHighlights(@Param("id") id: string, @Request() req) {

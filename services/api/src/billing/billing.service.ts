@@ -11,7 +11,8 @@ import { v4 as uuidv4 } from "uuid";
 @Injectable()
 export class BillingService {
   constructor(
-    @Inject(IPlansRepository) private readonly plansRepository: IPlansRepository,
+    @Inject(IPlansRepository)
+    private readonly plansRepository: IPlansRepository,
     private createSubscriptionUseCase: CreateSubscriptionUseCase,
     private cancelSubscriptionUseCase: CancelSubscriptionUseCase,
     private addPaymentMethodUseCase: AddPaymentMethodUseCase,
@@ -20,8 +21,16 @@ export class BillingService {
   ) {}
 
   // --- Subscriptions ---
-  async createSubscription(userId: string, planId: string, stripePriceId: string) {
-    return this.createSubscriptionUseCase.execute(userId, planId, stripePriceId);
+  async createSubscription(
+    userId: string,
+    planId: string,
+    stripePriceId: string,
+  ) {
+    return this.createSubscriptionUseCase.execute(
+      userId,
+      planId,
+      stripePriceId,
+    );
   }
 
   async cancelSubscription(subscriptionId: string) {

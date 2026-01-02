@@ -10,7 +10,7 @@ import { TransactionalAdapterPrisma } from "@nestjs-cls/transactional-adapter-pr
 export class UsersRepository implements IUsersRepository {
   constructor(
     private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
-    private prisma: PrismaService
+    private prisma: PrismaService,
   ) {}
 
   private get db() {
@@ -70,7 +70,10 @@ export class UsersRepository implements IUsersRepository {
     });
   }
 
-  async countUsersByDomain(domainSuffix: string, institutionId: string): Promise<number> {
+  async countUsersByDomain(
+    domainSuffix: string,
+    institutionId: string,
+  ): Promise<number> {
     return this.db.users.count({
       where: {
         email: { endsWith: domainSuffix },

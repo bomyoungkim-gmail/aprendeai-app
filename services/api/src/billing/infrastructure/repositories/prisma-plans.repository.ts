@@ -47,16 +47,20 @@ export class PrismaPlansRepository implements IPlansRepository {
   }
 
   async update(id: string, updates: Partial<Plan>): Promise<Plan> {
-      // Logic from BillingService: "isActive" update maps to "is_active", etc.
-      // But update takes Partial<Plan>.
-      const data: any = {};
-      if (updates.name !== undefined) data.name = updates.name;
-      if (updates.description !== undefined) data.description = updates.description;
-      if (updates.entitlements !== undefined) data.entitlements = updates.entitlements;
-      if (updates.monthlyPrice !== undefined) data.monthly_price = updates.monthlyPrice;
-      if (updates.yearlyPrice !== undefined) data.yearly_price = updates.yearlyPrice;
-      if (updates.isActive !== undefined) data.is_active = updates.isActive;
-      data.updated_at = new Date();
+    // Logic from BillingService: "isActive" update maps to "is_active", etc.
+    // But update takes Partial<Plan>.
+    const data: any = {};
+    if (updates.name !== undefined) data.name = updates.name;
+    if (updates.description !== undefined)
+      data.description = updates.description;
+    if (updates.entitlements !== undefined)
+      data.entitlements = updates.entitlements;
+    if (updates.monthlyPrice !== undefined)
+      data.monthly_price = updates.monthlyPrice;
+    if (updates.yearlyPrice !== undefined)
+      data.yearly_price = updates.yearlyPrice;
+    if (updates.isActive !== undefined) data.is_active = updates.isActive;
+    data.updated_at = new Date();
 
     const updated = await this.prisma.plans.update({
       where: { id },
@@ -72,8 +76,10 @@ export class PrismaPlansRepository implements IPlansRepository {
       name: item.name,
       description: item.description,
       entitlements: item.entitlements,
-      monthlyPrice: item.monthly_price !== null ? Number(item.monthly_price) : undefined,
-      yearlyPrice: item.yearly_price !== null ? Number(item.yearly_price) : undefined,
+      monthlyPrice:
+        item.monthly_price !== null ? Number(item.monthly_price) : undefined,
+      yearlyPrice:
+        item.yearly_price !== null ? Number(item.yearly_price) : undefined,
       isActive: item.is_active,
       createdAt: item.created_at,
       updatedAt: item.updated_at,

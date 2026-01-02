@@ -1,5 +1,13 @@
-import { Injectable, Inject, ConflictException, BadRequestException } from "@nestjs/common";
-import { IDomainsRepository, InstitutionDomain } from "../../domain/domains.repository.interface";
+import {
+  Injectable,
+  Inject,
+  ConflictException,
+  BadRequestException,
+} from "@nestjs/common";
+import {
+  IDomainsRepository,
+  InstitutionDomain,
+} from "../../domain/domains.repository.interface";
 import { AdminService } from "../../../admin/admin.service";
 import { IUsersRepository } from "../../../users/domain/users.repository.interface";
 import { AddDomainDto } from "../../dto/institution.dto";
@@ -8,20 +16,26 @@ import { v4 as uuidv4 } from "uuid";
 @Injectable()
 export class InstitutionDomainUseCase {
   constructor(
-    @Inject(IDomainsRepository) private readonly domainsRepository: IDomainsRepository,
+    @Inject(IDomainsRepository)
+    private readonly domainsRepository: IDomainsRepository,
     private readonly adminService: AdminService,
-    @Inject(IUsersRepository) private readonly usersRepository: IUsersRepository,
+    @Inject(IUsersRepository)
+    private readonly usersRepository: IUsersRepository,
   ) {}
 
   async addDomain(institutionId: string, dto: AddDomainDto, addedBy: string) {
     const domainPattern = /^@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!domainPattern.test(dto.domain)) {
-      throw new BadRequestException("Invalid domain format. Must be @domain.com");
+      throw new BadRequestException(
+        "Invalid domain format. Must be @domain.com",
+      );
     }
 
     const existing = await this.domainsRepository.findByDomain(dto.domain);
     if (existing) {
-      throw new ConflictException("Domain already registered to another institution");
+      throw new ConflictException(
+        "Domain already registered to another institution",
+      );
     }
 
     const domain = new InstitutionDomain({
@@ -54,11 +68,13 @@ export class InstitutionDomainUseCase {
     // Check if there are users with this domain
     const usersCount = await this.usersRepository.countUsersByDomain(
       domain.domain.substring(1),
-      domain.institutionId
+      domain.institutionId,
     );
 
     if (usersCount > 0) {
-      throw new ConflictException(`Cannot remove domain with ${usersCount} active users`);
+      throw new ConflictException(
+        `Cannot remove domain with ${usersCount} active users`,
+      );
     }
 
     await this.domainsRepository.delete(domainId);

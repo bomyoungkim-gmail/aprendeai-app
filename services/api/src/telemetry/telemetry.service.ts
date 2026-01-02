@@ -1,9 +1,9 @@
-import { Injectable, OnModuleDestroy, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { TrackEventDto } from './dto/track-event.dto';
-import { Prisma } from '@prisma/client';
+import { Injectable, OnModuleDestroy, Logger } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { TrackEventDto } from "./dto/track-event.dto";
+import { Prisma } from "@prisma/client";
 
-import { SanitizationService } from './sanitization.service'; // Added
+import { SanitizationService } from "./sanitization.service"; // Added
 
 @Injectable()
 export class TelemetryService implements OnModuleDestroy {
@@ -15,7 +15,7 @@ export class TelemetryService implements OnModuleDestroy {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly sanitizer: SanitizationService // Injected
+    private readonly sanitizer: SanitizationService, // Injected
   ) {
     this.startFlushInterval();
   }
@@ -37,7 +37,7 @@ export class TelemetryService implements OnModuleDestroy {
       content_id: dto.contentId,
       session_id: dto.sessionId,
       event_type: dto.eventType,
-      event_version: dto.eventVersion || '1.0.0',
+      event_version: dto.eventVersion || "1.0.0",
       ui_policy_version: dto.uiPolicyVersion || null,
       mode: dto.mode || null,
       data: scrubbedData ? (scrubbedData as any) : Prisma.JsonNull, // Use scrubbed data
@@ -47,7 +47,9 @@ export class TelemetryService implements OnModuleDestroy {
     this.eventBuffer.push(eventInput);
 
     if (this.eventBuffer.length >= this.BATCH_SIZE) {
-      this.logger.debug(`Buffer full (${this.eventBuffer.length} events). Flushing...`);
+      this.logger.debug(
+        `Buffer full (${this.eventBuffer.length} events). Flushing...`,
+      );
       await this.flush(); // Await here to ensure backpressure if needed, though caller ignores it mostly
     }
   }
@@ -62,20 +64,22 @@ export class TelemetryService implements OnModuleDestroy {
     this.eventBuffer = []; // Clear buffer immediately to avoid double processing
 
     try {
-      this.logger.debug(`Flushing ${eventsToSave.length} telemetry events to DB...`);
-      
+      this.logger.debug(
+        `Flushing ${eventsToSave.length} telemetry events to DB...`,
+      );
+
       await this.prisma.telemetry_events.createMany({
         data: eventsToSave,
         skipDuplicates: true, // Safety net
       });
 
-      this.logger.debug('Flush complete.');
+      this.logger.debug("Flush complete.");
     } catch (error) {
-      this.logger.error('Failed to flush telemetry events', error.stack);
-      // Strategy: Re-queue failed events? 
-      // For telemetry, we often drop data rather than risk memory leaks or crash. 
+      this.logger.error("Failed to flush telemetry events", error.stack);
+      // Strategy: Re-queue failed events?
+      // For telemetry, we often drop data rather than risk memory leaks or crash.
       // But for critical analytics, we might retry.
-      // Decision: Drop and log for Sprint 1. MVP. 
+      // Decision: Drop and log for Sprint 1. MVP.
       // To improve: Add to a DLQ or retry buffer with limit.
     }
   }
@@ -84,7 +88,9 @@ export class TelemetryService implements OnModuleDestroy {
    * Ensures all buffered events are saved before the application shuts down.
    */
   async onModuleDestroy() {
-    this.logger.log('TelemetryService destroying. Flushing remaining events...');
+    this.logger.log(
+      "TelemetryService destroying. Flushing remaining events...",
+    );
     clearInterval(this.flushInterval);
     await this.flush();
   }
@@ -98,7 +104,7 @@ export class TelemetryService implements OnModuleDestroy {
     await this.flush();
 
     const stats = await this.prisma.telemetry_events.groupBy({
-      by: ['event_type'],
+      by: ["event_type"],
       where: {
         content_id: contentId,
       },
@@ -109,7 +115,7 @@ export class TelemetryService implements OnModuleDestroy {
 
     // Format as { VIEW_CONTENT: 10, SCROLL: 50, ... }
     const result: Record<string, number> = {};
-    stats.forEach(item => {
+    stats.forEach((item) => {
       result[item.event_type] = item._count.event_type;
     });
 

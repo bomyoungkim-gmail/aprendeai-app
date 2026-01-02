@@ -1,4 +1,4 @@
-import { Enrollment } from '../entities/enrollment.entity';
+import { Enrollment } from "../entities/enrollment.entity";
 
 export interface IEnrollmentRepository {
   enroll(enrollment: Enrollment): Promise<Enrollment>;

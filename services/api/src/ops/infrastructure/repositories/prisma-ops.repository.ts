@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { IOpsRepository } from '../../domain/interfaces/ops.repository.interface';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
+import { IOpsRepository } from "../../domain/interfaces/ops.repository.interface";
 
 @Injectable()
 export class PrismaOpsRepository implements IOpsRepository {
@@ -21,7 +21,10 @@ export class PrismaOpsRepository implements IOpsRepository {
 
     return sessions.reduce((sum, s) => {
       if (s.finished_at && s.started_at) {
-        return sum + Math.floor((s.finished_at.getTime() - s.started_at.getTime()) / 60000);
+        return (
+          sum +
+          Math.floor((s.finished_at.getTime() - s.started_at.getTime()) / 60000)
+        );
       }
       return sum;
     }, 0);

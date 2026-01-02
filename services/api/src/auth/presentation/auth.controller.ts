@@ -70,19 +70,25 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: "Invalid credentials" })
   @ApiBody({ type: LoginDto })
-  async login(@Body() loginDto: LoginDto, @Response({ passthrough: true }) res) {
+  async login(
+    @Body() loginDto: LoginDto,
+    @Response({ passthrough: true }) res,
+  ) {
     this.logger.log(`Login attempt: ${loginDto.email}`);
-    const result = await this.loginUseCase.execute(loginDto.email, loginDto.password);
-    
+    const result = await this.loginUseCase.execute(
+      loginDto.email,
+      loginDto.password,
+    );
+
     // Set refresh token as HTTP-only cookie
-    res.cookie('refresh_token', result.refresh_token, {
+    res.cookie("refresh_token", result.refresh_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: '/',
+      path: "/",
     });
-    
+
     // Return only access token and user in response body
     return {
       access_token: result.access_token,
@@ -98,25 +104,25 @@ export class AuthController {
     description: "Token refreshed successfully, returns new access token",
   })
   @ApiResponse({ status: 401, description: "Invalid or expired refresh token" })
-  @ApiBody({ schema: { properties: { refresh_token: { type: "string" } } }, required: false })
-  async refresh(
-    @Body() body: { refresh_token?: string },
-    @Request() req,
-  ) {
+  @ApiBody({
+    schema: { properties: { refresh_token: { type: "string" } } },
+    required: false,
+  })
+  async refresh(@Body() body: { refresh_token?: string }, @Request() req) {
     this.logger.log("Token refresh attempt");
-    
+
     // Try to get refresh token from cookie first, fallback to body (backward compatibility)
     const refreshToken = req.cookies?.refresh_token || body.refresh_token;
-    
+
     if (!refreshToken) {
-      throw new Error('No refresh token provided');
+      throw new Error("No refresh token provided");
     }
-    
+
     const result = await this.refreshTokenUseCase.execute(refreshToken);
-    
+
     // Note: Refresh token rotation not implemented yet
     // The same refresh token cookie remains valid until expiration
-    
+
     // Return only access token and user
     return {
       access_token: result.access_token,

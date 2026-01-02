@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import mammoth from 'mammoth';
 import { FileText, AlertCircle, Loader2 } from 'lucide-react';
 import { logger } from '@/lib/utils/logger';
+import { api } from '@/lib/api';
 import type { Content, ViewMode } from '@/lib/types/cornell';
 
 interface DocxViewerProps {
@@ -31,13 +32,12 @@ export function DocxViewer({ content, mode }: DocxViewerProps) {
       setLoading(true);
       setError(null);
 
-      // Fetch DOCX file
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch file: ${response.statusText}`);
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
+      // Fetch DOCX file using authenticated api instance
+      const response = await api.get(url, {
+        responseType: 'arraybuffer',
+      });
+      
+      const arrayBuffer = response.data;
 
       // Convert to HTML using Mammoth
       const result = await mammoth.convertToHtml(

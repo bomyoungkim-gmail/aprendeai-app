@@ -1,63 +1,24 @@
-/**
- * Cornell Type Selector Component
- * 
- * Radio button selector for Cornell Notes annotation types.
- * Auto-assigns colors based on type.
- */
-
-import React from 'react';
-import { MessageSquare, HelpCircle, Star, Highlighter } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { MessageSquare, HelpCircle, Star, Highlighter, Type, LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { HighlightType } from '@/lib/cornell/labels';
-import { getColorForCornellType } from '@/lib/cornell/type-color-map';
+import { useCornellConfig } from '@/hooks/cornell/use-cornell-config';
 
-const CORNELL_TYPES = [
-  {
-    value: 'NOTE' as const,
-    label: 'Nota',
-    description: 'Anotações detalhadas',
-    icon: MessageSquare,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50',
-    borderColor: 'border-green-300',
-  },
-  {
-    value: 'QUESTION' as const,
-    label: 'Questão',
-    description: 'Dúvidas ou perguntas',
-    icon: HelpCircle,
-    color: 'text-red-600',
-    bgColor: 'bg-red-50',
-    borderColor: 'border-red-300',
-  },
-  {
-    value: 'STAR' as const,
-    label: 'Importante',
-    description: 'Conceitos-chave',
-    icon: Star,
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-50',
-    borderColor: 'border-yellow-300',
-  },
-  {
-    value: 'SUMMARY' as const,
-    label: 'Síntese',
-    description: 'Síntese parcial',
-    icon: Highlighter, // Using Highlighter as fallback, maybe MessageSquare is better? Or a new icon. Using Highlighter for now.
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-50',
-    borderColor: 'border-yellow-300',
-  },
-  {
-    value: 'HIGHLIGHT' as const,
-    label: 'Destaque',
-    description: 'Destaque geral',
-    icon: Highlighter,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-300',
-  },
-] as const;
+const ICON_MAP: Record<string, LucideIcon> = {
+  HIGHLIGHT: Highlighter,
+  IMPORTANT: Star,
+  SYNTHESIS: Type,
+  QUESTION: HelpCircle,
+  NOTE: MessageSquare,
+};
+
+const COLOR_MAP: Record<string, { color: string; bgColor: string; borderColor: string; ringColor: string }> = {
+  yellow: { color: 'text-yellow-600', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-300', ringColor: 'ring-yellow-400' },
+  red: { color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-300', ringColor: 'ring-red-400' },
+  blue: { color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-300', ringColor: 'ring-blue-400' },
+  purple: { color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-300', ringColor: 'ring-purple-400' },
+  green: { color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-300', ringColor: 'ring-green-400' },
+};
 
 export interface CornellTypeSelectorProps {
   value: Exclude<HighlightType, 'AI_RESPONSE'>;
@@ -72,13 +33,28 @@ export function CornellTypeSelector({
   disabled = false,
   className,
 }: CornellTypeSelectorProps) {
+  const { data: config, isLoading } = useCornellConfig();
+
+  const types = useMemo(() => {
+    if (!config?.types) return [];
+    return config.types.map(t => ({
+      value: t.id as Exclude<HighlightType, 'AI_RESPONSE'>,
+      label: t.label,
+      description: t.label === 'Destaque' ? 'Destaque geral' : t.label === 'Importante' ? 'Conceitos-chave' : 'Anotação',
+      icon: ICON_MAP[t.id] || Highlighter,
+      ...COLOR_MAP[t.color || 'yellow']
+    }));
+  }, [config]);
+
+  if (isLoading) return <div className="h-20 flex items-center justify-center animate-pulse bg-gray-100 rounded-lg" />;
+
   return (
     <div className={cn('space-y-2', className)}>
       <label className="text-sm font-medium text-gray-700">
         Tipo de Anotação
       </label>
       <div className="grid grid-cols-2 gap-2">
-        {CORNELL_TYPES.map((type) => {
+        {types.map((type) => {
           const Icon = type.icon;
           const isSelected = value === type.value;
 
@@ -97,7 +73,7 @@ export function CornellTypeSelector({
                       type.borderColor,
                       'ring-2',
                       'ring-offset-2',
-                      `ring-${type.color.split('-')[1]}-400`,
+                      type.ringColor,
                     ]
                   : 'bg-white border-gray-200 hover:border-gray-300',
                 disabled && 'opacity-50 cursor-not-allowed'
@@ -139,9 +115,21 @@ export function CornellTypeSelectorCompact({
   disabled = false,
   className,
 }: CornellTypeSelectorProps) {
+  const { data: config } = useCornellConfig();
+
+  const types = useMemo(() => {
+    if (!config?.types) return [];
+    return config.types.map(t => ({
+      value: t.id as Exclude<HighlightType, 'AI_RESPONSE'>,
+      label: t.label,
+      icon: ICON_MAP[t.id] || Highlighter,
+      ...COLOR_MAP[t.color || 'yellow']
+    }));
+  }, [config]);
+
   return (
     <div className={cn('inline-flex items-center gap-1', className)}>
-      {CORNELL_TYPES.map((type) => {
+      {types.map((type) => {
         const Icon = type.icon;
         const isSelected = value === type.value;
 

@@ -25,8 +25,31 @@ export class CreateHighlightDto {
   @IsEnum(["TEXT", "AREA"])
   kind: "TEXT" | "AREA";
 
-  @IsEnum(["PDF", "IMAGE", "DOCX", "VIDEO", "AUDIO", "ARTICLE", "TEXT", "NEWS", "ARXIV", "SCHOOL_MATERIAL", "WEB_CLIP"])
-  target_type: "PDF" | "IMAGE" | "DOCX" | "VIDEO" | "AUDIO" | "ARTICLE" | "TEXT" | "NEWS" | "ARXIV" | "SCHOOL_MATERIAL" | "WEB_CLIP";
+  @IsEnum([
+    "PDF",
+    "IMAGE",
+    "DOCX",
+    "VIDEO",
+    "AUDIO",
+    "ARTICLE",
+    "TEXT",
+    "NEWS",
+    "ARXIV",
+    "SCHOOL_MATERIAL",
+    "WEB_CLIP",
+  ])
+  target_type:
+    | "PDF"
+    | "IMAGE"
+    | "DOCX"
+    | "VIDEO"
+    | "AUDIO"
+    | "ARTICLE"
+    | "TEXT"
+    | "NEWS"
+    | "ARXIV"
+    | "SCHOOL_MATERIAL"
+    | "WEB_CLIP";
 
   @IsOptional()
   @IsInt()
@@ -94,8 +117,31 @@ export class CreateContentDto {
   @IsString()
   title: string;
 
-  @IsEnum(["PDF", "IMAGE", "DOCX", "VIDEO", "AUDIO", "TEXT", "ARTICLE", "NEWS", "ARXIV", "SCHOOL_MATERIAL", "WEB_CLIP"])
-  type: "PDF" | "IMAGE" | "DOCX" | "VIDEO" | "AUDIO" | "TEXT" | "ARTICLE" | "NEWS" | "ARXIV" | "SCHOOL_MATERIAL" | "WEB_CLIP";
+  @IsEnum([
+    "PDF",
+    "IMAGE",
+    "DOCX",
+    "VIDEO",
+    "AUDIO",
+    "TEXT",
+    "ARTICLE",
+    "NEWS",
+    "ARXIV",
+    "SCHOOL_MATERIAL",
+    "WEB_CLIP",
+  ])
+  type:
+    | "PDF"
+    | "IMAGE"
+    | "DOCX"
+    | "VIDEO"
+    | "AUDIO"
+    | "TEXT"
+    | "ARTICLE"
+    | "NEWS"
+    | "ARXIV"
+    | "SCHOOL_MATERIAL"
+    | "WEB_CLIP";
 
   @IsString()
   @IsOptional()

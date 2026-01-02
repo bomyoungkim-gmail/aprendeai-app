@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { UpdateReadingProgressDto } from '../../dto/reading-progress.dto';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
+import { UpdateReadingProgressDto } from "../../dto/reading-progress.dto";
 
 @Injectable()
 export class UpdateReadingProgressUseCase {
@@ -8,8 +8,14 @@ export class UpdateReadingProgressUseCase {
 
   constructor(private prisma: PrismaService) {}
 
-  async execute(user_id: string, content_id: string, dto: UpdateReadingProgressDto) {
-    this.logger.log(`Updating reading progress for user ${user_id}, content ${content_id}`);
+  async execute(
+    user_id: string,
+    content_id: string,
+    dto: UpdateReadingProgressDto,
+  ) {
+    this.logger.log(
+      `Updating reading progress for user ${user_id}, content ${content_id}`,
+    );
 
     return this.prisma.reading_progress.upsert({
       where: {

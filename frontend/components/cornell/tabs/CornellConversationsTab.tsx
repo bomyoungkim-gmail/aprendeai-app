@@ -9,6 +9,9 @@ import { ThreadPanel } from '../../sharing/ThreadPanel';
 import { AIChatPanel } from '../AIChatPanel';
 import { ShareContextType } from '@/lib/types/sharing';
 import { Bot, Users } from 'lucide-react';
+import { useCornellLayout } from '@/contexts/CornellLayoutContext';
+
+
 
 export interface CornellConversationsTabProps {
   contentId: string;
@@ -21,13 +24,14 @@ export function CornellConversationsTab({
   contentId,
   threadContext,
 }: CornellConversationsTabProps) {
+  const { aiContext } = useCornellLayout();
   // Determine if we have a group context
   const hasGroupContext = threadContext.type === ShareContextType.FAMILY || 
                          threadContext.type === ShareContextType.CLASSROOM ||
                          threadContext.type === ShareContextType.STUDY_GROUP;
 
-  // Default to AI if individual, otherwise default to Group (or let user toggle)
-  const [activeSubTab, setActiveSubTab] = useState<SubTab>(hasGroupContext ? 'GROUP' : 'AI');
+  // Default to AI always (user can toggle to Group if needed)
+  const [activeSubTab, setActiveSubTab] = useState<SubTab>('AI');
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-800">
@@ -64,7 +68,11 @@ export function CornellConversationsTab({
       {/* Content Area */}
       <div className="flex-1 overflow-hidden relative">
         {activeSubTab === 'AI' ? (
-          <AIChatPanel className="absolute inset-0" />
+          <AIChatPanel 
+            className="absolute inset-0" 
+            selection={aiContext}
+            initialInput={aiContext ? `Sobre o texto: "${aiContext}"\n` : ''}
+          />
         ) : (
           <ThreadPanel
             query={{

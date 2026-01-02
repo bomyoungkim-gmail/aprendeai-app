@@ -126,9 +126,27 @@ async function bootstrap() {
   });
   logger.log("📚 Swagger documentation available at /api/docs");
 
-  // Enable CORS for frontend - Phase 1: Centralized URLs
+  // Enable CORS for frontend - Ultra-robust for local development
   app.enableCors({
-    origin: URL_CONFIG.corsOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin) return callback(null, true);
+
+      const isDevelopment = process.env.NODE_ENV !== "production";
+      const allowedOrigins = URL_CONFIG.corsOrigins;
+
+      if (
+        allowedOrigins.includes(origin) ||
+        (isDevelopment &&
+          (origin.includes("localhost:3000") ||
+            origin.includes("127.0.0.1:3000")))
+      ) {
+        callback(null, true);
+      } else {
+        logger.error(`🚫 CORS blocked for origin: ${origin}`);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   });
 

@@ -1,4 +1,4 @@
-export type EnrollmentStatus = 'ACTIVE' | 'REMOVED';
+export type EnrollmentStatus = "ACTIVE" | "REMOVED";
 
 export class Enrollment {
   constructor(
@@ -6,7 +6,7 @@ export class Enrollment {
     public readonly classroomId: string,
     public readonly learnerUserId: string,
     public readonly nickname?: string,
-    public readonly status: EnrollmentStatus = 'ACTIVE',
+    public readonly status: EnrollmentStatus = "ACTIVE",
     public readonly enrolledAt: Date = new Date(),
   ) {}
 }

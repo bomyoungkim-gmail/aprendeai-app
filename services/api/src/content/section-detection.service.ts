@@ -1,19 +1,19 @@
 /**
  * Section Detection Service
- * 
+ *
  * Application layer - orchestrates use cases
  * Following MelhoresPraticas.txt: application layer for orchestration
  */
 
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 
 export interface Section {
   id: string;
   title: string;
   startLine: number;
   endLine?: number;
-  type: 'IMRAD' | 'HEADING' | 'PARAGRAPH';
+  type: "IMRAD" | "HEADING" | "PARAGRAPH";
 }
 
 @Injectable()
@@ -24,11 +24,11 @@ export class SectionDetectionService {
     // Fetch content
     const content = await this.prisma.contents.findUnique({
       where: { id: contentId },
-      select: { 
-        id: true, 
+      select: {
+        id: true,
         title: true,
         // Note: raw_text might not exist in schema, using title as fallback
-      }
+      },
     });
 
     if (!content) {
@@ -39,7 +39,7 @@ export class SectionDetectionService {
     const text = content.title;
 
     // Detect sections based on mode
-    if (mode === 'SCIENTIFIC') {
+    if (mode === "SCIENTIFIC") {
       return this.detectIMRaDSections(text);
     }
 
@@ -58,15 +58,25 @@ export class SectionDetectionService {
    */
   private detectIMRaDSections(text: string): Section[] {
     const IMRAD_PATTERNS = [
-      { section: 'ABSTRACT', patterns: [/^abstract$/i, /^resumo$/i] },
-      { section: 'INTRODUCTION', patterns: [/^introduction$/i, /^introdução$/i, /^1\.?\s*introduction/i] },
-      { section: 'METHODS', patterns: [/^methods?$/i, /^methodology$/i, /^materiais?\s+e\s+métodos/i] },
-      { section: 'RESULTS', patterns: [/^results?$/i, /^resultados?$/i] },
-      { section: 'DISCUSSION', patterns: [/^discussion$/i, /^discussão$/i] },
-      { section: 'CONCLUSION', patterns: [/^conclusion$/i, /^conclusão$/i] }
+      { section: "ABSTRACT", patterns: [/^abstract$/i, /^resumo$/i] },
+      {
+        section: "INTRODUCTION",
+        patterns: [/^introduction$/i, /^introdução$/i, /^1\.?\s*introduction/i],
+      },
+      {
+        section: "METHODS",
+        patterns: [
+          /^methods?$/i,
+          /^methodology$/i,
+          /^materiais?\s+e\s+métodos/i,
+        ],
+      },
+      { section: "RESULTS", patterns: [/^results?$/i, /^resultados?$/i] },
+      { section: "DISCUSSION", patterns: [/^discussion$/i, /^discussão$/i] },
+      { section: "CONCLUSION", patterns: [/^conclusion$/i, /^conclusão$/i] },
     ];
 
-    const lines = text.split('\n');
+    const lines = text.split("\n");
     const sections: Section[] = [];
 
     lines.forEach((line, index) => {
@@ -74,12 +84,12 @@ export class SectionDetectionService {
       if (!trimmed) return;
 
       for (const { section, patterns } of IMRAD_PATTERNS) {
-        if (patterns.some(p => p.test(trimmed))) {
+        if (patterns.some((p) => p.test(trimmed))) {
           sections.push({
             id: `${section.toLowerCase()}-${index}`,
             title: section,
             startLine: index,
-            type: 'IMRAD'
+            type: "IMRAD",
           });
           break;
         }
@@ -102,13 +112,13 @@ export class SectionDetectionService {
    * Domain logic: Detect heading-based sections
    */
   private detectHeadingSections(text: string): Section[] {
-    const lines = text.split('\n');
+    const lines = text.split("\n");
     const sections: Section[] = [];
 
     const headingPatterns = [
-      /^#{1,3}\s+(.+)$/,           // Markdown headings
+      /^#{1,3}\s+(.+)$/, // Markdown headings
       /^([A-Z][A-Za-z\s]+):?\s*$/, // Title case lines
-      /^\d+\.?\s+([A-Z].+)$/       // Numbered headings
+      /^\d+\.?\s+([A-Z].+)$/, // Numbered headings
     ];
 
     lines.forEach((line, index) => {
@@ -122,7 +132,7 @@ export class SectionDetectionService {
             id: `heading-${index}`,
             title: title.trim(),
             startLine: index,
-            type: 'HEADING'
+            type: "HEADING",
           });
           break;
         }
@@ -152,17 +162,17 @@ export class SectionDetectionService {
     paragraphs.forEach((para, index) => {
       const trimmed = para.trim();
       if (trimmed.length >= minLength) {
-        const lineCount = para.split('\n').length;
+        const lineCount = para.split("\n").length;
         sections.push({
           id: `paragraph-${index}`,
           title: `Paragraph ${index + 1}`,
           startLine: currentLine,
           endLine: currentLine + lineCount - 1,
-          type: 'PARAGRAPH'
+          type: "PARAGRAPH",
         });
         currentLine += lineCount + 1;
       } else {
-        currentLine += para.split('\n').length + 1;
+        currentLine += para.split("\n").length + 1;
       }
     });
 

@@ -8,22 +8,22 @@ import {
   Request,
   HttpCode,
   HttpStatus,
-} from '@nestjs/common';
+} from "@nestjs/common";
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
-} from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/infrastructure/jwt-auth.guard';
-import { ContentModeService } from './content-mode.service';
-import { UpdateContentModeDto } from './dto/update-content-mode.dto';
-import { ContentModeResponseDto } from './dto/content-mode-response.dto';
+} from "@nestjs/swagger";
+import { JwtAuthGuard } from "../auth/infrastructure/jwt-auth.guard";
+import { ContentModeService } from "./content-mode.service";
+import { UpdateContentModeDto } from "./dto/update-content-mode.dto";
+import { ContentModeResponseDto } from "./dto/content-mode-response.dto";
 
 /**
  * Content Mode Controller
- * 
+ *
  * Presentation layer - thin controller following clean architecture:
  * - Validates input (via DTOs and guards)
  * - Handles authentication/authorization
@@ -31,8 +31,8 @@ import { ContentModeResponseDto } from './dto/content-mode-response.dto';
  * - Maps responses to DTOs
  * - Never contains business rules
  */
-@ApiTags('Content Mode')
-@Controller('cornell/contents')
+@ApiTags("Content Mode")
+@Controller("cornell/contents")
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class ContentModeController {
@@ -42,30 +42,33 @@ export class ContentModeController {
    * Get content mode information
    * Returns current mode, source, and inferred mode if not set
    */
-  @Get(':id/mode')
+  @Get(":id/mode")
   @ApiOperation({
-    summary: 'Get content mode',
-    description: 'Retrieves the current content mode with metadata. Returns inferred mode if not explicitly set.',
+    summary: "Get content mode",
+    description:
+      "Retrieves the current content mode with metadata. Returns inferred mode if not explicitly set.",
   })
   @ApiParam({
-    name: 'id',
-    description: 'Content ID',
-    example: 'cuid123',
+    name: "id",
+    description: "Content ID",
+    example: "cuid123",
   })
   @ApiResponse({
     status: 200,
-    description: 'Content mode retrieved successfully',
+    description: "Content mode retrieved successfully",
     type: ContentModeResponseDto,
   })
   @ApiResponse({
     status: 404,
-    description: 'Content not found',
+    description: "Content not found",
   })
   @ApiResponse({
     status: 401,
-    description: 'Unauthorized - JWT token required',
+    description: "Unauthorized - JWT token required",
   })
-  async getMode(@Param('id') contentId: string): Promise<ContentModeResponseDto> {
+  async getMode(
+    @Param("id") contentId: string,
+  ): Promise<ContentModeResponseDto> {
     // Delegate to service layer - no business logic here
     return this.contentModeService.getModeInfo(contentId);
   }
@@ -74,35 +77,36 @@ export class ContentModeController {
    * Update content mode
    * Only content creator or educators can update mode
    */
-  @Put(':id/mode')
+  @Put(":id/mode")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Update content mode',
-    description: 'Sets the content mode. Only content creator or educators in the classroom can update.',
+    summary: "Update content mode",
+    description:
+      "Sets the content mode. Only content creator or educators in the classroom can update.",
   })
   @ApiParam({
-    name: 'id',
-    description: 'Content ID',
-    example: 'cuid123',
+    name: "id",
+    description: "Content ID",
+    example: "cuid123",
   })
   @ApiResponse({
     status: 200,
-    description: 'Content mode updated successfully',
+    description: "Content mode updated successfully",
   })
   @ApiResponse({
     status: 404,
-    description: 'Content not found',
+    description: "Content not found",
   })
   @ApiResponse({
     status: 403,
-    description: 'Forbidden - User cannot modify this content',
+    description: "Forbidden - User cannot modify this content",
   })
   @ApiResponse({
     status: 401,
-    description: 'Unauthorized - JWT token required',
+    description: "Unauthorized - JWT token required",
   })
   async updateMode(
-    @Param('id') contentId: string,
+    @Param("id") contentId: string,
     @Body() dto: UpdateContentModeDto,
     @Request() req: any,
   ): Promise<void> {
@@ -118,7 +122,7 @@ export class ContentModeController {
       contentId,
       dto.mode,
       userId,
-      dto.source || 'USER',
+      dto.source || "USER",
     );
   }
 }

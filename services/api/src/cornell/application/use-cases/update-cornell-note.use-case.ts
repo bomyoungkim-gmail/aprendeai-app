@@ -22,7 +22,7 @@ export class UpdateCornellNoteUseCase {
     userId: string,
     dto: UpdateCornellDto,
   ): Promise<CornellNote> {
-    let note = await this.cornellRepository.findByContentAndUser(
+    const note = await this.cornellRepository.findByContentAndUser(
       contentId,
       userId,
     );

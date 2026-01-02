@@ -24,10 +24,14 @@ export class PrismaFamilyRepository implements IFamilyRepository {
       where: { id },
       include: {
         family_members: {
-          include: { users: { select: { id: true, name: true, email: true, avatar_url: true } } }
+          include: {
+            users: {
+              select: { id: true, name: true, email: true, avatar_url: true },
+            },
+          },
         },
-        users_owner: { select: { id: true, name: true, email: true } }
-      }
+        users_owner: { select: { id: true, name: true, email: true } },
+      },
     });
     return found ? this.mapToDomain(found) : null;
   }
@@ -35,9 +39,9 @@ export class PrismaFamilyRepository implements IFamilyRepository {
   async findByUser(userId: string): Promise<Family[]> {
     const memberships = await this.prisma.family_members.findMany({
       where: { user_id: userId },
-      include: { families: { include: { family_members: true } } }
+      include: { families: { include: { family_members: true } } },
     });
-    return memberships.map(m => this.mapToDomain(m.families));
+    return memberships.map((m) => this.mapToDomain(m.families));
   }
 
   async update(id: string, updates: Partial<Family>): Promise<Family> {
@@ -47,7 +51,7 @@ export class PrismaFamilyRepository implements IFamilyRepository {
         name: updates.name,
         owner_user_id: updates.ownerUserId,
         updated_at: new Date(),
-      }
+      },
     });
     return this.mapToDomain(updated);
   }
@@ -65,33 +69,40 @@ export class PrismaFamilyRepository implements IFamilyRepository {
         role: member.role,
         status: member.status as any,
         display_name: member.displayName,
-      }
+      },
     });
     return this.mapMemberToDomain(created);
   }
 
-  async findMember(familyId: string, userId: string): Promise<FamilyMember | null> {
+  async findMember(
+    familyId: string,
+    userId: string,
+  ): Promise<FamilyMember | null> {
     const found = await this.prisma.family_members.findUnique({
-      where: { family_id_user_id: { family_id: familyId, user_id: userId } }
+      where: { family_id_user_id: { family_id: familyId, user_id: userId } },
     });
     return found ? this.mapMemberToDomain(found) : null;
   }
 
-  async updateMember(familyId: string, userId: string, updates: Partial<FamilyMember>): Promise<FamilyMember> {
+  async updateMember(
+    familyId: string,
+    userId: string,
+    updates: Partial<FamilyMember>,
+  ): Promise<FamilyMember> {
     const updated = await this.prisma.family_members.update({
       where: { family_id_user_id: { family_id: familyId, user_id: userId } },
       data: {
         role: updates.role,
         status: updates.status as any,
         display_name: updates.displayName,
-      }
+      },
     });
     return this.mapMemberToDomain(updated);
   }
 
   async deleteMember(familyId: string, userId: string): Promise<void> {
     await this.prisma.family_members.delete({
-      where: { family_id_user_id: { family_id: familyId, user_id: userId } }
+      where: { family_id_user_id: { family_id: familyId, user_id: userId } },
     });
   }
 
@@ -105,7 +116,7 @@ export class PrismaFamilyRepository implements IFamilyRepository {
         },
       },
     });
-    return families.map(f => this.mapToDomain(f));
+    return families.map((f) => this.mapToDomain(f));
   }
 
   private mapToDomain(item: any): Family {
@@ -128,10 +139,12 @@ export class PrismaFamilyRepository implements IFamilyRepository {
       status: item.status,
       displayName: item.display_name,
       joinedAt: item.joined_at,
-      user: item.users ? {
-          email: item.users.email,
-          name: item.users.name,
-      } : undefined,
+      user: item.users
+        ? {
+            email: item.users.email,
+            name: item.users.name,
+          }
+        : undefined,
     });
   }
 }

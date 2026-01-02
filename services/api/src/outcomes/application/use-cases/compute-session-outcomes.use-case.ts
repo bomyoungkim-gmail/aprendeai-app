@@ -7,9 +7,12 @@ import { IContentRepository } from "../../../cornell/domain/content.repository.i
 @Injectable()
 export class ComputeSessionOutcomesUseCase {
   constructor(
-    @Inject(ISessionsRepository) private readonly sessionsRepository: ISessionsRepository,
-    @Inject(IContentRepository) private readonly contentRepository: IContentRepository,
-    @Inject(IOutcomesRepository) private readonly outcomesRepository: IOutcomesRepository,
+    @Inject(ISessionsRepository)
+    private readonly sessionsRepository: ISessionsRepository,
+    @Inject(IContentRepository)
+    private readonly contentRepository: IContentRepository,
+    @Inject(IOutcomesRepository)
+    private readonly outcomesRepository: IOutcomesRepository,
   ) {}
 
   async execute(sessionId: string): Promise<SessionOutcome> {
@@ -21,22 +24,22 @@ export class ComputeSessionOutcomesUseCase {
 
     const content = await this.contentRepository.findById(session.contentId);
     if (!content) {
-        throw new NotFoundException(`Content not found for session ${sessionId}`);
+      throw new NotFoundException(`Content not found for session ${sessionId}`);
     }
 
     // Attach full content to session object for calculation methods
     // We can use a composite object or typed cast if needed, or update methods signatures.
     // The methods expect 'session' to have 'session_events' and 'contents' property (Prisma style).
     // We should refactor the helper methods to use Domain Entity structure.
-    
+
     // Domain Entity 'ReadingSession' has 'events' property instead of 'session_events'.
     // And 'content' property (summary) instead of 'contents'.
-    
+
     // Let's adapt the helpers.
     const validationContext = {
-       ...session,
-       session_events: session.events || [], // Map for compatibility or refactor helpers
-       contents: content // inject full content
+      ...session,
+      session_events: session.events || [], // Map for compatibility or refactor helpers
+      contents: content, // inject full content
     };
 
     // Calculate three outcome scores
@@ -56,7 +59,7 @@ export class ComputeSessionOutcomesUseCase {
   }
 
   private async calculateComprehension(session: any): Promise<number> {
-    let score = 50; 
+    let score = 50;
 
     const quizEvents = session.session_events.filter(
       (e) => e.event_type === "QUIZ_RESPONSE",
@@ -66,7 +69,7 @@ export class ComputeSessionOutcomesUseCase {
         (e) => (e.payload_json as any)?.correct === true,
       ).length;
       const quizAccuracy = correctCount / quizEvents.length;
-      score += (quizAccuracy - 0.5) * 40; 
+      score += (quizAccuracy - 0.5) * 40;
     }
 
     const checkpointEvents = session.session_events.filter(

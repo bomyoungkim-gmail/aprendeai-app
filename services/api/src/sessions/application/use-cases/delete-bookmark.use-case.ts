@@ -1,5 +1,9 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
 
 @Injectable()
 export class DeleteBookmarkUseCase {
@@ -11,11 +15,11 @@ export class DeleteBookmarkUseCase {
     });
 
     if (!bookmark) {
-      throw new NotFoundException('Bookmark not found');
+      throw new NotFoundException("Bookmark not found");
     }
 
     if (bookmark.user_id !== user_id) {
-      throw new ForbiddenException('Not allowed to delete this bookmark');
+      throw new ForbiddenException("Not allowed to delete this bookmark");
     }
 
     return this.prisma.bookmarks.delete({

@@ -5,7 +5,8 @@ export class ClassroomMapper {
     return {
       id: classroom.id,
       institutionId: classroom.institutionId || classroom.institution_id,
-      ownerEducatorUserId: classroom.ownerEducatorId || classroom.owner_educator_id,
+      ownerEducatorUserId:
+        classroom.ownerEducatorId || classroom.owner_educator_id,
       name: classroom.name,
       description: null,
       gradeLevel: classroom.gradeLevel || classroom.grade_level,

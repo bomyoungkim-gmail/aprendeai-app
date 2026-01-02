@@ -1,6 +1,5 @@
 import {
   Injectable,
-  NotFoundException,
   BadRequestException,
   ForbiddenException,
 } from "@nestjs/common";
@@ -57,7 +56,9 @@ export class CornellService {
   }
 
   async getMyContents(userId: string) {
-    const { results } = await this.listContentUseCase.execute(userId, { limit: 100 });
+    const { results } = await this.listContentUseCase.execute(userId, {
+      limit: 100,
+    });
     return results.map((content) => ({
       id: content.id,
       title: content.title,
@@ -70,11 +71,14 @@ export class CornellService {
       created_at: content.createdAt,
       updated_at: content.updatedAt,
       metadata: content.metadata,
-      files: content.file ? { ...content.file } : null,
-      file: content.file ? {
-           ...content.file,
-           sizeBytes: Number(content.file.sizeBytes),
-      } : null,
+      files: content.file ? { ...content.file, viewUrl: `/files/${content.file.id}/view` } : null,
+      file: content.file
+        ? {
+            ...content.file,
+            sizeBytes: Number(content.file.sizeBytes),
+            viewUrl: `/files/${content.file.id}/view`,
+          }
+        : null,
     }));
   }
 
@@ -94,24 +98,28 @@ export class CornellService {
       metadata: content.metadata,
       created_at: content.createdAt,
       updated_at: content.updatedAt,
-      files: content.file ? {
-          ...content.file,
-          viewUrl: `/api/v1/files/${content.file.id}/view`,
-      } : null,
-      file: content.file ? {
-          ...content.file,
-          viewUrl: `/api/v1/files/${content.file.id}/view`,
-      } : null,
+      files: content.file
+        ? {
+            ...content.file,
+            viewUrl: `/files/${content.file.id}/view`,
+          }
+        : null,
+      file: content.file
+        ? {
+            ...content.file,
+            viewUrl: `/files/${content.file.id}/view`,
+          }
+        : null,
     };
   }
 
   async updateContent(id: string, userId: string, dto: UpdateContentDto) {
     const updated = await this.updateContentUseCase.execute(id, userId, dto);
     return {
-        id: updated.id,
-        title: updated.title,
-        metadata: updated.metadata,
-        updated_at: updated.updatedAt,
+      id: updated.id,
+      title: updated.title,
+      metadata: updated.metadata,
+      updated_at: updated.updatedAt,
     };
   }
 
@@ -133,7 +141,10 @@ export class CornellService {
     const accessChecks = await Promise.all(
       contents.map(async (c) => ({
         id: c.id,
-        hasAccess: await this.contentAccessService.canAccessContent(c.id, userId),
+        hasAccess: await this.contentAccessService.canAccessContent(
+          c.id,
+          userId,
+        ),
       })),
     );
 
@@ -162,16 +173,19 @@ export class CornellService {
   async getOrCreateCornellNotes(contentId: string, userId: string) {
     // Map Domain Entity to DB Shape for Controller logic if needed
     // Or return Entity. Valid choice: return Entity, Controller serializes.
-    const note = await this.getOrCreateCornellNoteUseCase.execute(contentId, userId);
+    const note = await this.getOrCreateCornellNoteUseCase.execute(
+      contentId,
+      userId,
+    );
     return {
-        id: note.id,
-        content_id: note.contentId,
-        user_id: note.userId,
-        cues_json: note.cues,
-        notes_json: note.notes,
-        summary_text: note.summary,
-        created_at: note.createdAt,
-        updated_at: note.updatedAt
+      id: note.id,
+      content_id: note.contentId,
+      user_id: note.userId,
+      cues_json: note.cues,
+      notes_json: note.notes,
+      summary_text: note.summary,
+      created_at: note.createdAt,
+      updated_at: note.updatedAt,
     };
   }
 
@@ -180,33 +194,62 @@ export class CornellService {
     dto: UpdateCornellDto,
     userId: string,
   ) {
-    const note = await this.updateCornellNoteUseCase.execute(contentId, userId, dto);
+    const note = await this.updateCornellNoteUseCase.execute(
+      contentId,
+      userId,
+      dto,
+    );
     return {
-        id: note.id,
-        cues_json: note.cues,
-        notes_json: note.notes,
-        summary_text: note.summary,
-        updated_at: note.updatedAt
+      id: note.id,
+      cues_json: note.cues,
+      notes_json: note.notes,
+      summary_text: note.summary,
+      updated_at: note.updatedAt,
     };
   }
 
   async getHighlights(contentId: string, userId: string) {
-    const highlights = await this.getHighlightsUseCase.execute(contentId, userId);
+    const highlights = await this.getHighlightsUseCase.execute(
+      contentId,
+      userId,
+    );
     // Use repository map? No, map to legacy response or return entities.
-    return highlights.map(h => ({
-        id: h.id,
-        content_id: h.contentId,
-        user_id: h.userId,
-        kind: h.kind,
-        target_type: h.targetType,
-        page_number: h.pageNumber,
-        anchor_json: h.anchor,
-        color_key: h.colorKey,
-        comment_text: h.commentText,
-        tags_json: h.tags,
-        created_at: h.createdAt,
-        updated_at: h.updatedAt
+    return highlights.map((h) => ({
+      id: h.id,
+      content_id: h.contentId,
+      user_id: h.userId,
+      kind: h.kind,
+      target_type: h.targetType,
+      page_number: h.pageNumber,
+      anchor_json: h.anchor,
+      color_key: h.colorKey,
+      comment_text: h.commentText,
+      tags_json: h.tags,
+      created_at: h.createdAt,
+      updated_at: h.updatedAt,
     }));
+  }
+
+  async getConfig() {
+    return {
+      types: [
+        { id: "HIGHLIGHT", label: "Destaque", color: "yellow", tag: "CORNELL_HIGHLIGHT" },
+        { id: "IMPORTANT", label: "Importante", color: "red", tag: "CORNELL_IMPORTANT" },
+        { id: "SYNTHESIS", label: "Síntese", color: "blue", tag: "CORNELL_SYNTHESIS" },
+        { id: "QUESTION", label: "Dúvida", color: "purple", tag: "CORNELL_QUESTION" },
+      ],
+      tabs: [
+        { id: "STREAM", label: "Stream", icon: "activity" },
+        { id: "CHAT", label: "Chat IA", icon: "message-square" },
+        { id: "NOTES", label: "Notas", icon: "file-text" },
+        { id: "QUESTIONS", label: "Perguntas", icon: "help-circle" },
+        { id: "ANALYTICS", label: "Analíticos", icon: "bar-chart-2" },
+      ],
+      defaults: {
+        viewMode: "study",
+        sidebarVisible: true,
+      },
+    };
   }
 
   async createHighlight(
@@ -216,29 +259,29 @@ export class CornellService {
   ) {
     const h = await this.createHighlightUseCase.execute(contentId, userId, dto);
     return {
-        id: h.id,
-        content_id: h.contentId,
-        user_id: h.userId,
-        kind: h.kind,
-        target_type: h.targetType,
-        page_number: h.pageNumber,
-        anchor_json: h.anchor,
-        color_key: h.colorKey,
-        comment_text: h.commentText,
-        tags_json: h.tags,
-        created_at: h.createdAt,
-        updated_at: h.updatedAt
+      id: h.id,
+      content_id: h.contentId,
+      user_id: h.userId,
+      kind: h.kind,
+      target_type: h.targetType,
+      page_number: h.pageNumber,
+      anchor_json: h.anchor,
+      color_key: h.colorKey,
+      comment_text: h.commentText,
+      tags_json: h.tags,
+      created_at: h.createdAt,
+      updated_at: h.updatedAt,
     };
   }
 
   async updateHighlight(id: string, dto: UpdateHighlightDto, userId: string) {
     const h = await this.updateHighlightUseCase.execute(id, dto, userId);
     return {
-        id: h.id,
-        color_key: h.colorKey,
-        comment_text: h.commentText,
-        tags_json: h.tags,
-        updated_at: h.updatedAt
+      id: h.id,
+      color_key: h.colorKey,
+      comment_text: h.commentText,
+      tags_json: h.tags,
+      updated_at: h.updatedAt,
     };
   }
 

@@ -1,5 +1,7 @@
 'use client';
 
+import { logger } from '@/lib/utils/logger';
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { ModernCornellLayout } from '@/components/cornell/ModernCornellLayout';
@@ -13,7 +15,6 @@ import { ReviewMode } from '@/components/cornell/review/ReviewMode';
 import { Toast, useToast } from '@/components/ui/Toast';
 import { VideoPlayer } from '@/components/media/VideoPlayer';
 import { AudioPlayer } from '@/components/media/AudioPlayer';
-import { ActionToolbar } from '@/components/cornell/ActionToolbar';
 import { TextViewer } from '@/components/cornell/viewers/TextViewer';
 
 import {
@@ -204,7 +205,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
   // Handle creating stream items from viewers (PDF/Text)
   const handleCreateStreamItem = useCallback(
     async (type: UnifiedStreamItemType, text: string, data?: unknown) => {
-      console.log('Create stream item action:', type, text);
+      logger.debug('Create stream item action', { type, textLength: text.length });
       const id = crypto.randomUUID();
 
       try {
@@ -221,7 +222,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
             track('question_created', { cue_id: id });
             toastControls.success('Dúvida criada');
             break;
-          case 'star':
+          case 'important':
             track('star_added', { text: text.substring(0, 50) });
             toastControls.success('Marcado como Favorito');
             break;
@@ -232,12 +233,12 @@ export default function ReaderPage({ params }: ReaderPageProps) {
             // For now, simpler fallback:
              track('highlight_created', { type: 'manual_fallback', text_length: text.length });
              toastControls.success('Destaque criado');
-            break;
+             break;
           case 'ai':
-            // Open AI chat panel with selected text as context
-            track('ai_chat_opened', { context_text: text.substring(0, 100) });
-            // TODO: Wire to Sidebar Chat Tab
-            toastControls.info('Abrindo chat (TODO: Integrar com Sidebar)');
+            // AI action is handled by ModernCornellLayout.handleSelectionAction
+            // This case should not be reached if using TextSelectionMenu
+            logger.warn('AI action called on ReaderPage handler - should use Layout handler');
+            track('ai_action_deprecated_path', { text_length: text.length });
             break;
            case 'triage':
             // Create highlight with 'triage' tag - To be implemented with proper tagging
@@ -246,7 +247,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
             break;
         }
       } catch (error) {
-        console.error('Failed to create item:', error);
+        logger.error('Failed to create stream item', error, { type });
         toastControls.error('Falha ao criar item');
       }
     },
@@ -309,7 +310,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
             highlights={highlights || []}
             onCreateHighlight={handleCreateHighlight}
             selectedColor={selectedColor}
-            onSelectionAction={handleCreateStreamItem}
+            onSelectionAction={handleCreateStreamItem as any}
             onPageChange={setCurrentPage}
           />
         );
@@ -394,7 +395,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
             summary={summaryText}
             onSummaryChange={handleSummaryChange}
             disableSelectionMenu={content.contentType === 'PDF'}
-            onCreateStreamItem={handleCreateStreamItem}
+            onCreateStreamItem={handleCreateStreamItem as any}
             selectedColor={selectedColor}
             onColorChange={setSelectedColor}
             onNavigate={handleNavigate}

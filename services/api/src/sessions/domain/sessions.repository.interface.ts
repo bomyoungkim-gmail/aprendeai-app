@@ -4,9 +4,12 @@ export interface ISessionsRepository {
   create(data: Partial<ReadingSession>): Promise<ReadingSession>;
   findById(id: string): Promise<ReadingSession | null>;
   update(id: string, data: Partial<ReadingSession>): Promise<ReadingSession>;
-  addEvent(sessionId: string, event: Partial<SessionEvent>): Promise<SessionEvent>;
+  addEvent(
+    sessionId: string,
+    event: Partial<SessionEvent>,
+  ): Promise<SessionEvent>;
   findEvents(sessionId: string): Promise<SessionEvent[]>;
-  
+
   // For queries
   findMany(params: {
     where?: any;

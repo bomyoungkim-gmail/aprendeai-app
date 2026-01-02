@@ -15,3 +15,21 @@ export const CORNELL_MODAL_DEFAULTS = {
   PAGE: 1,
   CONTEXT: 'PERSONAL' as const,
 } as const;
+
+// Cornell Annotation Types (Core - Single Source of Truth)
+export const CORNELL_TYPES = {
+  HIGHLIGHT: 'HIGHLIGHT',
+  NOTE: 'NOTE',
+  IMPORTANT: 'IMPORTANT',
+  QUESTION: 'QUESTION',
+} as const;
+
+// Extended types (includes synthesis and AI)
+export const CORNELL_EXTENDED_TYPES = {
+  ...CORNELL_TYPES,
+  SYNTHESIS: 'SYNTHESIS',
+  AI: 'AI',
+} as const;
+
+export type CornellType = typeof CORNELL_TYPES[keyof typeof CORNELL_TYPES];
+export type CornellExtendedType = typeof CORNELL_EXTENDED_TYPES[keyof typeof CORNELL_EXTENDED_TYPES];

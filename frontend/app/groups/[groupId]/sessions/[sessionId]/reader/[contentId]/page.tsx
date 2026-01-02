@@ -1,16 +1,13 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { CornellLayout } from '@/components/cornell/classic/CornellLayout';
+import { ModernCornellLayout } from '@/components/cornell/ModernCornellLayout';
 import { PDFViewer, ImageViewer, DocxViewer } from '@/components/cornell/viewers';
 import { ReviewMode } from '@/components/cornell/review/ReviewMode';
 import { Toast, useToast } from '@/components/ui/Toast';
-import { useContent } from '@/hooks/cornell/use-data';
+import { useContent, useUnifiedStream } from '@/hooks/cornell';
 import {
-  useCornellNotes,
   useUpdateCornellNotes,
-  useHighlights,
-  useCreateHighlight,
   useCornellAutosave,
 } from '@/hooks/cornell';
 import { useSaveStatusWithOnline } from '@/hooks/ui/use-online-status';
@@ -19,7 +16,7 @@ import { AnnotationsSidebar } from '@/components/annotations/AnnotationsSidebar'
 import { useTextSelection } from '@/hooks/ui';
 import { useCreateAnnotation } from '@/hooks/content';
 import { useStudySession } from '@/hooks/sessions/reading';
-import type { ViewMode, CueItem, NoteItem, UpdateCornellDto } from '@/lib/types/cornell';
+import type { ViewMode, CueItem, UpdateCornellDto } from '@/lib/types/cornell';
 
 interface GroupReaderPageProps {
   params: {
@@ -35,17 +32,19 @@ export default function GroupReaderPage({ params }: GroupReaderPageProps) {
   const [contentRef, setContentRef] = useState<HTMLElement | null>(null);
   const { toast, show: showToast, hide: hideToast } = useToast();
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currentTimestamp, setCurrentTimestamp] = useState(0);
+  const [selectedColor, setSelectedColor] = useState('yellow');
+
   // Get study session context (group + session info)
-  const { groupId, sessionId, isInSession } = useStudySession();
+  const { groupId, isInSession } = useStudySession();
 
   // Fetch data
   const { data: content, isLoading: contentLoading } = useContent(params.contentId);
-  const { data: cornell, isLoading: cornellLoading } = useCornellNotes(params.contentId);
-  const { data: highlights } = useHighlights(params.contentId);
+  const { streamItems, isLoading: streamLoading, cues, summary } = useUnifiedStream(params.contentId);
 
   // Mutations
   const updateMutation = useUpdateCornellNotes(params.contentId);
-  const { mutateAsync: createHighlight } = useCreateHighlight(params.contentId);
   const { mutateAsync: createAnnotation } = useCreateAnnotation(params.contentId);
 
   // Text selection for annotations
@@ -53,7 +52,7 @@ export default function GroupReaderPage({ params }: GroupReaderPageProps) {
 
   // Autosave
   const { save, status: baseStatus, lastSaved } = useCornellAutosave({
-    onSave: async (data) => {
+    onSave: async (data: any) => {
       await updateMutation.mutateAsync(data as UpdateCornellDto);
     },
     delay: 1000,
@@ -68,20 +67,6 @@ export default function GroupReaderPage({ params }: GroupReaderPageProps) {
 
   const status = useSaveStatusWithOnline(baseStatus);
 
-  // Highlight creation with feedback
-  const handleCreateHighlight = useCallback(
-    async (highlightData: any) => {
-      try {
-        await createHighlight(highlightData);
-        showToast('success', 'Highlight created!');
-      } catch (error) {
-        showToast('error', 'Failed to create highlight');
-        throw error;
-      }
-    },
-    [createHighlight, showToast]
-  );
-
   // Annotation creation with feedback
   const handleCreateAnnotation = useCallback(
     async (annotationData: any) => {
@@ -93,7 +78,7 @@ export default function GroupReaderPage({ params }: GroupReaderPageProps) {
         showToast('success', 'Annotation created!');
         clearSelection();
       } catch (error) {
-        showToast('error', 'Failed to create annotation');
+        showToast('error', 'Failed to annotation creation');
         throw error;
       }
     },
@@ -102,22 +87,15 @@ export default function GroupReaderPage({ params }: GroupReaderPageProps) {
 
   // Handlers
   const handleCuesChange = useCallback(
-    (cues: CueItem[]) => {
-      save({ cuesJson: cues });
-    },
-    [save]
-  );
-
-  const handleNotesChange = useCallback(
-    (notes: NoteItem[]) => {
-      save({ notesJson: notes });
+    (newCues: CueItem[]) => {
+      save({ cues_json: newCues });
     },
     [save]
   );
 
   const handleSummaryChange = useCallback(
-    (summary: string) => {
-      save({ summaryText: summary });
+    (newSummary: string) => {
+      save({ summary_text: newSummary });
     },
     [save]
   );
@@ -149,8 +127,8 @@ export default function GroupReaderPage({ params }: GroupReaderPageProps) {
           <PDFViewer
             content={content}
             mode={mode}
-            highlights={highlights}
-            onCreateHighlight={handleCreateHighlight}
+            highlights={[]} // Not used in this basic mapping for now
+            onCreateHighlight={async () => {}}
           />
         );
       case 'IMAGE':
@@ -158,8 +136,8 @@ export default function GroupReaderPage({ params }: GroupReaderPageProps) {
           <ImageViewer
             content={content}
             mode={mode}
-            highlights={highlights}
-            onCreateHighlight={handleCreateHighlight}
+            highlights={[]}
+            onCreateHighlight={async () => {}}
           />
         );
       case 'DOCX':
@@ -174,7 +152,7 @@ export default function GroupReaderPage({ params }: GroupReaderPageProps) {
   };
 
   // Loading state
-  if (contentLoading || cornellLoading) {
+  if (contentLoading || streamLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -224,23 +202,34 @@ export default function GroupReaderPage({ params }: GroupReaderPageProps) {
       <div className="relative h-screen flex">
         {/* Main Content */}
         <div className={`flex-1 transition-all duration-300 ${showAnnotations ? 'mr-80' : 'mr-0'}`}>
-          <CornellLayout
+          <ModernCornellLayout
             title={content.title}
             mode={mode}
             onModeToggle={handleModeToggle}
             saveStatus={status}
             lastSaved={lastSaved}
-            cues={cornell?.cuesJson || []}
+            contentId={params.contentId}
+            targetType={content.contentType}
+            currentPage={currentPage}
+            currentTimestamp={currentTimestamp}
+            streamItems={streamItems}
+            onStreamItemClick={(item) => console.log('Item click:', item)}
+            onStreamItemEdit={(item) => console.log('Edit item:', item)}
+            onStreamItemDelete={(item) => console.log('Delete item:', item)}
+            onStreamItemSaveEdit={(item, updates) => console.log('Save item edit:', item, updates)}
+            cues={cues}
             onCuesChange={handleCuesChange}
-            notes={cornell?.notesJson || []}
-            onNotesChange={handleNotesChange}
-            summary={cornell?.summaryText || ''}
+            summary={summary}
             onSummaryChange={handleSummaryChange}
             viewer={
               <div ref={(el) => setContentRef(el)}>
                 {renderViewer()}
               </div>
             }
+            selectedColor={selectedColor}
+            onColorChange={setSelectedColor}
+            onNavigate={(page) => setCurrentPage(page)}
+            onCreateStreamItem={() => {}}
           />
         </div>
 

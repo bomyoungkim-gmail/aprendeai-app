@@ -31,6 +31,12 @@ import { ManageGroupContentUseCase } from "./application/use-cases/manage-group-
       useClass: PrismaStudyGroupsRepository,
     },
   ],
-  exports: [StudyGroupsService, GroupSessionsService, GroupChatService, CreateStudyGroupUseCase, IStudyGroupsRepository],
+  exports: [
+    StudyGroupsService,
+    GroupSessionsService,
+    GroupChatService,
+    CreateStudyGroupUseCase,
+    IStudyGroupsRepository,
+  ],
 })
 export class StudyGroupsModule {}

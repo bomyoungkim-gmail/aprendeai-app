@@ -15,15 +15,15 @@ export class ReadingSession {
   targetWordsJson?: any;
   createdAt: Date;
   updatedAt: Date;
-  
+
   // Relations (optional/partial for aggregates)
   events?: SessionEvent[];
   outcomes?: SessionOutcome[];
   content?: {
-      id: string;
-      title: string;
-      type: string;
-      originalLanguage?: string;
+    id: string;
+    title: string;
+    type: string;
+    originalLanguage?: string;
   };
 
   constructor(partial: Partial<ReadingSession>) {
@@ -31,21 +31,21 @@ export class ReadingSession {
   }
 
   isFinished(): boolean {
-      return this.phase === 'FINISHED';
+    return this.phase === "FINISHED";
   }
 }
 
 export class SessionEvent {
-    id: string;
-    sessionId: string;
-    eventType: string;
-    payload: any;
-    createdAt: Date;
+  id: string;
+  sessionId: string;
+  eventType: string;
+  payload: any;
+  createdAt: Date;
 }
 
 export class SessionOutcome {
-    sessionId: string;
-    comprehensionScore: number;
-    productionScore: number;
-    frustrationIndex: number;
+  sessionId: string;
+  comprehensionScore: number;
+  productionScore: number;
+  frustrationIndex: number;
 }

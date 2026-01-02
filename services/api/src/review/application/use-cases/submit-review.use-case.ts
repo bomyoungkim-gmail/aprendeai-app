@@ -16,44 +16,50 @@ export interface SubmitReviewInput {
 @Injectable()
 export class SubmitReviewUseCase {
   constructor(
-    @Inject(IReviewRepository) private readonly reviewRepository: IReviewRepository,
-    @Inject(IVocabRepository) private readonly vocabRepository: IVocabRepository, 
+    @Inject(IReviewRepository)
+    private readonly reviewRepository: IReviewRepository,
+    @Inject(IVocabRepository)
+    private readonly vocabRepository: IVocabRepository,
     private readonly srsService: SrsService,
   ) {}
 
   async execute(userId: string, input: SubmitReviewInput) {
     const vocab = await this.vocabRepository.findById(input.vocabId);
     if (!vocab) {
-        throw new NotFoundException(`Vocabulary item ${input.vocabId} not found`);
+      throw new NotFoundException(`Vocabulary item ${input.vocabId} not found`);
     }
 
     if (vocab.userId !== userId) {
-        // Simple ownership check
-        throw new NotFoundException(`Vocabulary item not found or access denied`);
+      // Simple ownership check
+      throw new NotFoundException(`Vocabulary item not found or access denied`);
     }
 
     // Calculate SRS
-    const calc = this.srsService.calculateNextDue(vocab.srsStage as any, input.result);
+    const calc = this.srsService.calculateNextDue(
+      vocab.srsStage as any,
+      input.result,
+    );
     const masteryDelta = this.srsService.calculateMasteryDelta(input.result);
 
     // Prepare objects
     const attempt = new VocabAttempt({
-        id: uuidv4(),
-        vocabId: vocab.id,
-        sessionId: input.sessionId,
-        dimension: input.dimension,
-        result: input.result,
-        createdAt: new Date(),
+      id: uuidv4(),
+      vocabId: vocab.id,
+      sessionId: input.sessionId,
+      dimension: input.dimension,
+      result: input.result,
+      createdAt: new Date(),
     });
 
     // Delegate to Repo for Transactional Update
-    const updatedVocab = await this.reviewRepository.recordAttemptAndUpdateVocab(attempt, {
+    const updatedVocab =
+      await this.reviewRepository.recordAttemptAndUpdateVocab(attempt, {
         id: vocab.id,
         srsStage: calc.newStage as SrsStage,
         dueAt: calc.dueDate,
         lapsesIncrement: calc.lapseIncrement,
-        masteryDelta, 
-    });
+        masteryDelta,
+      });
 
     return updatedVocab;
   }

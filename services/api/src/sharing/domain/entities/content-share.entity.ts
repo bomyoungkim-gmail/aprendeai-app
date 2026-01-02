@@ -1,14 +1,14 @@
 export enum ShareContextType {
-  CLASSROOM = 'CLASSROOM',
-  STUDY_GROUP = 'STUDY_GROUP',
-  FAMILY = 'FAMILY',
-  PUBLIC = 'PUBLIC',
+  CLASSROOM = "CLASSROOM",
+  STUDY_GROUP = "STUDY_GROUP",
+  FAMILY = "FAMILY",
+  PUBLIC = "PUBLIC",
 }
 
 export enum SharePermission {
-  VIEW = 'VIEW',
-  EDIT = 'EDIT',
-  ASSIGN = 'ASSIGN',
+  VIEW = "VIEW",
+  EDIT = "EDIT",
+  ASSIGN = "ASSIGN",
 }
 
 export class ContentShare {

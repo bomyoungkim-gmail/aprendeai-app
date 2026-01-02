@@ -1,19 +1,25 @@
-import { Injectable, Inject, NotFoundException, BadRequestException } from "@nestjs/common";
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
 import { IApprovalsRepository } from "../../domain/approvals.repository.interface";
 import { IInstitutionsRepository } from "../../domain/institutions.repository.interface";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { EmailService } from "../../../email/email.service";
 import { AdminService } from "../../../admin/admin.service";
 import { SubscriptionService } from "../../../billing/subscription.service";
-import { InstitutionMember } from "../../domain/institution-member.entity";
-import { ContextRole, InstitutionRole } from "@prisma/client";
+import { ContextRole } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class ProcessUserApprovalUseCase {
   constructor(
-    @Inject(IApprovalsRepository) private readonly approvalsRepository: IApprovalsRepository,
-    @Inject(IInstitutionsRepository) private readonly institutionsRepository: IInstitutionsRepository,
+    @Inject(IApprovalsRepository)
+    private readonly approvalsRepository: IApprovalsRepository,
+    @Inject(IInstitutionsRepository)
+    private readonly institutionsRepository: IInstitutionsRepository,
     private readonly prisma: PrismaService, // For cross-module transaction if needed, or use tx manager
     private readonly emailService: EmailService,
     private readonly adminService: AdminService,
@@ -23,7 +29,8 @@ export class ProcessUserApprovalUseCase {
   async approve(approvalId: string, reviewedBy: string) {
     const approval = await this.approvalsRepository.findById(approvalId);
     if (!approval) throw new NotFoundException("Approval not found");
-    if (approval.status !== "PENDING") throw new BadRequestException("Approval already processed");
+    if (approval.status !== "PENDING")
+      throw new BadRequestException("Approval already processed");
 
     // We use PrismaService directly for the complex cross-entity transaction (User, Member, Subscription, Approval)
     const user = await this.prisma.$transaction(async (tx) => {
@@ -70,7 +77,9 @@ export class ProcessUserApprovalUseCase {
     await this.subscriptionService.createInitialSubscription("USER", user.id);
 
     // Notify user
-    const institution = await this.institutionsRepository.findById(approval.institutionId);
+    const institution = await this.institutionsRepository.findById(
+      approval.institutionId,
+    );
     await this.emailService.sendEmail({
       to: approval.email,
       subject: "Cadastro Aprovado! 🎉",
@@ -104,7 +113,9 @@ export class ProcessUserApprovalUseCase {
       rejectionReason: reason,
     });
 
-    const institution = await this.institutionsRepository.findById(approval.institutionId);
+    const institution = await this.institutionsRepository.findById(
+      approval.institutionId,
+    );
     await this.emailService.sendEmail({
       to: approval.email,
       subject: "Atualização sobre seu Cadastro",
@@ -128,7 +139,10 @@ export class ProcessUserApprovalUseCase {
   }
 
   private mapToContextRole(role: string): ContextRole {
-    if (role === "INSTITUTION_EDUCATION_ADMIN" || role === "INSTITUTION_ADMIN") {
+    if (
+      role === "INSTITUTION_EDUCATION_ADMIN" ||
+      role === "INSTITUTION_ADMIN"
+    ) {
       return ContextRole.INSTITUTION_EDUCATION_ADMIN;
     }
     if (role === "TEACHER") return ContextRole.TEACHER;

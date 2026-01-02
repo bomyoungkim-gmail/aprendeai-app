@@ -1,6 +1,6 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { IUsersRepository } from '../../../users/domain/users.repository.interface';
-import { JwtService } from '@nestjs/jwt';
+import { Injectable, Inject, NotFoundException } from "@nestjs/common";
+import { IUsersRepository } from "../../../users/domain/users.repository.interface";
+import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
 export class UnsubscribeUserUseCase {
@@ -16,7 +16,7 @@ export class UnsubscribeUserUseCase {
 
     const user = await this.usersRepo.findById(userId);
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     // Update settings to disable all emails

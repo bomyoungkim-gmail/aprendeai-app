@@ -1,8 +1,8 @@
-import { ShareContextType } from './content-share.entity';
+import { ShareContextType } from "./content-share.entity";
 
 export enum AnnotationShareMode {
-  READ_ONLY = 'READ_ONLY',
-  COLLABORATIVE = 'COLLABORATIVE',
+  READ_ONLY = "READ_ONLY",
+  COLLABORATIVE = "COLLABORATIVE",
 }
 
 export class AnnotationShare {

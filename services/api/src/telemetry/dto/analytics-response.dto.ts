@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from "@nestjs/swagger";
 
 export class SessionMetricsDto {
   @ApiProperty()
@@ -53,9 +53,9 @@ export class GlobalStatsDto {
   @ApiProperty()
   avgTime: number;
 
-  @ApiProperty({ type: 'object', additionalProperties: { type: 'number' } })
+  @ApiProperty({ type: "object", additionalProperties: { type: "number" } })
   modeUsage: Record<string, number>;
 
-  @ApiProperty({ type: 'array', items: { type: 'object' } })
+  @ApiProperty({ type: "array", items: { type: "object" } })
   confusionHeatmap: Array<{ sectionId: string; count: number }>;
 }

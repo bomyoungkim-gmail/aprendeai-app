@@ -411,7 +411,7 @@ export class ContentService {
         { owner_type: "USER", owner_id: userId },
         { owner_type: "FAMILY", owner_id: { in: familyIds } },
         { owner_user_id: userId },
-        { created_by: userId }
+        { created_by: userId },
       ],
     };
 
@@ -616,13 +616,13 @@ export class ContentService {
   async canAccessContent(contentId: string, userId: string): Promise<boolean> {
     const content = await this.prisma.contents.findUnique({
       where: { id: contentId },
-      select: { 
-        owner_type: true, 
-        owner_id: true, 
-        owner_user_id: true, 
+      select: {
+        owner_type: true,
+        owner_id: true,
+        owner_user_id: true,
         created_by: true,
         scope_type: true,
-        institution_id: true
+        institution_id: true,
       },
     });
 
@@ -630,23 +630,34 @@ export class ContentService {
 
     // Direct User Ownership (Standardized)
     if (
-        content.owner_user_id === userId ||
-        content.created_by === userId ||
-        (content.owner_type === "USER" && content.owner_id === userId)
-    ) return true;
+      content.owner_user_id === userId ||
+      content.created_by === userId ||
+      (content.owner_type === "USER" && content.owner_id === userId)
+    )
+      return true;
 
     // Shared Ownership (Basic check for legacy service compatibility)
     if (content.owner_type === "FAMILY") {
       const familyMember = await this.prisma.family_members.findFirst({
-        where: { family_id: content.owner_id, user_id: userId, status: 'ACTIVE' },
+        where: {
+          family_id: content.owner_id,
+          user_id: userId,
+          status: "ACTIVE",
+        },
       });
       return !!familyMember;
     }
 
-    if (content.owner_type === "INSTITUTION" || content.scope_type === "INSTITUTION") {
-        const instId = content.owner_id || content.institution_id;
-        const user = await this.prisma.users.findUnique({ where: { id: userId }, select: { last_institution_id: true } });
-        return user?.last_institution_id === instId;
+    if (
+      content.owner_type === "INSTITUTION" ||
+      content.scope_type === "INSTITUTION"
+    ) {
+      const instId = content.owner_id || content.institution_id;
+      const user = await this.prisma.users.findUnique({
+        where: { id: userId },
+        select: { last_institution_id: true },
+      });
+      return user?.last_institution_id === instId;
     }
 
     return false;

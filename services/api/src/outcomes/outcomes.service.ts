@@ -3,7 +3,9 @@ import { ComputeSessionOutcomesUseCase } from "./application/use-cases/compute-s
 
 @Injectable()
 export class OutcomesService {
-  constructor(private readonly computeSessionOutcomesUseCase: ComputeSessionOutcomesUseCase) {}
+  constructor(
+    private readonly computeSessionOutcomesUseCase: ComputeSessionOutcomesUseCase,
+  ) {}
 
   /**
    * Compute session outcomes when session finishes.

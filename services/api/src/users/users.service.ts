@@ -118,10 +118,10 @@ export class UsersService {
 
   async getStats(userId: string) {
     const [contentsCount, annotationsCount, groupsCount] = await Promise.all([
-      this.prisma.contents.count({ 
-        where: { 
-          OR: this.contentAccessService.getOwnerFilter(userId)
-        } 
+      this.prisma.contents.count({
+        where: {
+          OR: this.contentAccessService.getOwnerFilter(userId),
+        },
       }),
       this.prisma.annotations.count({ where: { user_id: userId } }),
       this.prisma.study_group_members.count({ where: { user_id: userId } }),

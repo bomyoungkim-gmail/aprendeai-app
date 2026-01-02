@@ -5,7 +5,7 @@ export class Subscription {
     public readonly scopeType: string,
     public readonly scopeId: string,
     public readonly planId: string,
-    public readonly status: 'ACTIVE' | 'CANCELED' | 'PAST_DUE',
+    public readonly status: "ACTIVE" | "CANCELED" | "PAST_DUE",
     public readonly startDate: Date,
     public readonly stripeSubscriptionId: string,
     public readonly endDate?: Date,

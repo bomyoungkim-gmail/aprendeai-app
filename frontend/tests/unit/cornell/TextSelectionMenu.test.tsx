@@ -1,6 +1,6 @@
 const vi = jest;
 import { render, screen, fireEvent } from '@testing-library/react';
-import { TextSelectionMenu, SelectionAction } from '@/components/cornell/TextSelectionMenu';
+import { TextSelectionMenu } from '@/components/cornell/TextSelectionMenu';
 import { ACTION_LABELS } from '@/lib/cornell/labels';
 
 describe('TextSelectionMenu', () => {
@@ -30,7 +30,7 @@ describe('TextSelectionMenu', () => {
     expect(screen.getByLabelText(ACTION_LABELS.HIGHLIGHT)).toBeInTheDocument();
     expect(screen.getByLabelText(ACTION_LABELS.NOTE)).toBeInTheDocument();
     expect(screen.getByLabelText(ACTION_LABELS.QUESTION)).toBeInTheDocument();
-    expect(screen.getByLabelText(ACTION_LABELS.STAR)).toBeInTheDocument();
+    expect(screen.getByLabelText(ACTION_LABELS.IMPORTANT)).toBeInTheDocument();
     expect(screen.getByLabelText(ACTION_LABELS.AI)).toBeInTheDocument();
   });
 
@@ -45,7 +45,7 @@ describe('TextSelectionMenu', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('should call onAction with "highlight" when Highlight button clicked', () => {
+  it('should call onAction with "annotation" when Highlight button clicked', () => {
     render(
       <TextSelectionMenu 
         selectionInfo={mockSelectionInfo} 
@@ -54,7 +54,7 @@ describe('TextSelectionMenu', () => {
     );
 
     fireEvent.click(screen.getByLabelText(ACTION_LABELS.HIGHLIGHT));
-    expect(mockOnAction).toHaveBeenCalledWith('highlight', mockSelectionInfo.text);
+    expect(mockOnAction).toHaveBeenCalledWith('annotation', mockSelectionInfo.text);
   });
 
   it('should call onAction with "note" when Note button clicked', () => {
@@ -69,7 +69,7 @@ describe('TextSelectionMenu', () => {
     expect(mockOnAction).toHaveBeenCalledWith('note', mockSelectionInfo.text);
   });
 
-  it('should call onAction with "star" when Star button clicked', () => {
+  it('should call onAction with "important" when Important button clicked', () => {
     render(
       <TextSelectionMenu 
         selectionInfo={mockSelectionInfo} 
@@ -77,8 +77,20 @@ describe('TextSelectionMenu', () => {
       />
     );
 
-    fireEvent.click(screen.getByLabelText(ACTION_LABELS.STAR));
-    expect(mockOnAction).toHaveBeenCalledWith('star', mockSelectionInfo.text);
+    fireEvent.click(screen.getByLabelText(ACTION_LABELS.IMPORTANT));
+    expect(mockOnAction).toHaveBeenCalledWith('important', mockSelectionInfo.text);
+  });
+
+  it('should call onAction with "question" when Question button clicked', () => {
+    render(
+      <TextSelectionMenu 
+        selectionInfo={mockSelectionInfo} 
+        onAction={mockOnAction} 
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText(ACTION_LABELS.QUESTION));
+    expect(mockOnAction).toHaveBeenCalledWith('question', mockSelectionInfo.text);
   });
 
   it('should call onAction with "ai" when AI button clicked', () => {

@@ -54,13 +54,18 @@ describe("GetContentUseCase", () => {
 
     expect(result).toBe(mockContent);
     expect(repository.findById).toHaveBeenCalledWith("content-1");
-    expect(accessService.canAccessContent).toHaveBeenCalledWith("content-1", "user-1");
+    expect(accessService.canAccessContent).toHaveBeenCalledWith(
+      "content-1",
+      "user-1",
+    );
   });
 
   it("should throw NotFoundException if content does not exist", async () => {
     repository.findById.mockResolvedValue(null);
 
-    await expect(useCase.execute("content-1", "user-1")).rejects.toThrow(NotFoundException);
+    await expect(useCase.execute("content-1", "user-1")).rejects.toThrow(
+      NotFoundException,
+    );
     expect(repository.findById).toHaveBeenCalledWith("content-1");
     expect(accessService.canAccessContent).not.toHaveBeenCalled();
   });
@@ -69,7 +74,12 @@ describe("GetContentUseCase", () => {
     repository.findById.mockResolvedValue(mockContent);
     accessService.canAccessContent.mockResolvedValue(false);
 
-    await expect(useCase.execute("content-1", "user-2")).rejects.toThrow(ForbiddenException);
-    expect(accessService.canAccessContent).toHaveBeenCalledWith("content-1", "user-2");
+    await expect(useCase.execute("content-1", "user-2")).rejects.toThrow(
+      ForbiddenException,
+    );
+    expect(accessService.canAccessContent).toHaveBeenCalledWith(
+      "content-1",
+      "user-2",
+    );
   });
 });

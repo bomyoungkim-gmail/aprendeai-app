@@ -39,8 +39,9 @@ interface PDFViewerProps {
   highlights?: BackendHighlight[];
   onCreateHighlight?: (highlight: any) => Promise<void>;
   selectedColor?: string;
-  onSelectionAction?: (action: 'note' | 'question' | 'ai' | 'star' | 'triage' | 'annotation', text: string, data?: any) => void;
+  onSelectionAction?: (action: 'note' | 'question' | 'ai' | 'important' | 'triage' | 'annotation', text: string, data?: any) => void;
   onPageChange?: (page: number) => void;
+  forwardedRef?: React.Ref<PDFViewerRef>;
 }
 
 export interface PDFViewerRef {
@@ -55,7 +56,8 @@ export const PDFViewer = forwardRef<PDFViewerRef, PDFViewerProps>(({
   onCreateHighlight, 
   selectedColor = 'yellow',
   onSelectionAction,
-  onPageChange: onPageChangeProp
+  onPageChange: onPageChangeProp,
+  forwardedRef,
 }, ref) => {
   const fileUrl = content.file?.viewUrl;
 
@@ -71,7 +73,7 @@ export const PDFViewer = forwardRef<PDFViewerRef, PDFViewerProps>(({
   );
 
   // Expose methods to parent
-  React.useImperativeHandle(ref, () => ({
+  React.useImperativeHandle(forwardedRef || ref, () => ({
     jumpToPage: (page: number) => {
       if (navigation.viewerRef.current) {
         navigation.viewerRef.current.jumpToPage(page - 1); // 0-indexed

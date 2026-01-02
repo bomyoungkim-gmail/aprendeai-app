@@ -9,13 +9,18 @@ import { IContentRepository } from "../../../cornell/domain/content.repository.i
 @Injectable()
 export class StartSessionUseCase {
   constructor(
-    @Inject(ISessionsRepository) private readonly sessionsRepository: ISessionsRepository,
+    @Inject(ISessionsRepository)
+    private readonly sessionsRepository: ISessionsRepository,
     private readonly profileService: ProfileService,
     private readonly gatingService: GatingService,
-    @Inject(IContentRepository) private readonly contentRepository: IContentRepository,
+    @Inject(IContentRepository)
+    private readonly contentRepository: IContentRepository,
   ) {}
 
-  async execute(userId: string, contentId: string): Promise<ReadingSession & { minTargetWords: number }> {
+  async execute(
+    userId: string,
+    contentId: string,
+  ): Promise<ReadingSession & { minTargetWords: number }> {
     // 1. Get/create learner profile
     const profile = await this.profileService.getOrCreate(userId);
 
@@ -34,24 +39,24 @@ export class StartSessionUseCase {
 
     // 4. Create session with phase=PRE
     const session = await this.sessionsRepository.create({
-        id: uuidv4(),
-        userId: userId,
-        contentId: contentId,
-        phase: "PRE",
-        modality: "READING",
-        assetLayer: assetLayer,
-        startTime: new Date()
+      id: uuidv4(),
+      userId: userId,
+      contentId: contentId,
+      phase: "PRE",
+      modality: "READING",
+      assetLayer: assetLayer,
+      startTime: new Date(),
     });
 
     const minTargetWords = this.getMinTargetWords(profile.educationLevel);
 
     // Return hybrid object (Entity + metadata)
-    // We explicitly cast to avoid strict class method checks on the intersection return 
-    // unless we fully hydrate a new class extension. 
+    // We explicitly cast to avoid strict class method checks on the intersection return
+    // unless we fully hydrate a new class extension.
     // For now, simpler to return as any or defined DTO in controller.
     return {
-        ...session,
-        minTargetWords
+      ...session,
+      minTargetWords,
     } as any;
   }
 

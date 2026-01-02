@@ -10,9 +10,18 @@ export interface IDomainEvent {
 export interface IEventRepository {
   persist(event: IDomainEvent): Promise<void>;
   getSessionEvents(sessionId: string, domain?: string): Promise<IDomainEvent[]>;
-  getHouseholdEvents(householdId: string, limit?: number): Promise<IDomainEvent[]>;
-  getClassroomEvents(classroomId: string, limit?: number): Promise<IDomainEvent[]>;
-  getStudentEvents(learnerUserId: string, limit?: number): Promise<IDomainEvent[]>;
+  getHouseholdEvents(
+    householdId: string,
+    limit?: number,
+  ): Promise<IDomainEvent[]>;
+  getClassroomEvents(
+    classroomId: string,
+    limit?: number,
+  ): Promise<IDomainEvent[]>;
+  getStudentEvents(
+    learnerUserId: string,
+    limit?: number,
+  ): Promise<IDomainEvent[]>;
 }
 
 export const IEventRepository = Symbol("IEventRepository");

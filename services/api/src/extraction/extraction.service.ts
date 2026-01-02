@@ -30,7 +30,10 @@ export class ExtractionService {
     }
 
     // Use centralized access check
-    const hasContentAccess = await this.contentAccess.canAccessContent(contentId, userId);
+    const hasContentAccess = await this.contentAccess.canAccessContent(
+      contentId,
+      userId,
+    );
     if (!hasContentAccess) {
       throw new ForbiddenException("No access to this content");
     }

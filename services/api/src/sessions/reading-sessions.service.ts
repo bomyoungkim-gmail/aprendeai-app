@@ -2,7 +2,6 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
-  ForbiddenException,
   Logger,
   Inject,
 } from "@nestjs/common";
@@ -26,7 +25,7 @@ import { Prisma } from "@prisma/client";
 import { ProviderUsageService } from "../observability/provider-usage.service";
 import { StartSessionUseCase } from "./application/use-cases/start-session.use-case";
 import { GetSessionUseCase } from "./application/use-cases/get-session.use-case";
-import { UpdatePrePhaseUseCase, UpdatePrePhaseData } from "./application/use-cases/update-pre-phase.use-case";
+import { UpdatePrePhaseUseCase } from "./application/use-cases/update-pre-phase.use-case";
 import { AdvancePhaseUseCase } from "./application/use-cases/advance-phase.use-case";
 import { RecordEventUseCase } from "./application/use-cases/record-event.use-case";
 import { UpdateReadingProgressUseCase } from "./application/use-cases/update-reading-progress.use-case";
@@ -79,7 +78,7 @@ export class ReadingSessionsService {
   }
 
   async recordEvent(sessionId: string, event_type: string, payload: any) {
-    return this.recordEventUseCase.execute(sessionId, event_type, payload); 
+    return this.recordEventUseCase.execute(sessionId, event_type, payload);
   }
 
   async advancePhase(
@@ -87,10 +86,14 @@ export class ReadingSessionsService {
     user_id: string,
     toPhase: "POST" | "FINISHED",
   ) {
-    const updated = await this.advancePhaseUseCase.execute(sessionId, user_id, toPhase);
+    const updated = await this.advancePhaseUseCase.execute(
+      sessionId,
+      user_id,
+      toPhase,
+    );
 
     // If finishing, compute outcomes and integrate with gamification
-    // Note: Use Case only handles state transition. Side effects like Gamification/Outcomes 
+    // Note: Use Case only handles state transition. Side effects like Gamification/Outcomes
     // ideally happen via Domain Events, but for now we keep them here or move them later.
     // The previous implementation did this integration AFTER update.
     if (toPhase === "FINISHED") {
@@ -230,8 +233,7 @@ export class ReadingSessionsService {
     const startedAt = session.startTime || session.started_at;
 
     const durationMinutes = Math.floor(
-      (new Date(finishedAt).getTime() -
-        new Date(startedAt).getTime()) /
+      (new Date(finishedAt).getTime() - new Date(startedAt).getTime()) /
         (1000 * 60),
     );
 

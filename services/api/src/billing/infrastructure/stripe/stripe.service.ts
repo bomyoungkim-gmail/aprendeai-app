@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import Stripe from 'stripe';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import Stripe from "stripe";
 
 @Injectable()
 export class StripeService {
@@ -8,13 +8,15 @@ export class StripeService {
   private readonly logger = new Logger(StripeService.name);
 
   constructor(private configService: ConfigService) {
-    const secretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
+    const secretKey = this.configService.get<string>("STRIPE_SECRET_KEY");
     if (!secretKey) {
-      this.logger.warn('STRIPE_SECRET_KEY not found in environment. Stripe operations will fail.');
+      this.logger.warn(
+        "STRIPE_SECRET_KEY not found in environment. Stripe operations will fail.",
+      );
       return;
     }
     this.stripe = new Stripe(secretKey, {
-      apiVersion: '2023-10-16' as any,
+      apiVersion: "2023-10-16" as any,
     });
   }
 

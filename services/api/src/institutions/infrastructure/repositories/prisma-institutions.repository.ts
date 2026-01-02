@@ -33,7 +33,10 @@ export class PrismaInstitutionsRepository implements IInstitutionsRepository {
     return all.map(this.mapToDomain);
   }
 
-  async update(id: string, updates: Partial<Institution>): Promise<Institution> {
+  async update(
+    id: string,
+    updates: Partial<Institution>,
+  ): Promise<Institution> {
     const updated = await this.prisma.institutions.update({
       where: { id },
       data: {
@@ -62,14 +65,19 @@ export class PrismaInstitutionsRepository implements IInstitutionsRepository {
     return this.mapMemberToDomain(created);
   }
 
-  async findMember(institutionId: string, userId: string): Promise<InstitutionMember | null> {
+  async findMember(
+    institutionId: string,
+    userId: string,
+  ): Promise<InstitutionMember | null> {
     const found = await this.prisma.institution_members.findFirst({
       where: { institution_id: institutionId, user_id: userId },
     });
     return found ? this.mapMemberToDomain(found) : null;
   }
 
-  async findAdminMember(userId: string): Promise<(InstitutionMember & { institutions: Institution }) | null> {
+  async findAdminMember(
+    userId: string,
+  ): Promise<(InstitutionMember & { institutions: Institution }) | null> {
     const found = await this.prisma.institution_members.findFirst({
       where: {
         user_id: userId,

@@ -10,7 +10,8 @@ import { InviteGroupMemberDto } from "./dto/invite-member.dto";
 @Injectable()
 export class StudyGroupsService {
   constructor(
-    @Inject(IStudyGroupsRepository) private readonly repository: IStudyGroupsRepository,
+    @Inject(IStudyGroupsRepository)
+    private readonly repository: IStudyGroupsRepository,
     private readonly createGroupUseCase: CreateStudyGroupUseCase,
     private readonly inviteMemberUseCase: InviteGroupMemberUseCase,
     private readonly manageContentUseCase: ManageGroupContentUseCase,
@@ -30,15 +31,27 @@ export class StudyGroupsService {
     return this.repository.findById(groupId);
   }
 
-  async inviteMember(groupId: string, inviterId: string, dto: InviteGroupMemberDto): Promise<void> {
+  async inviteMember(
+    groupId: string,
+    inviterId: string,
+    dto: InviteGroupMemberDto,
+  ): Promise<void> {
     return this.inviteMemberUseCase.execute(groupId, inviterId, dto);
   }
 
-  async addContent(groupId: string, userId: string, contentId: string): Promise<void> {
+  async addContent(
+    groupId: string,
+    userId: string,
+    contentId: string,
+  ): Promise<void> {
     return this.manageContentUseCase.addContent(groupId, userId, contentId);
   }
 
-  async removeContent(groupId: string, userId: string, contentId: string): Promise<void> {
+  async removeContent(
+    groupId: string,
+    userId: string,
+    contentId: string,
+  ): Promise<void> {
     return this.manageContentUseCase.removeContent(groupId, userId, contentId);
   }
 
@@ -56,6 +69,8 @@ export class StudyGroupsService {
 
   async removeMember(groupId: string, removerId: string, targetUserId: string) {
     // Logic from original service (OWNER/MOD check)
-    await this.repository.updateMember(groupId, targetUserId, { status: "REMOVED" as any });
+    await this.repository.updateMember(groupId, targetUserId, {
+      status: "REMOVED" as any,
+    });
   }
 }

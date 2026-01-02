@@ -1,5 +1,3 @@
-import { institutions } from "@prisma/client";
-
 export class InstitutionMapper {
   static toDto(institution: any | null) {
     if (!institution) return null;

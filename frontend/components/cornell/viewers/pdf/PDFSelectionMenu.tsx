@@ -4,26 +4,19 @@ import React, { useRef, useState, useLayoutEffect, forwardRef } from 'react';
 import { Highlighter, MessageSquare, HelpCircle, Sparkles, Star, BookOpen } from 'lucide-react';
 import type { RenderHighlightTargetProps } from '@react-pdf-viewer/highlight';
 import { getColorForKey } from '@/lib/constants/colors';
+import { ACTION_LABELS } from '@/lib/cornell/labels';
+
+import { useCornellLayout } from '@/contexts/CornellLayoutContext';
 
 interface PDFSelectionMenuProps {
   props: RenderHighlightTargetProps;
   handleHighlightCreation: (props: any) => void;
-  onSelectionAction?: (action: 'note' | 'question' | 'ai' | 'star' | 'triage' | 'annotation', text: string, data?: any) => void;
+  onSelectionAction?: (action: 'note' | 'question' | 'ai' | 'important' | 'triage' | 'annotation', text: string, data?: any) => void;
   selectedColor: string;
 }
 
 /**
  * PDFSelectionMenu - Menu de seleção de texto no PDF
- * 
- * Exibe um menu flutuante quando o usuário seleciona texto no PDF,
- * oferecendo ações como: destacar, criar nota, marcar como importante,
- * fazer pergunta, usar IA, ou fazer triagem.
- * 
- * Features:
- * - Posicionamento automático no viewport
- * - Ajuste para evitar overflow
- * - 6 ações disponíveis
- * - Suporte a dark mode
  */
 export const PDFSelectionMenu = forwardRef<HTMLDivElement, PDFSelectionMenuProps>(({ 
   props, 
@@ -31,6 +24,7 @@ export const PDFSelectionMenu = forwardRef<HTMLDivElement, PDFSelectionMenuProps
   onSelectionAction, 
   selectedColor,
 }, ref) => {
+  const layout = useCornellLayout();
   const internalRef = useRef<HTMLDivElement>(null);
   const [positionStyle, setPositionStyle] = useState<React.CSSProperties>({
     position: 'absolute',
@@ -92,10 +86,10 @@ export const PDFSelectionMenu = forwardRef<HTMLDivElement, PDFSelectionMenuProps
           props.toggle();
         }}
         className={buttonClass}
-        title="Destaque"
+        title={ACTION_LABELS.HIGHLIGHT}
       >
         <Highlighter className="h-4 w-4" style={{ color: getColorForKey(selectedColor) }} />
-        <span className={labelClass}>Destacar</span>
+        <span className={labelClass}>{ACTION_LABELS.HIGHLIGHT}</span>
       </button>
 
       {/* Note - 💬 */}
@@ -107,10 +101,10 @@ export const PDFSelectionMenu = forwardRef<HTMLDivElement, PDFSelectionMenuProps
           props.toggle();
         }}
         className={buttonClass}
-        title="Nota"
+        title={ACTION_LABELS.NOTE}
       >
-        <MessageSquare className="h-4 w-4 text-blue-500" />
-        <span className={labelClass}>Nota</span>
+        <BookOpen className="h-4 w-4 text-blue-500" />
+        <span className={labelClass}>{ACTION_LABELS.NOTE}</span>
       </button>
 
       {/* Star - ⭐ */}
@@ -118,14 +112,14 @@ export const PDFSelectionMenu = forwardRef<HTMLDivElement, PDFSelectionMenuProps
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
-          onSelectionAction?.('star', props.selectedText, props);
+          onSelectionAction?.('important', props.selectedText, props);
           props.toggle();
         }}
         className={buttonClass}
-        title="Importante"
+        title={ACTION_LABELS.IMPORTANT}
       >
         <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-        <span className={labelClass}>Importante</span> 
+        <span className={labelClass}>{ACTION_LABELS.IMPORTANT}</span> 
       </button>
 
       {/* Question - ❓ */}
@@ -137,10 +131,10 @@ export const PDFSelectionMenu = forwardRef<HTMLDivElement, PDFSelectionMenuProps
           props.toggle();
         }}
         className={buttonClass}
-        title="Dúvida"
+        title={ACTION_LABELS.QUESTION}
       >
         <HelpCircle className="h-4 w-4 text-red-500" />
-        <span className={labelClass}>Dúvida</span>
+        <span className={labelClass}>{ACTION_LABELS.QUESTION}</span>
       </button>
 
       <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-1" />
@@ -150,7 +144,7 @@ export const PDFSelectionMenu = forwardRef<HTMLDivElement, PDFSelectionMenuProps
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
-          onSelectionAction?.('ai', props.selectedText, props);
+          layout.handleAISelection(props.selectedText);
           props.toggle();
         }}
         className={`${buttonClass} relative group`}
@@ -158,21 +152,6 @@ export const PDFSelectionMenu = forwardRef<HTMLDivElement, PDFSelectionMenuProps
       >
         <Sparkles className="h-4 w-4 text-purple-600 animate-pulse" />
         <span className={`${labelClass} text-purple-600 font-bold`}>IA</span>
-      </button>
-      
-      {/* Triage - 📖 */}
-       <button 
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelectionAction?.('triage', props.selectedText, props);
-          props.toggle();
-        }}
-        className={buttonClass}
-        title="Triagem"
-      >
-        <BookOpen className="h-4 w-4 text-gray-500" />
-        <span className={labelClass}>Triagem</span>
       </button>
 
       {/* Triangle Arrow */}

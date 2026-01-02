@@ -21,7 +21,10 @@ export class PrismaAnalyticsRepository implements IAnalyticsRepository {
     return this.mapToDomain(created);
   }
 
-  async updateSession(id: string, updates: Partial<StudySession>): Promise<StudySession> {
+  async updateSession(
+    id: string,
+    updates: Partial<StudySession>,
+  ): Promise<StudySession> {
     const updated = await this.prisma.study_sessions.update({
       where: { id },
       data: {
@@ -43,7 +46,7 @@ export class PrismaAnalyticsRepository implements IAnalyticsRepository {
   async incrementInterruptions(id: string): Promise<void> {
     await this.prisma.study_sessions.update({
       where: { id },
-      data: { interruptions: { increment: 1 } }
+      data: { interruptions: { increment: 1 } },
     });
   }
 
@@ -54,7 +57,10 @@ export class PrismaAnalyticsRepository implements IAnalyticsRepository {
     return found ? this.mapToDomain(found) : null;
   }
 
-  async findActiveSession(userId: string, activityType?: string): Promise<StudySession | null> {
+  async findActiveSession(
+    userId: string,
+    activityType?: string,
+  ): Promise<StudySession | null> {
     const found = await this.prisma.study_sessions.findFirst({
       where: {
         user_id: userId,
@@ -66,7 +72,9 @@ export class PrismaAnalyticsRepository implements IAnalyticsRepository {
     return found ? this.mapToDomain(found) : null;
   }
 
-  async findAbandonedSessions(thresholdMinutes: number): Promise<StudySession[]> {
+  async findAbandonedSessions(
+    thresholdMinutes: number,
+  ): Promise<StudySession[]> {
     const threshold = new Date(Date.now() - thresholdMinutes * 60 * 1000);
     const found = await this.prisma.study_sessions.findMany({
       where: {
@@ -77,20 +85,26 @@ export class PrismaAnalyticsRepository implements IAnalyticsRepository {
     return found.map(this.mapToDomain);
   }
 
-  async findReadingSession(userId: string, contentId: string): Promise<StudySession | null> {
-     const found = await this.prisma.study_sessions.findFirst({
-        where: {
-          user_id: userId,
-          content_id: contentId,
-          activity_type: "reading",
-          end_time: null,
-        },
-        orderBy: { start_time: "desc" },
-      });
-      return found ? this.mapToDomain(found) : null;
+  async findReadingSession(
+    userId: string,
+    contentId: string,
+  ): Promise<StudySession | null> {
+    const found = await this.prisma.study_sessions.findFirst({
+      where: {
+        user_id: userId,
+        content_id: contentId,
+        activity_type: "reading",
+        end_time: null,
+      },
+      orderBy: { start_time: "desc" },
+    });
+    return found ? this.mapToDomain(found) : null;
   }
 
-  async countMasteredVocab(userId: string, minMastery: number): Promise<number> {
+  async countMasteredVocab(
+    userId: string,
+    minMastery: number,
+  ): Promise<number> {
     return this.prisma.user_vocabularies.count({
       where: { user_id: userId, mastery_score: { gte: minMastery } },
     });

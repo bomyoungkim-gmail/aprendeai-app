@@ -2,7 +2,6 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { IProfileRepository } from "../../domain/profile.repository.interface";
 import { Profile } from "../../domain/profile.entity";
-import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class PrismaProfileRepository implements IProfileRepository {
@@ -24,7 +23,7 @@ export class PrismaProfileRepository implements IProfileRepository {
         reading_level_score: data.readingLevelScore,
         listening_level_score: data.listeningLevelScore,
         writing_level_score: data.writingLevelScore,
-        updated_at: new Date(), 
+        updated_at: new Date(),
       },
     });
     return this.mapToDomain(created);

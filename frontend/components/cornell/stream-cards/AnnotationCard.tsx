@@ -3,6 +3,7 @@ import { Highlighter, Trash2, Edit2, MapPin } from 'lucide-react';
 import type { AnnotationStreamItem, UnifiedStreamItem } from '@/lib/types/unified-stream';
 import { getColorForKey } from '@/lib/constants/colors';
 import { AnnotationEditor } from '../InlineEditor';
+import { ITEM_TYPE_LABELS } from '@/lib/cornell/labels';
 
 interface AnnotationCardProps {
   item: AnnotationStreamItem;
@@ -48,6 +49,9 @@ export function AnnotationCard({ item, onClick, onEdit, onDelete, onSaveEdit }: 
             className="h-4 w-4 shrink-0" 
             style={{ color: rgb }}
           />
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            {ITEM_TYPE_LABELS.HIGHLIGHT}
+          </span>
           {item.pageNumber && (
             <span className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
               <MapPin className="h-3 w-3" />

@@ -1,4 +1,4 @@
-import { Injectable, Inject, ConflictException, NotFoundException } from "@nestjs/common";
+import { Injectable, Inject, ConflictException } from "@nestjs/common";
 import { IInvitesRepository } from "../../domain/invites.repository.interface";
 import { IInstitutionsRepository } from "../../domain/institutions.repository.interface";
 import { EmailService } from "../../../email/email.service";
@@ -12,8 +12,10 @@ import { v4 as uuidv4 } from "uuid";
 @Injectable()
 export class InstitutionInviteUseCase {
   constructor(
-    @Inject(IInvitesRepository) private readonly invitesRepository: IInvitesRepository,
-    @Inject(IInstitutionsRepository) private readonly institutionsRepository: IInstitutionsRepository,
+    @Inject(IInvitesRepository)
+    private readonly invitesRepository: IInvitesRepository,
+    @Inject(IInstitutionsRepository)
+    private readonly institutionsRepository: IInstitutionsRepository,
     private readonly prisma: PrismaService, // For checking existing user
     private readonly emailService: EmailService,
     private readonly adminService: AdminService,
@@ -46,12 +48,13 @@ export class InstitutionInviteUseCase {
     });
 
     const created = await this.invitesRepository.create(invite);
-    const institution = await this.institutionsRepository.findById(institutionId);
+    const institution =
+      await this.institutionsRepository.findById(institutionId);
 
     // Fetch inviter info for email
     const inviter = await this.prisma.users.findUnique({
-        where: { id: invitedBy },
-        select: { name: true }
+      where: { id: invitedBy },
+      select: { name: true },
     });
 
     const inviteUrl = `${process.env.FRONTEND_URL}/register/invite?token=${token}`;
@@ -107,7 +110,9 @@ export class InstitutionInviteUseCase {
     }
 
     // Need to get institution name for response
-    const institution = await this.institutionsRepository.findById(invite.institutionId);
+    const institution = await this.institutionsRepository.findById(
+      invite.institutionId,
+    );
 
     return {
       valid: true,

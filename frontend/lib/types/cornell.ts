@@ -1,6 +1,7 @@
 import { ContentType, TargetType } from '../constants/enums';
 
-export type CornellType = 'NOTE' | 'QUESTION' | 'STAR' | 'HIGHLIGHT' | 'SUMMARY';
+// Import from single source of truth
+export type { CornellType, CornellExtendedType } from '@/lib/cornell/constants';
 
 export interface Content {
   id: string;

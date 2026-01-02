@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { ContentMode } from '@prisma/client';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { ContentMode } from "@prisma/client";
 
 @Injectable()
 export class ContentModeService {
@@ -25,11 +25,11 @@ export class ContentModeService {
     }
 
     // Source of truth: PRODUCER > USER > HEURISTIC
-    if (content.mode && content.mode_source === 'PRODUCER') {
+    if (content.mode && content.mode_source === "PRODUCER") {
       return content.mode as ContentMode;
     }
 
-    if (content.mode && content.mode_source === 'USER') {
+    if (content.mode && content.mode_source === "USER") {
       return content.mode as ContentMode;
     }
 
@@ -75,7 +75,7 @@ export class ContentModeService {
     contentId: string,
     mode: ContentMode,
     userId: string,
-    source: 'PRODUCER' | 'USER' = 'USER',
+    source: "PRODUCER" | "USER" = "USER",
   ): Promise<void> {
     // Verify content exists
     const content = await this.prisma.contents.findUnique({
@@ -108,66 +108,66 @@ export class ContentModeService {
 
     // Check for language learning content
     if (
-      title.includes('vocabulário') ||
-      title.includes('vocabulary') ||
-      title.includes('language') ||
-      title.includes('idioma') ||
-      title.includes('inglês') ||
-      title.includes('english') ||
-      title.includes('español') ||
-      title.includes('french')
+      title.includes("vocabulário") ||
+      title.includes("vocabulary") ||
+      title.includes("language") ||
+      title.includes("idioma") ||
+      title.includes("inglês") ||
+      title.includes("english") ||
+      title.includes("español") ||
+      title.includes("french")
     ) {
       return ContentMode.LANGUAGE;
     }
 
     // Check for news content
     if (
-      title.includes('notícia') ||
-      title.includes('news') ||
-      title.includes('jornal') ||
-      title.includes('artigo') ||
-      title.includes('reportagem')
+      title.includes("notícia") ||
+      title.includes("news") ||
+      title.includes("jornal") ||
+      title.includes("artigo") ||
+      title.includes("reportagem")
     ) {
       return ContentMode.NEWS;
     }
 
     // Check for scientific content
     if (
-      title.includes('científico') ||
-      title.includes('scientific') ||
-      title.includes('research') ||
-      title.includes('paper') ||
-      title.includes('estudo') ||
-      title.includes('pesquisa') ||
-      title.includes('journal')
+      title.includes("científico") ||
+      title.includes("scientific") ||
+      title.includes("research") ||
+      title.includes("paper") ||
+      title.includes("estudo") ||
+      title.includes("pesquisa") ||
+      title.includes("journal")
     ) {
       return ContentMode.SCIENTIFIC;
     }
 
     // Check for technical content
     if (
-      title.includes('técnico') ||
-      title.includes('technical') ||
-      title.includes('manual') ||
-      title.includes('documentation') ||
-      title.includes('guide') ||
-      title.includes('tutorial') ||
-      title.includes('api') ||
-      title.includes('código')
+      title.includes("técnico") ||
+      title.includes("technical") ||
+      title.includes("manual") ||
+      title.includes("documentation") ||
+      title.includes("guide") ||
+      title.includes("tutorial") ||
+      title.includes("api") ||
+      title.includes("código")
     ) {
       return ContentMode.TECHNICAL;
     }
 
     // Check for didactic content
     if (
-      title.includes('aula') ||
-      title.includes('curso') ||
-      title.includes('lesson') ||
-      title.includes('course') ||
-      title.includes('apostila') ||
-      title.includes('exercício') ||
-      title.includes('atividade') ||
-      title.includes('lição')
+      title.includes("aula") ||
+      title.includes("curso") ||
+      title.includes("lesson") ||
+      title.includes("course") ||
+      title.includes("apostila") ||
+      title.includes("exercício") ||
+      title.includes("atividade") ||
+      title.includes("lição")
     ) {
       return ContentMode.DIDACTIC;
     }

@@ -1,8 +1,15 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { ISharingRepository } from '../../domain/interfaces/sharing.repository.interface';
-import { ContentShare, ShareContextType, SharePermission } from '../../domain/entities/content-share.entity';
-import { AnnotationShare, AnnotationShareMode } from '../../domain/entities/annotation-share.entity';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
+import { ISharingRepository } from "../../domain/interfaces/sharing.repository.interface";
+import {
+  ContentShare,
+  ShareContextType,
+  SharePermission,
+} from "../../domain/entities/content-share.entity";
+import {
+  AnnotationShare,
+  AnnotationShareMode,
+} from "../../domain/entities/annotation-share.entity";
 
 @Injectable()
 export class PrismaSharingRepository implements ISharingRepository {
@@ -39,7 +46,11 @@ export class PrismaSharingRepository implements ISharingRepository {
     );
   }
 
-  async revokeContentShare(contentId: string, contextType: string, contextId: string): Promise<void> {
+  async revokeContentShare(
+    contentId: string,
+    contextType: string,
+    contextId: string,
+  ): Promise<void> {
     await this.prisma.content_shares.deleteMany({
       where: {
         content_id: contentId,
@@ -49,7 +60,9 @@ export class PrismaSharingRepository implements ISharingRepository {
     });
   }
 
-  async upsertAnnotationShare(share: AnnotationShare): Promise<AnnotationShare> {
+  async upsertAnnotationShare(
+    share: AnnotationShare,
+  ): Promise<AnnotationShare> {
     const upserted = await this.prisma.annotation_shares.upsert({
       where: {
         annotation_id_context_type_context_id: {
@@ -80,7 +93,11 @@ export class PrismaSharingRepository implements ISharingRepository {
     );
   }
 
-  async revokeAnnotationShare(annotationId: string, contextType: string, contextId: string): Promise<void> {
+  async revokeAnnotationShare(
+    annotationId: string,
+    contextType: string,
+    contextId: string,
+  ): Promise<void> {
     await this.prisma.annotation_shares.deleteMany({
       where: {
         annotation_id: annotationId,

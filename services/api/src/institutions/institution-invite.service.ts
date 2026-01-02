@@ -27,11 +27,11 @@ export class InstitutionInviteService {
   }
 
   async findByToken(token: string) {
-      return this.inviteUseCase.validate(token);
+    return this.inviteUseCase.validate(token);
   }
 
   async delete(inviteId: string, deletedBy: string) {
-      await this.repository.delete(inviteId);
-      return { message: "Invite cancelled successfully" };
+    await this.repository.delete(inviteId);
+    return { message: "Invite cancelled successfully" };
   }
 }

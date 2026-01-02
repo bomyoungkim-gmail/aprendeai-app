@@ -4,6 +4,9 @@ export const IGameProgressRepository = "IGameProgressRepository";
 
 export interface IGameProgressRepository {
   findByUser(userId: string): Promise<GameProgress[]>;
-  findByUserAndGame(userId: string, gameId: string): Promise<GameProgress | null>;
+  findByUserAndGame(
+    userId: string,
+    gameId: string,
+  ): Promise<GameProgress | null>;
   save(progress: GameProgress): Promise<GameProgress>;
 }

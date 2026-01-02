@@ -1,11 +1,12 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { IClassroomRepository } from '../../domain/interfaces/classroom.repository.interface';
-import { Classroom } from '../../domain/entities/classroom.entity';
+import { Injectable, Inject, NotFoundException } from "@nestjs/common";
+import { IClassroomRepository } from "../../domain/interfaces/classroom.repository.interface";
+import { Classroom } from "../../domain/entities/classroom.entity";
 
 @Injectable()
 export class GetClassroomUseCase {
   constructor(
-    @Inject(IClassroomRepository) private readonly classroomRepo: IClassroomRepository,
+    @Inject(IClassroomRepository)
+    private readonly classroomRepo: IClassroomRepository,
   ) {}
 
   async execute(id: string): Promise<Classroom> {

@@ -1,4 +1,3 @@
-
 export class CornellNote {
   id: string;
   contentId: string;

@@ -15,6 +15,10 @@ import { TrackStudySessionUseCase } from "./application/use-cases/track-study-se
       useClass: PrismaAnalyticsRepository,
     },
   ],
-  exports: [SessionTrackingService, TrackStudySessionUseCase, IAnalyticsRepository],
+  exports: [
+    SessionTrackingService,
+    TrackStudySessionUseCase,
+    IAnalyticsRepository,
+  ],
 })
 export class SessionTrackingModule {}

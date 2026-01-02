@@ -1,6 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../prisma/prisma.service";
-import { IDomainsRepository, InstitutionDomain } from "../../domain/domains.repository.interface";
+import {
+  IDomainsRepository,
+  InstitutionDomain,
+} from "../../domain/domains.repository.interface";
 
 @Injectable()
 export class PrismaDomainsRepository implements IDomainsRepository {
@@ -46,7 +49,10 @@ export class PrismaDomainsRepository implements IDomainsRepository {
     await this.prisma.institution_domains.delete({ where: { id } });
   }
 
-  async update(id: string, updates: Partial<InstitutionDomain>): Promise<InstitutionDomain> {
+  async update(
+    id: string,
+    updates: Partial<InstitutionDomain>,
+  ): Promise<InstitutionDomain> {
     const updated = await this.prisma.institution_domains.update({
       where: { id },
       data: {

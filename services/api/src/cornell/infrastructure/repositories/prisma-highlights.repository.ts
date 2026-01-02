@@ -46,7 +46,7 @@ export class PrismaHighlightsRepository implements IHighlightsRepository {
         context_type: highlight.contextType as any, // Enum
         context_id: highlight.contextId,
         learner_id: highlight.learnerId,
-        status: highlight.status as any || "ACTIVE",
+        status: (highlight.status as any) || "ACTIVE",
       },
     });
     return this.mapToDomain(created);

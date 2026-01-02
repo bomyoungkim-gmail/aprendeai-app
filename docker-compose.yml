@@ -65,13 +65,14 @@ services:
     image: socrates/api
     container_name: socrates-api
     ports:
-      - "4000:4000"
+      - "0.0.0.0:4000:4000"
     volumes:
       # DO NOT bind mount ./services/api:/app - it overwrites Linux-compiled bcrypt with Windows binary!
       # For development, rebuild image instead of using bind mounts for native modules
       - ./services/api/src:/app/src
       - ./services/api/prisma/schema.prisma:/app/prisma/schema.prisma
-      - /app/node_modules  # Protects node_modules from being overwritten
+      - ./services/api/uploads:/app/uploads # Persist uploaded files across rebuilds
+      - /app/node_modules # Protects node_modules from being overwritten
     environment:
       NODE_ENV: development
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-aprendeai}
@@ -80,7 +81,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:-test-jwt-secret-key-change-in-production}
       ADMIN_MASTER_KEY: ${ADMIN_MASTER_KEY:-sY5VUo8LqAAq8k8VKM2IMEZ9C9XqGt+EBQGg/hp/DbA=}
       AI_SERVICE_SECRET: ${AI_SERVICE_SECRET:-dev-insecure-secret-key-change-me-in-prod-12345}
-      API_URL: http://localhost:4000/api/v1
+      API_URL: http://127.0.0.1:4000/api/v1
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
     depends_on:
       postgres:
         condition: service_healthy
@@ -232,12 +234,15 @@ services:
     image: socrates/frontend
     container_name: socrates-frontend
     ports:
-      - "3000:3000"
+      - "0.0.0.0:3000:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+      NEXT_PUBLIC_API_URL: http://127.0.0.1:4000/api/v1
+      HOSTNAME: 0.0.0.0
+      WATCHPACK_POLLING: "true"
+      NODE_OPTIONS: "--max-old-space-size=4096 --dns-result-order=ipv4first"
     depends_on:
       api:
         condition: service_started

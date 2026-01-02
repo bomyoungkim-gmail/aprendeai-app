@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Stage, Layer, Image as KonvaImage, Rect } from 'react-konva';
 import useImage from 'use-image';
 import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { logger } from '@/lib/utils/logger';
+import { api } from '@/lib/api';
 import type { Content, Highlight, ViewMode } from '@/lib/types/cornell';
 
 interface ImageViewerProps {
@@ -13,7 +14,34 @@ interface ImageViewerProps {
 }
 
 export function ImageViewer({ content, mode, highlights = [], onCreateHighlight }: ImageViewerProps) {
-  const [image] = useImage(content.file?.viewUrl || '');
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [image] = useImage(imageUrl);
+
+  useEffect(() => {
+    if (!content.file?.viewUrl) return;
+
+    let currentBlobUrl = '';
+    
+    const fetchImage = async () => {
+      try {
+        const response = await api.get(content.file!.viewUrl!, {
+          responseType: 'blob'
+        });
+        const url = URL.createObjectURL(response.data);
+        currentBlobUrl = url;
+        setImageUrl(url);
+      } catch (error) {
+        logger.error('Failed to fetch image', error, { url: content.file?.viewUrl });
+      }
+    };
+
+    fetchImage();
+
+    return () => {
+      if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+    };
+  }, [content.file?.viewUrl]);
+
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isSelecting, setIsSelecting] = useState(false);

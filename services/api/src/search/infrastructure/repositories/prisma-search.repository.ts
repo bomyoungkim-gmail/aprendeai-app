@@ -1,6 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { ISearchRepository, SearchResult } from '../../domain/interfaces/search.repository.interface';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
+import {
+  ISearchRepository,
+  SearchResult,
+} from "../../domain/interfaces/search.repository.interface";
 
 @Injectable()
 export class PrismaSearchRepository implements ISearchRepository {
@@ -9,14 +12,14 @@ export class PrismaSearchRepository implements ISearchRepository {
   async searchContent(query: string, filters: any): Promise<SearchResult[]> {
     const where: any = {
       OR: [
-        { title: { contains: query, mode: 'insensitive' } },
-        { raw_text: { contains: query, mode: 'insensitive' } },
+        { title: { contains: query, mode: "insensitive" } },
+        { raw_text: { contains: query, mode: "insensitive" } },
       ],
     };
 
     if (filters.contentType) where.type = filters.contentType;
     if (filters.language) where.original_language = filters.language;
-    
+
     // NEW: Use standardized owner filter if provided
     if (filters.ownerFilter) {
       where.OR = (where.OR || []).concat(filters.ownerFilter);
@@ -39,10 +42,14 @@ export class PrismaSearchRepository implements ISearchRepository {
 
     return contents.map((content: any) => ({
       id: content.id,
-      type: 'content' as const,
+      type: "content" as const,
       title: content.title,
       snippet: this.extractSnippet(content.raw_text, query, 150),
-      relevance: this.calculateRelevance(content.title, content.raw_text, query),
+      relevance: this.calculateRelevance(
+        content.title,
+        content.raw_text,
+        query,
+      ),
       metadata: {
         type: content.type,
         language: content.original_language,
@@ -52,11 +59,14 @@ export class PrismaSearchRepository implements ISearchRepository {
     }));
   }
 
-  async searchTranscripts(query: string, userId?: string): Promise<SearchResult[]> {
+  async searchTranscripts(
+    query: string,
+    userId?: string,
+  ): Promise<SearchResult[]> {
     const where: any = {
-      type: { in: ['VIDEO', 'AUDIO'] as any },
+      type: { in: ["VIDEO", "AUDIO"] as any },
       metadata: {
-        path: ['transcription', 'text'],
+        path: ["transcription", "text"],
         string_contains: query,
       },
     };
@@ -66,7 +76,7 @@ export class PrismaSearchRepository implements ISearchRepository {
       where.OR = [
         { owner_user_id: userId },
         { created_by: userId },
-        { owner_type: 'USER', owner_id: userId }
+        { owner_type: "USER", owner_id: userId },
       ];
     }
 
@@ -79,13 +89,14 @@ export class PrismaSearchRepository implements ISearchRepository {
     });
 
     return contents.map((content: any) => {
-      const transcription = (content.metadata as any)?.transcription?.text || '';
+      const transcription =
+        (content.metadata as any)?.transcription?.text || "";
       return {
         id: content.id,
-        type: 'transcript' as const,
+        type: "transcript" as const,
         title: `${content.title} (Transcript)`,
         snippet: this.extractSnippet(transcription, query, 150),
-        relevance: this.calculateRelevance('', transcription, query),
+        relevance: this.calculateRelevance("", transcription, query),
         metadata: {
           type: content.type,
           owner: content.users_owner,
@@ -95,13 +106,16 @@ export class PrismaSearchRepository implements ISearchRepository {
     });
   }
 
-  async searchAnnotations(userId: string, query: string): Promise<SearchResult[]> {
+  async searchAnnotations(
+    userId: string,
+    query: string,
+  ): Promise<SearchResult[]> {
     const annotations = await this.prisma.annotations.findMany({
       where: {
         user_id: userId,
         OR: [
-          { text: { contains: query, mode: 'insensitive' } },
-          { selected_text: { contains: query, mode: 'insensitive' } },
+          { text: { contains: query, mode: "insensitive" } },
+          { selected_text: { contains: query, mode: "insensitive" } },
         ],
       },
       include: {
@@ -113,16 +127,16 @@ export class PrismaSearchRepository implements ISearchRepository {
 
     return annotations.map((annotation: any) => ({
       id: annotation.id,
-      type: 'annotation' as const,
+      type: "annotation" as const,
       title: `Annotation on ${annotation.contents.title}`,
       snippet: this.extractSnippet(
-        annotation.text || annotation.selected_text || '',
+        annotation.text || annotation.selected_text || "",
         query,
         150,
       ),
       relevance: this.calculateRelevance(
-        '',
-        annotation.text || annotation.selected_text || '',
+        "",
+        annotation.text || annotation.selected_text || "",
         query,
       ),
       metadata: {
@@ -138,9 +152,7 @@ export class PrismaSearchRepository implements ISearchRepository {
     const notes = await this.prisma.cornell_notes.findMany({
       where: {
         user_id: userId,
-        OR: [
-          { summary_text: { contains: query, mode: 'insensitive' } },
-        ],
+        OR: [{ summary_text: { contains: query, mode: "insensitive" } }],
       },
       include: {
         contents: { select: { id: true, title: true } },
@@ -153,10 +165,10 @@ export class PrismaSearchRepository implements ISearchRepository {
       const combinedText = `${note.summary_text}`;
       return {
         id: note.id,
-        type: 'note' as const,
+        type: "note" as const,
         title: `Cornell Note on ${note.contents.title}`,
         snippet: this.extractSnippet(combinedText, query, 150),
-        relevance: this.calculateRelevance('', combinedText, query),
+        relevance: this.calculateRelevance("", combinedText, query),
         metadata: {
           contentId: note.contents.id,
           contentTitle: note.contents.title,
@@ -168,24 +180,31 @@ export class PrismaSearchRepository implements ISearchRepository {
   }
 
   private extractSnippet(text: string, query: string, length: number): string {
-    if (!text) return '';
+    if (!text) return "";
     const lowerText = text.toLowerCase();
     const lowerQuery = query.toLowerCase();
     const queryIndex = lowerText.indexOf(lowerQuery);
 
     if (queryIndex === -1) {
-      return text.substring(0, length) + (text.length > length ? '...' : '');
+      return text.substring(0, length) + (text.length > length ? "..." : "");
     }
 
     const start = Math.max(0, queryIndex - length / 3);
-    const end = Math.min(text.length, queryIndex + query.length + (length * 2) / 3);
+    const end = Math.min(
+      text.length,
+      queryIndex + query.length + (length * 2) / 3,
+    );
     let snippet = text.substring(start, end);
-    if (start > 0) snippet = '...' + snippet;
-    if (end < text.length) snippet = snippet + '...';
+    if (start > 0) snippet = "..." + snippet;
+    if (end < text.length) snippet = snippet + "...";
     return snippet;
   }
 
-  private calculateRelevance(title: string, content: string, query: string): number {
+  private calculateRelevance(
+    title: string,
+    content: string,
+    query: string,
+  ): number {
     const lowerQuery = query.toLowerCase();
     const lowerTitle = title.toLowerCase();
     const lowerContent = content.toLowerCase();
@@ -196,7 +215,8 @@ export class PrismaSearchRepository implements ISearchRepository {
     }
     if (lowerContent.includes(lowerQuery)) {
       score += 5;
-      const matches = (lowerContent.match(new RegExp(lowerQuery, 'g')) || []).length;
+      const matches = (lowerContent.match(new RegExp(lowerQuery, "g")) || [])
+        .length;
       score += Math.min(matches, 5);
     }
     return score;

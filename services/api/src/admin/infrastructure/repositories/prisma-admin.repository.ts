@@ -4,7 +4,10 @@ import {
   IFeatureFlagsRepository,
   IAuditLogsRepository,
 } from "../../domain/admin.repository.interface";
-import { FeatureFlag, FeatureFlagEnvironment } from "../../domain/feature-flag.entity";
+import {
+  FeatureFlag,
+  FeatureFlagEnvironment,
+} from "../../domain/feature-flag.entity";
 import { AuditLog } from "../../domain/audit-log.entity";
 import { Environment, ScopeType } from "@prisma/client";
 
@@ -30,7 +33,10 @@ export class PrismaFeatureFlagsRepository implements IFeatureFlagsRepository {
     return this.mapToDomain(created);
   }
 
-  async update(id: string, updates: Partial<FeatureFlag>): Promise<FeatureFlag> {
+  async update(
+    id: string,
+    updates: Partial<FeatureFlag>,
+  ): Promise<FeatureFlag> {
     const updated = await this.prisma.feature_flags.update({
       where: { id },
       data: {
@@ -56,13 +62,19 @@ export class PrismaFeatureFlagsRepository implements IFeatureFlagsRepository {
   }
 
   async findByKey(key: string): Promise<FeatureFlag | null> {
-    const found = await this.prisma.feature_flags.findUnique({ where: { key } });
+    const found = await this.prisma.feature_flags.findUnique({
+      where: { key },
+    });
     return found ? this.mapToDomain(found) : null;
   }
 
-  async findMany(filter?: { environment?: FeatureFlagEnvironment; enabled?: boolean }): Promise<FeatureFlag[]> {
+  async findMany(filter?: {
+    environment?: FeatureFlagEnvironment;
+    enabled?: boolean;
+  }): Promise<FeatureFlag[]> {
     const where: any = {};
-    if (filter?.environment) where.environment = filter.environment as Environment;
+    if (filter?.environment)
+      where.environment = filter.environment as Environment;
     if (filter?.enabled !== undefined) where.enabled = filter.enabled;
 
     const found = await this.prisma.feature_flags.findMany({
@@ -76,36 +88,36 @@ export class PrismaFeatureFlagsRepository implements IFeatureFlagsRepository {
     key: string,
     environment: FeatureFlagEnvironment,
     userId?: string,
-    institutionId?: string
+    institutionId?: string,
   ): Promise<FeatureFlag | null> {
-     // Priority: USER > INSTITUTION > GLOBAL (with Environment check)
-     if (userId) {
+    // Priority: USER > INSTITUTION > GLOBAL (with Environment check)
+    if (userId) {
       const userFlag = await this.prisma.feature_flags.findFirst({
         where: { key, scope_type: "USER", scope_id: userId },
       });
       if (userFlag) return this.mapToDomain(userFlag);
-     }
+    }
 
-     if (institutionId) {
+    if (institutionId) {
       const instFlag = await this.prisma.feature_flags.findFirst({
         where: { key, scope_type: "INSTITUTION", scope_id: institutionId },
       });
       if (instFlag) return this.mapToDomain(instFlag);
-     }
+    }
 
-     const globalFlag = await this.prisma.feature_flags.findFirst({
-        where: {
-          key,
-          scope_type: { equals: null },
-          OR: [
-            { environment: null },
-            { environment: environment as Environment }
-          ]
-        },
-        orderBy: { environment: "desc" } // Prefer specific env over null
-     });
+    const globalFlag = await this.prisma.feature_flags.findFirst({
+      where: {
+        key,
+        scope_type: { equals: null },
+        OR: [
+          { environment: null },
+          { environment: environment as Environment },
+        ],
+      },
+      orderBy: { environment: "desc" }, // Prefer specific env over null
+    });
 
-     return globalFlag ? this.mapToDomain(globalFlag) : null;
+    return globalFlag ? this.mapToDomain(globalFlag) : null;
   }
 
   private mapToDomain(item: any): FeatureFlag {
@@ -149,12 +161,16 @@ export class PrismaAuditLogsRepository implements IAuditLogsRepository {
     return this.mapToDomain(created);
   }
 
-  async findMany(params: { skip?: number; take?: number; where?: any }): Promise<AuditLog[]> {
+  async findMany(params: {
+    skip?: number;
+    take?: number;
+    where?: any;
+  }): Promise<AuditLog[]> {
     const found = await this.prisma.audit_logs.findMany({
       skip: params.skip,
       take: params.take,
       where: params.where,
-      orderBy: { created_at: "desc" }
+      orderBy: { created_at: "desc" },
     });
     return found.map(this.mapToDomain);
   }

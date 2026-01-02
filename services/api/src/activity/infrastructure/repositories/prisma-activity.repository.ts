@@ -1,14 +1,18 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { IActivityRepository } from '../../domain/interfaces/activity.repository.interface';
-import { Activity } from '../../domain/entities/activity.entity';
-import { v4 as uuidv4 } from 'uuid';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
+import { IActivityRepository } from "../../domain/interfaces/activity.repository.interface";
+import { Activity } from "../../domain/entities/activity.entity";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class PrismaActivityRepository implements IActivityRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async track(userId: string, date: Date, data: Partial<Omit<Activity, 'id' | 'userId' | 'date'>>): Promise<void> {
+  async track(
+    userId: string,
+    date: Date,
+    data: Partial<Omit<Activity, "id" | "userId" | "date">>,
+  ): Promise<void> {
     await this.prisma.daily_activities.upsert({
       where: {
         user_id_date: {
@@ -26,10 +30,18 @@ export class PrismaActivityRepository implements IActivityRepository {
         annotations_created: data.annotationsCreated || 0,
       },
       update: {
-        minutes_studied: data.minutesStudied ? { increment: data.minutesStudied } : undefined,
-        sessions_count: data.sessionsCount ? { increment: data.sessionsCount } : undefined,
-        contents_read: data.contentsRead ? { increment: data.contentsRead } : undefined,
-        annotations_created: data.annotationsCreated ? { increment: data.annotationsCreated } : undefined,
+        minutes_studied: data.minutesStudied
+          ? { increment: data.minutesStudied }
+          : undefined,
+        sessions_count: data.sessionsCount
+          ? { increment: data.sessionsCount }
+          : undefined,
+        contents_read: data.contentsRead
+          ? { increment: data.contentsRead }
+          : undefined,
+        annotations_created: data.annotationsCreated
+          ? { increment: data.annotationsCreated }
+          : undefined,
       },
     });
   }
@@ -43,18 +55,21 @@ export class PrismaActivityRepository implements IActivityRepository {
         user_id: userId,
         date: { gte: startDate },
       },
-      orderBy: { date: 'asc' },
+      orderBy: { date: "asc" },
     });
 
-    return activities.map(a => new Activity(
-      a.id,
-      a.user_id,
-      a.date,
-      a.minutes_studied,
-      a.sessions_count,
-      a.contents_read,
-      a.annotations_created
-    ));
+    return activities.map(
+      (a) =>
+        new Activity(
+          a.id,
+          a.user_id,
+          a.date,
+          a.minutes_studied,
+          a.sessions_count,
+          a.contents_read,
+          a.annotations_created,
+        ),
+    );
   }
 
   async getActivities(userId: string, since: Date): Promise<Activity[]> {
@@ -63,18 +78,21 @@ export class PrismaActivityRepository implements IActivityRepository {
         user_id: userId,
         date: { gte: since },
       },
-      orderBy: { date: 'desc' },
+      orderBy: { date: "desc" },
     });
 
-    return activities.map(a => new Activity(
-      a.id,
-      a.user_id,
-      a.date,
-      a.minutes_studied,
-      a.sessions_count,
-      a.contents_read,
-      a.annotations_created
-    ));
+    return activities.map(
+      (a) =>
+        new Activity(
+          a.id,
+          a.user_id,
+          a.date,
+          a.minutes_studied,
+          a.sessions_count,
+          a.contents_read,
+          a.annotations_created,
+        ),
+    );
   }
 
   async getActiveTopicsCount(userId: string, since: Date): Promise<number> {
@@ -84,7 +102,7 @@ export class PrismaActivityRepository implements IActivityRepository {
         last_activity_at: { gte: since },
       },
       select: { topic: true },
-      distinct: ['topic'],
+      distinct: ["topic"],
     });
 
     return topics.length;

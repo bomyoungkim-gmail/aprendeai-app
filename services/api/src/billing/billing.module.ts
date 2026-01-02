@@ -44,9 +44,15 @@ import { ContentAccessModule } from "../cornell/content-access.module";
     PlanLimitsService,
     StripeService,
     // Repositories
-    { provide: ISubscriptionRepository, useClass: PrismaSubscriptionRepository },
+    {
+      provide: ISubscriptionRepository,
+      useClass: PrismaSubscriptionRepository,
+    },
     { provide: IInvoiceRepository, useClass: PrismaInvoiceRepository },
-    { provide: IPaymentMethodRepository, useClass: PrismaPaymentMethodRepository },
+    {
+      provide: IPaymentMethodRepository,
+      useClass: PrismaPaymentMethodRepository,
+    },
     { provide: IPlansRepository, useClass: PrismaPlansRepository },
     // Use Cases
     CreateSubscriptionUseCase,

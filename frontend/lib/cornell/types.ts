@@ -7,9 +7,9 @@
 export type CornellAnnotationType = 
   | 'NOTE' 
   | 'QUESTION' 
-  | 'STAR' 
+  | 'IMPORTANT'
   | 'HIGHLIGHT' 
-  | 'SUMMARY';
+  | 'SYNTHESIS';
 
 export type ContextTypeKey = 
   | 'PERSONAL' 

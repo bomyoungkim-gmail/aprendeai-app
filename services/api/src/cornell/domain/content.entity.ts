@@ -12,11 +12,11 @@ export class Content {
   scopeId?: string;
   metadata?: Record<string, any>;
   file?: {
-      id: string;
-      originalFilename: string;
-      mimeType: string;
-      sizeBytes: number;
-      viewUrl?: string; // Hydrated by service if needed
+    id: string;
+    originalFilename: string;
+    mimeType: string;
+    sizeBytes: number;
+    viewUrl?: string; // Hydrated by service if needed
   };
   createdAt: Date;
   updatedAt: Date;
@@ -28,15 +28,15 @@ export class Content {
 }
 
 export class ContentVersion {
-    id: string;
-    contentId: string;
-    targetLanguage: Language;
-    schoolingLevelTarget: string;
-    simplifiedText?: string;
-    summary?: string; 
-    createdAt?: Date;
+  id: string;
+  contentId: string;
+  targetLanguage: Language;
+  schoolingLevelTarget: string;
+  simplifiedText?: string;
+  summary?: string;
+  createdAt?: Date;
 
-    constructor(partial: Partial<ContentVersion>) {
-        Object.assign(this, partial);
-    }
+  constructor(partial: Partial<ContentVersion>) {
+    Object.assign(this, partial);
+  }
 }

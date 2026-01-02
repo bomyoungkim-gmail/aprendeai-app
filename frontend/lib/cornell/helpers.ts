@@ -11,10 +11,18 @@ import { inferCornellType } from './type-color-map';
  * Filter synthesis items from unified stream
  */
 export function filterSynthesisItems(items: UnifiedStreamItem[]): UnifiedStreamItem[] {
-  return items.filter(
-    (item) =>
-      item.type === 'annotation' &&
-      inferCornellType(item.highlight.colorKey, item.highlight.tagsJson) === 'SUMMARY'
+  return items.filter(item =>
+    item.type === 'synthesis' ||
+    (item.type === 'annotation' && item.highlight &&
+      inferCornellType(item.highlight.colorKey, item.highlight.tagsJson) === 'SYNTHESIS')
+  );
+}
+
+export function hasSynthesisItems(items: UnifiedStreamItem[]): boolean {
+  return items.some(item =>
+    item.type === 'synthesis' ||
+    (item.type === 'annotation' && item.highlight &&
+    inferCornellType(item.highlight.colorKey, item.highlight.tagsJson) === 'SYNTHESIS')
   );
 }
 
@@ -24,6 +32,6 @@ export function filterSynthesisItems(items: UnifiedStreamItem[]): UnifiedStreamI
 export function isSynthesisItem(item: UnifiedStreamItem): boolean {
   return (
     item.type === 'annotation' &&
-    inferCornellType(item.highlight.colorKey, item.highlight.tagsJson) === 'SUMMARY'
+    inferCornellType(item.highlight.colorKey, item.highlight.tagsJson) === 'SYNTHESIS'
   );
 }

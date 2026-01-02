@@ -65,8 +65,8 @@ describe('Cornell Labels Constants', () => {
     expect(ITEM_TYPE_LABELS.NOTE).toBe('Nota');
     expect(ITEM_TYPE_LABELS.HIGHLIGHT).toBe('Destaque');
     expect(ITEM_TYPE_LABELS.QUESTION).toBe('Dúvida');
-    expect(ITEM_TYPE_LABELS.SUMMARY).toBe('Síntese');
-    expect(ITEM_TYPE_LABELS.STAR).toBe('Estrela');
+    expect(ITEM_TYPE_LABELS.SYNTHESIS).toBe('Síntese');
+    expect(ITEM_TYPE_LABELS.IMPORTANT).toBe('Importante');
     expect(ITEM_TYPE_LABELS.AI_RESPONSE).toBe('IA');
   });
 

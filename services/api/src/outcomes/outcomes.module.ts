@@ -8,11 +8,7 @@ import { SessionsModule } from "../sessions/sessions.module";
 import { CornellModule } from "../cornell/cornell.module";
 
 @Module({
-  imports: [
-    PrismaModule,
-    forwardRef(() => SessionsModule),
-    CornellModule,
-  ],
+  imports: [PrismaModule, forwardRef(() => SessionsModule), CornellModule],
   providers: [
     OutcomesService,
     ComputeSessionOutcomesUseCase,
@@ -21,6 +17,10 @@ import { CornellModule } from "../cornell/cornell.module";
       useClass: PrismaOutcomesRepository,
     },
   ],
-  exports: [OutcomesService, ComputeSessionOutcomesUseCase, IOutcomesRepository],
+  exports: [
+    OutcomesService,
+    ComputeSessionOutcomesUseCase,
+    IOutcomesRepository,
+  ],
 })
 export class OutcomesModule {}

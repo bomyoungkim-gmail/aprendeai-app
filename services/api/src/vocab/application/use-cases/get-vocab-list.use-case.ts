@@ -13,14 +13,15 @@ export interface GetVocabListInput {
 @Injectable()
 export class GetVocabListUseCase {
   constructor(
-    @Inject(IVocabRepository) private readonly vocabRepository: IVocabRepository,
+    @Inject(IVocabRepository)
+    private readonly vocabRepository: IVocabRepository,
   ) {}
 
   async execute(input: GetVocabListInput): Promise<Vocabulary[]> {
     return this.vocabRepository.findAll(input.userId, {
-        language: input.language as Language,
-        srsStage: input.srsStage as SrsStage,
-        dueOnly: input.dueOnly
+      language: input.language as Language,
+      srsStage: input.srsStage as SrsStage,
+      dueOnly: input.dueOnly,
     });
   }
 }

@@ -44,7 +44,10 @@ import { InstitutionDomainUseCase } from "./application/use-cases/institution-do
     InstitutionInviteUseCase,
     InstitutionDomainUseCase,
     // Repositories
-    { provide: IInstitutionsRepository, useClass: PrismaInstitutionsRepository },
+    {
+      provide: IInstitutionsRepository,
+      useClass: PrismaInstitutionsRepository,
+    },
     { provide: IApprovalsRepository, useClass: PrismaApprovalsRepository },
     { provide: IInvitesRepository, useClass: PrismaInvitesRepository },
     { provide: IDomainsRepository, useClass: PrismaDomainsRepository },

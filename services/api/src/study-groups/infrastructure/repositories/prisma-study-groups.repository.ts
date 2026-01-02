@@ -25,10 +25,10 @@ export class PrismaStudyGroupsRepository implements IStudyGroupsRepository {
       where: { id },
       include: {
         study_group_members: {
-            include: { users: { select: { id: true, name: true, email: true } } }
+          include: { users: { select: { id: true, name: true, email: true } } },
         },
-        _count: { select: { group_sessions: true } }
-      }
+        _count: { select: { group_sessions: true } },
+      },
     });
     return found ? this.mapToDomain(found) : null;
   }
@@ -69,14 +69,21 @@ export class PrismaStudyGroupsRepository implements IStudyGroupsRepository {
     return this.mapMemberToDomain(created);
   }
 
-  async findMember(groupId: string, userId: string): Promise<StudyGroupMember | null> {
+  async findMember(
+    groupId: string,
+    userId: string,
+  ): Promise<StudyGroupMember | null> {
     const found = await this.prisma.study_group_members.findUnique({
       where: { group_id_user_id: { group_id: groupId, user_id: userId } },
     });
     return found ? this.mapMemberToDomain(found) : null;
   }
 
-  async updateMember(groupId: string, userId: string, updates: Partial<StudyGroupMember>): Promise<StudyGroupMember> {
+  async updateMember(
+    groupId: string,
+    userId: string,
+    updates: Partial<StudyGroupMember>,
+  ): Promise<StudyGroupMember> {
     const updated = await this.prisma.study_group_members.update({
       where: { group_id_user_id: { group_id: groupId, user_id: userId } },
       data: {
@@ -95,7 +102,11 @@ export class PrismaStudyGroupsRepository implements IStudyGroupsRepository {
     return all.map(this.mapMemberToDomain);
   }
 
-  async addContentShare(groupId: string, contentId: string, createdBy: string): Promise<void> {
+  async addContentShare(
+    groupId: string,
+    contentId: string,
+    createdBy: string,
+  ): Promise<void> {
     await this.prisma.content_shares.create({
       data: {
         content_id: contentId,

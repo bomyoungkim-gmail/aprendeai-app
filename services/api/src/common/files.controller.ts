@@ -7,13 +7,13 @@ import {
   Request,
   ForbiddenException,
 } from "@nestjs/common";
-import { AuthGuard } from "@nestjs/passport";
+import { JwtAuthGuard } from "../auth/infrastructure/jwt-auth.guard";
 import { Response } from "express";
 import { StorageService } from "../cornell/services/storage.service";
 import { ContentAccessService } from "../cornell/services/content-access.service";
 
 @Controller("files")
-@UseGuards(AuthGuard("jwt"))
+@UseGuards(JwtAuthGuard)
 export class FilesController {
   constructor(
     private storageService: StorageService,

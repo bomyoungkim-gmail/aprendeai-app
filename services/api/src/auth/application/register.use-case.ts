@@ -71,7 +71,9 @@ export class RegisterUseCase {
     const invite: any = await this.inviteService.findByToken(token);
 
     if (!invite || !invite.valid) {
-      throw new UnauthorizedException(invite?.message || "Invalid or expired invite");
+      throw new UnauthorizedException(
+        invite?.message || "Invalid or expired invite",
+      );
     }
 
     if (invite.email.toLowerCase() !== registerDto.email.toLowerCase()) {
@@ -85,7 +87,10 @@ export class RegisterUseCase {
   }
 
   @Transactional()
-  private async registerWithInviteTransaction(registerDto: RegisterDto, invite: any) {
+  private async registerWithInviteTransaction(
+    registerDto: RegisterDto,
+    invite: any,
+  ) {
     const passwordHash = await bcrypt.hash(registerDto.password, 10);
     const newUser = await this.usersRepository.create({
       id: uuidv4(),
@@ -110,9 +115,10 @@ export class RegisterUseCase {
 
     await this.subscriptionService.createFreeSubscription(newUser.id);
 
-    await (this.txHost.tx as PrismaService).institution_invites.update({ // Cast needed? txHost.tx is usually typed if generic provided.
-        // Actually generic is TransactionalAdapterPrisma. But tx property needs to be cast or we trust it.
-        // Let's use a helper getter or just cast.
+    await (this.txHost.tx as PrismaService).institution_invites.update({
+      // Cast needed? txHost.tx is usually typed if generic provided.
+      // Actually generic is TransactionalAdapterPrisma. But tx property needs to be cast or we trust it.
+      // Let's use a helper getter or just cast.
       where: { id: invite.id },
       data: { used_at: new Date() },
     });
@@ -124,13 +130,19 @@ export class RegisterUseCase {
     registerDto: RegisterDto,
     domainConfig: any,
   ) {
-    const user = await this.registerWithInstitutionTransaction(registerDto, domainConfig);
+    const user = await this.registerWithInstitutionTransaction(
+      registerDto,
+      domainConfig,
+    );
     this.sendWelcomeEmail(user.email, user.name);
     return user;
   }
 
   @Transactional()
-  private async registerWithInstitutionTransaction(registerDto: RegisterDto, domainConfig: any) {
+  private async registerWithInstitutionTransaction(
+    registerDto: RegisterDto,
+    domainConfig: any,
+  ) {
     const passwordHash = await bcrypt.hash(registerDto.password, 10);
     const newUser = await this.usersRepository.create({
       id: uuidv4(),

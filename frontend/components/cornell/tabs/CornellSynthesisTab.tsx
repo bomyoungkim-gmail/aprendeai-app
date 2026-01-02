@@ -38,7 +38,7 @@ export function CornellSynthesisTab({
 }: CornellSynthesisTabProps) {
   const synthesisItems = filteredItems.filter(i => {
     if (i.type === 'annotation') {
-      return inferCornellType(i.highlight.colorKey, i.highlight.tagsJson) === 'SUMMARY';
+      return inferCornellType(i.highlight.colorKey, i.highlight.tagsJson) === 'SYNTHESIS';
     }
     return false;
   });

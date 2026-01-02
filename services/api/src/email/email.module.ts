@@ -25,7 +25,12 @@ import { FamilyModule } from "../family/family.module";
     }),
   ],
   controllers: [EmailController],
-  providers: [EmailService, EmailProcessor, EmailWorker, UnsubscribeUserUseCase],
+  providers: [
+    EmailService,
+    EmailProcessor,
+    EmailWorker,
+    UnsubscribeUserUseCase,
+  ],
   exports: [EmailService],
 })
 export class EmailModule {}

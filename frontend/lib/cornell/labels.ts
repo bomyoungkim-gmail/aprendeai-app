@@ -15,17 +15,17 @@ export const CORNELL_LABELS = {
 export type HighlightType = 
   | 'HIGHLIGHT'
   | 'NOTE'
-  | 'SUMMARY'
+  | 'SYNTHESIS'
   | 'QUESTION'
-  | 'STAR'
+  | 'IMPORTANT'
   | 'AI_RESPONSE';
 
 export const ITEM_TYPE_LABELS: Record<HighlightType, string> = {
-  HIGHLIGHT: 'Destaque',
-  NOTE: 'Nota',
+  HIGHLIGHT: 'Evidência',
+  NOTE: 'Vocabulário',
   QUESTION: 'Dúvida',
-  SUMMARY: 'Síntese',
-  STAR: 'Estrela',
+  SYNTHESIS: 'Síntese',
+  IMPORTANT: 'Ideia Central',
   AI_RESPONSE: 'IA',
 };
 
@@ -33,19 +33,19 @@ export const ITEM_TYPE_ICONS: Record<HighlightType, string> = {
   HIGHLIGHT: '🎨',
   NOTE: '💬',
   QUESTION: '❓',
-  SUMMARY: '📝',
-  STAR: '⭐',
+  SYNTHESIS: '📝',
+  IMPORTANT: '⭐',
   AI_RESPONSE: '🤖',
 };
 
 // Action Toolbar Labels
 export const ACTION_LABELS = {
   TRIAGE: 'Triagem',
-  HIGHLIGHT: 'Highlight',
-  NOTE: 'Nota',
+  HIGHLIGHT: 'Evidência',
+  NOTE: 'Vocabulário',
   QUESTION: 'Dúvida',
   AI: 'IA',
-  STAR: 'Destaque',
+  IMPORTANT: 'Ideia Central',
 } as const;
 
 // Keyboard Shortcuts
@@ -67,25 +67,25 @@ export const CHAT_LABELS = {
 // Modal Labels (for CreateHighlightModal)
 export const CORNELL_MODAL_LABELS = {
   TITLE: {
-    NOTE: 'Nova Nota',
-    QUESTION: 'Nova Questão',
-    STAR: 'Novo Importante',
-    HIGHLIGHT: 'Novo Destaque',
-    SUMMARY: 'Nova Síntese',
+    NOTE: 'Vocabulário / Termo',
+    QUESTION: 'Dúvida / Loop Aberto',
+    IMPORTANT: 'Ideia Central / Tese',
+    HIGHLIGHT: 'Evidência / Apoio',
+    SYNTHESIS: 'Nova Síntese',
   },
   FIELD: {
-    NOTE: 'Anotação',
-    QUESTION: 'Questão',
-    STAR: 'Importante',
-    HIGHLIGHT: 'Destaque',
-    SUMMARY: 'Síntese',
+    NOTE: 'Definição / Contexto',
+    QUESTION: 'O que está confuso?',
+    IMPORTANT: 'Resumo da tese',
+    HIGHLIGHT: 'Trecho de apoio',
+    SYNTHESIS: 'Síntese',
   },
   PLACEHOLDER: {
-    NOTE: 'Digite sua anotação...',
-    QUESTION: 'Digite sua questão...',
-    STAR: 'Digite o ponto importante...',
-    HIGHLIGHT: 'Digite o destaque...',
-    SUMMARY: 'Digite sua síntese...',
+    NOTE: 'Explique o termo ou use a IA para definir...',
+    QUESTION: 'O que você quer perguntar ao Educator?',
+    IMPORTANT: 'Qual a ideia central desse trecho?',
+    HIGHLIGHT: 'Por que este trecho sustenta a tese?',
+    SYNTHESIS: 'Digite sua síntese...',
   },
   BUTTONS: {
     CANCEL: 'Cancelar',

@@ -23,7 +23,7 @@ import type { HighlightType } from '@/lib/cornell/labels';
 // ========================================
 
 export interface CreateHighlightData {
-  type: Exclude<HighlightType, 'SUMMARY' | 'AI_RESPONSE'>;
+  type: Exclude<HighlightType, 'SYNTHESIS' | 'AI_RESPONSE'>;
   target_type: TargetType;
   page_number?: number;
   anchor_json?: {
@@ -170,9 +170,23 @@ export function useCreateHighlight(contentId: string) {
       }
 
 
+      // Map frontend tags to backend expected types (Legacy Compatibility)
+      const tag = data.tags_json?.[0];
+      let backendType = 'HIGHLIGHT';
+
+      if (tag) {
+        const t = tag.toLowerCase();
+        if (t === 'important' || t === 'star') backendType = 'STAR'; // Map IMPORTANT -> STAR
+        else if (t === 'synthesis' || t === 'summary') backendType = 'SUMMARY'; // Map SYNTHESIS -> SUMMARY
+        else if (t === 'note') backendType = 'NOTE';
+        else if (t === 'question') backendType = 'QUESTION';
+        else if (t === 'highlight') backendType = 'HIGHLIGHT';
+        else backendType = tag.toUpperCase(); // Fallback
+      }
+
       // Transform CreateHighlightDto to CreateHighlightPayload expected by API
       const apiPayload: import('@/lib/types/cornell').CreateHighlightPayload = {
-        type: (data.tags_json?.[0]) || 'HIGHLIGHT', // Extract Cornell type from tags
+        type: backendType,
         target_type: data.target_type,
         page_number: data.page_number,
         anchor_json: data.anchor_json,

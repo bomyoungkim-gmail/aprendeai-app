@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTelemetry } from '@/hooks/telemetry/use-telemetry';
 
-export type HistoryEntityType = 'HIGHLIGHT' | 'NOTE' | 'CUE' | 'STAR' | 'AI' | 'TRIAGE';
+export type HistoryEntityType = 'HIGHLIGHT' | 'NOTE' | 'CUE' | 'IMPORTANT' | 'AI' | 'TRIAGE';
 export type HistoryActionType = 'CREATE' | 'UPDATE' | 'DELETE';
 
 export interface HistoryAction<T = any> {

@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 import { logger } from '@/lib/utils/logger';
+import { api } from '@/lib/api';
 
 /**
  * usePDFDocument - Hook para gerenciar carregamento de documentos PDF
  * 
  * Responsabilidades:
- * - Fetch do PDF com autenticação
+ * - Fetch do PDF com autenticação usando a instância 'api' configurada
  * - Criação de Blob URL
  * - Gerenciamento de loading/error states
  * - Cleanup de Blob URL
  * 
- * @param fileUrl - URL do arquivo PDF
+ * @param fileUrl - URL do arquivo PDF (ex: /files/id/view)
  * @returns Estado do documento (pdfUrl, loading, error, refetch)
  */
 export function usePDFDocument(fileUrl: string | undefined) {
@@ -25,32 +26,34 @@ export function usePDFDocument(fileUrl: string | undefined) {
       return;
     }
 
+    let currentBlobUrl = '';
+
     const fetchPDF = async () => {
       try {
         setLoading(true);
-        // Get token from store directly to ensure we have value even if localStorage format is different
-        const { useAuthStore } = await import('@/stores/auth-store');
-        const token = useAuthStore.getState().token;
+        logger.debug('PDF Fetch: Starting request via axios', { fileUrl });
         
-        if (!token) {
-          logger.error('PDF Fetch: No token found in auth store');
-          throw new Error('Authentication token missing. Please log in again.');
-        }
-
-        logger.debug('PDF Fetch: Starting request', { fileUrl });
-        
-        const response = await fetch(fileUrl, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
+        // A instância 'api' já contém baseURL e injeta o token JWT via interceptors
+        const response = await api.get(fileUrl, {
+          responseType: 'blob',
         });
 
-        if (!response.ok) {
-          throw new Error(`Failed to load PDF: ${response.statusText}`);
+        const blob = response.data;
+        
+        // Robustness check: Ensure we actually got a PDF
+        if (blob.type !== 'application/pdf' && blob.size < 1000) {
+            // Might be a JSON error response disguised as a blob
+            const text = await blob.text();
+            try {
+                const json = JSON.parse(text);
+                throw new Error(json.message || 'Server returned an error instead of a PDF');
+            } catch (e) {
+                throw new Error(`Unexpected file type received: ${blob.type}`);
+            }
         }
 
-        const blob = await response.blob();
         const blobUrl = URL.createObjectURL(blob);
+        currentBlobUrl = blobUrl;
         setPdfUrl(blobUrl);
         setError('');
       } catch (err) {
@@ -63,10 +66,10 @@ export function usePDFDocument(fileUrl: string | undefined) {
 
     fetchPDF();
 
-    // Cleanup blob URL on unmount
+    // Cleanup blob URL on unmount or fileUrl change
     return () => {
-      if (pdfUrl) {
-        URL.revokeObjectURL(pdfUrl);
+      if (currentBlobUrl) {
+        URL.revokeObjectURL(currentBlobUrl);
       }
     };
   }, [fileUrl]);

@@ -1,4 +1,4 @@
-export type NotificationPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+export type NotificationPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 
 export class Notification {
   constructor(
@@ -8,8 +8,10 @@ export class Notification {
     public readonly title: string,
     public readonly message: string,
     public readonly data: Record<string, any> = {},
-    public readonly priority: NotificationPriority = 'MEDIUM',
-    public readonly channels: ('EMAIL' | 'WEBSOCKET' | 'PUSH')[] = ['WEBSOCKET'],
+    public readonly priority: NotificationPriority = "MEDIUM",
+    public readonly channels: ("EMAIL" | "WEBSOCKET" | "PUSH")[] = [
+      "WEBSOCKET",
+    ],
     public readonly createdAt: Date = new Date(),
   ) {}
 }

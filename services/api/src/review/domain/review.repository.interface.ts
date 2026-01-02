@@ -1,11 +1,11 @@
 import { Vocabulary } from "../../vocab/domain/vocabulary.entity";
 import { VocabAttempt } from "./vocab-attempt.entity";
-import { VocabDimension, AttemptResult, SrsStage } from "@prisma/client";
+import { SrsStage } from "@prisma/client";
 
 export interface IReviewRepository {
   findDue(userId: string, limit: number): Promise<Vocabulary[]>;
   countDue(userId: string): Promise<number>;
-  
+
   recordAttemptAndUpdateVocab(
     attempt: VocabAttempt,
     vocabUpdate: {
@@ -14,7 +14,7 @@ export interface IReviewRepository {
       dueAt: Date;
       lapsesIncrement: number;
       masteryDelta: number;
-    }
+    },
   ): Promise<Vocabulary>;
 }
 

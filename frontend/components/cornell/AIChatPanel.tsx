@@ -3,6 +3,8 @@ import { Send, X, Bot, User, AlertCircle } from 'lucide-react';
 import { CHAT_LABELS } from '@/lib/cornell/labels';
 import { URLS } from '@/lib/config/urls';
 
+
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -40,7 +42,7 @@ export function AIChatPanel({ onSendMessage, initialInput = '', selection = '', 
 
   // Update input when initialInput changes (e.g. from selection)
   useEffect(() => {
-    if (initialInput) {
+    if (initialInput !== undefined) {
       setInput(initialInput);
     }
   }, [initialInput]);

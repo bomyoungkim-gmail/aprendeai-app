@@ -6,7 +6,8 @@ import {
   HelpCircle, 
   Sparkles, 
   Star, 
-  BookOpen 
+  BookOpen,
+  Book
 } from 'lucide-react';
 import type { UnifiedStreamItemType } from '@/lib/types/unified-stream';
 
@@ -63,7 +64,7 @@ export function TextSelectionMenu({ selectionInfo, onAction }: TextSelectionMenu
         onClick={() => onAction('annotation', selectionInfo.text)}
         className={buttonClass}
         aria-label={ACTION_LABELS.HIGHLIGHT}
-        title="Atalho: H"
+        title="Atalho: E (Evidência)"
       >
         <Highlighter className="h-4 w-4 text-yellow-500" />
         <span className={labelClass}>{ACTION_LABELS.HIGHLIGHT}</span>
@@ -74,21 +75,21 @@ export function TextSelectionMenu({ selectionInfo, onAction }: TextSelectionMenu
         onClick={() => onAction('note', selectionInfo.text)}
         className={buttonClass}
         aria-label={ACTION_LABELS.NOTE}
-        title="Atalho: N"
+        title="Atalho: V (Vocabulário)"
       >
-        <MessageSquare className="h-4 w-4 text-blue-500" />
+        <BookOpen className="h-4 w-4 text-blue-500" />
         <span className={labelClass}>{ACTION_LABELS.NOTE}</span>
       </button>
 
       {/* Star - ⭐ */}
       <button 
-        onClick={() => onAction('star', selectionInfo.text)}
+        onClick={() => onAction('important', selectionInfo.text)}
         className={buttonClass}
-        aria-label={ACTION_LABELS.STAR} // You might need to add STAR to ACTION_LABELS if missing
-        title="Atalho: S"
+        aria-label={ACTION_LABELS.IMPORTANT}
+        title="Atalho: I (Ideia Central)"
       >
         <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-        <span className={labelClass}>Destaque</span> 
+        <span className={labelClass}>{ACTION_LABELS.IMPORTANT}</span>
       </button>
 
       {/* Question - ❓ */}
@@ -113,16 +114,6 @@ export function TextSelectionMenu({ selectionInfo, onAction }: TextSelectionMenu
       >
         <Sparkles className="h-4 w-4 text-purple-600 animate-pulse" />
         <span className={`${labelClass} text-purple-600 font-bold`}>{ACTION_LABELS.AI}</span>
-      </button>
-      
-      {/* Triage/Define - 📖 */}
-       <button 
-        onClick={() => onAction('triage', selectionInfo.text)}
-        className={buttonClass}
-        aria-label={ACTION_LABELS.TRIAGE}
-      >
-        <BookOpen className="h-4 w-4 text-gray-500" />
-        <span className={labelClass}>{ACTION_LABELS.TRIAGE}</span>
       </button>
 
       {/* Triangle Arrow at bottom */}

@@ -1,7 +1,5 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { addDays } from "date-fns";
-import * as crypto from "crypto";
 import { GetVocabListUseCase } from "./application/use-cases/get-vocab-list.use-case";
 import { AddVocabListUseCase } from "./application/use-cases/add-vocab-list.use-case";
 
@@ -10,7 +8,7 @@ export class VocabService {
   constructor(
     private prisma: PrismaService,
     private readonly getVocabListUseCase: GetVocabListUseCase,
-    private readonly addVocabListUseCase: AddVocabListUseCase
+    private readonly addVocabListUseCase: AddVocabListUseCase,
   ) {}
 
   /**
@@ -57,7 +55,7 @@ export class VocabService {
 
     const result = await this.addVocabListUseCase.execute(
       session.user_id,
-      items
+      items,
     );
 
     return {
@@ -109,7 +107,7 @@ export class VocabService {
 
     const result = await this.addVocabListUseCase.execute(
       session.user_id,
-      items
+      items,
     );
 
     return {
@@ -127,7 +125,7 @@ export class VocabService {
       language?: string;
       srsStage?: string;
       dueOnly?: boolean;
-    }
+    },
   ) {
     return this.getVocabListUseCase.execute({
       userId,

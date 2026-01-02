@@ -1,5 +1,5 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { IAnalyticsRepository } from '../../domain/analytics.repository.interface';
+import { Injectable, Inject } from "@nestjs/common";
+import { IAnalyticsRepository } from "../../domain/analytics.repository.interface";
 
 @Injectable()
 export class GetQualityOverviewUseCase {
@@ -9,7 +9,7 @@ export class GetQualityOverviewUseCase {
   ) {}
 
   async execute(userId: string, period?: string) {
-    const days = period === 'week' ? 7 : period === 'month' ? 30 : 7;
+    const days = period === "week" ? 7 : period === "month" ? 30 : 7;
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
     const sessions = await this.repository.getQualitySessions(userId, since);

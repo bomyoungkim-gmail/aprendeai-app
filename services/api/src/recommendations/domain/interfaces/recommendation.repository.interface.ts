@@ -12,9 +12,20 @@ export interface RecommendationContent {
 export interface IRecommendationRepository {
   getContinueReading(userId: string): Promise<RecommendationContent[]>;
   getRecentReads(userId: string): Promise<RecommendationContent[]>;
-  getPopularInGroups(userId: string, groupIds: string[]): Promise<RecommendationContent[]>;
-  getSimilarContent(userId: string, types: string[], languages: string[], readIds: string[]): Promise<RecommendationContent[]>;
-  getTrending(userId: string, readIds: string[]): Promise<RecommendationContent[]>;
+  getPopularInGroups(
+    userId: string,
+    groupIds: string[],
+  ): Promise<RecommendationContent[]>;
+  getSimilarContent(
+    userId: string,
+    types: string[],
+    languages: string[],
+    readIds: string[],
+  ): Promise<RecommendationContent[]>;
+  getTrending(
+    userId: string,
+    readIds: string[],
+  ): Promise<RecommendationContent[]>;
 }
 
 export const IRecommendationRepository = Symbol("IRecommendationRepository");
