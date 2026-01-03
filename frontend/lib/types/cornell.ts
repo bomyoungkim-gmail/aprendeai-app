@@ -42,6 +42,45 @@ export interface NoteItem {
   id: string;
   body: string;
   linkedHighlightIds: string[];
+  type?: string;
+  anchor?: SynthesisAnchor;
+}
+
+/**
+ * Synthesis Category - Types of study/analysis
+ */
+export type SynthesisCategory = 
+  | 'resumo'          // Resumo padrão do trecho
+  | 'mapa_argumentos' // Teses, premissas e evidências
+  | 'comparacao'      // A vs B, Prós e Contras, Trade-offs
+  | 'glossario'       // Termos e definições chave (Vocabulário recorrente)
+  | 'linha_tempo'     // Sequência cronológica de eventos
+  | 'causa_efeito'    // Mecanismos, gatilhos e consequências
+  | 'analogia'        // Analogias e metáforas didáticas
+  | 'aplicacao'       // Casos de uso reais e exercícios
+  | 'conclusao'       // Principais "takeaways" e lições aprendidas
+  | 'lacuna'          // Dúvida aberta, "open loops" ou o que falta pesquisar
+  | 'metodo'          // Passo a passo, algoritmos ou procedimentos
+  | 'analise_critica'; // Contra-pontos e visão pessoal do estudante
+
+/**
+ * Synthesis Anchor - Coexisting dimensions of a synthesis
+ */
+export interface SynthesisAnchor {
+  location?: {
+    label: string;
+    tocId?: string;
+    pageRange?: [number, number];
+  };
+  temporal?: {
+    label: string;
+    startMs: number;
+    endMs?: number;
+  };
+  transversal?: {
+    category: SynthesisCategory;
+    theme?: string;
+  };
 }
 
 export interface Highlight {
@@ -159,6 +198,7 @@ export interface UpdateHighlightPayload {
 
 export interface CreateHighlightPayload {
   type: string;
+  kind: 'TEXT' | 'AREA';
   target_type: TargetType;
   page_number?: number;
   timestamp_ms?: number;

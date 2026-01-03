@@ -33,6 +33,7 @@ export interface AnnotationTypeConfig {
   emoji: string;
   shortcut?: string;
   tags: string[];
+  forceColor?: boolean; 
 }
 
 export const CORNELL_CONFIG: Record<string, AnnotationTypeConfig> = {
@@ -45,6 +46,7 @@ export const CORNELL_CONFIG: Record<string, AnnotationTypeConfig> = {
     emoji: '🎨',
     shortcut: 'E',
     tags: ['highlight', 'evidence'],
+    forceColor: false,
   },
   NOTE: {
     id: 'note',
@@ -55,16 +57,18 @@ export const CORNELL_CONFIG: Record<string, AnnotationTypeConfig> = {
     emoji: '📖',
     shortcut: 'V',
     tags: ['note', 'vocab'],
+    forceColor: true,
   },
   IMPORTANT: {
     id: 'important',
     type: 'IMPORTANT',
     label: 'Ideia Central',
     icon: Star,
-    color: 'amber',
+    color: 'green',
     emoji: '⭐',
     shortcut: 'I',
     tags: ['important', 'star', 'main-idea'], // Retrocompatibilidade
+    forceColor: true,
   },
   QUESTION: {
     id: 'question',
@@ -75,6 +79,7 @@ export const CORNELL_CONFIG: Record<string, AnnotationTypeConfig> = {
     emoji: '❓',
     shortcut: 'Q',
     tags: ['question'],
+    forceColor: true,
   },
   SYNTHESIS: {
     id: 'synthesis',
@@ -85,6 +90,7 @@ export const CORNELL_CONFIG: Record<string, AnnotationTypeConfig> = {
     emoji: '📝',
     shortcut: undefined,
     tags: ['synthesis', 'summary'], // Retrocompatibilidade
+    forceColor: true,
   },
   AI: {
     id: 'ai',
@@ -95,6 +101,7 @@ export const CORNELL_CONFIG: Record<string, AnnotationTypeConfig> = {
     emoji: '✨',
     shortcut: '/',
     tags: ['ai'],
+    forceColor: true,
   },
 } as const;
 

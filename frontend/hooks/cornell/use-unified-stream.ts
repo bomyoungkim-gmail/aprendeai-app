@@ -21,11 +21,23 @@ export function useUnifiedStream(contentId: string) {
       });
     }
 
-    // Add Cornell notes as note items
-    if (cornellNotes?.notesJson) {
-      cornellNotes.notesJson.forEach(note => {
+    // Add Cornell notes as note/synthesis items
+    const notesArray = cornellNotes?.notesJson || (cornellNotes as any)?.notes_json;
+    if (notesArray) {
+      notesArray.forEach((note: any) => {
         // Use updatedAt from the Cornell document as proxy for note creation time
-        items.push(noteToStreamItem(note, cornellNotes.updatedAt));
+        if (note.type === 'synthesis') {
+          items.push({
+            id: note.id,
+            type: 'synthesis',
+            createdAt: cornellNotes.updatedAt,
+            updatedAt: cornellNotes.updatedAt,
+            body: note.body,
+            anchor: note.anchor,
+          });
+        } else {
+          items.push(noteToStreamItem(note, cornellNotes.updatedAt));
+        }
       });
     }
 
@@ -37,8 +49,8 @@ export function useUnifiedStream(contentId: string) {
     streamItems,
     isLoading: highlightsLoading || notesLoading,
     highlights,
-    notes: cornellNotes?.notesJson || [],
-    summary: cornellNotes?.summaryText || '',
-    cues: cornellNotes?.cuesJson || [],
+    notes: cornellNotes?.notesJson || (cornellNotes as any)?.notes_json || [],
+    summary: cornellNotes?.summaryText || (cornellNotes as any)?.summary_text || '',
+    cues: cornellNotes?.cuesJson || (cornellNotes as any)?.cues_json || [],
   };
 }

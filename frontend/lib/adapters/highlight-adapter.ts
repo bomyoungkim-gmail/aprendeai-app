@@ -123,7 +123,8 @@ export function reactPDFToBackend(
   highlight: Partial<ReactPDFHighlight>,
   contentId: string,
   userId: string,
-  colorKey: string = 'yellow'
+  colorKey: string = 'yellow',
+  tags: string[] = []
 ): Omit<import('@/lib/types/cornell').CreateHighlightDto, 'kind' | 'target_type'> & { kind: 'TEXT'; target_type: 'PDF' } {
   const pageIndex = highlight.position?.pageIndex ?? 0;
   const boundingRect = highlight.position?.boundingRect || highlight.highlightAreas?.[0];
@@ -161,7 +162,7 @@ export function reactPDFToBackend(
     },
     color_key: colorKey,
     comment_text: highlight.comment?.message || undefined,
-    tags_json: [],
+    tags_json: tags,
   };
 }
 

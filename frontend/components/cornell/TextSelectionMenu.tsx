@@ -1,13 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { ACTION_LABELS, ITEM_TYPE_ICONS } from '@/lib/cornell/labels';
+import { CORNELL_CONFIG } from '@/lib/cornell/unified-config';
+import { ACTION_LABELS } from '@/lib/cornell/labels';
 import { 
-  Highlighter, 
-  MessageSquare, 
-  HelpCircle, 
   Sparkles, 
-  Star, 
-  BookOpen,
-  Book
 } from 'lucide-react';
 import type { UnifiedStreamItemType } from '@/lib/types/unified-stream';
 
@@ -59,49 +54,27 @@ export function TextSelectionMenu({ selectionInfo, onAction }: TextSelectionMenu
       role="dialog"
       aria-label="Menu de seleção de texto"
     >
-      {/* Highlight - 🎨 */}
-      <button 
-        onClick={() => onAction('annotation', selectionInfo.text)}
-        className={buttonClass}
-        aria-label={ACTION_LABELS.HIGHLIGHT}
-        title="Atalho: E (Evidência)"
-      >
-        <Highlighter className="h-4 w-4 text-yellow-500" />
-        <span className={labelClass}>{ACTION_LABELS.HIGHLIGHT}</span>
-      </button>
-
-      {/* Note - 💬 */}
-      <button 
-        onClick={() => onAction('note', selectionInfo.text)}
-        className={buttonClass}
-        aria-label={ACTION_LABELS.NOTE}
-        title="Atalho: V (Vocabulário)"
-      >
-        <BookOpen className="h-4 w-4 text-blue-500" />
-        <span className={labelClass}>{ACTION_LABELS.NOTE}</span>
-      </button>
-
-      {/* Star - ⭐ */}
-      <button 
-        onClick={() => onAction('important', selectionInfo.text)}
-        className={buttonClass}
-        aria-label={ACTION_LABELS.IMPORTANT}
-        title="Atalho: I (Ideia Central)"
-      >
-        <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-        <span className={labelClass}>{ACTION_LABELS.IMPORTANT}</span>
-      </button>
-
-      {/* Question - ❓ */}
-      <button 
-        onClick={() => onAction('question', selectionInfo.text)}
-        className={buttonClass}
-        aria-label={ACTION_LABELS.QUESTION}
-        title="Atalho: Q"
-      >
-        <HelpCircle className="h-4 w-4 text-red-500" />
-        <span className={labelClass}>{ACTION_LABELS.QUESTION}</span>
-      </button>
+      {['HIGHLIGHT', 'NOTE', 'IMPORTANT', 'QUESTION'].map((key) => {
+        const config = CORNELL_CONFIG[key];
+        const Icon = config.icon;
+        const color = config.color;
+        const shortcut = config.shortcut ? ` (Atalho: ${config.shortcut})` : '';
+        
+        return (
+          <button 
+            key={key}
+            onClick={() => onAction(config.type.toLowerCase() as SelectionAction, selectionInfo.text)}
+            className={buttonClass}
+            aria-label={config.label}
+            title={`${config.label}${shortcut}`}
+          >
+            <Icon 
+              className={`h-4 w-4 text-${color}-500 ${key === 'IMPORTANT' ? `fill-${color}-500` : ''}`} 
+            />
+            <span className={labelClass}>{config.label}</span>
+          </button>
+        );
+      })}
 
       <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-1" />
 

@@ -8,6 +8,7 @@ import {
 } from '@/lib/adapters/highlight-adapter';
 import { getColorForKey } from '@/lib/constants/colors';
 import { logger } from '@/lib/utils/logger';
+import { CORNELL_CONFIG } from '@/lib/cornell/unified-config';
 
 /**
  * usePDFHighlights - Hook para gerenciar highlights no PDF
@@ -76,8 +77,13 @@ export function usePDFHighlights(
   }, [reactPDFHighlights]);
 
   // Transform and create highlight
-  const handleHighlightCreation = useCallback(async (area: any) => {
+  const handleHighlightCreation = useCallback(async (area: any, typeKey: string = 'HIGHLIGHT') => {
     if (!onCreateHighlight) return;
+
+    // Get config for the pedagogical type
+    const config = CORNELL_CONFIG[typeKey] || CORNELL_CONFIG.HIGHLIGHT;
+    const tags = config.tags || [];
+    const colorKey = typeKey === 'HIGHLIGHT' ? selectedColor : config.color;
 
     // Handle RenderHighlightTargetProps structure vs direct object
     const region = area.selectionRegion || area;
@@ -144,7 +150,8 @@ export function usePDFHighlights(
         },
         contentId,
         '',
-        selectedColor
+        colorKey,
+        tags
       );
 
       await onCreateHighlight(backendFormat);

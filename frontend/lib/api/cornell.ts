@@ -12,6 +12,8 @@ import { API_ENDPOINTS } from '@/lib/config/api';
 import { ContentType } from '../constants/enums';
 
 // Cornell Reader API
+// TODO: Consider using a codegen tool (e.g., openapi-typescript-codegen) to auto-generate
+// API interfaces from backend Swagger/OpenAPI spec to prevent manual schema drift.
 export const cornellApi = {
   // Content
   async getContent(contentId: string): Promise<Content> {

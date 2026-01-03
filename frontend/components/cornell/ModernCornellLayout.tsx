@@ -12,6 +12,7 @@ import { SearchBar, type FilterType } from './SearchBar';
 import { TargetType, ContentType } from '@/lib/constants/enums';
 import { useStreamFilter } from '@/hooks/cornell/use-stream-filter';
 import { CORNELL_LABELS } from '@/lib/cornell/labels';
+import { CORNELL_CONFIG } from '@/lib/cornell/unified-config';
 import { SuggestionsPanel } from './SuggestionsPanel';
 import { ThreadPanel } from '../sharing/ThreadPanel';
 import { ShareModal } from '../sharing/ShareModal';
@@ -35,7 +36,7 @@ import { useContentContext } from '@/hooks/cornell/use-content-context';
 import { useTextSelection } from '@/hooks/ui/use-text-selection';
 import { getColorForKey, getDefaultPalette, DEFAULT_COLOR } from '@/lib/constants/colors';
 import { inferCornellType } from '@/lib/cornell/type-color-map';
-import { filterSynthesisItems } from '@/lib/cornell/helpers';
+import { filterSynthesisItems, isSynthesisItem } from '@/lib/cornell/helpers';
 import { CORNELL_MODAL_LABELS } from '@/lib/cornell/labels';
 import { ContentModeIndicator } from './ContentModeIndicator';
 import { ContentModeSelector } from './ContentModeSelector';
@@ -58,6 +59,8 @@ import { useReadingPersistence } from '@/hooks/sessions/reading/use-reading-pers
 import { Bookmark as BookmarkIcon, History, Save, Wifi, WifiOff, RefreshCw, PanelBottom, ChevronDown } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/shared/use-online-status';
 import { telemetryClient } from '@/lib/telemetry/telemetry-client';
+import { MOCK_TOC, type TocItem } from '@/lib/types/toc';
+import { convertTocToSections } from '@/lib/cornell/helpers';
 
 // Pedagogical (Sprint 4)
 import { useInterventions } from '@/hooks/pedagogical/use-interventions';
@@ -221,22 +224,13 @@ function ModernCornellLayoutInternal({
   // Section Filtering (G5.4)
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const sections = useMemo(() => {
-    if (contentModeData?.effectiveMode === ContentMode.SCIENTIFIC) {
-      if (contentText) {
-        return detectSections(contentText, 'SCIENTIFIC');
-      }
-      
-      // Fallback/Mocked sections for MVP/testing if no text is provided
-      return [
-        { id: 'abstract', title: 'Abstract', startLine: 0, type: 'IMRAD' as const },
-        { id: 'introduction', title: 'Introduction', startLine: 10, type: 'IMRAD' as const },
-        { id: 'methods', title: 'Methods', startLine: 50, type: 'IMRAD' as const },
-        { id: 'results', title: 'Results', startLine: 100, type: 'IMRAD' as const },
-        { id: 'discussion', title: 'Discussion', startLine: 150, type: 'IMRAD' as const },
-        { id: 'conclusion', title: 'Conclusion', startLine: 200, type: 'IMRAD' as const }
-      ];
+    if (contentText) {
+      return detectSections(contentText, contentModeData?.effectiveMode);
     }
-    return [];
+    
+    // Fallback/Mocked sections for MVP/testing if no text is provided
+    // We now use MOCK_TOC to align with the Sidebar TOC display
+    return convertTocToSections(MOCK_TOC);
   }, [contentModeData?.effectiveMode, contentText]);
 
   const annotationCounts = useMemo(() => {
@@ -527,7 +521,6 @@ function ModernCornellLayoutInternal({
   const { selection, clearSelection } = useTextSelection(contentElement);
 
 
-  const [createModalType, setCreateModalType] = useState<CornellExtendedType>('NOTE');
 
   // AI Suggestions & Entitlements
   const { suggestions, acceptSuggestion, dismissSuggestion } = useSuggestions(contentId);
@@ -539,7 +532,12 @@ function ModernCornellLayoutInternal({
 
   
   // Apply search and filter
-  const { filteredItems, filteredCount, hasActiveFilter } = useStreamFilter(
+  const { 
+    filteredItems, 
+    allFilteredItems, // Added this to include items regardless of type filter
+    filteredCount, 
+    hasActiveFilter 
+  } = useStreamFilter(
     streamItems,
     layout.searchQuery,
     layout.filterType
@@ -547,28 +545,40 @@ function ModernCornellLayoutInternal({
 
   // AI Context for Sidebar Chat is now in context (layout.aiContext)
 
-  const handleSelectionAction = useCallback((action: SelectionAction, text: string) => {
+  const handleSelectionAction = useCallback((action: SelectionAction, text: string, data?: any) => {
     if (!onCreateStreamItem) return;
 
+    // Helper to dispatch annotation
+    const dispatchAnnotation = (typeKey: string) => {
+      const config = CORNELL_CONFIG[typeKey] || CORNELL_CONFIG.HIGHLIGHT;
+      // Pass full metadata including tags and color
+      onCreateStreamItem('annotation', text, { 
+        tags: config.tags, 
+        colorKey: config.color,
+        type: config.type,
+        // Pass through selection data (from PDF viewer)
+        anchor: data?.anchor || data,
+        isManualSelection: true
+      });
+      track('HIGHLIGHT_CREATED', {
+        type: config.type,
+        color: config.color,
+        length: text.length
+      });
+    };
+
     switch (action) {
-      case 'annotation':
-        onCreateStreamItem('annotation', text, { color: layout.selectedColor });
-        track('HIGHLIGHT_CREATED', {
-            color: layout.selectedColor,
-            length: text.length,
-            hasComment: false // Initial creation usually no comment
-        });
+      case 'annotation': // Evidência
+        dispatchAnnotation('HIGHLIGHT');
         break;
-      case 'note':
-        onCreateStreamItem('note', text);
-        track('NOTE_CREATED', { type: 'NOTE', length: text.length });
+      case 'note': // Vocabulário
+        dispatchAnnotation('NOTE');
         break;
-      case 'question':
-        onCreateStreamItem('question', text);
-        track('NOTE_CREATED', { type: 'QUESTION', length: text.length });
+      case 'question': // Dúvida
+        dispatchAnnotation('QUESTION');
         break;
-      case 'important':
-        onCreateStreamItem('important', text);
+      case 'important': // Ideia Central
+        dispatchAnnotation('IMPORTANT');
         break;
       case 'ai':
         // Instead of creating stream item, send to chat context
@@ -582,10 +592,16 @@ function ModernCornellLayoutInternal({
     clearSelection();
   }, [onCreateStreamItem, propSelectedColor, clearSelection, layout, track]);
 
-  // Memoize synthesis items to avoid repeated filtering
-  const synthesisItems = useMemo(
-    () => filterSynthesisItems(filteredItems),
+  // Memoize stream-only items (non-synthesis)
+  const streamOnlyItems = useMemo(
+    () => filteredItems.filter(item => !isSynthesisItem(item)),
     [filteredItems]
+  );
+
+  // Memoize synthesis items - Ignore type filter, only respect search query
+  const synthesisItems = useMemo(
+    () => filterSynthesisItems(allFilteredItems),
+    [allFilteredItems]
   );
 
   return (
@@ -671,12 +687,12 @@ function ModernCornellLayoutInternal({
             }}
             streamProps={{
               streamItems,
-              filteredItems,
+              filteredItems: streamOnlyItems,
               searchQuery: layout.searchQuery,
               filterType: layout.filterType,
               onSearchChange: layout.setSearchQuery,
               onFilterChange: layout.setFilterType,
-              filteredCount,
+              filteredCount: streamOnlyItems.length,
               hasActiveFilter,
               contentMode: contentModeData?.effectiveMode || ContentMode.NARRATIVE,
               sections,
@@ -695,19 +711,20 @@ function ModernCornellLayoutInternal({
               onCueClick,
             }}
             synthesisProps={{
-              filteredItems,
+              filteredItems: synthesisItems,
               searchQuery: layout.searchQuery,
               filterType: layout.filterType,
+              currentPage: currentPage || 1,
               onSearchChange: layout.setSearchQuery,
               onFilterChange: layout.setFilterType,
               onCreateSynthesis: () => {
-                setCreateModalType('SYNTHESIS');
-                layout.setIsCreateModalOpen(true);
+                onCreateStreamItem?.('synthesis', '');
               },
               onItemClick: onStreamItemClick,
               onItemEdit: onStreamItemEdit,
               onItemDelete: onStreamItemDelete,
               onItemSaveEdit: onStreamItemSaveEdit,
+              sections: sections,
             }}
             conversationsProps={{
               contentId,

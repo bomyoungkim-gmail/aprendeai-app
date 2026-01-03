@@ -34,6 +34,7 @@ import type { UnifiedStreamItem, UnifiedStreamItemType } from '@/lib/types/unifi
 import { reactPDFToBackend } from '@/lib/adapters/highlight-adapter';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import type { CreateHighlightDto } from '@/lib/types/cornell';
+import { ContentType } from '@/lib/constants/enums';
 
 interface ReaderPageProps {
   params: {
@@ -164,11 +165,12 @@ export default function ReaderPage({ params }: ReaderPageProps) {
         } catch (error) {
           toastControls.error('Falha ao excluir anotação');
         }
-      } else if (item.type === 'note') {
+      } else if (item.type === 'note' || item.type === 'synthesis') {
         // Remove note from Cornell notes
-        const updatedNotes = (notes || []).filter((n) => n.id !== item.note.id);
+        const targetId = item.type === 'note' ? item.note.id : item.id;
+        const updatedNotes = (notes || []).filter((n: any) => n.id !== targetId);
         save({ notes_json: updatedNotes });
-        toastControls.success('Nota excluída');
+        toastControls.success(item.type === 'synthesis' ? 'Síntese concluída/removida' : 'Nota excluída');
       }
     },
     [notes, save, toastControls, deleteHighlightMutation]
@@ -187,13 +189,14 @@ export default function ReaderPage({ params }: ReaderPageProps) {
         } catch (error) {
           toastControls.error('Falha ao atualizar anotação');
         }
-      } else if (item.type === 'note') {
+      } else if (item.type === 'note' || item.type === 'synthesis') {
         // Update note in Cornell notes
-        const updatedNotes = (notes || []).map((n) =>
-          n.id === item.note.id ? { ...n, ...updates } : n
+        const targetId = item.type === 'note' ? item.note.id : item.id;
+        const updatedNotes = (notes || []).map((n: any) =>
+          n.id === targetId ? { ...n, ...updates } : n
         );
         save({ notes_json: updatedNotes });
-        toastControls.success('Nota atualizada');
+        toastControls.success(item.type === 'synthesis' ? 'Síntese atualizada' : 'Nota atualizada');
       }
     },
     [notes, save, toastControls, updateHighlightMutation]
@@ -227,20 +230,55 @@ export default function ReaderPage({ params }: ReaderPageProps) {
             toastControls.success('Marcado como Favorito');
             break;
           case 'annotation':
-            // For HTML content, we would create a highlight here.
-            // For PDF, this is handled by viewer's internal menu usually.
-            // If triggered from global menu (HTML), we need logic.
-            // For now, simpler fallback:
-             track('highlight_created', { type: 'manual_fallback', text_length: text.length });
-             toastControls.success('Destaque criado');
-             break;
+            // Robust Highlight Creation
+            const meta = data as any;
+            if (meta?.isManualSelection || meta?.anchor) {
+              const tagsJson = meta.tags || ['highlight'];
+              const colorKey = meta.colorKey || selectedColor;
+
+              // Fallback anchor for text/HTML content if none provided
+              const fallbackAnchor: any = {
+                  type: 'DOCX_TEXT', 
+                  quote: text,
+                  range: { 
+                    startPath: [], 
+                    startOffset: 0, 
+                    endPath: [], 
+                    endOffset: text.length 
+                  } 
+              };
+
+              await handleCreateHighlight({
+                kind: 'TEXT',
+                target_type: content?.contentType || ContentType.ARTICLE,
+                anchor_json: (meta.anchor || fallbackAnchor) as any,
+                color_key: colorKey,
+                tags_json: tagsJson,
+                timestamp_ms: currentTimestamp,
+                page_number: currentPage
+              });
+              
+              track('highlight_created', { 
+                type: meta.type || 'HIGHLIGHT', 
+                color: colorKey, 
+                text_length: text.length 
+              });
+            }
+            break;
           case 'ai':
             // AI action is handled by ModernCornellLayout.handleSelectionAction
             // This case should not be reached if using TextSelectionMenu
             logger.warn('AI action called on ReaderPage handler - should use Layout handler');
             track('ai_action_deprecated_path', { text_length: text.length });
             break;
-           case 'triage':
+          case 'synthesis':
+            const synthesisId = id || crypto.randomUUID();
+            const newSynthesisNote = { id: synthesisId, body: text, type: 'synthesis', linkedHighlightIds: [] };
+            await save({ notes_json: [...(notes || []), newSynthesisNote] });
+            track('synthesis_created', { note_id: synthesisId });
+            toastControls.success('Instância de síntese criada');
+            break;
+          case 'triage':
             // Create highlight with 'triage' tag - To be implemented with proper tagging
             track('definition_opened', { text: text.substring(0, 50) });
             toastControls.info('Adicionado à triagem 📋');

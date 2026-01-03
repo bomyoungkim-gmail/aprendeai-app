@@ -43,13 +43,45 @@ export function useUpdateCornellNotes(contentId: string) {
   return useMutation({
     mutationFn: (updates: UpdateCornellDto) =>
       cornellApi.updateCornellNotes(contentId, updates),
+    
+    // 🚀 Optimistic Updates
+    onMutate: async (updates) => {
+      // Cancel refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: cornellKeys.notes(contentId) });
+
+      // Snapshot the previous value
+      const previousNotes = queryClient.getQueryData<CornellNotes>(cornellKeys.notes(contentId));
+
+      // Optimistically update to the new value
+      if (previousNotes) {
+        queryClient.setQueryData<CornellNotes>(cornellKeys.notes(contentId), {
+          ...previousNotes,
+          ...updates,
+          updatedAt: new Date().toISOString(), // Temporary proxy
+        });
+      }
+
+      // Return context with snapshotted value
+      return { previousNotes };
+    },
+
+    onError: (error, _updates, context) => {
+      logger.error('Failed to update Cornell notes', error, { contentId });
+      // Rollback to previous value
+      if (context?.previousNotes) {
+        queryClient.setQueryData(cornellKeys.notes(contentId), context.previousNotes);
+      }
+    },
+
     onSuccess: (data) => {
-      // Update cache
+      // Update with final data from server
       queryClient.setQueryData(cornellKeys.notes(contentId), data);
     },
-    onError: (error) => {
-      logger.error('Failed to update Cornell notes', error, { contentId });
-    },
+    
+    onSettled: () => {
+      // Always refetch in background to ensure sync
+      queryClient.invalidateQueries({ queryKey: cornellKeys.notes(contentId) });
+    }
   });
 }
 
@@ -69,6 +101,7 @@ export function useCreateHighlight(contentId: string) {
     mutationFn: (highlight: CreateHighlightDto) => {
       const payload: CreateHighlightPayload = {
         type: highlight.tags_json?.[0] || 'HIGHLIGHT',
+        kind: highlight.kind,
         target_type: highlight.target_type,
         page_number: highlight.page_number,
         timestamp_ms: highlight.timestamp_ms,

@@ -12,6 +12,9 @@ interface SearchBarProps {
   activeFilter: FilterType;
   onFilterChange: (filter: FilterType) => void;
   resultCount?: number;
+  hideFilters?: boolean;
+  actionButton?: React.ReactNode;
+  placeholder?: string;
 }
 
 export function SearchBar({
@@ -21,6 +24,9 @@ export function SearchBar({
   activeFilter,
   onFilterChange,
   resultCount,
+  hideFilters = false,
+  actionButton,
+  placeholder,
 }: SearchBarProps) {
   const [showFilters, setShowFilters] = React.useState(false);
 
@@ -41,7 +47,7 @@ export function SearchBar({
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Buscar anotações..."
+          placeholder={placeholder || "Buscar..."}
           className="w-full pl-10 pr-10 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
         />
         {value && (
@@ -54,20 +60,26 @@ export function SearchBar({
         )}
       </div>
 
-      {/* Filter Toggle */}
+      {/* Filter Toggle & Results */}
       <div className="flex items-center justify-between">
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-        >
-          <Filter className="h-3.5 w-3.5" />
-          Filtros
-        </button>
         {resultCount !== undefined && (
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
             {resultCount} {resultCount === 1 ? 'resultado' : 'resultados'}
           </span>
         )}
+        
+        <div className="flex items-center gap-2">
+          {actionButton}
+          {!hideFilters && (
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Filter className="h-3.5 w-3.5" />
+              Filtros
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filter Pills */}

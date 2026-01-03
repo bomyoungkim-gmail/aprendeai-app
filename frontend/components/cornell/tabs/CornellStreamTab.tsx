@@ -11,6 +11,7 @@ import { SectionAnnotationsFilter } from '../../annotations/SectionAnnotationsFi
 import type { UnifiedStreamItem } from '@/lib/types/unified-stream';
 import type { Section } from '@/lib/content/section-detector';
 import { ContentMode } from '@/lib/types/content-mode';
+import { isSynthesisItem } from '@/lib/cornell/helpers';
 
 export interface CornellStreamTabProps {
   streamItems: UnifiedStreamItem[];
@@ -56,9 +57,10 @@ export function CornellStreamTab({
   onItemSaveEdit,
 }: CornellStreamTabProps) {
   const displayItems = filteredItems.filter(item => 
-    !selectedSectionId || 
+    (!selectedSectionId || 
     (item as any).section === selectedSectionId || 
-    selectedSectionId === 'abstract' // Soft match for MVP
+    selectedSectionId === 'abstract') &&
+    !isSynthesisItem(item)
   );
 
   return (
@@ -79,6 +81,7 @@ export function CornellStreamTab({
         activeFilter={filterType}
         onFilterChange={onFilterChange}
         resultCount={filteredCount}
+        placeholder="Buscar anotações..."
       />
       
       <div className="space-y-3">

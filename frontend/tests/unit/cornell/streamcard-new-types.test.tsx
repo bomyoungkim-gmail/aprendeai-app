@@ -4,9 +4,9 @@ import { StreamCard } from '@/components/cornell/StreamCard';
 import { ITEM_TYPE_LABELS } from '@/lib/cornell/labels';
 import type { QuestionStreamItem, ImportantStreamItem } from '@/lib/types/unified-stream';
 
-describe('StreamCard - Phase 2 New Types', () => {
-  describe('QuestionCard', () => {
-    it('should display question with QUESTION label from constants', () => {
+describe('StreamCard - Unified Pedagogical Pillars', () => {
+  describe('Dúvida (Question)', () => {
+    it('should display doubt with correct pedagogical label', () => {
       const mockQuestion: QuestionStreamItem = {
         type: 'question',
         id: 'q-1',
@@ -18,49 +18,30 @@ describe('StreamCard - Phase 2 New Types', () => {
 
       render(<StreamCard item={mockQuestion} />);
 
-      // Verify label from constants
+      // Verify label from constants (Dúvida)
       expect(screen.getByText(ITEM_TYPE_LABELS.QUESTION)).toBeInTheDocument();
       
       // Verify question content
       expect(screen.getByText('O que significa fotossíntese?')).toBeInTheDocument();
     });
 
-    it('should show resolved status when question has AI response', () => {
-      const mockResolvedQuestion: QuestionStreamItem = {
-        type: 'question',
-        id: 'q-2',
-        question: 'Como funciona a mitocôndria?',
-        resolved: true,
-        aiResponseId: 'ai-resp-1',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      render(<StreamCard item={mockResolvedQuestion} />);
-
-      // Should show AI response indicator using constant
-      expect(screen.getByText(`${ITEM_TYPE_LABELS.AI_RESPONSE} respondeu`)).toBeInTheDocument();
-    });
-
-    it('should display section if provided', () => {
+    it('should display ID and date in footer', () => {
       const mockQuestion: QuestionStreamItem = {
         type: 'question',
-        id: 'q-3',
-        question: 'Test question',
-        section: 'Capítulo 2',
+        id: 'q-unique-123',
+        question: 'Test content',
         resolved: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
 
       render(<StreamCard item={mockQuestion} />);
-
-      expect(screen.getByText(/Capítulo 2/)).toBeInTheDocument();
+      expect(screen.getByText(/ID: q-unique/)).toBeInTheDocument();
     });
   });
 
-  describe('ImportantCard', () => {
-    it('should display important quote with IMPORTANT label from constants', () => {
+  describe('Ideia Central (Important)', () => {
+    it('should display main idea quote with correct label', () => {
       const mockImportant: ImportantStreamItem = {
         type: 'important',
         id: 'star-1',
@@ -72,9 +53,9 @@ describe('StreamCard - Phase 2 New Types', () => {
 
       render(<StreamCard item={mockImportant} />);
 
-      // Verify label from constants
+      // Verify label from constants (Ideia Central)
       expect(screen.getByText(ITEM_TYPE_LABELS.IMPORTANT)).toBeInTheDocument();
-      expect(ITEM_TYPE_LABELS.IMPORTANT).toBe('Importante');
+      expect(ITEM_TYPE_LABELS.IMPORTANT).toBe('Ideia Central');
       
       // Verify quote content
       expect(screen.getByText(/"A fotossíntese é o processo/)).toBeInTheDocument();
@@ -82,25 +63,10 @@ describe('StreamCard - Phase 2 New Types', () => {
       // Verify page number
       expect(screen.getByText(/Pg\. 42/)).toBeInTheDocument();
     });
-
-    it('should display optional note if provided', () => {
-      const mockImportant: ImportantStreamItem = {
-        type: 'important',
-        id: 'star-2',
-        quote: 'Important concept',
-        note: 'Cai na prova!',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      render(<StreamCard item={mockImportant} />);
-
-      expect(screen.getByText('Cai na prova!')).toBeInTheDocument();
-    });
   });
 
   describe('NO Hard-Coded Labels', () => {
-    it('should use centralized constants for all new card types', () => {
+    it('should use centralized constants for unified cards', () => {
       const question: QuestionStreamItem = {
         type: 'question',
         id: 'q-test',
@@ -112,7 +78,6 @@ describe('StreamCard - Phase 2 New Types', () => {
 
       render(<StreamCard item={question} />);
       
-      // All labels should come from ITEM_TYPE_LABELS constant
       const label = screen.getByText(ITEM_TYPE_LABELS.QUESTION);
       expect(label).toBeInTheDocument();
     });

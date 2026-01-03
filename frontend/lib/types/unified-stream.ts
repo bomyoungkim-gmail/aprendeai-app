@@ -1,7 +1,8 @@
 // Unified Knowledge Stream Types for Cornell Notes
 // This combines Annotations (Highlights) and Notes into a single stream
 
-import type { Highlight, NoteItem, CueItem } from './cornell';
+import type { Highlight, NoteItem, CueItem, SynthesisCategory, SynthesisAnchor } from './cornell';
+export type { SynthesisCategory, SynthesisAnchor };
 
 /**
  * Unified Stream Item - represents any entry in the knowledge sidebar
@@ -31,6 +32,7 @@ export interface AnnotationStreamItem extends BaseStreamItem {
   type: 'annotation';
   highlight: Highlight;
   // Quick access fields
+  annotationType?: string;
   colorKey: string;
   quote?: string;
   pageNumber?: number;
@@ -91,13 +93,25 @@ export interface AIResponseStreamItem extends BaseStreamItem {
   helpful?: boolean; // User feedback
 }
 
+// Synthesis definitions moved to cornell.ts
+
+/**
+ * Synthesis Stream Item - represents global or anchored document summary
+ */
+export interface SynthesisStreamItem extends BaseStreamItem {
+  type: 'synthesis';
+  body: string;
+  anchor?: SynthesisAnchor;
+}
+
 export type UnifiedStreamItem = 
   | AnnotationStreamItem 
   | NoteStreamItem 
   | AISuggestionStreamItem
   | QuestionStreamItem
   | ImportantStreamItem
-  | AIResponseStreamItem;
+  | AIResponseStreamItem
+  | SynthesisStreamItem;
 
 /**
  * Helper to convert Highlight to AnnotationStreamItem
@@ -106,6 +120,20 @@ export function highlightToStreamItem(highlight: Highlight): AnnotationStreamIte
   const quote = highlight.anchorJson.type === 'PDF_TEXT' 
     ? highlight.anchorJson.quote 
     : undefined;
+
+  // Infer annotation type from tags
+  let annotationType = 'HIGHLIGHT';
+  const tags = highlight.tagsJson || [];
+  
+  if (tags.some(t => ['question', 'doubt'].includes(t.toLowerCase()))) {
+    annotationType = 'QUESTION';
+  } else if (tags.some(t => ['important', 'star', 'main-idea'].includes(t.toLowerCase()))) {
+    annotationType = 'IMPORTANT';
+  } else if (tags.some(t => ['note', 'vocab'].includes(t.toLowerCase()))) {
+    annotationType = 'NOTE';
+  } else if (tags.some(t => ['ai'].includes(t.toLowerCase()))) {
+    annotationType = 'AI';
+  }
     
   return {
     id: highlight.id,
@@ -113,6 +141,7 @@ export function highlightToStreamItem(highlight: Highlight): AnnotationStreamIte
     createdAt: highlight.createdAt,
     updatedAt: highlight.updatedAt,
     highlight,
+    annotationType,
     colorKey: highlight.colorKey,
     quote,
     pageNumber: highlight.pageNumber,

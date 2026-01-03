@@ -5,12 +5,13 @@ import { Highlighter, MessageSquare, HelpCircle, Sparkles, Star, BookOpen } from
 import type { RenderHighlightTargetProps } from '@react-pdf-viewer/highlight';
 import { getColorForKey } from '@/lib/constants/colors';
 import { ACTION_LABELS } from '@/lib/cornell/labels';
+import { CORNELL_CONFIG } from '@/lib/cornell/unified-config';
 
 import { useCornellLayout } from '@/contexts/CornellLayoutContext';
 
 interface PDFSelectionMenuProps {
   props: RenderHighlightTargetProps;
-  handleHighlightCreation: (props: any) => void;
+  handleHighlightCreation: (props: any, typeKey?: string) => void;
   onSelectionAction?: (action: 'note' | 'question' | 'ai' | 'important' | 'triage' | 'annotation', text: string, data?: any) => void;
   selectedColor: string;
 }
@@ -77,65 +78,31 @@ export const PDFSelectionMenu = forwardRef<HTMLDivElement, PDFSelectionMenuProps
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Highlight - 🎨 */}
-      <button 
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.stopPropagation();
-          handleHighlightCreation(props); 
-          props.toggle();
-        }}
-        className={buttonClass}
-        title={ACTION_LABELS.HIGHLIGHT}
-      >
-        <Highlighter className="h-4 w-4" style={{ color: getColorForKey(selectedColor) }} />
-        <span className={labelClass}>{ACTION_LABELS.HIGHLIGHT}</span>
-      </button>
-
-      {/* Note - 💬 */}
-      <button 
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelectionAction?.('note', props.selectedText, props);
-          props.toggle();
-        }}
-        className={buttonClass}
-        title={ACTION_LABELS.NOTE}
-      >
-        <BookOpen className="h-4 w-4 text-blue-500" />
-        <span className={labelClass}>{ACTION_LABELS.NOTE}</span>
-      </button>
-
-      {/* Star - ⭐ */}
-      <button 
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelectionAction?.('important', props.selectedText, props);
-          props.toggle();
-        }}
-        className={buttonClass}
-        title={ACTION_LABELS.IMPORTANT}
-      >
-        <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-        <span className={labelClass}>{ACTION_LABELS.IMPORTANT}</span> 
-      </button>
-
-      {/* Question - ❓ */}
-      <button 
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelectionAction?.('question', props.selectedText, props);
-          props.toggle();
-        }}
-        className={buttonClass}
-        title={ACTION_LABELS.QUESTION}
-      >
-        <HelpCircle className="h-4 w-4 text-red-500" />
-        <span className={labelClass}>{ACTION_LABELS.QUESTION}</span>
-      </button>
+      {['HIGHLIGHT', 'NOTE', 'IMPORTANT', 'QUESTION'].map((key) => {
+        const config = CORNELL_CONFIG[key];
+        const Icon = config.icon;
+        const color = config.color;
+        
+        return (
+          <button 
+            key={key}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              // All pedagogical actions are handled as Highlights in PDF
+              handleHighlightCreation(props, key);
+              props.toggle();
+            }}
+            className={buttonClass}
+            title={config.label}
+          >
+            <Icon 
+              className={`h-4 w-4 text-${color}-500 ${key === 'IMPORTANT' ? `fill-${color}-500` : ''}`} 
+            />
+            <span className={labelClass}>{config.label}</span>
+          </button>
+        );
+      })}
 
       <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-1" />
 

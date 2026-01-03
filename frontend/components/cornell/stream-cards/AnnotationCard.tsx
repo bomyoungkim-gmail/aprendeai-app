@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Highlighter, Trash2, Edit2, MapPin } from 'lucide-react';
-import type { AnnotationStreamItem, UnifiedStreamItem } from '@/lib/types/unified-stream';
+import { Trash2, Edit2, MapPin, Clock } from 'lucide-react';
+import type { UnifiedStreamItem } from '@/lib/types/unified-stream';
 import { getColorForKey } from '@/lib/constants/colors';
 import { AnnotationEditor } from '../InlineEditor';
-import { ITEM_TYPE_LABELS } from '@/lib/cornell/labels';
+import { CORNELL_CONFIG } from '@/lib/cornell/unified-config';
 
 interface AnnotationCardProps {
-  item: AnnotationStreamItem;
+  item: UnifiedStreamItem;
   onClick?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -15,20 +15,47 @@ interface AnnotationCardProps {
 
 export function AnnotationCard({ item, onClick, onEdit, onDelete, onSaveEdit }: AnnotationCardProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const rgb = getColorForKey(item.colorKey);
   
-  const handleSaveEdit = (comment: string, colorKey: string) => {
-    // Backend expects snake_case field names
-    onSaveEdit?.(item, { comment_text: comment, color_key: colorKey });
+  // Get config based on item type
+  const typeKey = (item as any).annotationType || item.type.toUpperCase();
+  const config = CORNELL_CONFIG[typeKey] || CORNELL_CONFIG.HIGHLIGHT;
+  const Icon = config.icon;
+  
+  // Color handling - Pillars (Vocab, Idea, Doubt) strictly use config color.
+  // Evidence (Highlight) uses the highlight's specific color.
+  const colorKey = config.forceColor ? config.color : ((item as any).colorKey || config.color);
+  const rgb = getColorForKey(colorKey);
+  
+  // Content extraction (normalize different item structures)
+  const quote = (item as any).quote || (item as any).highlight?.anchorJson?.quote;
+  const comment = (item as any).commentText || (item as any).question || (item as any).note || (item as any).note?.body;
+
+  const handleSaveEdit = (newComment: string, newColorKey: string, newType?: string) => {
+    // Determine the tags_json based on the new type
+    let tagsJson = (item as any).tagsJson || [];
+    if (newType) {
+      const targetConfig = CORNELL_CONFIG[newType.toUpperCase()];
+      if (targetConfig) {
+        tagsJson = targetConfig.tags;
+      }
+    }
+
+    onSaveEdit?.(item, { 
+      comment_text: newComment, 
+      color_key: newColorKey,
+      tags_json: tagsJson,
+      type: newType?.toUpperCase() 
+    });
     setIsEditing(false);
   };
   
   if (isEditing) {
     return (
-      <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="p-1">
         <AnnotationEditor
-          initialComment={item.commentText || ''}
-          initialColor={item.colorKey}
+          initialComment={comment || ''}
+          initialColor={colorKey}
+          initialType={typeKey}
           onSave={handleSaveEdit}
           onCancel={() => setIsEditing(false)}
         />
@@ -38,24 +65,30 @@ export function AnnotationCard({ item, onClick, onEdit, onDelete, onSaveEdit }: 
   
   return (
     <div 
-      className="group relative p-3 rounded-lg border hover:shadow-md transition-all cursor-pointer"
+      className="group relative p-3 rounded-lg border-2 hover:shadow-md transition-all cursor-pointer bg-white dark:bg-gray-800/50"
       style={{ borderColor: rgb }}
       onClick={onClick}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Highlighter 
+          <Icon 
             className="h-4 w-4 shrink-0" 
             style={{ color: rgb }}
           />
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-            {ITEM_TYPE_LABELS.HIGHLIGHT}
+          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: rgb }}>
+            {config.label}
           </span>
-          {item.pageNumber && (
+          {(item as any).pageNumber && (
             <span className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
               <MapPin className="h-3 w-3" />
-              Pg. {item.pageNumber}
+              Pg. {(item as any).pageNumber}
+            </span>
+          )}
+          {(item as any).timestampMs !== undefined && (
+            <span className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+              <Clock className="h-3 w-3" />
+              {new Date((item as any).timestampMs).toISOString().substr(11, 8)}
             </span>
           )}
         </div>
@@ -68,7 +101,7 @@ export function AnnotationCard({ item, onClick, onEdit, onDelete, onSaveEdit }: 
               setIsEditing(true);
             }}
             className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-            title="Edit"
+            title="Editar"
           >
             <Edit2 className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400" />
           </button>
@@ -78,38 +111,39 @@ export function AnnotationCard({ item, onClick, onEdit, onDelete, onSaveEdit }: 
               onDelete?.();
             }}
             className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
-            title="Delete"
+            title="Excluir"
           >
             <Trash2 className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
           </button>
         </div>
       </div>
 
-      {/* Content */}
-      {item.quote && (
-        <p 
-          className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3 px-2 py-1 rounded"
-          style={{ backgroundColor: rgb + '20' }}
-        >
-          "{item.quote}"
-        </p>
-      )}
+      {/* Content Area */}
+      <div className="space-y-2">
+        {quote && typeof quote === 'string' && (
+          <p 
+            className="text-sm text-gray-700 dark:text-gray-300 line-clamp-4 px-2 py-1.5 rounded border-l-2 italic"
+            style={{ 
+              backgroundColor: rgb + '10',
+              borderColor: rgb
+            }}
+          >
+            "{quote}"
+          </p>
+        )}
+        
+        {comment && typeof comment === 'string' && (
+          <p className="text-sm text-gray-800 dark:text-gray-200 font-medium leading-relaxed">
+            {comment}
+          </p>
+        )}
+      </div>
       
-      {item.commentText && (
-        <p className="mt-2 text-xs text-gray-600 dark:text-gray-400 italic">
-          {item.commentText}
-        </p>
-      )}
-      
-      {/* Timestamp */}
-      <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
-        {new Date(item.createdAt).toLocaleDateString('pt-BR', { 
-          month: 'short', 
-          day: 'numeric', 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        })}
-      </p>
+      {/* Footer / Meta */}
+      <div className="mt-3 flex items-center justify-between text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-tighter">
+        <span>{new Date(item.createdAt).toLocaleDateString('pt-BR')}</span>
+        <span>ID: {item.id.slice(0, 8)}</span>
+      </div>
     </div>
   );
 }
