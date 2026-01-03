@@ -35,8 +35,12 @@ export function ContentItem({ content }: ContentItemProps) {
     }
   };
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('pt-BR', {
+  const formatDate = (date: string | undefined) => {
+    if (!date) return 'Data indisponível';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return 'Data inválida';
+    
+    return d.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -61,7 +65,7 @@ export function ContentItem({ content }: ContentItemProps) {
             <span className="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-700 text-xs font-medium">
               {content.contentType}
             </span>
-            <span>{formatDate(content.createdAt)}</span>
+            <span>{formatDate(content.created_at || content.createdAt)}</span>
           </div>
         </div>
 

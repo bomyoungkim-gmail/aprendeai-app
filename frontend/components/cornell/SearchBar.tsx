@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, X, Filter } from 'lucide-react';
 import type { FilterType } from '@/lib/types/ui';
+import { CORNELL_CONFIG } from '@/lib/cornell/unified-config';
 
 // Re-export for backwards compatibility
 export type { FilterType };
@@ -30,12 +31,50 @@ export function SearchBar({
 }: SearchBarProps) {
   const [showFilters, setShowFilters] = React.useState(false);
 
-  const filters: { type: FilterType; label: string; icon: string }[] = [
-    { type: 'all', label: 'Todos', icon: '📚' },
-    { type: 'annotation', label: 'Destaques', icon: '🖍️' },
-    { type: 'note', label: 'Notas', icon: '📝' },
-    { type: 'important', label: 'Importantes', icon: '⭐' },
-    { type: 'question', label: 'Dúvidas', icon: '❓' },
+  // Derive filters from CORNELL_CONFIG to ensure consistency
+  const filters: { type: FilterType; label: string; icon: React.ReactNode; colorClass: string; activeClass: string }[] = [
+    { 
+      type: 'all', 
+      label: 'Todos', 
+      icon: '📚', 
+      colorClass: 'text-gray-700 dark:text-gray-300',
+      activeClass: 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900',
+    },
+    { 
+      type: 'evidence', 
+      label: CORNELL_CONFIG.EVIDENCE.label, 
+      icon: CORNELL_CONFIG.EVIDENCE.emoji,
+      colorClass: 'text-yellow-600 dark:text-yellow-400',
+      activeClass: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800',
+    },
+    { 
+      type: 'vocabulary', 
+      label: CORNELL_CONFIG.VOCABULARY.label, 
+      icon: CORNELL_CONFIG.VOCABULARY.emoji,
+      colorClass: 'text-blue-600 dark:text-blue-400',
+      activeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 border-blue-200 dark:border-blue-800',
+    },
+    { 
+      type: 'main-idea', 
+      label: CORNELL_CONFIG.MAIN_IDEA.label, 
+      icon: CORNELL_CONFIG.MAIN_IDEA.emoji,
+      colorClass: 'text-green-600 dark:text-green-400',
+      activeClass: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 border-green-200 dark:border-green-800',
+    },
+    { 
+      type: 'doubt', 
+      label: CORNELL_CONFIG.DOUBT.label, 
+      icon: CORNELL_CONFIG.DOUBT.emoji,
+      colorClass: 'text-red-600 dark:text-red-400',
+      activeClass: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200 border-red-200 dark:border-red-800',
+    },
+    { 
+      type: 'synthesis', 
+      label: CORNELL_CONFIG.SYNTHESIS.label, 
+      icon: CORNELL_CONFIG.SYNTHESIS.emoji,
+      colorClass: 'text-purple-600 dark:text-purple-400',
+      activeClass: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200 border-purple-200 dark:border-purple-800',
+    },
   ];
 
   return (
@@ -85,23 +124,25 @@ export function SearchBar({
       {/* Filter Pills */}
       {showFilters && (
         <div className="flex flex-wrap gap-2">
-          {filters.map((filter) => (
-            <button
-              key={filter.type}
-              onClick={() => onFilterChange(filter.type)}
-              className={`
-                flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all
-                ${
-                  activeFilter === filter.type
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }
-              `}
-            >
-              <span>{filter.icon}</span>
-              <span>{filter.label}</span>
-            </button>
-          ))}
+          {filters.map((filter) => {
+            const isActive = activeFilter === filter.type;
+            return (
+              <button
+                key={filter.type}
+                onClick={() => onFilterChange(filter.type)}
+                className={`
+                  flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all border
+                  ${isActive 
+                    ? `${filter.activeClass} shadow-sm border-transparent`
+                    : `bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 ${filter.colorClass} hover:bg-gray-100 dark:hover:bg-gray-700`
+                  }
+                `}
+              >
+                <span>{filter.icon}</span>
+                <span>{filter.label}</span>
+              </button>
+            )
+          })}
         </div>
       )}
     </div>

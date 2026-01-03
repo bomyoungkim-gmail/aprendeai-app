@@ -11,17 +11,17 @@ export const CORNELL_MODAL_CONSTANTS = {
 } as const;
 
 export const CORNELL_MODAL_DEFAULTS = {
-  TYPE: 'NOTE' as const,
+  TYPE: 'EVIDENCE' as const,
   PAGE: 1,
   CONTEXT: 'PERSONAL' as const,
 } as const;
 
 // Cornell Annotation Types (Core - Single Source of Truth)
 export const CORNELL_TYPES = {
-  HIGHLIGHT: 'HIGHLIGHT',
-  NOTE: 'NOTE',
-  IMPORTANT: 'IMPORTANT',
-  QUESTION: 'QUESTION',
+  EVIDENCE: 'EVIDENCE',
+  VOCABULARY: 'VOCABULARY',
+  MAIN_IDEA: 'MAIN_IDEA',
+  DOUBT: 'DOUBT',
 } as const;
 
 // Extended types (includes synthesis and AI)

@@ -21,7 +21,6 @@ export class GetOrCreateCornellNoteUseCase {
         id: crypto.randomUUID(),
         contentId,
         userId,
-        cues: [],
         notes: [],
         summary: "",
       });

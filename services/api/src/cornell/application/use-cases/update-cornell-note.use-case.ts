@@ -57,7 +57,6 @@ export class UpdateCornellNoteUseCase {
     });
 
     // Update Domain Entity
-    note.cues = dto.cues_json ?? note.cues;
     note.notes = dto.notes_json ?? note.notes;
     note.summary = dto.summary_text ?? note.summary;
 

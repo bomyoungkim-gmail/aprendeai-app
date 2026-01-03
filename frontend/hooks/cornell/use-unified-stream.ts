@@ -23,7 +23,7 @@ export function useUnifiedStream(contentId: string) {
 
     // Add Cornell notes as note/synthesis items
     const notesArray = cornellNotes?.notesJson || (cornellNotes as any)?.notes_json;
-    if (notesArray) {
+    if (notesArray && cornellNotes) {
       notesArray.forEach((note: any) => {
         // Use updatedAt from the Cornell document as proxy for note creation time
         if (note.type === 'synthesis') {
@@ -51,6 +51,5 @@ export function useUnifiedStream(contentId: string) {
     highlights,
     notes: cornellNotes?.notesJson || (cornellNotes as any)?.notes_json || [],
     summary: cornellNotes?.summaryText || (cornellNotes as any)?.summary_text || '',
-    cues: cornellNotes?.cuesJson || (cornellNotes as any)?.cues_json || [],
   };
 }

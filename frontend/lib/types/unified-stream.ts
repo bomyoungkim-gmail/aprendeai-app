@@ -1,22 +1,23 @@
 // Unified Knowledge Stream Types for Cornell Notes
 // This combines Annotations (Highlights) and Notes into a single stream
 
-import type { Highlight, NoteItem, CueItem, SynthesisCategory, SynthesisAnchor } from './cornell';
+import type { Highlight, NoteItem, SynthesisCategory, SynthesisAnchor } from './cornell';
 export type { SynthesisCategory, SynthesisAnchor };
 
 /**
  * Unified Stream Item - represents any entry in the knowledge sidebar
  */
 export type UnifiedStreamItemType = 
-  | 'annotation' 
-  | 'note' 
-  | 'ai-suggestion'
-  | 'question'      // User-generated question
-  | 'important'     // Important highlight (renamed from star)
-  | 'synthesis'     // Synthesis/summary
-  | 'ai-response'   // AI's answer to a question
-  | 'triage'        // Item for triage/review
-  | 'ai';           // Generic AI request type
+  | 'evidence'       // Highlight-based evidence
+  | 'vocabulary'     // Highlight-based vocabulary
+  | 'main-idea'      // Highlight-based main idea
+  | 'doubt'          // Highlight-based doubt
+  | 'note'           // Manual user note
+  | 'synthesis'      // Manual synthesis/summary
+  | 'ai-suggestion'  // AI-generated content
+  | 'ai-response'    // AI's answer to a doubt
+  | 'triage'         // Item for triage/review
+  | 'ai';            // Generic AI request type
 
 export interface BaseStreamItem {
   id: string;
@@ -26,17 +27,32 @@ export interface BaseStreamItem {
 }
 
 /**
- * Annotation Stream Item - represents a highlight/anchor
+ * Base Highlight Stream Item - common fields for all highlight-based items
  */
-export interface AnnotationStreamItem extends BaseStreamItem {
-  type: 'annotation';
+export interface BaseHighlightStreamItem extends BaseStreamItem {
   highlight: Highlight;
   // Quick access fields
-  annotationType?: string;
+  annotationType: string;
   colorKey: string;
   quote?: string;
   pageNumber?: number;
   commentText?: string;
+}
+
+export interface EvidenceStreamItem extends BaseHighlightStreamItem {
+  type: 'evidence';
+}
+
+export interface VocabularyStreamItem extends BaseHighlightStreamItem {
+  type: 'vocabulary';
+}
+
+export interface MainIdeaStreamItem extends BaseHighlightStreamItem {
+  type: 'main-idea';
+}
+
+export interface DoubtStreamItem extends BaseHighlightStreamItem {
+  type: 'doubt';
 }
 
 /**
@@ -60,28 +76,7 @@ export interface AISuggestionStreamItem extends BaseStreamItem {
   accepted: boolean;
 }
 
-/**
- * Question Stream Item - represents a user question
- */
-export interface QuestionStreamItem extends BaseStreamItem {
-  type: 'question';
-  question: string;
-  section?: string;
-  pageNumber?: number;
-  resolved?: boolean;
-  aiResponseId?: string; // Link to AI answer
-}
-
-/**
- * Important Stream Item - represents an important highlight
- */
-export interface ImportantStreamItem extends BaseStreamItem {
-  type: 'important';
-  quote: string;
-  section?: string;
-  pageNumber?: number;
-  note?: string; // Optional note on why it's important
-}
+// MainIdeaStreamItem and DoubtStreamItem redefined above as BaseHighlightStreamItem extensions
 
 /**
  * AI Response Stream Item - represents AI's answer to a question
@@ -105,39 +100,47 @@ export interface SynthesisStreamItem extends BaseStreamItem {
 }
 
 export type UnifiedStreamItem = 
-  | AnnotationStreamItem 
+  | EvidenceStreamItem
+  | VocabularyStreamItem
+  | MainIdeaStreamItem
+  | DoubtStreamItem
   | NoteStreamItem 
   | AISuggestionStreamItem
-  | QuestionStreamItem
-  | ImportantStreamItem
   | AIResponseStreamItem
   | SynthesisStreamItem;
 
 /**
- * Helper to convert Highlight to AnnotationStreamItem
+ * Helper to convert Highlight to UnifiedStreamItem
  */
-export function highlightToStreamItem(highlight: Highlight): AnnotationStreamItem {
-  const quote = highlight.anchorJson.type === 'PDF_TEXT' 
+export function highlightToStreamItem(highlight: Highlight): UnifiedStreamItem {
+  const quote = highlight.anchorJson?.type === 'PDF_TEXT' 
     ? highlight.anchorJson.quote 
     : undefined;
 
   // Infer annotation type from tags
-  let annotationType = 'HIGHLIGHT';
-  const tags = highlight.tagsJson || [];
+  let annotationType = 'EVIDENCE';
+  let streamType: UnifiedStreamItemType = 'evidence';
   
-  if (tags.some(t => ['question', 'doubt'].includes(t.toLowerCase()))) {
-    annotationType = 'QUESTION';
-  } else if (tags.some(t => ['important', 'star', 'main-idea'].includes(t.toLowerCase()))) {
-    annotationType = 'IMPORTANT';
-  } else if (tags.some(t => ['note', 'vocab'].includes(t.toLowerCase()))) {
-    annotationType = 'NOTE';
-  } else if (tags.some(t => ['ai'].includes(t.toLowerCase()))) {
+  const tags = highlight.tagsJson || [];
+  const lowerTags = tags.map(t => t.toLowerCase());
+  
+  if (lowerTags.some(t => ['doubt', 'question'].includes(t))) {
+    annotationType = 'DOUBT';
+    streamType = 'doubt';
+  } else if (lowerTags.some(t => ['main-idea', 'star', 'important'].includes(t))) {
+    annotationType = 'MAIN_IDEA';
+    streamType = 'main-idea';
+  } else if (lowerTags.some(t => ['vocab', 'note'].includes(t))) {
+    annotationType = 'VOCABULARY';
+    streamType = 'vocabulary';
+  } else if (lowerTags.some(t => ['ai'].includes(t))) {
     annotationType = 'AI';
+    streamType = 'ai';
   }
     
   return {
     id: highlight.id,
-    type: 'annotation',
+    type: streamType,
     createdAt: highlight.createdAt,
     updatedAt: highlight.updatedAt,
     highlight,
@@ -145,8 +148,8 @@ export function highlightToStreamItem(highlight: Highlight): AnnotationStreamIte
     colorKey: highlight.colorKey,
     quote,
     pageNumber: highlight.pageNumber,
-    commentText: highlight.commentText,
-  };
+    commentText: highlight.commentText || (highlight as any).comment_text,
+  } as UnifiedStreamItem;
 }
 
 /**

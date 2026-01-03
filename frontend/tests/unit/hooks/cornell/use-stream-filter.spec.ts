@@ -6,16 +6,18 @@ describe('useStreamFilter', () => {
   const mockItems: UnifiedStreamItem[] = [
     {
       id: '1',
-      type: 'annotation',
+      type: 'evidence',
       quote: 'Important Quote',
       commentText: 'My comment',
       pageNumber: 1,
       createdAt: '2023-01-01',
-      highlight: { id: 'h1', contentId: 'c1' } as any
+      highlight: { id: 'h1', contentId: 'c1' } as any,
+      annotationType: 'EVIDENCE',
+      colorKey: 'yellow'
     },
     {
       id: '2',
-      type: 'note',
+      type: 'vocabulary',
       body: 'Personal note content',
       createdAt: '2023-01-02',
     },
@@ -38,11 +40,11 @@ describe('useStreamFilter', () => {
 
   it('should filter by type', () => {
     const { result } = renderHook(() => 
-      useStreamFilter(mockItems, '', 'annotation')
+      useStreamFilter(mockItems, '', 'evidence')
     );
 
     expect(result.current.filteredItems).toHaveLength(1);
-    expect(result.current.filteredItems[0].type).toBe('annotation');
+    expect(result.current.filteredItems[0].type).toBe('evidence');
     expect(result.current.hasActiveFilter).toBe(true);
   });
 
@@ -76,7 +78,7 @@ describe('useStreamFilter', () => {
 
   it('should combine type filter and search', () => {
     const { result } = renderHook(() => 
-      useStreamFilter(mockItems, 'Personal', 'annotation')
+      useStreamFilter(mockItems, 'Personal', 'evidence')
     );
 
     // Matches search but not type

@@ -10,10 +10,6 @@ import {
 export class UpdateCornellDto {
   @IsArray()
   @IsOptional()
-  cues_json?: any[];
-
-  @IsArray()
-  @IsOptional()
   notes_json?: any[];
 
   @IsString()
@@ -21,83 +17,8 @@ export class UpdateCornellDto {
   summary_text?: string;
 }
 
-export class CreateHighlightDto {
-  @IsEnum(["TEXT", "AREA"])
-  kind: "TEXT" | "AREA";
 
-  @IsEnum([
-    "PDF",
-    "IMAGE",
-    "DOCX",
-    "VIDEO",
-    "AUDIO",
-    "ARTICLE",
-    "TEXT",
-    "NEWS",
-    "ARXIV",
-    "SCHOOL_MATERIAL",
-    "WEB_CLIP",
-  ])
-  target_type:
-    | "PDF"
-    | "IMAGE"
-    | "DOCX"
-    | "VIDEO"
-    | "AUDIO"
-    | "ARTICLE"
-    | "TEXT"
-    | "NEWS"
-    | "ARXIV"
-    | "SCHOOL_MATERIAL"
-    | "WEB_CLIP";
-
-  @IsOptional()
-  @IsInt()
-  page_number?: number;
-
-  @IsObject()
-  anchor_json: any;
-
-  @IsString()
-  @IsOptional()
-  color_key?: string;
-
-  @IsString()
-  @IsOptional()
-  comment_text?: string;
-
-  @IsArray()
-  @IsOptional()
-  tags_json?: string[];
-
-  @IsOptional()
-  @IsInt()
-  timestamp_ms?: number;
-
-  @IsOptional()
-  @IsInt()
-  duration_ms?: number;
-
-  @IsOptional()
-  @IsString()
-  visibility?: string;
-
-  @IsOptional()
-  @IsString()
-  visibility_scope?: string;
-
-  @IsOptional()
-  @IsString()
-  context_type?: string;
-
-  @IsOptional()
-  @IsString()
-  context_id?: string;
-
-  @IsOptional()
-  @IsString()
-  learner_id?: string;
-}
+import { CornellType } from "../constants/cornell-type-map";
 
 export class UpdateHighlightDto {
   @IsString()
@@ -107,6 +28,12 @@ export class UpdateHighlightDto {
   @IsString()
   @IsOptional()
   comment_text?: string;
+
+  @IsEnum(["EVIDENCE", "VOCABULARY", "MAIN_IDEA", "DOUBT", "SYNTHESIS"], {
+    message: "Type must be valid Cornell Type (EVIDENCE, VOCABULARY, etc)",
+  })
+  @IsOptional()
+  type?: CornellType;
 
   @IsArray()
   @IsOptional()

@@ -23,6 +23,7 @@ export class UpdateHighlightUseCase {
     highlight.colorKey = dto.color_key ?? highlight.colorKey;
     highlight.commentText = dto.comment_text ?? highlight.commentText;
     highlight.tags = dto.tags_json ?? highlight.tags;
+    highlight.type = dto.type ?? highlight.type;
 
     return this.highlightsRepository.update(highlight);
   }

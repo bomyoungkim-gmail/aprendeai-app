@@ -16,10 +16,11 @@
  */
 export type FilterType = 
   | 'all' 
-  | 'annotation'      // Highlights/annotations
-  | 'note'            // Notes
-  | 'important'       // Important items (renamed from star)
-  | 'question';       // Questions
+  | 'evidence'        // Highlights/annotations
+  | 'vocabulary'      // Vocabulary notes
+  | 'main-idea'       // Main ideas
+  | 'doubt'           // Doubts/questions
+  | 'synthesis';      // Synthesis/summaries
 
 /**
  * Sort types for content ordering

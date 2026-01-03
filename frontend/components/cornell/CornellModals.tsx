@@ -29,6 +29,7 @@ export interface CornellModalsProps {
   isCreateModalOpen: boolean;
   onCreateModalClose: () => void;
   createModalType: CornellType;
+  createModalQuote: string; // Added prop
   selectedColor: string;
   
   // Mode Selector
@@ -74,6 +75,7 @@ export function CornellModals({
   isCreateModalOpen,
   onCreateModalClose,
   createModalType,
+  createModalQuote, // Added
   selectedColor,
   
   // Mode Selector
@@ -117,6 +119,7 @@ export function CornellModals({
         isOpen={isCreateModalOpen}
         onClose={onCreateModalClose}
         initialType={createModalType}
+        initialQuote={createModalQuote} // Pass quote
         contentId={contentId}
         targetType={targetType}
       />

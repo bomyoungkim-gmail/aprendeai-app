@@ -15,9 +15,10 @@ interface StreamCardProps {
  */
 export function StreamCard({ item, onClick, onEdit, onDelete, onSaveEdit }: StreamCardProps) {
   switch (item.type) {
-    case 'annotation':
-    case 'important':
-    case 'question':
+    case 'evidence':
+    case 'vocabulary':
+    case 'main-idea':
+    case 'doubt':
       return (
         <AnnotationCard 
           item={item} 

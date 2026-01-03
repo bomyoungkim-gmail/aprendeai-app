@@ -133,7 +133,7 @@ describe('Cornell Reader Page Integration', () => {
     expect(await screen.findByText('Test Note')).toBeInTheDocument();
 
     // Switch to Cues Tab to check Cues
-    const cuesTab = screen.getByText('Importante & Dúvidas');
+    const cuesTab = screen.getByText('Ideias & Dúvidas');
     fireEvent.click(cuesTab);
     expect(screen.getByText('Test Cue')).toBeInTheDocument();
   });

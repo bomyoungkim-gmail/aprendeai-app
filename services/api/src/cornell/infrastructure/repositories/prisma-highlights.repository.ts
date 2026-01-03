@@ -34,6 +34,7 @@ export class PrismaHighlightsRepository implements IHighlightsRepository {
         user_id: highlight.userId,
         kind: highlight.kind as HighlightKind,
         target_type: highlight.targetType as TargetType,
+        type: highlight.type as any, // Pedagogical type
         page_number: highlight.pageNumber,
         anchor_json: highlight.anchor,
         color_key: highlight.colorKey,
@@ -88,6 +89,7 @@ export class PrismaHighlightsRepository implements IHighlightsRepository {
       userId: prismaHighlight.user_id,
       kind: prismaHighlight.kind,
       targetType: prismaHighlight.target_type,
+      type: prismaHighlight.type,
       pageNumber: prismaHighlight.page_number,
       anchor: prismaHighlight.anchor_json,
       colorKey: prismaHighlight.color_key,

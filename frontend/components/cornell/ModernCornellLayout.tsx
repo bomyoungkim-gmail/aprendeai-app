@@ -3,7 +3,7 @@
 import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { Menu, X, ChevronRight, Plus, Share2, Check as CheckIcon } from 'lucide-react';
-import type { ViewMode, SaveStatus, CueItem, CornellType, CornellExtendedType } from '@/lib/types/cornell';
+import type { ViewMode, SaveStatus, CornellType, CornellExtendedType } from '@/lib/types/cornell';
 import type { UnifiedStreamItem, UnifiedStreamItemType, SidebarTab } from '@/lib/types/unified-stream';
 import type { HistoryEntityType } from '@/hooks/cornell/use-undo-redo';
 import { SaveStatusIndicator } from './SaveStatusIndicator';
@@ -99,10 +99,7 @@ interface ModernCornellLayoutProps {
   onStreamItemDelete?: (item: UnifiedStreamItem) => void;
   onStreamItemSaveEdit?: (item: UnifiedStreamItem, updates: any) => void;
   
-  // Cues
-  cues: CueItem[];
-  onCuesChange: (cues: CueItem[]) => void;
-  onCueClick?: (cue: CueItem) => void;
+
   
   // Summary
   summary: string;
@@ -150,9 +147,7 @@ function ModernCornellLayoutInternal({
   onStreamItemEdit,
   onStreamItemDelete,
   onStreamItemSaveEdit,
-  cues,
-  onCuesChange,
-  onCueClick,
+
   summary,
   onSummaryChange,
   onCreateStreamItem,
@@ -236,7 +231,7 @@ function ModernCornellLayoutInternal({
   const annotationCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     streamItems.forEach(item => {
-      if (item.type === 'annotation') {
+      if (['evidence', 'vocabulary', 'main-idea', 'doubt'].includes(item.type)) {
         // For MVP/Test, we randomly assign or mock sections if not present
         const sec = (item as any).section || 'abstract';
         counts[sec] = (counts[sec] || 0) + 1;
@@ -465,11 +460,12 @@ function ModernCornellLayoutInternal({
           if (newItem) {
               // Map stream item type to history entity type
               const entityMap: Record<UnifiedStreamItemType, HistoryEntityType> = {
-                  'annotation': 'HIGHLIGHT',
+                  'evidence': 'HIGHLIGHT',
+                  'vocabulary': 'NOTE',
+                  'main-idea': 'IMPORTANT',
+                  'doubt': 'CUE',
                   'note': 'NOTE',
-                  'question': 'CUE',
-                  'important': 'IMPORTANT',
-                  'synthesis': 'NOTE', // Synthesis maps to NOTE in history for now
+                  'synthesis': 'NOTE',
                   'ai': 'AI',
                   'ai-suggestion': 'AI',
                   'ai-response': 'AI',
@@ -550,9 +546,9 @@ function ModernCornellLayoutInternal({
 
     // Helper to dispatch annotation
     const dispatchAnnotation = (typeKey: string) => {
-      const config = CORNELL_CONFIG[typeKey] || CORNELL_CONFIG.HIGHLIGHT;
+      const config = CORNELL_CONFIG[typeKey] || CORNELL_CONFIG.EVIDENCE;
       // Pass full metadata including tags and color
-      onCreateStreamItem('annotation', text, { 
+      onCreateStreamItem(config.id as UnifiedStreamItemType, text, { 
         tags: config.tags, 
         colorKey: config.color,
         type: config.type,
@@ -560,7 +556,7 @@ function ModernCornellLayoutInternal({
         anchor: data?.anchor || data,
         isManualSelection: true
       });
-      track('HIGHLIGHT_CREATED', {
+      track(`${config.type.toLowerCase()}_created` as any, {
         type: config.type,
         color: config.color,
         length: text.length
@@ -568,17 +564,17 @@ function ModernCornellLayoutInternal({
     };
 
     switch (action) {
-      case 'annotation': // Evidência
-        dispatchAnnotation('HIGHLIGHT');
+      case 'evidence': // Evidência
+        dispatchAnnotation('EVIDENCE');
         break;
-      case 'note': // Vocabulário
-        dispatchAnnotation('NOTE');
+      case 'vocabulary': // Vocabulário
+        dispatchAnnotation('VOCABULARY');
         break;
-      case 'question': // Dúvida
-        dispatchAnnotation('QUESTION');
+      case 'doubt': // Dúvida
+        dispatchAnnotation('DOUBT');
         break;
-      case 'important': // Ideia Central
-        dispatchAnnotation('IMPORTANT');
+      case 'main-idea': // Ideia Central
+        dispatchAnnotation('MAIN_IDEA');
         break;
       case 'ai':
         // Instead of creating stream item, send to chat context
@@ -659,7 +655,6 @@ function ModernCornellLayoutInternal({
 
 
           {/* Sidebar */}
-          {/* Sidebar */}
           <CornellSidebar
             containerRef={sidebarRef}
             isOpen={layout.sidebarOpen}
@@ -703,12 +698,6 @@ function ModernCornellLayoutInternal({
               onItemEdit: onStreamItemEdit,
               onItemDelete: onStreamItemDelete,
               onItemSaveEdit: onStreamItemSaveEdit,
-            }}
-            cuesProps={{
-              cues,
-              searchQuery: layout.searchQuery,
-              onSearchChange: layout.setSearchQuery,
-              onCueClick,
             }}
             synthesisProps={{
               filteredItems: synthesisItems,
@@ -804,6 +793,7 @@ function ModernCornellLayoutInternal({
         isCreateModalOpen={layout.isCreateModalOpen}
         onCreateModalClose={() => layout.setIsCreateModalOpen(false)}
         createModalType={layout.createModalType}
+        createModalQuote={layout.createModalQuote}
         selectedColor={layout.selectedColor}
         
         // Mode Selector

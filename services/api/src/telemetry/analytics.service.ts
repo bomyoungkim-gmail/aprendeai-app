@@ -50,14 +50,14 @@ export class AnalyticsService {
         user_id: userId,
         content_id: contentId,
         event_type: {
-          in: ["HIGHLIGHT_CREATED", "NOTE_CREATED", "SCROLL_DEPTH"],
+          in: ["ANNOTATION_CREATED", "NOTE_CREATED", "SCROLL_DEPTH"],
         },
       },
       _count: true,
     });
 
     const highlightsCount =
-      interactions.find((i) => i.event_type === "HIGHLIGHT_CREATED")?._count ||
+      interactions.find((i) => i.event_type === "ANNOTATION_CREATED")?._count ||
       0;
     const notesCount =
       interactions.find((i) => i.event_type === "NOTE_CREATED")?._count || 0;

@@ -119,7 +119,8 @@ describe('usePDFHighlights', () => {
       }),
       mockContentId,
       '',
-      'yellow'
+      'yellow',
+      'EVIDENCE'
     );
     expect(mockCreateHighlight).toHaveBeenCalled();
   });

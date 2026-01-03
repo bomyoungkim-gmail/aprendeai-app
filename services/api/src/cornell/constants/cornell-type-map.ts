@@ -12,11 +12,11 @@
  * Matches frontend HighlightType
  */
 export type CornellType =
-  | "HIGHLIGHT"
-  | "NOTE"
-  | "STAR"
-  | "QUESTION"
-  | "SUMMARY"
+  | "EVIDENCE"
+  | "VOCABULARY"
+  | "MAIN_IDEA"
+  | "DOUBT"
+  | "SYNTHESIS"
   | "AI_RESPONSE";
 
 /**
@@ -40,11 +40,11 @@ export const CORNELL_TYPE_COLOR_MAP: Record<
   Exclude<CornellType, "AI_RESPONSE">,
   ColorKey
 > = {
-  HIGHLIGHT: "blue",
-  NOTE: "green",
-  STAR: "yellow",
-  QUESTION: "red",
-  SUMMARY: "yellow",
+  EVIDENCE: "blue",
+  VOCABULARY: "blue",
+  MAIN_IDEA: "yellow",
+  DOUBT: "red",
+  SYNTHESIS: "purple",
 };
 
 /**
@@ -52,11 +52,11 @@ export const CORNELL_TYPE_COLOR_MAP: Record<
  * MUST match frontend lib/cornell/type-color-map.ts
  */
 export const CORNELL_TYPE_TAGS: Record<CornellType, string[]> = {
-  HIGHLIGHT: ["highlight"],
-  NOTE: ["note"],
-  STAR: ["star", "important"],
-  QUESTION: ["question"],
-  SUMMARY: ["summary"],
+  EVIDENCE: ["evidence"],
+  VOCABULARY: ["vocab"],
+  MAIN_IDEA: ["main-idea"],
+  DOUBT: ["doubt"],
+  SYNTHESIS: ["synthesis"],
   AI_RESPONSE: ["ai-response"],
 };
 
@@ -82,11 +82,11 @@ export function getTagsForType(type: CornellType): string[] {
  */
 export function isValidCornellType(type: string): type is CornellType {
   return [
-    "HIGHLIGHT",
-    "NOTE",
-    "STAR",
-    "QUESTION",
-    "SUMMARY",
+    "EVIDENCE",
+    "VOCABULARY",
+    "MAIN_IDEA",
+    "DOUBT",
+    "SYNTHESIS",
     "AI_RESPONSE",
   ].includes(type);
 }

@@ -78,18 +78,31 @@ export const PDFSelectionMenu = forwardRef<HTMLDivElement, PDFSelectionMenuProps
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
-      {['HIGHLIGHT', 'NOTE', 'IMPORTANT', 'QUESTION'].map((key) => {
+      {['EVIDENCE', 'VOCABULARY', 'MAIN_IDEA', 'DOUBT'].map((key) => {
         const config = CORNELL_CONFIG[key];
         const Icon = config.icon;
         const color = config.color;
         
+        // Explicit classes for JIT support
+        const colorClasses: Record<string, string> = {
+          yellow: 'text-yellow-500',
+          blue: 'text-blue-500',
+          green: 'text-green-500',
+          red: 'text-red-500',
+          purple: 'text-purple-500',
+        };
+
+        const fillClasses: Record<string, string> = {
+          green: 'fill-green-500',
+        };
+
         return (
           <button 
             key={key}
             onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
-              // All pedagogical actions are handled as Highlights in PDF
+              // Direct creation with correct quote capture logic
               handleHighlightCreation(props, key);
               props.toggle();
             }}
@@ -97,7 +110,7 @@ export const PDFSelectionMenu = forwardRef<HTMLDivElement, PDFSelectionMenuProps
             title={config.label}
           >
             <Icon 
-              className={`h-4 w-4 text-${color}-500 ${key === 'IMPORTANT' ? `fill-${color}-500` : ''}`} 
+              className={`h-4 w-4 ${colorClasses[color] || 'text-gray-500'} ${key === 'MAIN_IDEA' ? (fillClasses[color] || '') : ''}`} 
             />
             <span className={labelClass}>{config.label}</span>
           </button>

@@ -44,14 +44,23 @@ export interface AnchorGeometry {
  */
 export class CreateCornellHighlightDto {
   @ApiProperty({
-    enum: ["HIGHLIGHT", "NOTE", "STAR", "QUESTION"],
+    enum: ["EVIDENCE", "VOCABULARY", "MAIN_IDEA", "DOUBT"],
     description: "Cornell annotation type",
-    example: "NOTE",
+    example: "VOCABULARY",
   })
-  @IsEnum(["HIGHLIGHT", "NOTE", "STAR", "QUESTION"], {
-    message: "Type must be one of: HIGHLIGHT, NOTE, STAR, QUESTION",
+  @IsEnum(["EVIDENCE", "VOCABULARY", "MAIN_IDEA", "DOUBT"], {
+    message: "Type must be one of: EVIDENCE, VOCABULARY, MAIN_IDEA, DOUBT",
   })
-  type: Exclude<CornellType, "SUMMARY" | "AI_RESPONSE">;
+  type: Exclude<CornellType, "SYNTHESIS" | "AI_RESPONSE">;
+
+  @ApiPropertyOptional({
+    enum: ["TEXT", "AREA"],
+    description: "Highlight kind (optional, auto-inferred from target_type if not provided)",
+    example: "TEXT",
+  })
+  @IsOptional()
+  @IsEnum(["TEXT", "AREA"])
+  kind?: "TEXT" | "AREA";
 
   @ApiProperty({
     enum: TargetType,
@@ -190,12 +199,15 @@ export class CreateCornellHighlightDto {
   }
 
   /**
-   * Auto-computed semantic tags based on Cornell type
-   * Should not be provided in request
+   * Semantic tags (optional, can be auto-computed or provided)
    */
-  get tags_json(): string[] {
-    return getTagsForType(this.type);
-  }
+  @ApiPropertyOptional({
+    description: "Semantic tags",
+    example: ["vocab"],
+  })
+  @IsOptional()
+  @IsString({ each: true })
+  tags_json?: string[];
 }
 
 /**

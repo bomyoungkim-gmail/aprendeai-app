@@ -54,7 +54,8 @@ export const highlightsService = {
 
     // Online mode: call API
     const apiPayload: CreateHighlightPayload = {
-      type: (payload.tags_json?.[0]) || 'HIGHLIGHT',
+      type: (payload.tags_json?.[0]) || 'EVIDENCE',
+      kind: payload.kind || 'TEXT', // Add kind if missing or handle it
       target_type: payload.target_type,
       page_number: payload.page_number,
       timestamp_ms: payload.timestamp_ms,

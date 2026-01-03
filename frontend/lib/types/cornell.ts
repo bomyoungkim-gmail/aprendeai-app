@@ -17,6 +17,8 @@ export interface Content {
   };
   createdAt: string;
   updatedAt: string;
+  created_at?: string;
+  updated_at?: string;
   duration?: number;
   text?: string;
 }
@@ -25,18 +27,13 @@ export interface CornellNotes {
   id: string;
   contentId: string;
   userId: string;
-  cuesJson: CueItem[];
   notesJson: NoteItem[];
   summaryText: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface CueItem {
-  id: string;
-  prompt: string;
-  linkedHighlightIds: string[];
-}
+
 
 export interface NoteItem {
   id: string;
@@ -160,12 +157,12 @@ export interface BoundingRect {
 
 // API DTOs
 export interface UpdateCornellDto {
-  cues_json?: CueItem[];
   notes_json?: NoteItem[];
   summary_text?: string;
 }
 
 export interface CreateHighlightDto {
+  type: string;
   kind: 'TEXT' | 'AREA';
   target_type: TargetType;
   page_number?: number;
@@ -184,6 +181,7 @@ export interface UpdateHighlightDto {
   color_key?: string;
   comment_text?: string;
   tags_json?: string[];
+  type?: string;
 }
 
 export interface UpdateHighlightPayload {
@@ -204,6 +202,7 @@ export interface CreateHighlightPayload {
   timestamp_ms?: number;
   anchor_json: PDFTextAnchor | PDFAreaAnchor | ImageAreaAnchor | DocxTextAnchor;
   comment_text?: string;
+  tags_json?: string[];
   visibility?: string;
   visibility_scope?: string;
   context_type?: string;

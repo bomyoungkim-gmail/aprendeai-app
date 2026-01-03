@@ -11,6 +11,8 @@ interface AnnotationEditorProps {
   initialComment?: string;
   initialColor: string;
   initialType?: string;
+  quote?: string;
+  pageNumber?: number; // Added pageNumber prop
   onSave: (comment: string, color: string, type?: string) => void;
   onCancel: () => void;
 }
@@ -18,7 +20,9 @@ interface AnnotationEditorProps {
 export function AnnotationEditor({
   initialComment = '',
   initialColor,
-  initialType = 'HIGHLIGHT',
+  initialType = 'EVIDENCE',
+  quote,
+  pageNumber, // Destructure pageNumber
   onSave,
   onCancel,
 }: AnnotationEditorProps) {
@@ -29,6 +33,10 @@ export function AnnotationEditor({
 
   useEffect(() => {
     textareaRef.current?.focus();
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+    }
   }, []);
 
   const handleSave = () => {
@@ -45,24 +53,42 @@ export function AnnotationEditor({
 
   // Only show the 4 pedagogical pillars in the editor picker
   const categories = [
-    CORNELL_CONFIG.NOTE,      // Vocabulário
-    CORNELL_CONFIG.IMPORTANT, // Ideia Central
-    CORNELL_CONFIG.HIGHLIGHT, // Evidência
-    CORNELL_CONFIG.QUESTION,  // Dúvida
+    CORNELL_CONFIG.EVIDENCE,   // Evidência (First)
+    CORNELL_CONFIG.VOCABULARY, // Vocabulário
+    CORNELL_CONFIG.MAIN_IDEA,  // Ideia Central
+    CORNELL_CONFIG.DOUBT,      // Dúvida
   ];
 
   return (
     <div className="space-y-4 p-3 bg-white dark:bg-gray-900 rounded-xl border-2 border-gray-100 dark:border-gray-800 shadow-lg">
-      <div className="space-y-2">
-        <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">
-          Pilar Pedagógico
-        </span>
-        <div className="flex gap-2 p-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+      
+      <div className="space-y-4">
+        {/* Page Anchor Header */}
+        <div className="flex items-center gap-2 px-1">
+          <MapPin className="h-3 w-3 text-gray-400" />
+          <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+            {pageNumber ? `Página ${pageNumber}` : 'Localização'}
+          </span>
+        </div>
+        <div className="grid grid-cols-4 gap-2">
           {categories.map((config) => {
             const isSelected = selectedType === config.type;
             const Icon = config.icon;
-            const rgb = getColorForKey(config.color);
             
+            // Explicit color mappings for UI consistency
+            const colorMap: Record<string, string> = {
+              yellow: 'text-yellow-600 dark:text-yellow-400',
+              blue: 'text-blue-600 dark:text-blue-400',
+              green: 'text-green-600 dark:text-green-400',
+              red: 'text-red-600 dark:text-red-400',
+            };
+            const activeBorderMap: Record<string, string> = {
+              yellow: 'border-yellow-500/50 bg-yellow-500/10',
+              blue: 'border-blue-500/50 bg-blue-500/10',
+              green: 'border-green-500/50 bg-green-500/10',
+              red: 'border-red-500/50 bg-red-500/10',
+            };
+
             return (
               <button
                 key={config.id}
@@ -71,34 +97,45 @@ export function AnnotationEditor({
                   setSelectedColor(config.color);
                 }}
                 className={`
-                  flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-md transition-all border-2
+                  flex items-center justify-center p-3 rounded-lg border-2 transition-all
                   ${isSelected 
-                    ? 'bg-white dark:bg-gray-700 shadow-sm' 
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-800 border-transparent'}
+                    ? (activeBorderMap[config.color] || 'border-blue-500 bg-blue-500/10')
+                    : 'border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-gray-50 dark:bg-gray-800'}
                 `}
-                style={{ 
-                  borderColor: isSelected ? rgb : 'transparent' 
-                }}
                 title={config.label}
               >
                 <Icon 
-                  className={`h-5 w-5 mb-1 ${isSelected ? 'scale-110' : 'opacity-60 grayscale'}`} 
-                  style={{ color: isSelected ? rgb : undefined }}
+                  className={`h-5 w-5 ${colorMap[config.color]}`} 
                 />
-                <span className={`text-[9px] font-bold truncate w-full text-center ${isSelected ? 'opacity-100' : 'opacity-40'}`}>
-                  {config.label}
-                </span>
               </button>
             );
           })}
         </div>
       </div>
 
+      {/* Quote Preview - Moved Here */}
+      {quote && (
+        <div className="space-y-1">
+          <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">
+            Texto Selecionado
+          </span>
+          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 border-l-4 border-gray-300 dark:border-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-300 italic line-clamp-3">
+              "{quote}"
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-1">
         <textarea
           ref={textareaRef}
           value={comment}
-          onChange={(e) => setComment(e.target.value)}
+          onChange={(e) => {
+            setComment(e.target.value);
+            e.target.style.height = 'auto';
+            e.target.style.height = e.target.scrollHeight + 'px';
+          }}
           onKeyDown={handleKeyDown}
           placeholder="O que você aprendeu com este trecho?"
           className="w-full px-3 py-2 text-sm border-2 border-gray-100 dark:border-gray-800 rounded-lg resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:border-blue-500/50 transition-colors"
@@ -109,16 +146,17 @@ export function AnnotationEditor({
       <div className="flex items-center justify-end gap-2 pt-1">
         <button
           onClick={onCancel}
-          className="px-3 py-1.5 text-xs font-bold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+          className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+          title="Cancelar"
         >
-          CANCELAR
+          <X className="h-4 w-4" />
         </button>
         <button
           onClick={handleSave}
-          className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-md shadow-blue-500/20 transition-all active:scale-95"
+          className="p-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors active:scale-95"
+          title="Salvar"
         >
-          <Check className="h-3.5 w-3.5" />
-          SALVAR
+          <Check className="h-4 w-4" />
         </button>
       </div>
     </div>

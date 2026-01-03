@@ -100,16 +100,17 @@ export function useCreateHighlight(contentId: string) {
   return useMutation({
     mutationFn: (highlight: CreateHighlightDto) => {
       const payload: CreateHighlightPayload = {
-        type: highlight.tags_json?.[0] || 'HIGHLIGHT',
+        type: highlight.type || 'EVIDENCE',
         kind: highlight.kind,
         target_type: highlight.target_type,
         page_number: highlight.page_number,
         timestamp_ms: highlight.timestamp_ms,
         anchor_json: highlight.anchor_json,
         comment_text: highlight.comment_text,
-        visibility: highlight.visibility,
-        visibility_scope: highlight.visibility_scope,
-        context_type: highlight.context_type,
+        tags_json: highlight.tags_json,
+        visibility: highlight.visibility || 'PRIVATE' as any,
+        visibility_scope: highlight.visibility_scope as any,
+        context_type: highlight.context_type as any,
         context_id: highlight.context_id,
       };
       return cornellApi.createHighlight(contentId, payload);

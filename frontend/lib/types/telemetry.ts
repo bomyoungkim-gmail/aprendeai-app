@@ -35,12 +35,21 @@ export type NavigationEventType =
   | 'navigation_forward';
 
 export type AnnotationEventType =
-  | 'highlight_created'
-  | 'highlight_updated'
-  | 'highlight_deleted'
-  | 'note_created'
-  | 'note_updated'
-  | 'note_deleted';
+  | 'evidence_created'
+  | 'evidence_updated'
+  | 'evidence_deleted'
+  | 'vocabulary_created'
+  | 'vocabulary_updated'
+  | 'vocabulary_deleted'
+  | 'main_idea_created'
+  | 'main_idea_updated'
+  | 'main_idea_deleted'
+  | 'doubt_created'
+  | 'doubt_updated'
+  | 'doubt_deleted'
+  | 'synthesis_created'
+  | 'synthesis_updated'
+  | 'synthesis_deleted';
 
 export type UIEventType =
   | 'ui_toggled'

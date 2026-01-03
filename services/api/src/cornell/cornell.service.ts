@@ -10,10 +10,10 @@ import { ActivityService } from "../activity/activity.service";
 import { ContentAccessService } from "./services/content-access.service";
 import type {
   UpdateCornellDto,
-  CreateHighlightDto,
   UpdateHighlightDto,
   UpdateContentDto,
 } from "./dto/cornell.dto";
+import { CreateCornellHighlightDto } from "./dto/create-cornell-highlight.dto";
 import { Environment } from "@prisma/client";
 import { GetContentUseCase } from "./application/use-cases/get-content.use-case";
 import { ListContentUseCase } from "./application/use-cases/list-content.use-case";
@@ -181,7 +181,6 @@ export class CornellService {
       id: note.id,
       content_id: note.contentId,
       user_id: note.userId,
-      cues_json: note.cues,
       notes_json: note.notes,
       summary_text: note.summary,
       created_at: note.createdAt,
@@ -201,7 +200,6 @@ export class CornellService {
     );
     return {
       id: note.id,
-      cues_json: note.cues,
       notes_json: note.notes,
       summary_text: note.summary,
       updated_at: note.updatedAt,
@@ -233,16 +231,17 @@ export class CornellService {
   async getConfig() {
     return {
       types: [
-        { id: "HIGHLIGHT", label: "Destaque", color: "yellow", tag: "CORNELL_HIGHLIGHT" },
-        { id: "IMPORTANT", label: "Importante", color: "red", tag: "CORNELL_IMPORTANT" },
-        { id: "SYNTHESIS", label: "Síntese", color: "blue", tag: "CORNELL_SYNTHESIS" },
-        { id: "QUESTION", label: "Dúvida", color: "purple", tag: "CORNELL_QUESTION" },
+        { id: "EVIDENCE", label: "Evidência", color: "yellow", tag: "evidence" },
+        { id: "VOCABULARY", label: "Vocabulário", color: "blue", tag: "vocab" },
+        { id: "MAIN_IDEA", label: "Ideia Central", color: "green", tag: "main-idea" },
+        { id: "DOUBT", label: "Dúvida", color: "red", tag: "doubt" },
+        { id: "SYNTHESIS", label: "Síntese", color: "purple", tag: "synthesis" },
       ],
       tabs: [
         { id: "STREAM", label: "Stream", icon: "activity" },
         { id: "CHAT", label: "Chat IA", icon: "message-square" },
-        { id: "NOTES", label: "Notas", icon: "file-text" },
-        { id: "QUESTIONS", label: "Perguntas", icon: "help-circle" },
+        { id: "VOCABULARY", label: "Vocabulário", icon: "file-text" },
+        { id: "DOUBTS", label: "Dúvidas", icon: "help-circle" },
         { id: "ANALYTICS", label: "Analíticos", icon: "bar-chart-2" },
       ],
       defaults: {
@@ -254,7 +253,7 @@ export class CornellService {
 
   async createHighlight(
     contentId: string,
-    dto: CreateHighlightDto,
+    dto: CreateCornellHighlightDto,
     userId: string,
   ) {
     const h = await this.createHighlightUseCase.execute(contentId, userId, dto);

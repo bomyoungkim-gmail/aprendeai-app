@@ -31,8 +31,8 @@ export function AnalyticsDashboard({ contentId }: AnalyticsDashboardProps) {
   
   // Data for Charts
   const interactionData = [
-    { name: 'Destaques', value: metrics.highlightsCount, color: '#facc15' }, // Yellow-400
-    { name: 'Notas', value: metrics.notesCount, color: '#3b82f6' }, // Blue-500
+    { name: 'Evidências', value: metrics.highlightsCount, color: '#facc15' }, // Yellow-400
+    { name: 'Vocabulário', value: metrics.notesCount, color: '#3b82f6' }, // Blue-500
   ];
 
   return (
@@ -56,13 +56,13 @@ export function AnalyticsDashboard({ contentId }: AnalyticsDashboardProps) {
           description="Progresso de leitura vertical"
         />
          <StatCard 
-          title="Destaques" 
+          title="Evidências" 
           value={metrics.highlightsCount} 
           icon={Highlighter} 
           description="Passagens importantes marcadas"
         />
         <StatCard 
-          title="Anotações" 
+          title="Vocabulário / Reflexão" 
           value={metrics.notesCount} 
           icon={FileText} 
           description="Notas e dúvidas registradas"

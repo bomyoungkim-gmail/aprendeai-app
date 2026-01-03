@@ -845,6 +845,7 @@ model highlights {
   context_id          String?
   learner_id          String?
   status              AnnotationStatus      @default(ACTIVE)
+  type                AnnotationType?
   deleted_at          DateTime?
   annotation_comments annotation_comments[]
   contents            contents              @relation(fields: [content_id], references: [id], onDelete: Cascade)
@@ -1753,9 +1754,15 @@ enum AnnotationStatus {
 }
 
 enum AnnotationType {
+  EVIDENCE
+  VOCABULARY
+  MAIN_IDEA
+  DOUBT
+  SYNTHESIS
+  COMMENT
+  // Legacy types
   HIGHLIGHT
   NOTE
-  COMMENT
 }
 
 enum AnnotationVisibility {

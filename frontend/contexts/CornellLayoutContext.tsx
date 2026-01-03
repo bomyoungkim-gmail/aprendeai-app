@@ -43,6 +43,8 @@ export interface CornellLayoutContextType {
   setIsCreateModalOpen: (open: boolean) => void;
   createModalType: CornellType;
   setCreateModalType: (type: CornellType) => void;
+  createModalQuote: string; // Added
+  setCreateModalQuote: (quote: string) => void; // Added
   
   // Stream Filtering
   searchQuery: string;
@@ -70,6 +72,7 @@ export function CornellLayoutProvider({ children }: { children: React.ReactNode 
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createModalType, setCreateModalType] = useState<CornellType>('NOTE');
+  const [createModalQuote, setCreateModalQuote] = useState(''); // Added state
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
   const [aiContext, setAiContext] = useState('');
@@ -108,6 +111,8 @@ export function CornellLayoutProvider({ children }: { children: React.ReactNode 
     setIsCreateModalOpen,
     createModalType,
     setCreateModalType,
+    createModalQuote, // Added
+    setCreateModalQuote, // Added
     searchQuery,
     setSearchQuery,
     filterType,
@@ -118,7 +123,7 @@ export function CornellLayoutProvider({ children }: { children: React.ReactNode 
   }), [
     sidebarOpen, activeTab, activeAction, selectedColor, isUiVisible, 
     isModeSelectorOpen, isShareModalOpen, isCreateModalOpen, 
-    createModalType, searchQuery, filterType, aiContext, 
+    createModalType, createModalQuote, searchQuery, filterType, aiContext, 
     toggleSidebar, toggleAction, toggleUi, handleAISelection
   ]);
 

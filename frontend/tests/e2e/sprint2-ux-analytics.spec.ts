@@ -111,7 +111,7 @@ test.describe('Sprint 2: UX Core & Analytics E2E', () => {
         // Assuming we can type a note in the sidebar.
         
         // Open Stream Tab
-        await page.click('button:has-text("Notas")'); // "HIGHLIGHTS_NOTES" label
+        await page.click('button:has-text("Vocabulário")'); // Updated from "Notas"
         
         // Add a Note
         await page.fill('[placeholder="Adicionar nota..."]', 'Test Note 1');
@@ -144,14 +144,14 @@ test.describe('Sprint 2: UX Core & Analytics E2E', () => {
         await page.goto('/reader/demo-content');
 
         // Switch to Analytics Tab
-        await page.click('button:has-text("Analytics")');
+        await page.click('button:has-text("Analíticos")');
 
         // Check Metrics from Mock
         await expect(page.getByText('65000')).toBeHidden(); // Should be formatted as minutes
         await expect(page.getByText('1 min')).toBeVisible(); // 65000ms ~= 1 min
         
         await expect(page.getByText('45%')).toBeVisible(); // Depth
-        await expect(page.getByText('Destaques')).toBeVisible();
+        await expect(page.getByText('Evidência')).toBeVisible();
         await expect(page.getByText('5', { exact: true })).toBeVisible(); // Highlight count
     });
 

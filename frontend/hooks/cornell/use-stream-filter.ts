@@ -23,11 +23,11 @@ export function useStreamFilter(
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter((item) => {
         // Search in different fields based on item type
-        if (item.type === 'annotation') {
+        if (['evidence', 'vocabulary', 'main-idea', 'doubt'].includes(item.type)) {
           return (
-            item.quote?.toLowerCase().includes(query) ||
-            item.commentText?.toLowerCase().includes(query) ||
-            `page ${item.pageNumber}`.includes(query)
+            (item as any).quote?.toLowerCase().includes(query) ||
+            (item as any).commentText?.toLowerCase().includes(query) ||
+            `page ${(item as any).pageNumber}`.includes(query)
           );
         } else if (item.type === 'note') {
           return item.body.toLowerCase().includes(query);
@@ -53,11 +53,11 @@ export function useStreamFilter(
     if (!searchQuery.trim()) return items;
     const query = searchQuery.toLowerCase();
     return items.filter((item) => {
-      if (item.type === 'annotation') {
+      if (['evidence', 'vocabulary', 'main-idea', 'doubt'].includes(item.type)) {
         return (
-          item.quote?.toLowerCase().includes(query) ||
-          item.commentText?.toLowerCase().includes(query) ||
-          `page ${item.pageNumber}`.includes(query)
+          (item as any).quote?.toLowerCase().includes(query) ||
+          (item as any).commentText?.toLowerCase().includes(query) ||
+          `page ${(item as any).pageNumber}`.includes(query)
         );
       } else if (item.type === 'note') {
         return item.body.toLowerCase().includes(query);

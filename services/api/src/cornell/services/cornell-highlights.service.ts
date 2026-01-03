@@ -85,11 +85,11 @@ export class CornellHighlightsService {
     });
 
     // Emit event for real-time notifications
-    this.eventEmitter.emit(CornellEvent.HIGHLIGHT_CREATED, {
+    this.eventEmitter.emit(CornellEvent.ANNOTATION_CREATED, {
       contentId,
       highlightId: highlight.id,
       userId,
-      action: CornellEvent.HIGHLIGHT_CREATED,
+      action: CornellEvent.ANNOTATION_CREATED,
       timestamp: Date.now(),
       data: { type: dto.type },
     } as CornellEventPayload);
@@ -174,11 +174,11 @@ export class CornellHighlightsService {
     });
 
     // Emit event
-    this.eventEmitter.emit(CornellEvent.HIGHLIGHT_UPDATED, {
+    this.eventEmitter.emit(CornellEvent.ANNOTATION_UPDATED, {
       contentId: highlight.content_id,
       highlightId,
       userId,
-      action: CornellEvent.HIGHLIGHT_UPDATED,
+      action: CornellEvent.ANNOTATION_UPDATED,
       timestamp: Date.now(),
       data: { visibility: dto.visibility },
     } as CornellEventPayload);
@@ -211,11 +211,11 @@ export class CornellHighlightsService {
     });
 
     // Emit event
-    this.eventEmitter.emit(CornellEvent.HIGHLIGHT_DELETED, {
+    this.eventEmitter.emit(CornellEvent.ANNOTATION_DELETED, {
       contentId: highlight.content_id,
       highlightId,
       userId,
-      action: CornellEvent.HIGHLIGHT_DELETED,
+      action: CornellEvent.ANNOTATION_DELETED,
       timestamp: Date.now(),
     } as CornellEventPayload);
 

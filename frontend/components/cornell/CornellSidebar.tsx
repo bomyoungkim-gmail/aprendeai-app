@@ -12,7 +12,6 @@ import { CornellTocTab, type CornellTocTabProps } from './tabs/CornellTocTab';
 import { CornellAnalyticsTab, type CornellAnalyticsTabProps } from './tabs/CornellAnalyticsTab';
 import { CornellBookmarksTab, type CornellBookmarksTabProps } from './tabs/CornellBookmarksTab';
 import { CornellStreamTab, type CornellStreamTabProps } from './tabs/CornellStreamTab';
-import { CornellCuesTab, type CornellCuesTabProps } from './tabs/CornellCuesTab';
 import { CornellSynthesisTab, type CornellSynthesisTabProps } from './tabs/CornellSynthesisTab';
 import { CornellConversationsTab, type CornellConversationsTabProps } from './tabs/CornellConversationsTab';
 
@@ -28,7 +27,6 @@ export interface CornellSidebarProps {
   analyticsProps: CornellAnalyticsTabProps;
   bookmarksProps: CornellBookmarksTabProps;
   streamProps: CornellStreamTabProps;
-  cuesProps: CornellCuesTabProps;
   synthesisProps: CornellSynthesisTabProps;
   conversationsProps: CornellConversationsTabProps;
   containerRef?: React.RefObject<HTMLElement>;
@@ -43,7 +41,6 @@ export function CornellSidebar({
   analyticsProps,
   bookmarksProps,
   streamProps,
-  cuesProps,
   synthesisProps,
   conversationsProps,
   containerRef,
@@ -100,6 +97,7 @@ export function CornellSidebar({
             {activeTab === 'synthesis' && <CornellSynthesisTab {...synthesisProps} />}
             {activeTab === 'analytics' && <CornellAnalyticsTab {...analyticsProps} />}
             {activeTab === 'chat' && <CornellConversationsTab {...conversationsProps} />}
+            {/* TODO: Future Implementation - {activeTab === 'bookmarks' && <CornellBookmarksTab {...bookmarksProps} />} */}
           </div>
         </>
       ) : (

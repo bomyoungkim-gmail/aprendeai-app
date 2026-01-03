@@ -54,22 +54,35 @@ export function TextSelectionMenu({ selectionInfo, onAction }: TextSelectionMenu
       role="dialog"
       aria-label="Menu de seleção de texto"
     >
-      {['HIGHLIGHT', 'NOTE', 'IMPORTANT', 'QUESTION'].map((key) => {
+      {['EVIDENCE', 'VOCABULARY', 'MAIN_IDEA', 'DOUBT'].map((key) => {
         const config = CORNELL_CONFIG[key];
         const Icon = config.icon;
         const color = config.color;
         const shortcut = config.shortcut ? ` (Atalho: ${config.shortcut})` : '';
+
+        // Explicit classes for JIT support
+        const colorClasses: Record<string, string> = {
+          yellow: 'text-yellow-500',
+          blue: 'text-blue-500',
+          green: 'text-green-500',
+          red: 'text-red-500',
+          purple: 'text-purple-500',
+        };
+
+        const fillClasses: Record<string, string> = {
+          green: 'fill-green-500',
+        };
         
         return (
           <button 
             key={key}
-            onClick={() => onAction(config.type.toLowerCase() as SelectionAction, selectionInfo.text)}
+            onClick={() => onAction(config.id as SelectionAction, selectionInfo.text)}
             className={buttonClass}
             aria-label={config.label}
             title={`${config.label}${shortcut}`}
           >
             <Icon 
-              className={`h-4 w-4 text-${color}-500 ${key === 'IMPORTANT' ? `fill-${color}-500` : ''}`} 
+              className={`h-4 w-4 ${colorClasses[color] || 'text-gray-500'} ${key === 'MAIN_IDEA' ? (fillClasses[color] || '') : ''}`} 
             />
             <span className={labelClass}>{config.label}</span>
           </button>

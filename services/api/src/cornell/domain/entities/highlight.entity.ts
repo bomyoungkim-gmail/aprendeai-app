@@ -4,6 +4,7 @@ export class Highlight {
   userId: string;
   kind: string; // HighlightKind enum
   targetType: string; // TargetType enum
+  type?: string; // Pedagogical type: EVIDENCE, VOCABULARY, MAIN_IDEA, DOUBT
   pageNumber?: number;
   anchor: any; // JSON
   colorKey: string;

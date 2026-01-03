@@ -5,9 +5,9 @@
  */
 
 export enum CornellEvent {
-  HIGHLIGHT_CREATED = "cornell.highlight.created",
-  HIGHLIGHT_UPDATED = "cornell.highlight.updated",
-  HIGHLIGHT_DELETED = "cornell.highlight.deleted",
+  ANNOTATION_CREATED = "cornell.annotation.created",
+  ANNOTATION_UPDATED = "cornell.annotation.updated",
+  ANNOTATION_DELETED = "cornell.annotation.deleted",
   COMMENT_ADDED = "cornell.comment.added",
 }
 

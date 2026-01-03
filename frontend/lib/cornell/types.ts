@@ -5,10 +5,10 @@
  */
 
 export type CornellAnnotationType = 
-  | 'NOTE' 
-  | 'QUESTION' 
-  | 'IMPORTANT'
-  | 'HIGHLIGHT' 
+  | 'EVIDENCE' 
+  | 'VOCABULARY' 
+  | 'MAIN_IDEA' 
+  | 'DOUBT' 
   | 'SYNTHESIS';
 
 export type ContextTypeKey = 

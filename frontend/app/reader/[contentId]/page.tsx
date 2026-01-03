@@ -29,7 +29,7 @@ import {
 import { useFocusTracking } from '@/hooks/ui';
 import { useAutoTrackReading } from '@/hooks/shared';
 import { useTelemetry } from '@/hooks/telemetry/use-telemetry';
-import type { ViewMode, UpdateCornellDto, CueItem } from '@/lib/types/cornell';
+import type { ViewMode, UpdateCornellDto } from '@/lib/types/cornell';
 import type { UnifiedStreamItem, UnifiedStreamItemType } from '@/lib/types/unified-stream';
 import { reactPDFToBackend } from '@/lib/adapters/highlight-adapter';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -54,7 +54,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
 
   // Fetch data with unified stream
   const { data: content, isLoading: contentLoading } = useContent(params.contentId);
-  const { streamItems, isLoading: streamLoading, notes, cues, highlights, summary } = useUnifiedStream(params.contentId);
+  const { streamItems, isLoading: streamLoading, notes, highlights, summary } = useUnifiedStream(params.contentId);
 
   // Mutations
   const updateMutation = useUpdateCornellNotes(params.contentId);
@@ -111,12 +111,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
   );
 
   // Handlers
-  const handleCuesChange = useCallback(
-    (newCues: CueItem[]) => {
-      save({ cues_json: newCues });
-    },
-    [save]
-  );
+
 
   const handleSummaryChange = useCallback(
     (summary: string) => {
@@ -136,9 +131,9 @@ export default function ReaderPage({ params }: ReaderPageProps) {
 
   const handleStreamItemClick = useCallback((item: UnifiedStreamItem) => {
     // Navigate to the item location in the viewer
-    if (item.type === 'annotation' && item.pageNumber) {
-      viewerRef.current?.jumpToPage(item.pageNumber);
-      toastControls.info(`Navegando para página ${item.pageNumber}`);
+    if (['evidence', 'vocabulary', 'main-idea', 'doubt'].includes(item.type) && (item as any).pageNumber) {
+      viewerRef.current?.jumpToPage((item as any).pageNumber);
+      toastControls.info(`Navegando para página ${(item as any).pageNumber}`);
     }
   }, [toastControls]);
 
@@ -149,7 +144,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
 
   const handleStreamItemEdit = useCallback(async (item: UnifiedStreamItem) => {
     // TODO: Open edit modal/inline editor
-    if (item.type === 'annotation') {
+    if (['evidence', 'vocabulary', 'main-idea', 'doubt'].includes(item.type)) {
       // For now, just allow color change
       console.log('Edit annotation:', item);
     }
@@ -157,10 +152,10 @@ export default function ReaderPage({ params }: ReaderPageProps) {
 
   const handleStreamItemDelete = useCallback(
     async (item: UnifiedStreamItem) => {
-      if (item.type === 'annotation') {
+      if (['evidence', 'vocabulary', 'main-idea', 'doubt'].includes(item.type)) {
         // Delete highlight
         try {
-          await deleteHighlightMutation.mutateAsync(item.highlight.id);
+          await deleteHighlightMutation.mutateAsync((item as any).highlight.id);
           toastControls.success('Anotação excluída');
         } catch (error) {
           toastControls.error('Falha ao excluir anotação');
@@ -178,11 +173,11 @@ export default function ReaderPage({ params }: ReaderPageProps) {
 
   const handleStreamItemSaveEdit = useCallback(
     async (item: UnifiedStreamItem, updates: Partial<{ body: string; color_key: string; comment_text: string }>) => {
-      if (item.type === 'annotation') {
+      if (['evidence', 'vocabulary', 'main-idea', 'doubt'].includes(item.type)) {
         // Update highlight
         try {
           await updateHighlightMutation.mutateAsync({
-            id: item.highlight.id,
+            id: (item as any).highlight.id,
             updates: updates,
           });
           toastControls.success('Anotação atualizada');
@@ -219,21 +214,51 @@ export default function ReaderPage({ params }: ReaderPageProps) {
             track('note_created', { note_id: id, text_length: text.length });
             toastControls.success('Nota criada');
             break;
-          case 'question':
-            const newCue = { id, prompt: text, linkedHighlightIds: [] };
-            await save({ cues_json: [...(cues || []), newCue] });
-            track('question_created', { cue_id: id });
-            toastControls.success('Dúvida criada');
+          case 'doubt':
+            // Robust Highlight Creation for doubt
+            await handleCreateHighlight({
+              type: 'DOUBT',
+              kind: 'TEXT',
+              target_type: content?.contentType || ContentType.ARTICLE,
+              anchor_json: {
+                  type: 'DOCX_TEXT', 
+                  quote: text,
+                  range: { startPath: [], startOffset: 0, endPath: [], endOffset: text.length } 
+              } as any,
+              color_key: 'red',
+              tags_json: ['doubt'],
+              timestamp_ms: currentTimestamp,
+              page_number: currentPage
+            });
+            track('doubt_created', { text_length: text.length });
+            toastControls.success('Dúvida registrada');
             break;
-          case 'important':
-            track('star_added', { text: text.substring(0, 50) });
-            toastControls.success('Marcado como Favorito');
+          case 'main-idea':
+            // Robust Highlight Creation for main-idea
+            await handleCreateHighlight({
+              type: 'MAIN_IDEA',
+              kind: 'TEXT',
+              target_type: content?.contentType || ContentType.ARTICLE,
+              anchor_json: {
+                  type: 'DOCX_TEXT', 
+                  quote: text,
+                  range: { startPath: [], startOffset: 0, endPath: [], endOffset: text.length } 
+              } as any,
+              color_key: 'green',
+              tags_json: ['main-idea'],
+              timestamp_ms: currentTimestamp,
+              page_number: currentPage
+            });
+            track('main_idea_created', { text_length: text.length });
+            toastControls.success('Ideia central registrada');
             break;
-          case 'annotation':
+          case 'evidence':
+          case 'vocabulary':
+          case 'doubt':
             // Robust Highlight Creation
             const meta = data as any;
             if (meta?.isManualSelection || meta?.anchor) {
-              const tagsJson = meta.tags || ['highlight'];
+              const tagsJson = meta.tags || [type];
               const colorKey = meta.colorKey || selectedColor;
 
               // Fallback anchor for text/HTML content if none provided
@@ -249,6 +274,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
               };
 
               await handleCreateHighlight({
+                type: type.toUpperCase(),
                 kind: 'TEXT',
                 target_type: content?.contentType || ContentType.ARTICLE,
                 anchor_json: (meta.anchor || fallbackAnchor) as any,
@@ -258,8 +284,8 @@ export default function ReaderPage({ params }: ReaderPageProps) {
                 page_number: currentPage
               });
               
-              track('highlight_created', { 
-                type: meta.type || 'HIGHLIGHT', 
+              track(`${type}_created` as any, { 
+                type: meta.type || type.toUpperCase(), 
                 color: colorKey, 
                 text_length: text.length 
               });
@@ -289,7 +315,7 @@ export default function ReaderPage({ params }: ReaderPageProps) {
         toastControls.error('Falha ao criar item');
       }
     },
-    [save, notes, cues, toastControls, track]
+    [save, notes, toastControls, track, content, currentTimestamp, currentPage, handleCreateHighlight]
   );
 
   const renderViewer = () => {
@@ -427,9 +453,6 @@ export default function ReaderPage({ params }: ReaderPageProps) {
             onStreamItemEdit={handleStreamItemEdit}
             onStreamItemDelete={handleStreamItemDelete}
             onStreamItemSaveEdit={handleStreamItemSaveEdit}
-            cues={cues}
-            onCuesChange={handleCuesChange}
-            onCueClick={(cue) => console.log('Cue clicked:', cue)}
             summary={summaryText}
             onSummaryChange={handleSummaryChange}
             disableSelectionMenu={content.contentType === 'PDF'}

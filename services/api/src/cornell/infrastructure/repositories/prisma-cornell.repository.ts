@@ -25,7 +25,6 @@ export class PrismaCornellRepository implements ICornellRepository {
         id: note.id,
         content_id: note.contentId,
         user_id: note.userId,
-        cues_json: note.cues || [],
         notes_json: note.notes || [],
         summary_text: note.summary || "",
       },
@@ -37,7 +36,6 @@ export class PrismaCornellRepository implements ICornellRepository {
     const updated = await this.prisma.cornell_notes.update({
       where: { id: note.id },
       data: {
-        cues_json: note.cues ?? undefined,
         notes_json: note.notes ?? undefined,
         summary_text: note.summary ?? undefined,
         updated_at: new Date(),
@@ -51,7 +49,6 @@ export class PrismaCornellRepository implements ICornellRepository {
       id: prismaNote.id,
       contentId: prismaNote.content_id,
       userId: prismaNote.user_id,
-      cues: prismaNote.cues_json as any[],
       notes: prismaNote.notes_json as any[],
       summary: prismaNote.summary_text,
       createdAt: prismaNote.created_at,

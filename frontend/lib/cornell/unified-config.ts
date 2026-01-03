@@ -37,48 +37,48 @@ export interface AnnotationTypeConfig {
 }
 
 export const CORNELL_CONFIG: Record<string, AnnotationTypeConfig> = {
-  HIGHLIGHT: {
-    id: 'highlight',
-    type: 'HIGHLIGHT',
+  EVIDENCE: {
+    id: 'evidence',
+    type: 'EVIDENCE',
     label: 'Evidência',
     icon: Highlighter,
     color: 'yellow',
     emoji: '🎨',
     shortcut: 'E',
-    tags: ['highlight', 'evidence'],
+    tags: ['evidence'],
     forceColor: false,
   },
-  NOTE: {
-    id: 'note',
-    type: 'NOTE',
+  VOCABULARY: {
+    id: 'vocabulary',
+    type: 'VOCABULARY',
     label: 'Vocabulário',
     icon: BookOpen,
     color: 'blue',
     emoji: '📖',
     shortcut: 'V',
-    tags: ['note', 'vocab'],
+    tags: ['vocab'],
     forceColor: true,
   },
-  IMPORTANT: {
-    id: 'important',
-    type: 'IMPORTANT',
+  MAIN_IDEA: {
+    id: 'main-idea',
+    type: 'MAIN_IDEA',
     label: 'Ideia Central',
     icon: Star,
     color: 'green',
     emoji: '⭐',
     shortcut: 'I',
-    tags: ['important', 'star', 'main-idea'], // Retrocompatibilidade
+    tags: ['main-idea'],
     forceColor: true,
   },
-  QUESTION: {
-    id: 'question',
-    type: 'QUESTION',
+  DOUBT: {
+    id: 'doubt',
+    type: 'DOUBT',
     label: 'Dúvida',
     icon: HelpCircle,
     color: 'red',
     emoji: '❓',
     shortcut: 'Q',
-    tags: ['question'],
+    tags: ['doubt'],
     forceColor: true,
   },
   SYNTHESIS: {
@@ -89,7 +89,7 @@ export const CORNELL_CONFIG: Record<string, AnnotationTypeConfig> = {
     color: 'purple',
     emoji: '📝',
     shortcut: undefined,
-    tags: ['synthesis', 'summary'], // Retrocompatibilidade
+    tags: ['synthesis'],
     forceColor: true,
   },
   AI: {
@@ -132,7 +132,7 @@ export const SIDEBAR_TABS_CONFIG: Record<string, SidebarTabConfig> = {
     description: 'Todas as anotações com filtros por tipo',
     icon: FileText,
     testId: 'tab-stream',
-    filters: ['all', 'highlight', 'note', 'important', 'question', 'synthesis'],
+    filters: ['all', 'evidence', 'vocabulary', 'main-idea', 'doubt', 'synthesis'],
   },
   SYNTHESIS: {
     id: 'synthesis',
@@ -155,6 +155,16 @@ export const SIDEBAR_TABS_CONFIG: Record<string, SidebarTabConfig> = {
     icon: MessageCircle,
     testId: 'tab-chat',
   },
+  /* 
+  TODO: Future Implementation - BOOKMARKS tab
+  BOOKMARKS: {
+    id: 'bookmarks',
+    label: 'Marcadores',
+    description: 'Favoritos de página e pontos de interesse',
+    icon: Bookmark,
+    testId: 'tab-bookmarks',
+  },
+  */
 } as const;
 
 export type SidebarTabId = typeof SIDEBAR_TABS_CONFIG[keyof typeof SIDEBAR_TABS_CONFIG]['id'];

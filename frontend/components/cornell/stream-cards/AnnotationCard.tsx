@@ -17,8 +17,8 @@ export function AnnotationCard({ item, onClick, onEdit, onDelete, onSaveEdit }: 
   const [isEditing, setIsEditing] = useState(false);
   
   // Get config based on item type
-  const typeKey = (item as any).annotationType || item.type.toUpperCase();
-  const config = CORNELL_CONFIG[typeKey] || CORNELL_CONFIG.HIGHLIGHT;
+  const typeKey = ((item as any).annotationType || item.type?.toUpperCase() || 'EVIDENCE').replace(/-/g, '_');
+  const config = CORNELL_CONFIG[typeKey] || CORNELL_CONFIG.EVIDENCE;
   const Icon = config.icon;
   
   // Color handling - Pillars (Vocab, Idea, Doubt) strictly use config color.
@@ -27,8 +27,8 @@ export function AnnotationCard({ item, onClick, onEdit, onDelete, onSaveEdit }: 
   const rgb = getColorForKey(colorKey);
   
   // Content extraction (normalize different item structures)
-  const quote = (item as any).quote || (item as any).highlight?.anchorJson?.quote;
-  const comment = (item as any).commentText || (item as any).question || (item as any).note || (item as any).note?.body;
+  const quote = (item as any).quote || (item as any).highlight?.anchorJson?.quote || (item as any).highlight?.anchor_json?.quote;
+  const comment = (item as any).commentText || (item as any).comment_text || (item as any).highlight?.comment_text || (item as any).highlight?.comment?.message || (item as any).question || (item as any).note || (item as any).note?.body;
 
   const handleSaveEdit = (newComment: string, newColorKey: string, newType?: string) => {
     // Determine the tags_json based on the new type
@@ -56,6 +56,15 @@ export function AnnotationCard({ item, onClick, onEdit, onDelete, onSaveEdit }: 
           initialComment={comment || ''}
           initialColor={colorKey}
           initialType={typeKey}
+          quote={typeof quote === 'string' ? quote : undefined}
+          pageNumber={
+            (item as any).pageNumber || 
+            (item as any).highlight?.pageNumber ||
+            (item as any).highlight?.page_number ||
+            (item as any).highlight?.anchorJson?.position?.pageNumber ||
+            (item as any).highlight?.anchor_json?.position?.pageNumber ||
+            (item as any).highlight?.anchor_json?.page_number
+          } // Robust pageNumber extraction
           onSave={handleSaveEdit}
           onCancel={() => setIsEditing(false)}
         />
@@ -79,13 +88,7 @@ export function AnnotationCard({ item, onClick, onEdit, onDelete, onSaveEdit }: 
           <span className="text-xs font-bold uppercase tracking-wider" style={{ color: rgb }}>
             {config.label}
           </span>
-          {(item as any).pageNumber && (
-            <span className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-              <MapPin className="h-3 w-3" />
-              Pg. {(item as any).pageNumber}
-            </span>
-          )}
-          {(item as any).timestampMs !== undefined && (
+          {(item as any).timestampMs && !isNaN(Number((item as any).timestampMs)) && (
             <span className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
               <Clock className="h-3 w-3" />
               {new Date((item as any).timestampMs).toISOString().substr(11, 8)}
@@ -94,27 +97,38 @@ export function AnnotationCard({ item, onClick, onEdit, onDelete, onSaveEdit }: 
         </div>
         
         {/* Actions (visible on hover) */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsEditing(true);
-            }}
-            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-            title="Editar"
-          >
-            <Edit2 className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete?.();
-            }}
-            className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
-            title="Excluir"
-          >
-            <Trash2 className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
-          </button>
+
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing(true);
+              }}
+              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+              title="Editar"
+            >
+              <Edit2 className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete?.();
+              }}
+              className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+              title="Excluir"
+            >
+              <Trash2 className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+            </button>
+          </div>
+
+          {/* Page Number - Moved here */}
+          {((item as any).pageNumber || (item as any).highlight?.pageNumber || (item as any).highlight?.page_number) && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-400 dark:text-gray-500">
+              <MapPin className="h-3 w-3" />
+              Pg. {(item as any).pageNumber || (item as any).highlight?.pageNumber || (item as any).highlight?.page_number}
+            </span>
+          )}
         </div>
       </div>
 
@@ -141,8 +155,26 @@ export function AnnotationCard({ item, onClick, onEdit, onDelete, onSaveEdit }: 
       
       {/* Footer / Meta */}
       <div className="mt-3 flex items-center justify-between text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-tighter">
-        <span>{new Date(item.createdAt).toLocaleDateString('pt-BR')}</span>
-        <span>ID: {item.id.slice(0, 8)}</span>
+        <span>
+          {(() => {
+            try {
+              const dateSrc = item.createdAt || (item as any).created_at || (item as any).highlight?.createdAt || (item as any).timestampMs || (item as any).highlight?.timestampMs;
+              if (!dateSrc) return 'Sem data';
+              const date = new Date(dateSrc);
+              if (isNaN(date.getTime())) return 'Data inválida';
+              return date.toLocaleString('pt-BR', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: '2-digit', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              });
+            } catch (e) {
+              return 'Data inválida';
+            }
+          })()}
+        </span>
+        <span>ID: {item.id ? item.id.slice(0, 8) : 'N/A'}</span>
       </div>
     </div>
   );

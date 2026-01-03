@@ -14,19 +14,19 @@
 import { CORNELL_EXTENDED_TYPES } from './constants';
 
 const TYPE_TO_COLOR: Record<string, string> = {
-  HIGHLIGHT: 'blue',
-  NOTE: 'green',
-  IMPORTANT: 'yellow',  // ✅ Renamed from STAR
-  QUESTION: 'red',
-  SYNTHESIS: 'purple',  // ✅ Renamed from SUMMARY
+  EVIDENCE: 'yellow',
+  VOCABULARY: 'blue',
+  MAIN_IDEA: 'green',
+  DOUBT: 'red',
+  SYNTHESIS: 'purple',
   AI: 'purple',
 };
 
 const TYPE_TO_TAGS: Record<string, string[]> = {
-  HIGHLIGHT: ['highlight'],
-  NOTE: ['note'],
-  IMPORTANT: ['important'],
-  QUESTION: ['question'],
+  EVIDENCE: ['evidence', 'highlight'],
+  VOCABULARY: ['vocab', 'note'],
+  MAIN_IDEA: ['main-idea', 'important', 'star'],
+  DOUBT: ['doubt', 'question'],
   SYNTHESIS: ['synthesis'],
   AI: ['ai'],
 };
@@ -51,18 +51,20 @@ export function getTagsForCornellType(type: string): string[] {
  * Used when reading existing highlights (with backward compatibility)
  */
 export function inferCornellType(colorKey: string, tags: string[]): string {
-  // Check tags first (more reliable)
-  if (tags.includes('question')) return 'QUESTION';
-  if (tags.includes('important')) return 'IMPORTANT';
-  if (tags.includes('note')) return 'NOTE';
-  if (tags.includes('synthesis')) return 'SYNTHESIS';
-  if (tags.includes('ai')) return 'AI';
+  // Check tags first (more reliable) - Safe access
+  const safeTags = tags || [];
+  if (safeTags.some(t => ['doubt', 'question'].includes(t.toLowerCase()))) return 'DOUBT';
+  if (safeTags.some(t => ['main-idea', 'important', 'star'].includes(t.toLowerCase()))) return 'MAIN_IDEA';
+  if (safeTags.some(t => ['vocab', 'note'].includes(t.toLowerCase()))) return 'VOCABULARY';
+  if (safeTags.some(t => ['synthesis', 'summary'].includes(t.toLowerCase()))) return 'SYNTHESIS';
+  if (safeTags.includes('ai')) return 'AI';
   
   // Fall back to color
-  if (colorKey === 'red') return 'QUESTION';
-  if (colorKey === 'yellow') return 'IMPORTANT';
-  if (colorKey === 'green') return 'NOTE';
+  if (colorKey === 'red') return 'DOUBT';
+  if (colorKey === 'green') return 'MAIN_IDEA';
+  if (colorKey === 'blue') return 'VOCABULARY';
   if (colorKey === 'purple') return 'SYNTHESIS';
+  if (colorKey === 'yellow') return 'EVIDENCE';
   
-  return 'HIGHLIGHT';
+  return 'EVIDENCE';
 }

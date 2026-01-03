@@ -77,13 +77,13 @@ export function usePDFHighlights(
   }, [reactPDFHighlights]);
 
   // Transform and create highlight
-  const handleHighlightCreation = useCallback(async (area: any, typeKey: string = 'HIGHLIGHT') => {
+  const handleHighlightCreation = useCallback(async (area: any, typeKey: string = 'EVIDENCE') => {
     if (!onCreateHighlight) return;
 
     // Get config for the pedagogical type
-    const config = CORNELL_CONFIG[typeKey] || CORNELL_CONFIG.HIGHLIGHT;
+    const config = CORNELL_CONFIG[typeKey] || CORNELL_CONFIG.EVIDENCE;
     const tags = config.tags || [];
-    const colorKey = typeKey === 'HIGHLIGHT' ? selectedColor : config.color;
+    const colorKey = typeKey === 'EVIDENCE' ? selectedColor : config.color;
 
     // Handle RenderHighlightTargetProps structure vs direct object
     const region = area.selectionRegion || area;
@@ -150,6 +150,7 @@ export function usePDFHighlights(
         },
         contentId,
         '',
+        typeKey,
         colorKey,
         tags
       );

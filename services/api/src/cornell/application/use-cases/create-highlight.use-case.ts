@@ -3,7 +3,7 @@ import { IHighlightsRepository } from "../../domain/interfaces/highlights.reposi
 import { UsageTrackingService } from "../../../billing/usage-tracking.service";
 import { ActivityService } from "../../../activity/activity.service";
 import { EventEmitter2 } from "@nestjs/event-emitter";
-import { CreateHighlightDto } from "../../dto/cornell.dto";
+import { CreateCornellHighlightDto } from "../../dto/create-cornell-highlight.dto";
 import { Highlight } from "../../domain/entities/highlight.entity";
 import { Environment } from "@prisma/client";
 import * as crypto from "crypto";
@@ -21,14 +21,15 @@ export class CreateHighlightUseCase {
   async execute(
     contentId: string,
     userId: string,
-    dto: CreateHighlightDto,
+    dto: CreateCornellHighlightDto,
   ): Promise<Highlight> {
     const highlight = new Highlight({
       id: crypto.randomUUID(),
       contentId,
       userId,
-      kind: dto.kind,
+      kind: dto.kind || (dto.target_type === 'PDF' || dto.target_type === 'IMAGE' ? 'AREA' : 'TEXT'),
       targetType: dto.target_type,
+      type: dto.type, // Add the pedagogical type
       pageNumber: dto.page_number,
       anchor: dto.anchor_json,
       colorKey: dto.color_key,

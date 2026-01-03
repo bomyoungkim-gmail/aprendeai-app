@@ -123,6 +123,7 @@ export function reactPDFToBackend(
   highlight: Partial<ReactPDFHighlight>,
   contentId: string,
   userId: string,
+  type: string = 'EVIDENCE',
   colorKey: string = 'yellow',
   tags: string[] = []
 ): Omit<import('@/lib/types/cornell').CreateHighlightDto, 'kind' | 'target_type'> & { kind: 'TEXT'; target_type: 'PDF' } {
@@ -130,6 +131,7 @@ export function reactPDFToBackend(
   const boundingRect = highlight.position?.boundingRect || highlight.highlightAreas?.[0];
 
   return {
+    type,
     kind: 'TEXT' as const,
     target_type: 'PDF' as const,
     page_number: pageIndex + 1,

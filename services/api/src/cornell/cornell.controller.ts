@@ -23,12 +23,12 @@ import { StorageService } from "./services/storage.service";
 import { ContentService } from "./services/content.service";
 import { QueueService } from "../queue/queue.service";
 import {
-  CreateHighlightDto,
   UpdateCornellDto,
   UpdateHighlightDto,
   CreateContentDto,
   UpdateContentDto,
 } from "./dto/cornell.dto";
+import { CreateCornellHighlightDto } from "./dto/create-cornell-highlight.dto";
 import { UploadContentDto } from "./dto/upload-content.dto";
 import { NotificationsGateway } from "../notifications/notifications.gateway";
 import { CreateContentUseCase } from "./application/use-cases/create-content.use-case";
@@ -143,7 +143,7 @@ export class CornellController {
   @Post(":id/highlights")
   async createHighlight(
     @Param("id") id: string,
-    @Body() dto: CreateHighlightDto,
+    @Body() dto: CreateCornellHighlightDto,
     @Request() req,
   ) {
     return this.cornellService.createHighlight(id, dto, req.user.id);

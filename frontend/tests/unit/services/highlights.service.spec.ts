@@ -28,14 +28,18 @@ jest.mock('@/lib/cornell/offline-queue', () => ({
 describe('HighlightsService', () => {
   const contentId = 'content-123';
   const highlightId = 'highlight-123';
-  const mockPayload = { text: 'Test highlight', color: 'yellow' };
+  const mockPayload = { 
+    anchor_json: { type: 'PDF_TEXT', quote: 'Test highlight' }, 
+    target_type: 'PDF',
+    kind: 'TEXT'
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe('createHighlight', () => {
-    it('should call API when online', async () => {
+    it('should call API when online with default EVIDENCE type', async () => {
       const mockResponse = { id: highlightId, ...mockPayload };
       (cornellApi.createHighlight as jest.Mock).mockResolvedValue(mockResponse);
 
@@ -45,7 +49,12 @@ describe('HighlightsService', () => {
         { isOnline: true }
       );
 
-      expect(cornellApi.createHighlight).toHaveBeenCalledWith(contentId, mockPayload);
+      // Verify transformation to apiPayload
+      expect(cornellApi.createHighlight).toHaveBeenCalledWith(contentId, expect.objectContaining({
+        type: 'EVIDENCE',
+        target_type: 'PDF',
+        anchor_json: expect.objectContaining({ quote: 'Test highlight' })
+      }));
       expect(offlineQueue.add).not.toHaveBeenCalled();
       expect(result).toEqual(mockResponse);
     });

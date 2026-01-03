@@ -15,16 +15,16 @@ import type { TocItem } from '@/lib/types/toc';
 export function filterSynthesisItems(items: UnifiedStreamItem[]): SynthesisStreamItem[] {
   return items.filter(item =>
     item.type === 'synthesis' ||
-    (item.type === 'annotation' && item.highlight &&
-      inferCornellType(item.highlight.colorKey, item.highlight.tagsJson) === 'SYNTHESIS')
+    ['evidence', 'vocabulary', 'main-idea', 'doubt'].includes(item.type) && (item as any).highlight &&
+      inferCornellType((item as any).highlight.colorKey, (item as any).highlight.tagsJson) === 'SYNTHESIS'
   ) as SynthesisStreamItem[];
 }
 
 export function hasSynthesisItems(items: UnifiedStreamItem[]): boolean {
   return items.some(item =>
     item.type === 'synthesis' ||
-    (item.type === 'annotation' && item.highlight &&
-    inferCornellType(item.highlight.colorKey, item.highlight.tagsJson) === 'SYNTHESIS')
+    (['evidence', 'vocabulary', 'main-idea', 'doubt'].includes(item.type) && (item as any).highlight &&
+    inferCornellType((item as any).highlight.colorKey, (item as any).highlight.tagsJson) === 'SYNTHESIS')
   );
 }
 
@@ -34,8 +34,8 @@ export function hasSynthesisItems(items: UnifiedStreamItem[]): boolean {
 export function isSynthesisItem(item: UnifiedStreamItem): boolean {
   return (
     item.type === 'synthesis' ||
-    (item.type === 'annotation' && item.highlight &&
-      inferCornellType(item.highlight.colorKey, item.highlight.tagsJson) === 'SYNTHESIS')
+    (['evidence', 'vocabulary', 'main-idea', 'doubt'].includes(item.type) && (item as any).highlight &&
+      inferCornellType((item as any).highlight.colorKey, (item as any).highlight.tagsJson) === 'SYNTHESIS')
   );
 }
 
