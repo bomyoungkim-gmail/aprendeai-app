@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Stage, Layer, Image as KonvaImage, Rect } from 'react-konva';
 import useImage from 'use-image';
+import toast from 'react-hot-toast';
 import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { logger } from '@/lib/utils/logger';
 import { api } from '@/lib/api';
@@ -44,6 +45,10 @@ export function ImageViewer({ content, mode, highlights = [], onCreateHighlight 
 
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [canvasDimensions, setCanvasDimensions] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 800,
+    height: typeof window !== 'undefined' ? window.innerHeight - 64 : 600,
+  });
   const [isSelecting, setIsSelecting] = useState(false);
   const [selection, setSelection] = useState<{
     x: number;
@@ -52,6 +57,19 @@ export function ImageViewer({ content, mode, highlights = [], onCreateHighlight 
     height: number;
   } | null>(null);
   const stageRef = useRef<any>(null);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setCanvasDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight - 64,
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleWheel = (e: any) => {
     e.evt.preventDefault();
@@ -149,7 +167,10 @@ export function ImageViewer({ content, mode, highlights = [], onCreateHighlight 
         });
       } catch (error) {
         logger.error('Failed to create highlight', error, { contentId: content.id });
-        // TODO: Show error toast
+        toast.error('Falha ao criar destaque. Tente novamente.', {
+          duration: 4000,
+          position: 'bottom-right',
+        });
       }
     }
 
@@ -212,8 +233,8 @@ export function ImageViewer({ content, mode, highlights = [], onCreateHighlight 
       <div className="flex-1 overflow-hidden">
         <Stage
           ref={stageRef}
-          width={window.innerWidth}
-          height={window.innerHeight - 64}
+          width={canvasDimensions.width}
+          height={canvasDimensions.height}
           scaleX={scale}
           scaleY={scale}
           x={position.x}

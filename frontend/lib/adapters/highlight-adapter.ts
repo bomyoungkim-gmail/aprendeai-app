@@ -46,64 +46,108 @@ export interface ReactPDFHighlight {
  */
 export function backendToReactPDF(highlight: BackendHighlight): ReactPDFHighlight | null {
   try {
-    const { anchorJson, colorKey, commentText, pageNumber } = highlight;
+    const commentText = highlight.commentText || (highlight as any).comment_text;
+    const pageNumber = highlight.pageNumber || (highlight as any).page_number;
+    const tags = highlight.tagsJson || (highlight as any).tags_json || [];
+    
+    // Infer color from tags (Pedagogical Palette)
+    // Evidence: yellow, Vocab: blue, Main Idea: green, Doubt: red
+    let effectiveColorKey = highlight.colorKey || 'yellow';
+    const lowerTags = tags.map((t: string) => t.toLowerCase());
+
+    if (lowerTags.some((t: string) => ['doubt', 'question', 'duvida'].includes(t))) {
+      effectiveColorKey = 'red';
+    } else if (lowerTags.some((t: string) => ['main-idea', 'star', 'important', 'ideia-central'].includes(t))) {
+      effectiveColorKey = 'green';
+    } else if (lowerTags.some((t: string) => ['vocab', 'note', 'vocabulary', 'vocabulario'].includes(t))) {
+      effectiveColorKey = 'blue';
+    }
+
+    // Robust access to anchor data
+    const anchorJson = highlight.anchorJson || (highlight as any).anchor_json;
+    
+    // Validate anchor presence
+    if (!anchorJson) return null;
+
     const pageIndex = (pageNumber ?? 1) - 1; // Backend uses 1-indexed pages
 
-    // Handle PDF_TEXT type
-    if (highlight.targetType === 'PDF' && anchorJson.type === 'PDF_TEXT') {
-       const { position, quote } = anchorJson;
-       const boundingRect = position.boundingRect;
+    // Handle PDF_TEXT type - Ultra Permissive check to handle missing targetType/malformed data
+    // We check if it LOOKS like a PDF text anchor (has position or boundingRect)
+    const anyAnchor = anchorJson as any;
+    
+    // Check for ANY evidence of position data
+    const hasPosition = anyAnchor.position && (
+      anyAnchor.position.boundingRect || 
+      anyAnchor.position.rects || 
+      (anyAnchor.position.x1 !== undefined) // Direct coordinates support
+    );
+    
+    // Also support flat anchor format (legacy/migration)
+    const hasFlatPosition = anyAnchor.boundingRect || anyAnchor.rects;
+
+    const isPDFAnchor = 
+      (anchorJson.type === 'PDF_TEXT') ||
+      hasPosition ||
+      hasFlatPosition;
+
+    if (isPDFAnchor) {
+       // Normalize position data access (support both nested and flat structures)
+       const positionSource = anyAnchor.position || anyAnchor;
        
+       const boundingRect = positionSource.boundingRect || { x1: 0, y1: 0, x2: 0, y2: 0, width: 0, height: 0 };
+       const rects = Array.isArray(positionSource.rects) ? positionSource.rects : [];
+       const quote = anyAnchor.quote || '';
+
        return {
         id: highlight.id,
         content: {
-          text: quote || '',
+          text: quote,
         },
         position: {
           boundingRect: {
-            x1: boundingRect.x1,
-            y1: boundingRect.y1,
-            x2: boundingRect.x2,
-            y2: boundingRect.y2,
-            width: boundingRect.width,
-            height: boundingRect.height,
+            x1: boundingRect.x1 || 0,
+            y1: boundingRect.y1 || 0,
+            x2: boundingRect.x2 || 0,
+            y2: boundingRect.y2 || 0,
+            width: boundingRect.width || 0,
+            height: boundingRect.height || 0,
             pageIndex,
           },
-          rects: position.rects.map(r => ({
-             x1: r.x1,
-             y1: r.y1,
-             x2: r.x2,
-             y2: r.y2,
-             width: r.width,
-             height: r.height,
-             pageIndex: r.pageNumber ? r.pageNumber - 1 : pageIndex, 
+          rects: rects.map((r: any) => ({
+             x1: r.x1 || 0,
+             y1: r.y1 || 0,
+             x2: r.x2 || 0,
+             y2: r.y2 || 0,
+             width: r.width || 0,
+             height: r.height || 0,
+             pageIndex: typeof r.pageNumber === 'number' ? Math.max(0, r.pageNumber - 1) : pageIndex, 
           })),
           pageIndex,
         },
         comment: {
-          emoji: getEmojiForColor(colorKey),
+          emoji: getEmojiForColor(effectiveColorKey),
           message: commentText || '',
         },
         // Reconstruct highlightAreas from position.rects for multi-line support
-        highlightAreas: position.rects && position.rects.length > 0
-          ? position.rects.map(rect => ({
-              height: rect.height,
-              left: rect.x1,
-              pageIndex: rect.pageNumber ? rect.pageNumber - 1 : pageIndex,
-              top: rect.y1,
-              width: rect.width,
+        highlightAreas: rects.length > 0
+          ? rects.map((rect: any) => ({
+              height: rect.height || 0,
+              left: rect.x1 || 0,
+              pageIndex: typeof rect.pageNumber === 'number' ? Math.max(0, rect.pageNumber - 1) : pageIndex,
+              top: rect.y1 || 0,
+              width: rect.width || 0,
             }))
           : [
               // Fallback to single area from boundingRect
               {
-                height: boundingRect.height,
-                left: boundingRect.x1,
+                height: boundingRect.height || 0,
+                left: boundingRect.x1 || 0,
                 pageIndex,
-                top: boundingRect.y1,
-                width: boundingRect.width,
+                top: boundingRect.y1 || 0,
+                width: boundingRect.width || 0,
               },
             ],
-        colorKey: colorKey, // Include the color key
+        colorKey: effectiveColorKey, // Include the inferred color key
       };
     }
     

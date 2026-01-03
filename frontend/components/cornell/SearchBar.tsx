@@ -77,6 +77,9 @@ export function SearchBar({
     },
   ];
 
+  // Ocultar filtro de síntese na interface conforme pedido do usuário
+  const displayFilters = filters.filter(f => f.type !== 'synthesis');
+
   return (
     <div className="space-y-2">
       {/* Search Input */}
@@ -123,8 +126,8 @@ export function SearchBar({
 
       {/* Filter Pills */}
       {showFilters && (
-        <div className="flex flex-wrap gap-2">
-          {filters.map((filter) => {
+        <div className="flex flex-wrap gap-2 justify-center">
+          {displayFilters.map((filter) => {
             const isActive = activeFilter === filter.type;
             return (
               <button

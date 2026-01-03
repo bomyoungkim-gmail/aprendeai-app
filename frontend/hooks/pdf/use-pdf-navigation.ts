@@ -25,16 +25,20 @@ export function usePDFNavigation(totalPages: number) {
   }, [totalPages]);
 
   const nextPage = useCallback(() => {
-    if (currentPage < totalPages) {
-      goToPage(currentPage + 1);
+    if (currentPage < totalPages && viewerRef.current) {
+      const nextPageNum = currentPage + 1;
+      viewerRef.current.jumpToPage(nextPageNum - 1); // 0-indexed
+      setCurrentPage(nextPageNum);
     }
-  }, [currentPage, totalPages, goToPage]);
+  }, [currentPage, totalPages]);
 
   const previousPage = useCallback(() => {
-    if (currentPage > 1) {
-      goToPage(currentPage - 1);
+    if (currentPage > 1 && viewerRef.current) {
+      const prevPageNum = currentPage - 1;
+      viewerRef.current.jumpToPage(prevPageNum - 1); // 0-indexed
+      setCurrentPage(prevPageNum);
     }
-  }, [currentPage, goToPage]);
+  }, [currentPage]);
 
   const jumpToHighlight = useCallback((highlightArea: any) => {
     if (jumpToHighlightAreaRef.current) {

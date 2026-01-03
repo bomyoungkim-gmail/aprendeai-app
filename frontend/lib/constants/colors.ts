@@ -5,43 +5,43 @@
 export const HIGHLIGHT_COLORS = {
   yellow: {
     key: 'yellow',
-    rgb: 'rgba(255, 235, 59, 0.3)',
+    rgb: 'rgba(255, 235, 59, 0.8)', // Amarelo (Opacity 0.8 centralized)
     emoji: '💛',
     name: 'Amarelo',
   },
   green: {
     key: 'green',
-    rgb: 'rgba(76, 175, 80, 0.3)',
+    rgb: 'rgba(76, 175, 80, 0.8)', // Verde
     emoji: '💚',
     name: 'Verde',
   },
   blue: {
     key: 'blue',
-    rgb: 'rgba(33, 150, 243, 0.3)',
+    rgb: 'rgba(33, 150, 243, 0.8)', // Azul
     emoji: '💙',
     name: 'Azul',
   },
   red: {
     key: 'red',
-    rgb: 'rgba(244, 67, 54, 0.3)',
+    rgb: 'rgba(244, 67, 54, 0.8)', // Vermelho
     emoji: '❤️',
     name: 'Vermelho',
   },
   purple: {
     key: 'purple',
-    rgb: 'rgba(156, 39, 176, 0.3)',
+    rgb: 'rgba(156, 39, 176, 0.8)', // Roxo
     emoji: '💜',
     name: 'Roxo',
   },
   pink: {
     key: 'pink',
-    rgb: 'rgba(233, 30, 99, 0.3)',
+    rgb: 'rgba(233, 30, 99, 0.8)', // Rosa
     emoji: '💗',
     name: 'Rosa',
   },
   orange: {
     key: 'orange',
-    rgb: 'rgba(255, 152, 0, 0.3)',
+    rgb: 'rgba(255, 152, 0, 0.8)', // Laranja
     emoji: '🧡',
     name: 'Laranja',
   },

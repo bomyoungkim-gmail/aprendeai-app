@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Sparkles, Lightbulb, BookOpen, X } from 'lucide-react';
 
 interface AIAssistMenuProps {

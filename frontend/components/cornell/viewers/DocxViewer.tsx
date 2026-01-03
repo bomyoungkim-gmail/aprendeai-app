@@ -24,7 +24,12 @@ export function DocxViewer({ content, mode }: DocxViewerProps) {
       return;
     }
 
-    loadDocx(content.file.viewUrl);
+    // Proper async pattern in useEffect
+    const fetchAndConvert = async () => {
+      await loadDocx(content.file!.viewUrl!);
+    };
+    
+    fetchAndConvert();
   }, [content.file?.viewUrl]);
 
   async function loadDocx(url: string) {
@@ -92,8 +97,14 @@ export function DocxViewer({ content, mode }: DocxViewerProps) {
           <h3 className="text-lg font-semibold text-gray-700 mb-2">Error Loading Document</h3>
           <p className="text-gray-500 text-sm">{error}</p>
           <button
-            onClick={() => loadDocx(content.file!.viewUrl!)}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            onClick={() => {
+              // Safe retry with validation
+              if (content.file?.viewUrl) {
+                loadDocx(content.file.viewUrl);
+              }
+            }}
+            disabled={!content.file?.viewUrl}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Try Again
           </button>

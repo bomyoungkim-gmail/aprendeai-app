@@ -4,17 +4,12 @@ import { useState } from 'react';
  * usePDFUIState - Hook para gerenciar estado da UI do PDF
  * 
  * Responsabilidades:
- * - Controle de zoom
  * - Estado do sidebar (thumbnails/bookmarks)
- * - Menu de IA
- * - Texto selecionado
+ * - Total de páginas do documento
  * 
  * @returns Estado e setters da UI
  */
 export function usePDFUIState() {
-  const [zoom, setZoom] = useState(1.0);
-  const [showAIMenu, setShowAIMenu] = useState(false);
-  const [selectedText, setSelectedText] = useState<string>('');
   const [activeSidebar, setActiveSidebar] = useState<'thumbnails' | 'bookmarks' | null>(null);
   const [totalPages, setTotalPages] = useState(0);
 
@@ -27,12 +22,6 @@ export function usePDFUIState() {
   };
 
   return {
-    zoom,
-    setZoom,
-    showAIMenu,
-    setShowAIMenu,
-    selectedText,
-    setSelectedText,
     activeSidebar,
     setActiveSidebar,
     toggleSidebar,

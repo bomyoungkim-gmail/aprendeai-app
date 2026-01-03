@@ -40,16 +40,21 @@ export function usePDFDocument(fileUrl: string | undefined) {
 
         const blob = response.data;
         
-        // Robustness check: Ensure we actually got a PDF
-        if (blob.type !== 'application/pdf' && blob.size < 1000) {
-            // Might be a JSON error response disguised as a blob
+        // Robust validation: Check file type first
+        if (blob.type !== 'application/pdf') {
+          // If it's a small file, it might be a JSON error response
+          if (blob.size < 1000) {
             const text = await blob.text();
             try {
-                const json = JSON.parse(text);
-                throw new Error(json.message || 'Server returned an error instead of a PDF');
-            } catch (e) {
-                throw new Error(`Unexpected file type received: ${blob.type}`);
+              const json = JSON.parse(text);
+              throw new Error(json.message || 'Server returned an error instead of a PDF');
+            } catch (parseError) {
+              // If it's not JSON, throw generic error
+              throw new Error(`Invalid file type received: ${blob.type}. Expected application/pdf`);
             }
+          }
+          // If it's a large non-PDF file, reject it
+          throw new Error(`Invalid file type: ${blob.type}. Expected application/pdf`);
         }
 
         const blobUrl = URL.createObjectURL(blob);
@@ -74,17 +79,9 @@ export function usePDFDocument(fileUrl: string | undefined) {
     };
   }, [fileUrl]);
 
-  const refetch = () => {
-    if (fileUrl) {
-      setLoading(true);
-      setError('');
-    }
-  };
-
   return {
     pdfUrl,
     loading,
     error,
-    refetch,
   };
 }

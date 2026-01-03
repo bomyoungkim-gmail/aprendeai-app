@@ -1,4 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import type { RenderHighlightsProps } from '@react-pdf-viewer/highlight';
 import type { Highlight as BackendHighlight } from '@/lib/types/cornell';
 import {
@@ -53,7 +54,7 @@ export function usePDFHighlights(
                     className="highlight-area"
                     style={{
                       background: getColorForKey(highlight.colorKey),
-                      opacity: 0.7,
+                      // opacity handled by color logic (centralized in colors.ts)
                       position: 'absolute',
                       left: `${area.left}%`,
                       top: `${area.top}%`,
@@ -61,11 +62,17 @@ export function usePDFHighlights(
                       height: `${area.height}%`,
                       cursor: 'pointer',
                       pointerEvents: 'auto',
+                      mixBlendMode: 'multiply', // Better highlighter effect
+                      zIndex: 10, // Ensure it sits above text selection layer
                     }}
                     title={highlight.content.text}
                     onClick={() => {
                       if (highlight.comment?.message) {
-                        alert(highlight.comment.message);
+                        toast(highlight.comment.message, {
+                          duration: 4000,
+                          position: 'bottom-right',
+                          icon: '💬',
+                        });
                       }
                     }}
                   />
@@ -150,7 +157,10 @@ export function usePDFHighlights(
         },
         contentId,
         '',
-        typeKey,
+        // Fix persistence: Force 'EVIDENCE' as generic backend type.
+        // We rely on tags (passed below) to distinguish the actual semantic type (Doubt, Main Idea, etc.)
+        // This avoids backend Enum validation errors if it doesn't support 'MAIN_IDEA' etc.
+        'EVIDENCE', 
         colorKey,
         tags
       );
