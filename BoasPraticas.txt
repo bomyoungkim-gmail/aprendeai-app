@@ -1,36 +1,3 @@
-##
-vamos planejar uma revisao mais ampla na pasta
-frontend :
-- verificar dependencias circulares que aumentam sustentabilidade dos codigos
-- ha separacao de Lógica Hooks, API, negócio, UI e etc (deveria ser separado)
-- oportunidade de refatoracao
-- respeitando estrutura das pastas com as logicas
-
-
-
-
-ao final atualizar os testes existentes nas pastas centralizadoras de testes (caso necessario)
-
-me apresente o plano
-
-##
-faca mais uma revisao completa se esta deixando de escapar algum detalhe.
-quer replanejar as fases(incluindo subfases) para mitigar riscos?
-
-##
-vamos implementar uma fase por vez. 
-final de cada fase:
-- revise/concilie o que esta no plano com o que foi implementado
-- atualize os testes automatizados caso precise
-- adicionar mais testes caso nao esta cobrindo todos os pontos a ser testado para deixar aplicacao bullet prove
-- faca os testes para verificar se esta ok
-
-**consulte por completo o que esta feito e o que deve ser feito no implementation plan**
-Option A (Recommended): Fix compilation errors systematically first. no erro, tente consultar o internet para buscar solucao robusta.
-e nao faca tentativa e erro para corrigir, entenda o fluxo para identificar o erro e usar solucao robusta sempre.
-
-
-
 ================================================================================
 PARTE A — REGRA GLOBAL DE NOMES
 ================================================================================
@@ -212,3 +179,21 @@ SCRIPT (ANTIGRAVITY) — CODE REVIEW + PADRÕES (SERVIÇO / BACKEND COMO SUBPAST
 
 ## Cookies
 HTTP-Only Cookies
+
+
+
+
+## para ler o script
+crie plano de implementacao e task para script abaixo. tente detalhar ao maximo sem gerar inconsistencia com a aplicacao atual
+
+## apos ler o script
+concilie implementaion plan e task com o script e nao deixe nenhum detalhe escapar. nao implemente ainda.
+
+## para implementar
+Implemente e considerando as praticas detalhada no MelhoresPraticas.txt.
+Respeite ao maximo a estrutura de pastas que a aplicacao tem.
+sempre escolher evolucao incremental ao inves de substituir quando ha schema mismatches e ajustar a logica do service caso necessario.
+
+## conciliacao
+script 4 totalmente implementado? conciliar para ver se algo de fora e atualize documento de conciliacao. nao implemente.
+

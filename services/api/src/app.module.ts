@@ -54,6 +54,12 @@ import { RouteValidationMiddleware } from "./common/middleware/route-validation.
 import { NotificationsModule } from "./notifications/notifications.module";
 import { SessionTrackingModule } from "./analytics/session-tracking.module";
 import { TelemetryModule } from "./telemetry/telemetry.module";
+import { TransferModule } from "./transfer/transfer.module";
+import { DecisionModule } from "./decision/decision.module";
+import { PkmModule } from "./pkm/pkm.module"; // SCRIPT 09: PKM Atomic Notes
+import { GraphModule } from "./graph/graph.module"; // GRAPH SCRIPT 03: Learner Graph Builder
+import { RedisModule } from "./common/redis/redis.module";
+import { AiServiceModule } from "./ai-service/ai-service.module";
 
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
@@ -156,6 +162,18 @@ import { PrismaService } from "./prisma/prisma.service";
     SessionTrackingModule,
     TelemetryModule,
     GlossaryModule,
+    // Transfer Learning Module
+    TransferModule,
+    // Decision Service Module
+    DecisionModule,
+    // PKM Atomic Notes Module (SCRIPT 09)
+    PkmModule,
+    // Graph Learner Module (GRAPH SCRIPT 03)
+    GraphModule,
+    // Redis Module (Global)
+    RedisModule,
+    // AI Service Client
+    AiServiceModule,
   ],
   controllers: [AppController],
   providers: [

@@ -58,4 +58,8 @@ export class SubmitAssessmentDto {
   @IsNotEmpty()
   @IsArray()
   answers!: SubmitAssessmentAnswerDto[];
+
+  @IsOptional()
+  @IsString()
+  sessionId?: string;
 }

@@ -12,14 +12,17 @@ import { PrismaAssessmentRepository } from "./infrastructure/repositories/prisma
 import { CreateAssessmentUseCase } from "./application/use-cases/create-assessment.use-case";
 import { GetAssessmentUseCase } from "./application/use-cases/get-assessment.use-case";
 import { SubmitAssessmentUseCase } from "./application/use-cases/submit-assessment.use-case";
+import { AssessmentGenerationService } from "./application/assessment-generation.service";
 
 import { ContentAccessModule } from "../cornell/content-access.module";
+import { DecisionModule } from "../decision/decision.module";
 
 @Module({
-  imports: [PrismaModule, TopicMasteryModule, ContentAccessModule],
+  imports: [PrismaModule, TopicMasteryModule, ContentAccessModule, DecisionModule],
   controllers: [AssessmentController],
   providers: [
     AssessmentService,
+    AssessmentGenerationService,
     CreateAssessmentUseCase,
     GetAssessmentUseCase,
     SubmitAssessmentUseCase,
@@ -28,6 +31,6 @@ import { ContentAccessModule } from "../cornell/content-access.module";
       useClass: PrismaAssessmentRepository,
     },
   ],
-  exports: [AssessmentService],
+  exports: [AssessmentService, AssessmentGenerationService],
 })
 export class AssessmentModule {}

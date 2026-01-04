@@ -2,10 +2,10 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * Playwright Configuration for E2E Tests
- * Configured for services/api/test/e2e directory
+ * Configured for services/api/tests/e2e directory
  */
 export default defineConfig({
-  testDir: './test/e2e',
+  testDir: './tests/e2e',
   
   timeout: 30000,
   expect: {

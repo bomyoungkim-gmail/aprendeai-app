@@ -21,6 +21,7 @@ import { ContentPedagogicalController } from "./controllers/content-pedagogical.
 import { ContentPedagogicalService } from "./services/content-pedagogical.service";
 import { CornellHighlightsController } from "./controllers/cornell-highlights.controller";
 import { CornellHighlightsService } from "./services/cornell-highlights.service";
+import { CornellEventsService } from "./services/cornell-events.service";
 import { ContentModeController } from "./content-mode.controller";
 
 // Refactor Imports
@@ -98,6 +99,7 @@ import { GetHighlightsUseCase } from "./application/use-cases/get-highlights.use
     UpdateHighlightUseCase,
     DeleteHighlightUseCase,
     GetHighlightsUseCase,
+    CornellEventsService,
   ],
   exports: [
     CornellService,

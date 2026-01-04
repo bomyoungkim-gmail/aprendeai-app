@@ -4,6 +4,8 @@ import { IVocabRepository } from "../../../vocab/domain/vocab.repository.interfa
 import { SrsService, AttemptResult } from "../../../srs/srs.service";
 import { VocabAttempt } from "../../domain/vocab-attempt.entity";
 import { VocabDimension, SrsStage } from "@prisma/client";
+import { TelemetryService } from "../../../telemetry/telemetry.service";
+import { TelemetryEventType } from "../../../telemetry/domain/telemetry.constants";
 import { v4 as uuidv4 } from "uuid";
 
 export interface SubmitReviewInput {
@@ -21,6 +23,7 @@ export class SubmitReviewUseCase {
     @Inject(IVocabRepository)
     private readonly vocabRepository: IVocabRepository,
     private readonly srsService: SrsService,
+    private readonly telemetryService: TelemetryService,
   ) {}
 
   async execute(userId: string, input: SubmitReviewInput) {
@@ -60,6 +63,19 @@ export class SubmitReviewUseCase {
         lapsesIncrement: calc.lapseIncrement,
         masteryDelta,
       });
+
+    // Emit telemetry for SRS review
+    await this.telemetryService.track({
+      eventType: TelemetryEventType.SRS_REVIEW_DONE,
+      eventVersion: '1.0.0',
+      contentId: vocab.contentId || 'unknown',
+      sessionId: input.sessionId || 'unknown',
+      data: {
+        itemId: vocab.id,
+        correct: input.result === 'OK' || input.result === 'EASY',
+        intervalDays: Math.floor((calc.dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+      },
+    }, userId);
 
     return updatedVocab;
   }

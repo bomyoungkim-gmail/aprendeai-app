@@ -56,9 +56,59 @@ export class UpdateCornellNoteUseCase {
       activityType: "annotation",
     });
 
+    // Detect changes and emit granular events
+    const summaryChanged = dto.summary_text !== undefined && dto.summary_text !== note.summary;
+    const notesChanged = dto.notes_json !== undefined && JSON.stringify(dto.notes_json) !== JSON.stringify(note.notes);
+
     // Update Domain Entity
     note.notes = dto.notes_json ?? note.notes;
     note.summary = dto.summary_text ?? note.summary;
+
+    // Emit specific events for Cornell triggers
+    if (summaryChanged && note.summary && note.summary.length > 0) {
+      this.eventEmitter.emit('cornell.summary.updated', {
+        contentId,
+        userId,
+        timestamp: Date.now(),
+        data: {
+          summaryLength: note.summary.length,
+          rubricSelfCheck: dto.summary_text ? undefined : null, // Future: extract from DTO
+        },
+      });
+    }
+
+    if (notesChanged && dto.notes_json) {
+      // Detect added cues/notes (simple heuristic: array length increased)
+      const previousLength = note.notes?.length || 0;
+      const newLength = dto.notes_json.length;
+
+      if (newLength > previousLength) {
+        const addedItems = dto.notes_json.slice(previousLength);
+        addedItems.forEach((item: any) => {
+          if (item.type === 'cue' || item.cue) {
+            this.eventEmitter.emit('cornell.cue.added', {
+              contentId,
+              userId,
+              timestamp: Date.now(),
+              data: {
+                cueType: item.type || 'general',
+                length: item.text?.length || item.cue?.length || 0,
+              },
+            });
+          } else {
+            this.eventEmitter.emit('cornell.note.added', {
+              contentId,
+              userId,
+              timestamp: Date.now(),
+              data: {
+                noteType: item.type || 'general',
+                length: item.text?.length || item.note?.length || 0,
+              },
+            });
+          }
+        });
+      }
+    }
 
     return this.cornellRepository.update(note);
   }

@@ -103,6 +103,94 @@ async def process_turn(turn_request: TurnRequest, request: Request):
         )
 
 
+@educator_router.post("/transfer")
+async def process_transfer_task(request: Request):
+    """
+    Transfer Graph endpoint - Just-in-Time interventions.
+    
+    POST /educator/transfer
+    
+    AGENT SCRIPT A: Transfer Graph ✅
+    """
+    request_id = request.headers.get("X-Request-ID", "unknown")
+    
+    try:
+        # Parse request body
+        body = await request.json()
+        
+        intent = body.get('intent')
+        user_id = body.get('userId')
+        session_id = body.get('sessionId')
+        content_id = body.get('contentId')
+        transfer_metadata = body.get('transferMetadata', {})
+        mission_data = body.get('missionData', {})
+        user_profile = body.get('userProfile', {})
+        
+        logger.info(
+            f"[{request_id}] Processing transfer task: intent={intent}, session={session_id}"
+        )
+        
+        # Import transfer graph
+        from educator.transfer_graph import transfer_graph
+        
+        if not transfer_graph:
+            raise HTTPException(
+                status_code=500,
+                detail="Transfer graph not initialized. Check logs."
+            )
+        
+        # Prepare initial state
+        initial_state = {
+            "intent": intent,
+            "user_id": user_id,
+            "session_id": session_id,
+            "content_id": content_id,
+            "transfer_metadata": transfer_metadata,
+            "mission_data": mission_data,
+            "user_profile": user_profile,
+            "current_node": None,
+            "response_text": "",
+            "structured_output": None,
+            "events_to_write": [],
+            "tokens_used": None,
+            "model_used": None
+        }
+        
+        # Initialize Token Tracker
+        token_tracker = TokenUsageTracker()
+        
+        config = {
+            "callbacks": [token_tracker]
+        }
+        
+        # Invoke transfer graph (stateless execution)
+        result = await transfer_graph.ainvoke(initial_state, config=config)
+        
+        # Build response
+        response = {
+            "responseText": result.get('response_text', ''),
+            "structuredOutput": result.get('structured_output'),
+            "eventsToWrite": result.get('events_to_write', []),
+            "tokensUsed": token_tracker.total_tokens,
+            "modelUsed": token_tracker.model_name if hasattr(token_tracker, 'model_name') else None
+        }
+        
+        logger.info(
+            f"[{request_id}] Transfer task completed: intent={intent}, tokens={token_tracker.total_tokens}"
+        )
+        
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[{request_id}] Transfer task failed: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to process transfer task: {str(e)}"
+        )
+
+
 @educator_router.get("/health", response_model=HealthResponse)
 async def health_check():
     """

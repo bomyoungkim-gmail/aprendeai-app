@@ -1,8 +1,8 @@
 # AprendeAI - Sistema de Agentes de IA
 
-**Versão:** 2.0  
-**Data:** 25/12/2025  
-**Arquitetura:** LangGraph + LangChain  
+**Versão:** 3.0
+**Data:** 04/01/2026
+**Arquitetura:** LangGraph + LangChain + Determine Graph Ecosystem  
 **Checkpointing:** Redis (Educator) | MemorySaver (OpsCoach)
 
 ---
@@ -13,8 +13,9 @@
 2. [Agente 1: Educator](#agente-1-educator)
 3. [Agente 2: OpsCoach](#agente-2-opscoach)
 4. [Componentes Compartilhados](#componentes-compartilhados)
-5. [Fluxo de Dados](#fluxo-de-dados)
-6. [Monitoramento e Observabilidade](#monitoramento-e-observabilidade)
+5. [Ecossistema de Grafos](#ecossistema-de-grafos)
+6. [Fluxo de Dados](#fluxo-de-dados)
+7. [Monitoramento e Observabilidade](#monitoramento-e-observabilidade)
 
 ---
 
@@ -41,7 +42,7 @@ O AprendeAI utiliza **2 agentes LangGraph** especializados para diferentes conte
 
 ### Propósito
 
-Acompanhar o aluno durante **sessões de leitura**, oferecendo suporte pedagógico adaptativo nas fases de pré-leitura, leitura ativa, pós-leitura e jogos educacionais.
+Acompanhar o aluno durante **sessões de leitura**, oferecendo suporte pedagógico adaptativo nas fases de pré-leitura, leitura ativa, pós-leitura e jogos educacionais, além de gerenciar **Productive Failure** e **PKM Generation**.
 
 ### Arquivo Principal
 
@@ -208,6 +209,30 @@ Educator: "🎮 Iniciando Boss Fight de Vocabulário!
 
 Quick Replies: ["Começar!", "Escolher outro jogo"]
 ```
+
+#### 🧩 5. PRODUCTIVE FAILURE (Falha Produtiva)
+
+**Trigger:** `DecisionService` detecta `LowMastery` + `ContentHasPFAssets`.
+
+**Objetivo:** Apresentar um desafio complexo antes do ensino formal para preparar o terreno cognitivo.
+
+**Funcionalidades:**
+
+- ✅ **Assign Mission:** Atribui missão PF genérica.
+- ✅ **Feedback em Camadas:** Feedback determinístico (Metadata) -> Feedback LLM (se necessário).
+- ✅ **Mastery Loop:** Atualiza score de maestria baseado em tentativas.
+
+#### 🧠 6. PKM GENERATION (Gestão de Conhecimento)
+
+**Trigger:** Fase `POST` + Síntese Qualificada.
+
+**Objetivo:** Transformar a sessão em notas atômicas permanentes.
+
+**Funcionalidades:**
+
+- ✅ **Extração Determinística:** Título, Definições e Backlinks via `section_transfer_metadata`.
+- ✅ **Integração Cornell:** Converte notas Cornell em parágrafos estruturados.
+- ✅ **Grafo de Conhecimento:** Cria nós e arestas no `TopicGraph`.
 
 **Fluxo de Jogo:**
 
@@ -727,6 +752,82 @@ quiz_chain.invoke({...})
 
 ---
 
+### 5. AiRateLimiter (Controle de Budget)
+
+**Arquivo:** `services/api/src/ai/ai-rate-limiter.service.ts`
+
+**Objetivo:** Proteger o sistema contra custos excessivos e abuso.
+
+**Funcionalidades:**
+
+- ✅ **Sliding Window:** Limite de N requests por minuto (configurável por Tier).
+- ✅ **Daily Budget:** Bloqueio automático de features "nice-to-have" (Ex: Analogias LLM) se budget diário excedido.
+- ✅ **Feature Flags:** Habilita/desabilita features por instituição/família.
+
+---
+
+### 6. Scaffolding & Fading Engine
+
+**Arquivo:** `services/api/src/scaffolding/scaffolding.service.ts`
+
+**Objetivo:** Ajustar a intensidade do suporte pedagógico conforme a proficiência (`mastery`).
+
+**Níveis:**
+
+- **L0 (Invisible):** Nenhuma intervenção proativa. Apenas Help-on-demand.
+- **L1 (Minimal):** Perguntas de reflexão apenas. Sem analogias longas.
+- **L2 (Guided):** Suporte padrão.
+- **L3 (Full):** Explicações detalhadas, exemplos concretos, metáforas.
+
+**Fading:**
+
+- Se `mastery_score` > 0.8 E `consistency` > 3 → Reduz nível (L2 -> L1).
+- Se `error_pattern` detectado → Aumenta nível (L1 -> L2).
+
+---
+
+## 🧠 Ecossistema de Grafos (Graph Scripts)
+
+O AprendeAI agora conta com um motor de conhecimento estruturado para suportar decisões pedagógicas sem depender exclusivamente de LLMs.
+
+### 1. Topic Graph (Grafo de Tópicos)
+
+Estrutura hierárquica e relacional dos conceitos.
+
+- **Nodes:** Conceitos (Ex: "Fotossíntese", "ATP").
+- **Edges:** Relações (Ex: "CAUSES", "PART_OF", "IS_A").
+- **Evidence:** Rastreabilidade (Highlight ID, Page Number) para cada aresta.
+
+### 2. Camadas de Grafo
+
+| Camada            | Fonte                                | Confiança         | Propósito                              |
+| :---------------- | :----------------------------------- | :---------------- | :------------------------------------- |
+| **Baseline**      | TOC, Glossário (PDF/Doc)             | Alta (Estrutural) | Mapa inicial do conteúdo (Cold Start). |
+| **Learner**       | Highlights, Notas, Dúvidas           | Média (Pessoal)   | Modelo mental do aluno. Revela "Gaps". |
+| **Curated**       | Professores, Comunidade              | Altíssima         | Gold Standard para correçào.           |
+| **Deterministic** | Fusão (Curated > Learner > Baseline) | Calculada         | "Source of Truth" para o Agente.       |
+
+### 3. Graph Comparator (A vs B)
+
+Serviço capaz de comparar o Grafo do Aluno (Learner) contra o Baseline ou Curated.
+
+- **Gaps Críticos:** Arestas fundamentais que o aluno não conectou (Missão: `BRIDGING`).
+- **Erros Prováveis:** Conexões do aluno que contradizem o Curated (Missão: `CORRECTION`).
+- **Descobertas:** Conexões novas que o aluno fez (Insight).
+
+### 4. Decision Weighting (DCS)
+
+Sistema de ponderação para decidir entre **Determinismo (Graph)** vs **Probabilismo (LLM)**.
+
+**Fórmula DCS (Deterministic Confidence Score):**
+`DCS = 0.15*Doc + 0.20*Coverage + 0.20*Match + 0.20*Evidence + 0.15*Stability + 0.10*Curation`
+
+- **Se DCS > 0.8:** Bloqueia LLM. Usa resposta do Grafo. (Custo Zero).
+- **Se DCS < 0.5:** Permite LLM com contexto enriquecido.
+- **Invisible Mode:** Se DCS alto e Aluno em Flow -> Silêncio total.
+
+---
+
 ## 📊 Fluxo de Dados
 
 ### Educator - Fluxo Completo
@@ -821,6 +922,24 @@ Rastreia:
 - Response time (P50, P95, P99)
 - Success rate de memory jobs
 
+- Success rate de memory jobs
+
+### 4. Telemetry Aggregator Service
+
+**Arquivo:** `services/api/src/telemetry/telemetry-aggregator.service.ts`
+
+**Objetivo:** Transformar eventos brutos em índices de aprendizado.
+
+**Índices Calculados:**
+
+- **Deep Reading Index:** Tempo de leitura vs profundidade do scroll vs anotações.
+- **UI Load Index:** Frequência de uso de ferramentas vs progresso.
+- **Completion Quality:** Score de checkpoints + qualidade de resumos.
+- **Transfer Index:** Sucesso em missões de transferência (Bridging/PF).
+
+**Policy Overrides:**
+Permite que instituições ajustem os limiares (thresholds) dos índices sem alterar código.
+
 ---
 
 ## 🚀 Próximos Passos e Roadmap
@@ -860,6 +979,6 @@ Rastreia:
 
 ---
 
-**Última Atualização:** 25/12/2025  
-**Mantenedores:** Equipe AprendeAI  
-**Versão:** 2.0
+**Última Atualização:** 04/01/2026  
+**Mantenedores:** Equipe AprendeAI + Agent Antigravity  
+**Versão:** 3.0

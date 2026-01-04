@@ -3,8 +3,15 @@ import { HttpService } from "@nestjs/axios";
 import { ConfigService } from "@nestjs/config";
 import { firstValueFrom } from "rxjs";
 import * as crypto from "crypto";
+import { PrismaService } from "../prisma/prisma.service";
+import { AiRateLimiterService } from "./ai-rate-limiter.service";
+import { RedisService } from "../common/redis/redis.service"; // AGENT SCRIPT D
 import { PromptMessageDto } from "../sessions/dto/prompt-message.dto";
 import { AgentTurnResponseDto } from "../sessions/dto/agent-turn-response.dto";
+import {
+  TransferMetadataPrompt,
+  MetadataResponse,
+} from "./types/transfer-metadata.types";
 
 /**
  * AI Service Client
@@ -12,6 +19,7 @@ import { AgentTurnResponseDto } from "../sessions/dto/agent-turn-response.dto";
  * Phase 1: Stub implementation
  * Phase 2: Real HTTP client to FastAPI Educator Agent ✅
  * Phase 0: HMAC authentication added ✅
+ * PATCH 04v2: Transfer metadata extraction ✅
  */
 @Injectable()
 export class AiServiceClient {
@@ -22,6 +30,9 @@ export class AiServiceClient {
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
+    private readonly rateLimiter: AiRateLimiterService,
+    private readonly redis: RedisService, // AGENT SCRIPT D
   ) {
     // Centralized configuration - no hardcoded URLs!
     this.AI_SERVICE_URL = this.configService.get<string>(
@@ -50,6 +61,75 @@ export class AiServiceClient {
     const hmac = crypto.createHmac("sha256", this.AI_SERVICE_SECRET);
     hmac.update(body);
     return `sha256=${hmac.digest("hex")}`;
+  }
+
+  /**
+   * Generate cache key for transfer tasks
+   * AGENT SCRIPT D: Rule 2 - Cache Key Composition
+   */
+  private generateCacheKey(
+    intent: string,
+    contentId: string,
+    chunkRef: string,
+    eduLevel?: string,
+    lang?: string,
+    scaffolding?: number,
+    metaVersion?: string,
+  ): string {
+    const parts = [
+      'agent:transfer',
+      intent,
+      contentId,
+      chunkRef,
+      eduLevel || 'default',
+      lang || 'en',
+      scaffolding?.toString() || '0',
+      metaVersion || 'v1',
+    ];
+    return parts.join(':');
+  }
+
+  /**
+   * Record provider usage with metadata
+   * AGENT SCRIPT D: Rule 4 - Logging
+   */
+  private async recordUsage(data: {
+    feature: string;
+    tokens: number;
+    userId?: string;
+    familyId?: string;
+    institutionId?: string;
+    metadata: {
+      intent: string;
+      cacheHit: boolean;
+      strategy: 'DETERMINISTIC' | 'CACHE' | 'LLM';
+      scaffoldingLevel?: number;
+      chunkRef?: string;
+      [key: string]: any;
+    };
+  }): Promise<void> {
+    try {
+      await this.prisma.provider_usage.create({
+        data: {
+          id: crypto.randomUUID(),
+          provider: 'openai', // or from metadata
+          model: data.metadata.model || 'gpt-4',
+          operation: 'transfer_task',
+          total_tokens: data.tokens,
+          tokens: data.tokens,
+          prompt_tokens: data.metadata.promptTokens || 0,
+          completion_tokens: data.metadata.completionTokens || 0,
+          user_id: data.userId,
+          family_id: data.familyId,
+          institution_id: data.institutionId,
+          feature: data.feature,
+          metadata: data.metadata,
+          timestamp: new Date(),
+        },
+      });
+    } catch (error) {
+      this.logger.error('Failed to record usage', error);
+    }
   }
 
   /**
@@ -98,4 +178,322 @@ export class AiServiceClient {
       throw new Error("Failed to communicate with AI Service");
     }
   }
+
+  /**
+   * Check daily budget for a scope (family or institution)
+   * SCRIPT 10: Budget Guardrails
+   */
+  private async checkDailyBudget(
+    scopeId: string,
+    scopeType: 'family' | 'institution',
+    feature: string,
+  ): Promise<{ allowed: boolean; used: number; limit: number }> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Get policy limit
+    const policy =
+      scopeType === 'family'
+        ? await this.prisma.family_policies.findFirst({
+            where: { family_id: scopeId },
+          })
+        : await this.prisma.institution_policies.findUnique({
+            where: { institution_id: scopeId },
+          });
+
+    const limit = policy?.llm_budget_daily_tokens || 5000;
+
+    // Aggregate usage for today
+    const usage = await this.prisma.provider_usage.aggregate({
+      where: {
+        [scopeType === 'family' ? 'family_id' : 'institution_id']: scopeId,
+        feature,
+        timestamp: { gte: today },
+      },
+      _sum: { total_tokens: true },
+    });
+
+    const used = usage._sum.total_tokens || 0;
+    const allowed = used < limit;
+
+    if (!allowed) {
+      this.logger.warn(
+        `Daily budget exceeded for ${scopeType} ${scopeId}: ${used}/${limit} tokens (feature: ${feature})`,
+      );
+    }
+
+    return { allowed, used, limit };
+  }
+
+  /**
+   * Check rate limit for a scope
+   * SCRIPT 10: Rate Limit Guardrails
+   */
+  private async checkRateLimit(
+    scopeId: string,
+    scopeType: 'family' | 'institution',
+  ): Promise<boolean> {
+    const policy =
+      scopeType === 'family'
+        ? await this.prisma.family_policies.findFirst({
+            where: { family_id: scopeId },
+          })
+        : await this.prisma.institution_policies.findUnique({
+            where: { institution_id: scopeId },
+          });
+
+    const limit = policy?.llm_hard_rate_limit_per_min || 10;
+    return this.rateLimiter.checkLimit(scopeId, limit);
+  }
+
+  /**
+   * Extract transfer metadata (analogies, domains) via LLM fallback.
+   *
+   * POST {AI_SERVICE_URL}/metadata/transfer
+   *
+   * PATCH 04v2: LLM Fallback ✅
+   * SCRIPT 10: Budget & Rate Limit Checks ✅
+   */
+  async extractTransferMetadata(
+    prompt: TransferMetadataPrompt,
+    context?: { scopeId?: string; scopeType?: 'family' | 'institution'; feature?: string },
+  ): Promise<MetadataResponse> {
+    // SCRIPT 10: Budget & Rate Limit Checks
+    if (context?.scopeId && context?.scopeType) {
+      const feature = context.feature || 'transfer_metadata_llm';
+
+      // Check rate limit
+      const rateLimitOk = await this.checkRateLimit(
+        context.scopeId,
+        context.scopeType,
+      );
+      if (!rateLimitOk) {
+        throw new Error(
+          `Rate limit exceeded for ${context.scopeType} ${context.scopeId}`,
+        );
+      }
+
+      // Check daily budget
+      const budgetCheck = await this.checkDailyBudget(
+        context.scopeId,
+        context.scopeType,
+        feature,
+      );
+      if (!budgetCheck.allowed) {
+        throw new Error(
+          `Daily budget exceeded for ${context.scopeType} ${context.scopeId}: ${budgetCheck.used}/${budgetCheck.limit} tokens`,
+        );
+      }
+    }
+
+    const url = `${this.AI_SERVICE_URL}/metadata/transfer`;
+    const correlationId = `${prompt.contentId}-${prompt.sectionRef.chunkId || 'page' + prompt.sectionRef.page}`;
+
+    const bodyString = JSON.stringify(prompt);
+    const signature = this.signRequest(bodyString);
+
+    this.logger.debug(
+      `Extracting transfer metadata via LLM: contentId=${prompt.contentId}, correlationId=${correlationId}`,
+    );
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post<MetadataResponse>(url, prompt, {
+          timeout: 45000, // 45s timeout (LLM can be slower)
+          headers: {
+            "Content-Type": "application/json",
+            "X-Signature": signature,
+            "X-Correlation-ID": correlationId,
+          },
+        }),
+      );
+
+      this.logger.debug(
+        `LLM extraction successful: ${response.data.analogies?.length || 0} analogies, ${response.data.domains?.length || 0} domains`,
+      );
+
+      return response.data;
+    } catch (error) {
+      this.logger.error(
+        `LLM metadata extraction failed (correlationId=${correlationId})`,
+        error,
+      );
+      throw new Error("Failed to extract metadata via LLM");
+    }
+  }
+
+  /**
+   * Execute Transfer Task (Just-in-Time Intervention)
+   * 
+   * POST {AI_SERVICE_URL}/educator/transfer
+   * 
+   * AGENT SCRIPT A: Transfer Graph ✅
+   * AGENT SCRIPT D: Token Minimization (5-Layer Approach) ✅
+   */
+  async executeTransferTask(
+    task: import('./dto/transfer-task.dto').TransferTaskDto,
+    context?: { scopeId?: string; scopeType?: 'family' | 'institution' },
+  ): Promise<import('./dto/transfer-task.dto').TransferTaskResultDto> {
+    const feature = `educator_${task.intent.toLowerCase()}_node`;
+    const chunkRef = task.transferMetadata?.chunk_id || task.transferMetadata?.page || 'unknown';
+    
+    // ========== LAYER 1: DETERMINISTIC ROUTING (Rule 1) ==========
+    // Check if we can answer from metadata without LLM
+    if (task.intent === 'TIER2' && task.transferMetadata?.tier2_json) {
+      this.logger.debug(`Deterministic response for TIER2: ${task.transferMetadata.tier2_json}`);
+      
+      const result: import('./dto/transfer-task.dto').TransferTaskResultDto = {
+        responseText: JSON.stringify(task.transferMetadata.tier2_json),
+        structuredOutput: task.transferMetadata.tier2_json,
+        tokensUsed: 0,
+      };
+      
+      // Log usage with DETERMINISTIC strategy
+      await this.recordUsage({
+        feature,
+        tokens: 0,
+        userId: task.userId,
+        familyId: context?.scopeType === 'family' ? context.scopeId : undefined,
+        institutionId: context?.scopeType === 'institution' ? context.scopeId : undefined,
+        metadata: {
+          intent: task.intent,
+          cacheHit: false,
+          strategy: 'DETERMINISTIC',
+          chunkRef,
+          source: 'tier2_json',
+        },
+      });
+      
+      return result;
+    }
+    
+    // ========== LAYER 2: CACHE CHECK (Rule 2) ==========
+    const cacheKey = this.generateCacheKey(
+      task.intent,
+      task.contentId,
+      chunkRef,
+      task.userProfile?.schooling_level,
+      task.userProfile?.language_proficiency,
+      context?.scopeType === 'family' ? 1 : 0, // scaffolding level placeholder
+      'v1', // metadata version
+    );
+    
+    const cached = await this.redis.get<import('./dto/transfer-task.dto').TransferTaskResultDto>(cacheKey);
+    if (cached) {
+      this.logger.debug(`Cache HIT for ${task.intent}: ${cacheKey}`);
+      
+      // Log usage with CACHE strategy
+      await this.recordUsage({
+        feature,
+        tokens: 0,
+        userId: task.userId,
+        familyId: context?.scopeType === 'family' ? context.scopeId : undefined,
+        institutionId: context?.scopeType === 'institution' ? context.scopeId : undefined,
+        metadata: {
+          intent: task.intent,
+          cacheHit: true,
+          strategy: 'CACHE',
+          chunkRef,
+          cacheKey,
+        },
+      });
+      
+      return cached;
+    }
+    
+    this.logger.debug(`Cache MISS for ${task.intent}: ${cacheKey}`);
+    
+    // ========== LAYER 3: LIGHT RAG PREPARATION (Rule 3) ==========
+    // Context chunks should be passed by caller, but we log if missing
+    if (!task.contextChunks || task.contextChunks.length === 0) {
+      this.logger.warn(`No contextChunks provided for ${task.intent}, Python may need to fetch`);
+    }
+    
+    // ========== BUDGET & RATE LIMIT CHECKS (SCRIPT 10) ==========
+    if (context?.scopeId && context?.scopeType) {
+      // Check rate limit
+      const rateLimitOk = await this.checkRateLimit(
+        context.scopeId,
+        context.scopeType,
+      );
+      if (!rateLimitOk) {
+        throw new Error(
+          `Rate limit exceeded for ${context.scopeType} ${context.scopeId}`,
+        );
+      }
+
+      // Check daily budget
+      const budgetCheck = await this.checkDailyBudget(
+        context.scopeId,
+        context.scopeType,
+        feature,
+      );
+      if (!budgetCheck.allowed) {
+        throw new Error(
+          `Daily budget exceeded for ${context.scopeType} ${context.scopeId}: ${budgetCheck.used}/${budgetCheck.limit} tokens`,
+        );
+      }
+    }
+
+    // ========== LAYER 4: LLM EXECUTION ==========
+    const url = `${this.AI_SERVICE_URL}/educator/transfer`;
+    const correlationId = `${task.sessionId}-${task.intent}`;
+
+    const bodyString = JSON.stringify(task);
+    const signature = this.signRequest(bodyString);
+
+    this.logger.debug(
+      `Executing transfer task (LLM): intent=${task.intent}, sessionId=${task.sessionId}`,
+    );
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post<import('./dto/transfer-task.dto').TransferTaskResultDto>(url, task, {
+          timeout: 30000, // 30s timeout
+          headers: {
+            "Content-Type": "application/json",
+            "X-Signature": signature,
+            "X-Correlation-ID": correlationId,
+          },
+        }),
+      );
+
+      const result = response.data;
+
+      this.logger.debug(
+        `Transfer task completed: intent=${task.intent}, tokens=${result.tokensUsed || 0}`,
+      );
+
+      // ========== LAYER 5: POST-PROCESSING ==========
+      // Set cache (24h TTL)
+      await this.redis.set(cacheKey, result, 86400); // 24 hours
+      
+      // Log usage with LLM strategy
+      await this.recordUsage({
+        feature,
+        tokens: result.tokensUsed || 0,
+        userId: task.userId,
+        familyId: context?.scopeType === 'family' ? context.scopeId : undefined,
+        institutionId: context?.scopeType === 'institution' ? context.scopeId : undefined,
+        metadata: {
+          intent: task.intent,
+          cacheHit: false,
+          strategy: 'LLM',
+          chunkRef,
+          model: result.modelUsed,
+          promptTokens: result.tokensUsed ? Math.floor(result.tokensUsed * 0.6) : 0,
+          completionTokens: result.tokensUsed ? Math.floor(result.tokensUsed * 0.4) : 0,
+        },
+      });
+
+      return result;
+    } catch (error) {
+      this.logger.error(
+        `Transfer task failed (correlationId=${correlationId})`,
+        error,
+      );
+      throw new Error("Failed to execute transfer task");
+    }
+  }
 }
+

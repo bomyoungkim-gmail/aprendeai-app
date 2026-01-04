@@ -91,7 +91,12 @@ export class CornellHighlightsService {
       userId,
       action: CornellEvent.ANNOTATION_CREATED,
       timestamp: Date.now(),
-      data: { type: dto.type },
+      data: { 
+        type: dto.type,
+        hasAnchor: !!dto.anchor_json,
+        pageNumber: dto.page_number,
+        targetType: dto.target_type,
+      },
     } as CornellEventPayload);
 
     return highlight;

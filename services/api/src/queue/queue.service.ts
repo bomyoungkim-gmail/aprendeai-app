@@ -180,6 +180,16 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  // Generic add method for job enqueueing
+  async add(jobType: string, data: any): Promise<void> {
+    const queueName = `job.${jobType.toLowerCase()}`;
+    await this.publish(queueName, {
+      type: jobType,
+      data,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   // Health check method
   isConnected(): boolean {
     return this.channel !== null && this.connection !== null;

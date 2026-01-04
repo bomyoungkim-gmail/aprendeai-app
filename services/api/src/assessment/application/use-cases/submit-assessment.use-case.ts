@@ -3,6 +3,9 @@ import { IAssessmentRepository } from "../../domain/interfaces/assessment.reposi
 import { AssessmentAttempt } from "../../domain/entities/assessment-attempt.entity";
 import { SubmitAssessmentDto } from "../../dto/assessment.dto";
 import { TopicMasteryService } from "../../../analytics/topic-mastery.service";
+import { TelemetryService } from "../../../telemetry/telemetry.service";
+import { TelemetryEventType } from "../../../telemetry/domain/telemetry.constants";
+import { ScaffoldingService } from "../../../decision/application/scaffolding.service";
 import * as crypto from "crypto";
 
 @Injectable()
@@ -11,6 +14,8 @@ export class SubmitAssessmentUseCase {
     @Inject(IAssessmentRepository)
     private readonly assessmentRepository: IAssessmentRepository,
     private readonly topicMastery: TopicMasteryService,
+    private readonly telemetryService: TelemetryService,
+    private readonly scaffoldingService: ScaffoldingService,
   ) {}
 
   async execute(
@@ -26,6 +31,7 @@ export class SubmitAssessmentUseCase {
     let scorePoints = 0;
     const totalQuestions = assessment.questions?.length || 0;
     const assessmentAnswers: any[] = [];
+    const startTime = Date.now();
 
     // Process answers
     for (const answerDto of dto.answers) {
@@ -46,6 +52,19 @@ export class SubmitAssessmentUseCase {
         isCorrect: isCorrect,
         timeSpentSeconds: answerDto.timeSpentSeconds || 0,
       });
+
+      // Emit telemetry for each question answered
+      await this.telemetryService.track({
+        eventType: TelemetryEventType.MICRO_CHECK_ANSWERED,
+        eventVersion: '1.0.0',
+        contentId: assessment.contentId,
+        sessionId: dto.sessionId || 'unknown',
+        data: {
+          correct: isCorrect,
+          latencyMs: (answerDto.timeSpentSeconds || 0) * 1000,
+          difficulty: 'medium', // Default difficulty (not tracked in current schema)
+        },
+      }, userId);
     }
 
     const scorePercent =
@@ -81,15 +100,31 @@ export class SubmitAssessmentUseCase {
     // I might need a "GetContentMetadata" service or repo method.
     // Or, for simplicity in this refactor, I might need to skip strict mastery update here or fix the repo.
 
-    // Decision: I will keep the mastery update logic but commented out with a TODO to implement via EventBus
-    // as it is a textbook case for Domain Events.
-    // "UpdateMasteryOnAssessmentSubmitted" handler.
+    // SCRIPT 08: Emit ASSESSMENT_COMPLETED telemetry event
+    await this.telemetryService.track({
+      eventType: TelemetryEventType.ASSESSMENT_COMPLETED,
+      eventVersion: '1.0.0',
+      contentId: assessment.contentId,
+      sessionId: dto.sessionId || 'unknown',
+      data: {
+        assessmentId: assessmentId,
+        attemptId: createdAttempt.id,
+        scorePercent: scorePercent,
+        scoreRaw: scorePoints,
+        totalQuestions: totalQuestions,
+      },
+    }, userId);
 
-    /*
-    if (assessment.contentId) {
-        // Logic to fetch content topics and update mastery
+    // SCRIPT 08: Automatically update mastery from assessment results
+    try {
+      await this.scaffoldingService.updateMasteryFromAssessment(
+        userId,
+        createdAttempt.id,
+      );
+    } catch (error) {
+      // Log error but don't fail the assessment submission
+      console.error('Failed to update mastery from assessment:', error);
     }
-    */
 
     return createdAttempt;
   }
