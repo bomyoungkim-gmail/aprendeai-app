@@ -193,10 +193,8 @@ export class ContentService {
         original_language: dto.originalLanguage,
         raw_text: rawText,
         files: { connect: { id: fileRecord.id } },
-        owner_type: ownerType,
-        owner_id: ownerId,
         scope_type: dto.scopeType,
-        scope_id: dto.scopeId,
+        scope_id: dto.scopeId || userId, // Default to userId if no scopeId provided
         metadata: {
           duration,
           thumbnailUrl,
@@ -224,6 +222,14 @@ export class ContentService {
     const ownerType = dto.ownerType || "USER";
     const ownerId = dto.ownerId || userId;
 
+    // Merge metadata from DTO with default fields
+    const mergedMetadata = {
+      ...(dto.metadata || {}),
+      duration: dto.duration,
+      thumbnailUrl: dto.thumbnailUrl,
+      sourceUrl: dto.sourceUrl,
+    };
+
     // Create Content record without file
     const content = await this.prisma.contents.create({
       data: {
@@ -232,15 +238,10 @@ export class ContentService {
         type: dto.type,
         original_language: dto.originalLanguage || "PT_BR", // Default
         raw_text: dto.rawText || "",
-        owner_type: ownerType,
-        owner_id: ownerId,
         scope_type: dto.scopeType || ScopeType.USER,
-        scope_id: dto.scopeId,
-        metadata: {
-          duration: dto.duration,
-          thumbnailUrl: dto.thumbnailUrl,
-          sourceUrl: dto.sourceUrl,
-        },
+        scope_id: dto.scopeId || userId,
+        source_id: dto.sourceId, // Preserve sourceId from ingestors
+        metadata: mergedMetadata, // Preserve all metadata
         duration: dto.duration, // Mapped to column
         source_url: dto.sourceUrl,
         updated_at: new Date(),
@@ -408,9 +409,8 @@ export class ContentService {
     // Build permission filter (Owner OR Member of Family Scope)
     const permissionFilter = {
       OR: [
-        { owner_type: "USER", owner_id: userId },
-        { owner_type: "FAMILY", owner_id: { in: familyIds } },
-        { owner_user_id: userId },
+        { scope_type: ScopeType.USER, scope_id: userId },
+        { scope_type: ScopeType.FAMILY, scope_id: { in: familyIds } },
         { created_by: userId },
       ],
     };
@@ -617,11 +617,9 @@ export class ContentService {
     const content = await this.prisma.contents.findUnique({
       where: { id: contentId },
       select: {
-        owner_type: true,
-        owner_id: true,
-        owner_user_id: true,
         created_by: true,
         scope_type: true,
+        scope_id: true,
         institution_id: true,
       },
     });
@@ -630,17 +628,16 @@ export class ContentService {
 
     // Direct User Ownership (Standardized)
     if (
-      content.owner_user_id === userId ||
-      content.created_by === userId ||
-      (content.owner_type === "USER" && content.owner_id === userId)
+      content.scope_type === ScopeType.USER &&
+      (content.scope_id === userId || content.created_by === userId)
     )
       return true;
 
-    // Shared Ownership (Basic check for legacy service compatibility)
-    if (content.owner_type === "FAMILY") {
+    // Shared Ownership (Family)
+    if (content.scope_type === ScopeType.FAMILY) {
       const familyMember = await this.prisma.family_members.findFirst({
         where: {
-          family_id: content.owner_id,
+          family_id: content.scope_id,
           user_id: userId,
           status: "ACTIVE",
         },
@@ -648,11 +645,9 @@ export class ContentService {
       return !!familyMember;
     }
 
-    if (
-      content.owner_type === "INSTITUTION" ||
-      content.scope_type === "INSTITUTION"
-    ) {
-      const instId = content.owner_id || content.institution_id;
+    // Institution Ownership
+    if (content.scope_type === ScopeType.INSTITUTION) {
+      const instId = content.scope_id || content.institution_id;
       const user = await this.prisma.users.findUnique({
         where: { id: userId },
         select: { last_institution_id: true },
@@ -691,4 +686,49 @@ export class ContentService {
       },
     });
   }
+
+  /**
+   * Create content version (simplified text)
+   * Used by content_processor worker
+   * Accepts snake_case from worker, stores in DB
+   */
+  async createContentVersion(
+    contentId: string,
+    data: {
+      target_language: string;
+      schooling_level_target: string;
+      simplified_text: string;
+      summary?: string;
+      vocabulary_glossary?: Record<string, any>;
+    },
+  ) {
+    // Verify content exists
+    const content = await this.prisma.contents.findUnique({
+      where: { id: contentId },
+    });
+
+    if (!content) {
+      throw new NotFoundException(`Content ${contentId} not found`);
+    }
+
+    // Create version record (snake_case matches schema)
+    const version = await this.prisma.content_versions.create({
+      data: {
+        id: uuidv4(),
+        content_id: contentId,
+        target_language: data.target_language as Language,
+        schooling_level_target: data.schooling_level_target,
+        simplified_text: data.simplified_text,
+        summary: data.summary,
+        vocabulary_glossary: data.vocabulary_glossary,
+      },
+    });
+
+    this.logger.log(
+      `✅ Content version created: ${version.id} for content ${contentId}`,
+    );
+
+    return version;
+  }
 }
+

@@ -51,6 +51,8 @@ async function start() {
                 simplifiedText: result.simplified_text,
                 summary: result.summary,
                 vocabularyGlossary: result.glossary
+            }, {
+                headers: { 'x-api-key': WORKER_CONFIG.apiKey }
             });
             console.log("Saved simplified version.");
 
@@ -77,6 +79,8 @@ async function start() {
                 contentId: task.contentId,
                 schoolingLevelTarget: task.level || '1_EM',
                 questions: questionsDto
+            }, {
+                headers: { 'x-api-key': WORKER_CONFIG.apiKey }
             });
             console.log("Saved assessment.");
 
@@ -98,6 +102,8 @@ async function start() {
                tabooCards: result.gameConfigs?.taboo,
                bossFightConfig: result.gameConfigs?.bossFight,
                processingVersion: result.processingVersion
+            }, {
+                headers: { 'x-api-key': WORKER_CONFIG.apiKey }
             });
             console.log("Saved pedagogical data.");
         }

@@ -89,6 +89,14 @@ export class CreateContentDto {
   @IsString()
   @IsOptional()
   sourceUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  sourceId?: string;
+
+  @IsObject()
+  @IsOptional()
+  metadata?: Record<string, any>;
 }
 
 export class UpdateContentDto {

@@ -10,6 +10,9 @@ export const WORKER_CONFIG = {
   aiServiceUrl: process.env.AI_SERVICE_URL || 'http://ai:8001',
   apiUrl: process.env.API_URL || 'http://api:4000/api/v1',
   
+  // API Key for service-to-service auth
+  apiKey: process.env.API_SERVICE_SECRET || '',
+  
   // AI Service Endpoints
   aiEndpoints: {
     simplify: '/simplify',
@@ -19,7 +22,7 @@ export const WORKER_CONFIG = {
   
   // API Endpoints (relative to API_URL)
   apiEndpoints: {
-    contentVersions: (contentId: string) => `/content/${contentId}/versions`,
+    contentVersions: (contentId: string) => `/contents/${contentId}/versions`,
     assessment: '/assessment',
     pedagogicalData: (contentId: string) => `/cornell/contents/${contentId}/pedagogical`,
   },

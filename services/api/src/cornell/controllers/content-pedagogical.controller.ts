@@ -4,6 +4,11 @@ import { JwtAuthGuard } from "../../auth/infrastructure/jwt-auth.guard";
 import { ContentPedagogicalService } from "../services/content-pedagogical.service";
 import { CreateContentPedagogicalDataDto } from "../dto/create-content-pedagogical-data.dto";
 import { CreateGameResultDto } from "../dto/create-game-result.dto";
+import { CurrentUser } from "../../auth/presentation/decorators/current-user.decorator";
+import { users } from "@prisma/client";
+import * as crypto from "crypto";
+import { ApiKeyGuard } from "../../auth/infrastructure/api-key.guard";
+import { Public } from "../../auth/presentation/decorators/public.decorator";
 
 /**
  * Controller for Cornell Pedagogical Enhancement
@@ -30,6 +35,8 @@ export class ContentPedagogicalController {
   }
 
   @Post("contents/:id/pedagogical")
+  @UseGuards(ApiKeyGuard) // Allow workers to create pedagogical data
+  @Public()
   @ApiOperation({
     summary: "Create or update pedagogical data (Internal/Worker use)",
   })
@@ -57,13 +64,16 @@ export class ContentPedagogicalController {
   async recordGameResult(
     @Param("id") contentId: string,
     @Body() dto: CreateGameResultDto,
-    // @User() user: UserEntity -- In a real app we'd get user from request, but for now passing via DTO or assume middleware
-    // For now assuming the DTO or logic handles userId mapping, or we need to extract from request.
-    // The schema requires userId.
+    @CurrentUser() user: users,
   ) {
-    // TEMPORARY: In a real implementation, we extract userId from JWT.
-    // For this Sprint foundation, I will assume the DTO includes it or I need to change DTO to exclude it and add here.
-    // Actually, the DTO I created DOES NOT have userId. I need to get it from request.
-    throw new Error("UserId extraction not implemented yet");
+    return this.pedagogicalService.recordGameResult({
+      id: crypto.randomUUID(),
+      users: { connect: { id: user.id } },
+      contents: { connect: { id: contentId } },
+      game_type: dto.gameType,
+      score: dto.score,
+      metadata: dto.metadata || {},
+      played_at: new Date(),
+    });
   }
 }

@@ -152,6 +152,7 @@ services:
     environment:
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-aprendeai}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+      API_SERVICE_SECRET: ${API_SERVICE_SECRET:-dev-insecure-secret-key-change-me-in-prod-12345}
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -171,6 +172,7 @@ services:
     environment:
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-aprendeai}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+      API_SERVICE_SECRET: ${API_SERVICE_SECRET:-dev-insecure-secret-key-change-me-in-prod-12345}
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -191,6 +193,7 @@ services:
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-aprendeai}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
       AI_SERVICE_URL: http://ai:8001
+      API_SERVICE_SECRET: ${API_SERVICE_SECRET:-dev-insecure-secret-key-change-me-in-prod-12345}
     depends_on:
       rabbitmq:
         condition: service_healthy

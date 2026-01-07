@@ -9,6 +9,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtStrategy } from "./infrastructure/jwt.strategy";
 import { GoogleStrategy } from "./infrastructure/strategies/google.strategy";
 import { MicrosoftStrategy } from "./infrastructure/strategies/microsoft.strategy";
+import { ApiKeyGuard } from "./infrastructure/api-key.guard";
 import { EmailModule } from "../email/email.module";
 import { InstitutionsModule } from "../institutions/institutions.module";
 import { FeatureFlagsModule } from "../common/feature-flags.module";
@@ -56,6 +57,7 @@ import { BillingModule } from "../billing/billing.module";
     JwtStrategy,
     GoogleStrategy,
     MicrosoftStrategy,
+    ApiKeyGuard,
     ExtensionAuthService,
     PermissionEvaluator,
     TokenGeneratorService,
@@ -69,6 +71,6 @@ import { BillingModule } from "../billing/billing.module";
     ResetPasswordUseCase,
   ],
   controllers: [AuthController, ExtensionAuthController],
-  exports: [JwtModule, PermissionEvaluator, TokenGeneratorService],
+  exports: [JwtModule, PermissionEvaluator, TokenGeneratorService, ApiKeyGuard],
 })
 export class AuthModule {}

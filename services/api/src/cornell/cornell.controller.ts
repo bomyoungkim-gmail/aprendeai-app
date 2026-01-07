@@ -30,9 +30,12 @@ import {
 } from "./dto/cornell.dto";
 import { CreateCornellHighlightDto } from "./dto/create-cornell-highlight.dto";
 import { UploadContentDto } from "./dto/upload-content.dto";
+import { CreateContentVersionDto } from "./dto/create-content-version.dto";
 import { NotificationsGateway } from "../notifications/notifications.gateway";
 import { CreateContentUseCase } from "./application/use-cases/create-content.use-case";
 import { QUEUES, DEFAULTS, UPLOAD_LIMITS } from "../config/constants";
+import { ApiKeyGuard } from "../auth/infrastructure/api-key.guard";
+import { Public } from "../auth/presentation/decorators/public.decorator";
 
 @Controller("contents")
 @UseGuards(AuthGuard("jwt"))
@@ -46,6 +49,19 @@ export class CornellController {
     // Refactored Use Cases
     private createContentUseCase: CreateContentUseCase,
   ) {}
+
+  /**
+   * Create content from workers (news_ingestor, arxiv_ingestor)
+   * Protected by ApiKeyGuard for service-to-service auth
+   */
+  @Post()
+  @UseGuards(ApiKeyGuard)
+  @Public()
+  // TODO: Add specific rate limiting for worker endpoints (e.g. @Throttle(1000, 60)) if volume increases
+  async createContentFromWorker(@Body() dto: CreateContentDto) {
+    // Workers don't have user context, create as system content
+    return this.contentService.createManualContent(null, dto);
+  }
 
   @Post("create_manual")
   async createContent(@Body() dto: CreateContentDto, @Request() req) {
@@ -147,6 +163,30 @@ export class CornellController {
     @Request() req,
   ) {
     return this.cornellService.createHighlight(id, dto, req.user.id);
+  }
+
+  /**
+   * Create content version (simplified text)
+   * Used by content_processor worker
+   * Protected by ApiKeyGuard for service-to-service auth
+   */
+  @Post(":id/versions")
+  @UseGuards(ApiKeyGuard)
+  @Public()
+  async createContentVersion(
+    @Param("id") contentId: string,
+    @Body() dto: CreateContentVersionDto,
+  ) {
+    // Map camelCase DTO to snake_case for Prisma
+    const version = await this.contentService.createContentVersion(contentId, {
+      target_language: dto.targetLanguage,
+      schooling_level_target: dto.schoolingLevelTarget,
+      simplified_text: dto.simplifiedText,
+      summary: dto.summary,
+      vocabulary_glossary: dto.vocabularyGlossary,
+    });
+
+    return version;
   }
 
   @Get(":id/cornell")

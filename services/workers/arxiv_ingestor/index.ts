@@ -76,9 +76,11 @@ async function start() {
                 }
             };
             
-             // Post to API
+             // Post to API with service-to-service auth
              try {
-                await axios.post(`${API_URL}/content`, payload);
+                await axios.post(`${API_URL}/contents`, payload, {
+                   headers: { 'x-api-key': process.env.API_SERVICE_SECRET || '' }
+                });
                 console.log(`saved: ${title}`);
              } catch (apiErr) {
                 console.error(`Failed to save content: ${title}`, apiErr instanceof Error ? apiErr.message : apiErr);
