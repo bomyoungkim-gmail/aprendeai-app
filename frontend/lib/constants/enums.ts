@@ -53,6 +53,19 @@ export enum ContentType {
 }
 
 /**
+ * Content modes
+ * Maps to: ContentMode in schema.prisma
+ */
+export enum ContentMode {
+  NARRATIVE = 'NARRATIVE',
+  DIDACTIC = 'DIDACTIC',
+  TECHNICAL = 'TECHNICAL',
+  NEWS = 'NEWS',
+  SCIENTIFIC = 'SCIENTIFIC',
+  LANGUAGE = 'LANGUAGE',
+}
+
+/**
  * Target types for highlights/annotations
  * Now unified with ContentType for frontend compatibility.
  * 

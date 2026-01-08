@@ -6,7 +6,7 @@
  * scaffolding events (MISSION_COMPLETED, SCAFFOLDING_LEVEL_CHANGE).
  */
 
-import { ContentMode } from '../types/content';
+import { ContentMode } from '../lib/constants/enums';
 
 export interface TelemetryEvent {
   eventType: string;
