@@ -32,6 +32,21 @@ export class TelemetryService implements OnModuleDestroy {
   async track(dto: TrackEventDto, userId: string): Promise<void> {
     const scrubbedData = this.sanitizer.scrub(dto.data); // Scrub data
 
+    // De-duplication: Check for duplicate events in last 5 seconds
+    const isDuplicate = await this.isDuplicateEvent(
+      userId,
+      dto.eventType,
+      dto.contentId,
+      dto.sessionId,
+    );
+
+    if (isDuplicate) {
+      this.logger.debug(
+        `Duplicate event detected: ${dto.eventType} for user ${userId}. Skipping.`,
+      );
+      return; // Skip duplicate
+    }
+
     const eventInput: Prisma.telemetry_eventsCreateManyInput = {
       user_id: userId,
       content_id: dto.contentId,
@@ -93,6 +108,32 @@ export class TelemetryService implements OnModuleDestroy {
     );
     clearInterval(this.flushInterval);
     await this.flush();
+  }
+
+  /**
+   * Check if event is a duplicate (within 5-second window)
+   */
+  private async isDuplicateEvent(
+    userId: string,
+    eventType: string,
+    contentId: string,
+    sessionId: string,
+  ): Promise<boolean> {
+    const fiveSecondsAgo = new Date(Date.now() - 5000);
+
+    const existingEvent = await this.prisma.telemetry_events.findFirst({
+      where: {
+        user_id: userId,
+        event_type: eventType,
+        content_id: contentId,
+        session_id: sessionId,
+        created_at: {
+          gte: fiveSecondsAgo,
+        },
+      },
+    });
+
+    return !!existingEvent;
   }
 
   /**
