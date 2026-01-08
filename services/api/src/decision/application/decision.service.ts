@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { IDecisionLogRepository } from '../domain/decision-log.repository.interface';
 import { ScaffoldingService } from './scaffolding.service';
 import { ScaffoldingSignalDetectorService } from './scaffolding-signal-detector.service'; // SCRIPT 03 - Fase 2
+import { FlowStateDetectorService } from './flow-state-detector.service'; // SCRIPT 03 - GAP 8
 import { TelemetryService } from '../../telemetry/telemetry.service';
 import { TelemetryEventType } from '../../telemetry/domain/telemetry.constants';
 import {
@@ -51,6 +52,7 @@ export class DecisionService {
     private readonly logRepository: IDecisionLogRepository,
     private readonly scaffoldingService: ScaffoldingService,
     private readonly scaffoldingSignalDetector: ScaffoldingSignalDetectorService, // SCRIPT 03 - Fase 2
+    private readonly flowStateDetector: FlowStateDetectorService, // SCRIPT 03 - GAP 8
     private readonly telemetryService: TelemetryService,
     private readonly aiServiceClient: AiServiceClient, // AGENT SCRIPT A
     private readonly dcsCalculatorService: DcsCalculatorService, // GRAPH SCRIPT 09
