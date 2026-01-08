@@ -38,6 +38,18 @@ describe('buildSessionContext', () => {
       scaffoldingInitializer: {
         getInitialLevel: jest.fn().mockReturnValue(2), // Default to L2
       } as any,
+      scaffoldingBehaviorAdapter: {
+        getBehaviorModifiers: jest.fn().mockReturnValue({
+          responseFormat: 'DIRECT',
+          useSocraticMode: false,
+          includeExamples: false,
+          includeVerification: false,
+          quickReplies: [],
+          tone: 'conversational',
+          phaseAdjustments: { duringReading: false, postReading: false },
+        }),
+        formatSystemPrompt: jest.fn().mockReturnValue(''),
+      } as any,
     };
   });
 

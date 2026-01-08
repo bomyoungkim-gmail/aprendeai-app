@@ -9,6 +9,7 @@ import { buildSessionContext } from "../../helpers/context-builder";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { GamificationService } from "../../../gamification/gamification.service";
 import { ScaffoldingInitializerService } from "../../../decision/application/scaffolding-initializer.service"; // SCRIPT 03
+import { ScaffoldingBehaviorAdapterService } from "../../../decision/application/scaffolding-behavior-adapter.service"; // SCRIPT 03 - Fase 3
 
 @Injectable()
 export class GetSessionUseCase {
@@ -18,6 +19,7 @@ export class GetSessionUseCase {
     private readonly prisma: PrismaService,
     private readonly gamificationService: GamificationService,
     private readonly scaffoldingInitializer: ScaffoldingInitializerService, // SCRIPT 03
+    private readonly scaffoldingBehaviorAdapter: ScaffoldingBehaviorAdapterService, // SCRIPT 03 - Fase 3
   ) {}
 
   async execute(sessionId: string, userId: string): Promise<any> {
@@ -76,6 +78,7 @@ export class GetSessionUseCase {
           prisma: this.prisma, 
           gamificationService: this.gamificationService,
           scaffoldingInitializer: this.scaffoldingInitializer, // SCRIPT 03
+          scaffoldingBehaviorAdapter: this.scaffoldingBehaviorAdapter, // SCRIPT 03 - Fase 3
         },
         undefined, // No uiMode override in get-session
       );

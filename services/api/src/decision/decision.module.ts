@@ -6,6 +6,7 @@ import { DecisionService } from './application/decision.service';
 import { ScaffoldingService } from './application/scaffolding.service';
 import { ScaffoldingInitializerService } from './application/scaffolding-initializer.service'; // SCRIPT 03
 import { ScaffoldingSignalDetectorService } from './application/scaffolding-signal-detector.service'; // SCRIPT 03 - Fase 2
+import { ScaffoldingBehaviorAdapterService } from './application/scaffolding-behavior-adapter.service'; // SCRIPT 03 - Fase 3
 import { CornellTriggerService } from './application/cornell-trigger.service';
 import { DecisionController } from './decision.controller';
 import { PrismaDecisionLogRepository } from './infrastructure/repositories/prisma-decision-log.repository';
@@ -28,6 +29,7 @@ import { IDecisionLogRepository } from './domain/decision-log.repository.interfa
     ScaffoldingService,
     ScaffoldingInitializerService, // SCRIPT 03: Mode-aware initialization
     ScaffoldingSignalDetectorService, // SCRIPT 03 - Fase 2: Signal detection
+    ScaffoldingBehaviorAdapterService, // SCRIPT 03 - Fase 3: Behavior adaptation
     CornellTriggerService,
     {
       provide: IDecisionLogRepository,

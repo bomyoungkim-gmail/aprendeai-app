@@ -6,6 +6,7 @@ import { mergeDecisionPolicies } from '../../policies/decision-policy.merge';
 import { DecisionPolicyV1 } from '../../policies/decision-policy.schema';
 import { ContentModeHelper } from '../../contents/helpers/content-mode.helper';
 import { ScaffoldingInitializerService } from '../../decision/application/scaffolding-initializer.service'; // SCRIPT 03
+import { ScaffoldingBehaviorAdapterService } from '../../decision/application/scaffolding-behavior-adapter.service'; // SCRIPT 03 - Fase 3
 
 /**
  * Dependencies required for building session context
@@ -14,6 +15,7 @@ export interface ContextBuilderDeps {
   prisma: PrismaService;
   gamificationService: GamificationService;
   scaffoldingInitializer: ScaffoldingInitializerService; // SCRIPT 03
+  scaffoldingBehaviorAdapter: ScaffoldingBehaviorAdapterService; // SCRIPT 03 - Fase 3
 }
 
 /**
@@ -46,7 +48,7 @@ export async function buildSessionContext(
     return cached.data;
   }
 
-  const { prisma, gamificationService, scaffoldingInitializer } = deps; // SCRIPT 03
+  const { prisma, gamificationService, scaffoldingInitializer, scaffoldingBehaviorAdapter } = deps; // SCRIPT 03
 
   try {
     // Fetch all data in parallel for performance
@@ -232,6 +234,29 @@ export async function buildSessionContext(
       }
     }
 
+    // ========================================================================
+    // SCRIPT 03 - Fase 3: Mode-Specific Behavior Adaptation
+    // ========================================================================
+    
+    // Determine session phase (DURING or POST)
+    const sessionPhase: 'DURING' | 'POST' = session?.finished_at ? 'POST' : 'DURING';
+    
+    // Get behavior modifiers based on mode, level, and phase (GAP 1)
+    const behaviorModifiers = scaffoldingBehaviorAdapter.getBehaviorModifiers(
+      modeResolution.mode,
+      currentScaffoldingLevel as any,
+      sessionPhase,
+    );
+    
+    // Format system prompt with scaffolding behavior (GAP 2, GAP 7)
+    // This will be used by the Educator to modify AI responses
+    const baseSystemPrompt = ''; // Base prompt will be provided by Educator
+    const enhancedSystemPrompt = scaffoldingBehaviorAdapter.formatSystemPrompt(
+      baseSystemPrompt,
+      behaviorModifiers,
+      modeResolution.mode,
+    );
+
     // Build context with safe fallbacks
     const context: PromptContext = {
       // User
@@ -253,6 +278,11 @@ export async function buildSessionContext(
       // SRS
       VOCAB_COUNT: vocabCount,
       DAYS: daysUntilReview,
+      
+      // SCRIPT 03 - Fase 3: Scaffolding Behavior (for Educator integration)
+      scaffolding_level: currentScaffoldingLevel,
+      scaffolding_behavior: behaviorModifiers as any, // Complex object for Educator
+      system_prompt_override: enhancedSystemPrompt,
       
       // Not implemented in MVP (will be undefined)
       LEVEL: undefined,

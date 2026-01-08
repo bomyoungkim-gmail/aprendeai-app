@@ -5,6 +5,7 @@ import { SrsService } from "../../srs/srs.service";
 import { PromptContext } from "../../prompts/types/prompt-context";
 import { PrismaService } from "../../prisma/prisma.service";
 import { ScaffoldingInitializerService } from "../../decision/application/scaffolding-initializer.service"; // SCRIPT 03
+import { ScaffoldingBehaviorAdapterService } from "../../decision/application/scaffolding-behavior-adapter.service"; // SCRIPT 03 - Fase 3
 
 @Injectable()
 export class OpsCoachService {
@@ -16,6 +17,7 @@ export class OpsCoachService {
     private srsService: SrsService,
     private prisma: PrismaService,
     private scaffoldingInitializer: ScaffoldingInitializerService, // SCRIPT 03
+    private scaffoldingBehaviorAdapter: ScaffoldingBehaviorAdapterService, // SCRIPT 03 - Fase 3
   ) {}
 
   /**
@@ -80,6 +82,7 @@ export class OpsCoachService {
           prisma: this.prisma,
           gamificationService: this.gamificationService,
           scaffoldingInitializer: this.scaffoldingInitializer, // SCRIPT 03
+          scaffoldingBehaviorAdapter: this.scaffoldingBehaviorAdapter, // SCRIPT 03 - Fase 3
         },
       );
 
