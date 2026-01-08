@@ -2,6 +2,7 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { IDecisionLogRepository } from '../domain/decision-log.repository.interface';
 import { ScaffoldingService } from './scaffolding.service';
+import { ScaffoldingSignalDetectorService } from './scaffolding-signal-detector.service'; // SCRIPT 03 - Fase 2
 import { TelemetryService } from '../../telemetry/telemetry.service';
 import { TelemetryEventType } from '../../telemetry/domain/telemetry.constants';
 import {
@@ -12,6 +13,7 @@ import {
   DecisionResultV2,
   SuppressReason,
 } from '../domain/decision.types';
+import { ScaffoldingLevel } from '../domain/scaffolding.types'; // SCRIPT 03
 import {
   SuppressionContext,
   computeSuppressReasons,
@@ -48,6 +50,7 @@ export class DecisionService {
     @Inject(IDecisionLogRepository)
     private readonly logRepository: IDecisionLogRepository,
     private readonly scaffoldingService: ScaffoldingService,
+    private readonly scaffoldingSignalDetector: ScaffoldingSignalDetectorService, // SCRIPT 03 - Fase 2
     private readonly telemetryService: TelemetryService,
     private readonly aiServiceClient: AiServiceClient, // AGENT SCRIPT A
     private readonly dcsCalculatorService: DcsCalculatorService, // GRAPH SCRIPT 09
@@ -408,6 +411,75 @@ export class DecisionService {
           `Max interventions exceeded for user ${userId}: ${recentCount}/${maxInterventions} in last 10min`,
         );
         finalAction = 'NO_OP';
+      }
+    }
+
+    // ========================================================================
+    // SCRIPT 03 - Fase 2: Scaffolding Signal Detection & Adjustment
+    // ========================================================================
+    
+    // Only detect signals if we have required context
+    if (contentId && userId) {
+      try {
+        // Get current scaffolding state
+        const learnerProfile = await this.prisma.learner_profiles.findUnique({
+          where: { user_id: userId },
+          select: { scaffolding_state_json: true },
+        });
+
+        const scaffoldingState = learnerProfile?.scaffolding_state_json as any || {
+          currentLevel: scaffoldingLevel,
+          lastLevelChangeAt: new Date(),
+          fadingMetrics: {
+            consecutiveSuccesses: 0,
+            interventionDismissalRate: 0,
+          },
+        };
+
+        // Detect signal
+        const signal = await this.scaffoldingSignalDetector.detectSignal(
+          userId,
+          contentId,
+          await this.getContentMode(contentId),
+          scaffoldingState,
+        );
+
+        // GAP 4: Check cooldown (5 minutes)
+        const COOLDOWN_MS = 5 * 60 * 1000;
+        const timeSinceLastChange = Date.now() - new Date(scaffoldingState.lastLevelChangeAt).getTime();
+        const cooldownActive = timeSinceLastChange < COOLDOWN_MS;
+
+        // Apply scaffolding adjustment if signal confidence is high and cooldown passed
+        if (signal.type !== 'MAINTAIN' && signal.confidence > 0.7 && !cooldownActive) {
+          const newLevel = this.calculateNewScaffoldingLevel(
+            scaffoldingState.currentLevel,
+            signal.type,
+          );
+
+          if (newLevel !== scaffoldingState.currentLevel) {
+            this.logger.log(
+              `Scaffolding adjustment: L${scaffoldingState.currentLevel} → L${newLevel} (reason: ${signal.reason}, confidence: ${signal.confidence.toFixed(2)})`,
+            );
+
+            // Update scaffolding level (GAP 5: handles consecutiveSuccesses)
+            await this.scaffoldingService.updateLevel(
+              userId,
+              newLevel as ScaffoldingLevel,
+              signal.reason,
+              await this.getContentMode(contentId),
+              signal.type,
+            );
+
+            // TODO: Emit SCAFFOLDING_LEVEL_SET event (will be added in next step)
+          }
+        } else if (signal.type !== 'MAINTAIN' && cooldownActive) {
+          this.logger.debug(
+            `Scaffolding change suppressed (cooldown): ${timeSinceLastChange}ms < ${COOLDOWN_MS}ms`,
+          );
+        }
+      } catch (error) {
+        this.logger.error('Failed to detect/apply scaffolding signal:', error);
+        // Don't fail the entire decision if scaffolding detection fails
       }
     }
 
@@ -1005,5 +1077,35 @@ export class DecisionService {
         modelTier: 'flash', // Use fast, cheap model
       },
     };
+  }
+
+  // ========================================================================
+  // SCRIPT 03 - Fase 2: Scaffolding Helper Methods
+  // ========================================================================
+
+  /**
+   * Get ContentMode for a given content
+   */
+  private async getContentMode(contentId: string): Promise<any> {
+    const content = await this.prisma.contents.findUnique({
+      where: { id: contentId },
+      select: { mode: true },
+    });
+    return content?.mode || 'DIDACTIC';
+  }
+
+  /**
+   * Calculate new scaffolding level based on signal type
+   */
+  private calculateNewScaffoldingLevel(
+    currentLevel: number,
+    signalType: 'INCREASE' | 'DECREASE' | 'MAINTAIN',
+  ): number {
+    if (signalType === 'INCREASE') {
+      return Math.min(3, currentLevel + 1);
+    } else if (signalType === 'DECREASE') {
+      return Math.max(0, currentLevel - 1);
+    }
+    return currentLevel;
   }
 }

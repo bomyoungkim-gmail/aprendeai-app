@@ -455,4 +455,70 @@ export class ScaffoldingService {
       timestamp: new Date(),
     });
   }
+
+  /**
+   * SCRIPT 03 - Fase 2: Update scaffolding level
+   * 
+   * GAP 5: Tracks consecutiveSuccesses for fading logic
+   * 
+   * @param userId - User ID
+   * @param newLevel - New scaffolding level (0-3)
+   * @param reason - Reason for the change
+   * @param mode - Content mode
+   * @param signalType - Type of signal that triggered the change
+   */
+  async updateLevel(
+    userId: string,
+    newLevel: ScaffoldingLevel,
+    reason: string,
+    mode: any,
+    signalType?: 'INCREASE' | 'DECREASE' | 'MAINTAIN',
+  ): Promise<void> {
+    const profile = await this.prisma.learner_profiles.findUnique({
+      where: { user_id: userId },
+      select: { scaffolding_state_json: true },
+    });
+
+    const currentState: ScaffoldingState = (profile?.scaffolding_state_json as any) || {
+      currentLevel: 2,
+      lastLevelChangeAt: new Date(),
+      fadingMetrics: { consecutiveSuccesses: 0, interventionDismissalRate: 0 },
+    };
+
+    const updatedState: ScaffoldingState = {
+      ...currentState,
+      currentLevel: newLevel,
+      lastLevelChangeAt: new Date(),
+    };
+
+    // GAP 5: Update consecutiveSuccesses based on signal type
+    if (signalType === 'DECREASE') {
+      // Successful fading - reset counter
+      updatedState.fadingMetrics.consecutiveSuccesses = 0;
+      this.logger.log(`Fading successful: L${currentState.currentLevel} → L${newLevel}`);
+    } else if (reason === 'consistent_mastery') {
+      // Building toward fading - increment counter
+      updatedState.fadingMetrics.consecutiveSuccesses =
+        currentState.fadingMetrics.consecutiveSuccesses + 1;
+      this.logger.debug(
+        `Building consistency: ${updatedState.fadingMetrics.consecutiveSuccesses} sessions`,
+      );
+    } else if (signalType === 'INCREASE') {
+      // Performance dropped - reset counter
+      updatedState.fadingMetrics.consecutiveSuccesses = 0;
+      this.logger.log(`Scaffolding increased: L${currentState.currentLevel} → L${newLevel}`);
+    }
+
+    // Persist updated state
+    await this.prisma.learner_profiles.update({
+      where: { user_id: userId },
+      data: {
+        scaffolding_state_json: updatedState as any,
+      },
+    });
+
+    this.logger.log(
+      `Scaffolding level updated for user ${userId}: L${currentState.currentLevel} → L${newLevel} (reason: ${reason}, mode: ${mode})`,
+    );
+  }
 }
