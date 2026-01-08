@@ -470,7 +470,24 @@ export class DecisionService {
               signal.type,
             );
 
-            // TODO: Emit SCAFFOLDING_LEVEL_SET event (will be added in next step)
+            // Emit SCAFFOLDING_LEVEL_SET event
+            if (sessionId) {
+              await this.telemetryService.track({
+                eventType: 'SCAFFOLDING_LEVEL_SET' as any,
+                eventVersion: '1.0.0',
+                contentId: contentId,
+                sessionId: sessionId,
+                data: {
+                  from: scaffoldingState.currentLevel,
+                  to: newLevel,
+                  reason: signal.reason,
+                  mode: await this.getContentMode(contentId),
+                  phase: phase,
+                  confidence: signal.confidence,
+                  evidence: signal.evidence,
+                },
+              }, userId);
+            }
           }
         } else if (signal.type !== 'MAINTAIN' && cooldownActive) {
           this.logger.debug(
