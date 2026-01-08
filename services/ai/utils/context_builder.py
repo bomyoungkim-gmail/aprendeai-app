@@ -113,6 +113,13 @@ class ContextPackBuilder:
                 "decision_policy": parse_decision_policy(
                     session.get('decision_policy')
                 ).model_dump(),
+                # SCRIPT 03: Scaffolding & Fading
+                # Extract scaffolding state from session (sent by NestJS Context Builder)
+                "scaffolding": {
+                    "level": session.get('scaffolding_level', 2),  # Default L2
+                    "behavior": session.get('scaffolding_behavior', {}),
+                    "systemPromptOverride": session.get('system_prompt_override', ''),
+                },
             }
             
             logger.debug(f"Built context pack for session {session_id}")
