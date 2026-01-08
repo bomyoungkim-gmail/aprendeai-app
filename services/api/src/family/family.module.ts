@@ -7,6 +7,8 @@ import { PromptLibraryModule } from "../prompts/prompt-library.module";
 import { EventsModule } from "../events/events.module";
 import { StateMachineModule } from "../state-machine/state-machine.module";
 import { PrivacyModule } from "../privacy/privacy.module";
+import { GamificationModule } from "../gamification/gamification.module";
+import { SrsModule } from "../srs/srs.module";
 
 // Services
 import { OpsCoachService } from "./services/ops-coach.service";
@@ -30,6 +32,8 @@ import { CreateFamilyUseCase } from "./application/use-cases/create-family.use-c
     EventsModule,
     StateMachineModule,
     PrivacyModule,
+    GamificationModule,
+    SrsModule,
   ],
   controllers: [FamilyController],
   providers: [

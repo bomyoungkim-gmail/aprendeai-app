@@ -22,6 +22,7 @@ import { GetPlatformStatsUseCase } from "./application/use-cases/get-platform-st
 import { AdminUserManagementUseCase } from "./application/use-cases/admin-user-management.use-case";
 import { LLMModule } from "../llm/llm.module";
 import { AnalyticsModule } from "../analytics/analytics.module";
+import { DecisionModule } from "../decision/decision.module";
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { AnalyticsModule } from "../analytics/analytics.module";
     }),
     LLMModule,
     AnalyticsModule,
+    DecisionModule,
   ],
   controllers: [
     AdminController,

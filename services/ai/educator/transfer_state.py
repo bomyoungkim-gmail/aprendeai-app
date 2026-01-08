@@ -19,7 +19,9 @@ TransferIntent = Literal[
     "CONNECTION_CIRCLE", # Relationship mapping
     "PKM",               # Atomic note generation
     "MISSION_FEEDBACK",  # Rich feedback on attempts
-    "METACOGNITION"      # Self-regulation prompts
+    "METACOGNITION",      # Self-regulation prompts
+    "SENTENCE_ANALYSIS",  # Tool: Sentence Analysis (New)
+    "HIGH_ROAD"          # Transfer missions
 ]
 
 

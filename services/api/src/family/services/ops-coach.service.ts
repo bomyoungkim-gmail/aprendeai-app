@@ -1,15 +1,113 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { PromptLibraryService } from "../../prompts/prompt-library.service";
+import { GamificationService } from "../../gamification/gamification.service";
+import { SrsService } from "../../srs/srs.service";
+import { PromptContext } from "../../prompts/types/prompt-context";
+import { PrismaService } from "../../prisma/prisma.service";
+import { ScaffoldingInitializerService } from "../../decision/application/scaffolding-initializer.service"; // SCRIPT 03
 
 @Injectable()
 export class OpsCoachService {
-  constructor(private promptLibrary: PromptLibraryService) {}
+  private readonly logger = new Logger(OpsCoachService.name);
+
+  constructor(
+    private promptLibrary: PromptLibraryService,
+    private gamificationService: GamificationService,
+    private srsService: SrsService,
+    private prisma: PrismaService,
+    private scaffoldingInitializer: ScaffoldingInitializerService, // SCRIPT 03
+  ) {}
 
   /**
-   * Get daily boot prompt for learner
+   * Get daily boot prompt for learner based on session phase
+   * @param phase - Optional session phase (BOOT, PRE, DURING, POST, FINISHED)
+   * @returns Appropriate prompt for the given phase
    */
-  getDailyBootLearner() {
-    return this.promptLibrary.getPrompt("OPS_DAILY_BOOT_LEARNER");
+  getDailyBootLearner(phase?: 'BOOT' | 'PRE' | 'DURING' | 'POST' | 'FINISHED') {
+    // Default to BOOT phase if not specified (backward compatibility)
+    if (!phase || phase === 'BOOT') {
+      return this.promptLibrary.getPrompt("OPS_DAILY_BOOT_LEARNER");
+    }
+
+    // Map phases to their corresponding prompts
+    const promptKeys = {
+      PRE: "READ_PRE_CHOICE_SKIM",
+      DURING: "READ_DURING_MARK_RULE",
+      POST: "READ_POST_FREE_RECALL",
+      FINISHED: "READ_FINISHED_SUMMARY",
+    };
+
+    const promptKey = promptKeys[phase];
+    if (!promptKey) {
+      throw new Error(`No prompt defined for phase: ${phase}`);
+    }
+
+    return this.promptLibrary.getPrompt(promptKey);
+  }
+
+  /**
+   * Get daily boot prompt with context (for all phases)
+   * @param phase - Session phase
+   * @param userId - User ID for fetching gamification data
+   * @param sessionId - Session ID for context building
+   * @param contentId - Optional content ID for SRS calculation
+   * @returns Prompt with interpolated variables
+   */
+  async getDailyBootLearnerWithContext(
+    phase: 'BOOT' | 'PRE' | 'DURING' | 'POST' | 'FINISHED',
+    userId: string,
+    sessionId: string,
+    contentId?: string,
+  ) {
+    const basePrompt = this.getDailyBootLearner(phase);
+
+    // Interpolate for all phases
+    // if (phase !== 'FINISHED' && phase !== 'BOOT') {
+    //   return basePrompt;
+    // }
+
+    try {
+      // Use buildSessionContext helper
+      const { buildSessionContext } = await import(
+        '../../sessions/helpers/context-builder'
+      );
+
+      const context = await buildSessionContext(
+        sessionId,
+        userId,
+        contentId || '',
+        {
+          prisma: this.prisma,
+          gamificationService: this.gamificationService,
+          scaffoldingInitializer: this.scaffoldingInitializer, // SCRIPT 03
+        },
+      );
+
+      return this.promptLibrary.interpolateVariables(basePrompt, context);
+    } catch (error) {
+      // Fallback to base prompt if context building fails
+      this.logger.error('Failed to build prompt context:', error);
+      return basePrompt;
+    }
+  }
+
+  /**
+   * Calculate days until next review using simplified SRS logic
+   */
+  private async calculateNextReview(
+    userId: string,
+    contentId?: string,
+  ): Promise<number> {
+    if (!contentId) {
+      return 3; // Default: 3 days
+    }
+
+    // TODO: Query vocab items for this content and get earliest due date
+    // For now, use simple heuristic based on SRS intervals
+    const defaultStage = 'D3'; // Assume D3 stage for new content
+    const interval = this.srsService.getStageInterval(defaultStage as any);
+    
+    return interval;
   }
 
   /**
@@ -79,7 +177,7 @@ export class OpsCoachService {
     queueItem?: { title: string; estMin: number },
   ) {
     if (!hasDailyBoot) {
-      return this.getDailyBootLearner();
+      return this.getDailyBootLearner('BOOT');
     }
 
     if (isCoReadingDay) {

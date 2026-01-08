@@ -48,9 +48,18 @@ export class BulkService {
                     id: randomUUID(),
                     email,
                     name: row.name || email.split("@")[0],
-                    password_hash: "PENDING_INVITE",
                     schooling_level: "UNDERGRADUATE",
                     updated_at: new Date(),
+                  },
+                });
+
+                await (this.prisma as any).user_identities.create({
+                  data: {
+                    user_id: user.id,
+                    provider: "password",
+                    provider_id: email,
+                    email: email,
+                    password_hash: "PENDING_INVITE",
                   },
                 });
               }

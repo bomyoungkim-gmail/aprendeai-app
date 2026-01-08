@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useOnlineStatus } from '@/hooks/shared/use-online-status';
 import { offlineQueue, type QueuedOperation } from '@/lib/cornell/offline-queue';
@@ -9,6 +9,15 @@ export function useOfflineSync() {
   const isOnline = useOnlineStatus();
   const queryClient = useQueryClient();
   const isSyncing = useRef(false);
+  const [queueLength, setQueueLength] = useState(() => offlineQueue.length);
+
+  // Subscribe to queue changes
+  useEffect(() => {
+    const unsubscribe = offlineQueue.subscribe(() => {
+      setQueueLength(offlineQueue.length);
+    });
+    return () => { unsubscribe(); };
+  }, []);
 
   useEffect(() => {
     if (!isOnline || isSyncing.current) return;
@@ -63,11 +72,11 @@ export function useOfflineSync() {
       console.error('❌ Offline sync failed:', err);
       isSyncing.current = false;
     });
-  }, [isOnline, queryClient]);
+  }, [isOnline, queryClient, queueLength]); // Depend on queueLength to retry sync if new items added
 
   return {
     isOnline,
-    queueLength: offlineQueue.length,
+    queueLength,
     isSyncing: isSyncing.current,
   };
 }

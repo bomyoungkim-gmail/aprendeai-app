@@ -43,7 +43,7 @@ describe("Annotations Integration Tests", () => {
       create: {
         email: testUserEmail,
         name: "Annotations Tester",
-        password_hash: "hash", // Not used for JWT auth skip
+
         schooling_level: "ADULT",
         status: "ACTIVE",
         system_role: "ADMIN" as any, // Give admin to be safe for all Ops

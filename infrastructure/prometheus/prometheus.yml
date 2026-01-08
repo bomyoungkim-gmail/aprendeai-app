@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "graph-automation"
+    metrics_path: "/api/v1/metrics/graph"
+    static_configs:
+      - targets: ["api:4000", "host.docker.internal:4000"]
+    # 'api:4000' for container-to-container communication
+    # 'host.docker.internal:4000' for accessing host service from container

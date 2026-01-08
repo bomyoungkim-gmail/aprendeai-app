@@ -26,6 +26,21 @@ export class FamilyService {
   ) {}
 
   /**
+   * ✅ Issue #8: Validate family member limit (max 6 ACTIVE members)
+   */
+  private async validateMemberLimit(familyId: string): Promise<void> {
+    const activeMembers = await this.prisma.family_members.count({
+      where: { family_id: familyId, status: 'ACTIVE' },
+    });
+
+    if (activeMembers >= 6) {
+      throw new BadRequestException(
+        'Family member limit reached (maximum 6 active members)',
+      );
+    }
+  }
+
+  /**
    * Create a new family
    */
   async create(userId: string, dto: CreateFamilyDto) {
@@ -117,6 +132,9 @@ export class FamilyService {
         "Only Owners and Guardians can invite members",
       );
     }
+
+    // ✅ Issue #8: Validate member limit before inviting
+    await this.validateMemberLimit(familyId);
 
     // 2. Find user by email
     let invitedUser = await this.prisma.users.findUnique({

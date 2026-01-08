@@ -17,6 +17,7 @@ export class ContentModeService {
         mode_source: true,
         title: true,
         type: true,
+        raw_text: true, // Needed for narrative detection
       },
     });
 
@@ -33,8 +34,23 @@ export class ContentModeService {
       return content.mode as ContentMode;
     }
 
-    // Fallback: infer mode from content metadata
-    return this.inferMode(content);
+    // P3: Infer mode if not set (Script 02)
+    const inferredMode = this.inferMode(content);
+
+    // Lazy persistence: Save inferred mode to DB (idempotent)
+    if (!content.mode) {
+      await this.prisma.contents.update({
+        where: { id: contentId },
+        data: {
+          mode: inferredMode,
+          mode_source: 'HEURISTIC',
+          mode_set_by: 'SYSTEM',
+          mode_set_at: new Date(),
+        },
+      });
+    }
+
+    return inferredMode;
   }
 
   /**
@@ -100,12 +116,40 @@ export class ContentModeService {
   }
 
   /**
-   * Infer mode from content metadata using simple heuristics
+   * Infer mode from content metadata using ContentType-based rules (Script 02)
+   * Priority: ContentType mapping > Narrative detection > Title-based heuristics
    */
-  private inferMode(content: { title: string; type: string }): ContentMode {
+  private inferMode(content: { title: string; type: string; raw_text?: string }): ContentMode {
     const title = content.title.toLowerCase();
     const type = content.type;
 
+    // P3.1: Direct ContentType mappings (Script 02)
+    if (type === 'NEWS') {
+      return ContentMode.NEWS;
+    }
+    if (type === 'ARXIV') {
+      return ContentMode.SCIENTIFIC;
+    }
+    if (type === 'SCHOOL_MATERIAL') {
+      return ContentMode.DIDACTIC;
+    }
+
+    // P3.2: Narrative detection heuristic for ARTICLE/TEXT/WEB_CLIP
+    if (['ARTICLE', 'TEXT', 'WEB_CLIP'].includes(type)) {
+      if (this.detectNarrative(content.raw_text || '')) {
+        return ContentMode.NARRATIVE;
+      }
+      // Default for these types if not narrative
+      return ContentMode.TECHNICAL;
+    }
+
+    // P3.3: VIDEO/AUDIO - inherit from transcript/description (future enhancement)
+    // For now, default to TECHNICAL
+    if (['VIDEO', 'AUDIO'].includes(type)) {
+      return ContentMode.TECHNICAL;
+    }
+
+    // Fallback: Title-based heuristics (existing logic)
     // Check for language learning content
     if (
       title.includes("vocabulário") ||
@@ -172,7 +216,22 @@ export class ContentModeService {
       return ContentMode.DIDACTIC;
     }
 
-    // Default: NARRATIVE (stories, books, general reading)
-    return ContentMode.NARRATIVE;
+    // Default: TECHNICAL (conservative default)
+    return ContentMode.TECHNICAL;
+  }
+
+  /**
+   * Detect narrative content using dialogue ratio heuristic
+   * Returns true if content appears to be narrative/fiction
+   */
+  private detectNarrative(text: string): boolean {
+    if (!text || text.length < 100) return false;
+
+    // Count quotation marks (dialogue indicator)
+    const dialogueMarks = (text.match(/["'""'']/g) || []).length;
+    const dialogueRatio = dialogueMarks / text.length;
+
+    // Threshold: if >1% of characters are dialogue marks, likely narrative
+    return dialogueRatio > 0.01;
   }
 }

@@ -87,7 +87,7 @@ describe("Integration: Content Access & Service (Subfase 5.2)", () => {
           id: userId,
           email: `content-test-${uuidv4()}@test.com`,
           name: "Content Creator",
-          password_hash: "hash",
+
           schooling_level: "Superior",
           updated_at: new Date(),
         },
@@ -128,7 +128,7 @@ describe("Integration: Content Access & Service (Subfase 5.2)", () => {
           id: userId,
           email: `read-test-${uuidv4()}@test.com`,
           name: "Reader",
-          password_hash: "h",
+
           schooling_level: "Basic",
           updated_at: new Date(),
         },

@@ -10,12 +10,18 @@ export class CancelSubscriptionUseCase {
     private stripeService: StripeService,
   ) {}
 
-  async execute(subscriptionId: string): Promise<void> {
+  async execute(
+    subscriptionId: string,
+    immediate: boolean = false,
+  ): Promise<void> {
     const sub = await this.subscriptionRepo.findById(subscriptionId);
     if (!sub) throw new NotFoundException("Subscription not found");
 
-    // 1. Cancel on Stripe
-    await this.stripeService.cancelSubscription(sub.stripeSubscriptionId);
+    // 1. Cancel on Stripe (default: keep access until period end)
+    await this.stripeService.cancelSubscription(
+      sub.stripeSubscriptionId,
+      !immediate, // cancelAtPeriodEnd = !immediate
+    );
 
     // 2. Update DB
     await this.subscriptionRepo.cancel(subscriptionId);

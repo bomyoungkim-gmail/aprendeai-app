@@ -1,11 +1,24 @@
 """PKM Node - Assists in Atomic Note generation."""
 from educator.transfer_state import TransferState
+from educator.policies.decision_policy import parse_decision_policy
 import logging
 
 logger = logging.getLogger(__name__)
 
 def handle(state: TransferState) -> TransferState:
     logger.info("PKM node executing")
+    
+    # Check decision_policy gate
+    policy_dict = state.get("decision_policy", {})
+    policy = parse_decision_policy(policy_dict)
+    
+    if not policy.features.pkmEnabled:
+        logger.info("PKM disabled by decision_policy")
+        return {
+            **state,
+            "response_text": "⚠️ A geração de notas atômicas está desabilitada no momento.",
+            "current_node": "pkm",
+        }
     
     transfer_metadata = state.get('transfer_metadata', {})
     concept = transfer_metadata.get('concept', '')

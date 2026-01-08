@@ -8,12 +8,21 @@ export class PrismaStudyGroupsRepository implements IStudyGroupsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(group: StudyGroup): Promise<StudyGroup> {
+    // Determine which FK field to use based on scopeType
+    const scopeData: any = {};
+    if (group.scopeType === 'INSTITUTION') {
+      scopeData.institution_id = group.scopeId;
+    } else if (group.scopeType === 'FAMILY') {
+      scopeData.family_id = group.scopeId;
+    } else if (group.scopeType === 'USER') {
+      scopeData.personal_user_id = group.scopeId;
+    }
+
     const created = await this.prisma.study_groups.create({
       data: {
         id: group.id,
         name: group.name,
-        scope_type: group.scopeType as any,
-        scope_id: group.scopeId,
+        ...scopeData,
         users_owner: { connect: { id: group.ownerId } },
       },
     });
@@ -139,12 +148,27 @@ export class PrismaStudyGroupsRepository implements IStudyGroupsRepository {
   }
 
   private mapToDomain(item: any): StudyGroup {
+    // Determine scopeType and scopeId from FK fields
+    let scopeType = null;
+    let scopeId = null;
+
+    if (item.institution_id) {
+      scopeType = 'INSTITUTION';
+      scopeId = item.institution_id;
+    } else if (item.family_id) {
+      scopeType = 'FAMILY';
+      scopeId = item.family_id;
+    } else if (item.personal_user_id) {
+      scopeType = 'USER';
+      scopeId = item.personal_user_id;
+    }
+
     return new StudyGroup({
       id: item.id,
       name: item.name,
-      scopeType: item.scope_type,
-      scopeId: item.scope_id,
-      ownerId: item.owner_id,
+      scopeType,
+      scopeId,
+      ownerId: item.owner_user_id,
       createdAt: item.created_at,
       updatedAt: item.updated_at,
     });

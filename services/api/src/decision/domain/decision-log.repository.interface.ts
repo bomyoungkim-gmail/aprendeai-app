@@ -30,6 +30,22 @@ export interface IDecisionLogRepository {
     result: DecisionResultV2,
     context: DecisionInput,
   ): Promise<string>;
+
+  /**
+   * Get decision metrics for a time range
+   * 
+   * @param startDate - Start of the time range
+   * @param endDate - End of the time range
+   * @returns Aggregated counts by channel
+   */
+  getDecisionMetrics(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<{
+    total: number;
+    byChannel: Record<string, number>;
+    deterministicRatio: number;
+  }>;
 }
 
 export const IDecisionLogRepository = Symbol('IDecisionLogRepository');

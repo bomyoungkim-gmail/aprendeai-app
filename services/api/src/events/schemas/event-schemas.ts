@@ -45,7 +45,7 @@ export const CoSessionPhaseChangedSchema = z.object({
   type: z.literal("CO_SESSION_PHASE_CHANGED"),
   data: z.object({
     coSessionId: z.string(),
-    phase: z.enum(["BOOT", "PRE", "DURING", "POST", "CLOSE"]),
+    phase: z.enum(["BOOT", "PRE", "DURING", "POST", "FINISHED"]),
   }),
 });
 

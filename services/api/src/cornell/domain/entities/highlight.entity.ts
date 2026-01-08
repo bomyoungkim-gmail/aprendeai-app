@@ -3,7 +3,7 @@ export class Highlight {
   contentId: string;
   userId: string;
   kind: string; // HighlightKind enum
-  targetType: string; // TargetType enum
+  targetType: string; // ContentType enum
   type?: string; // Pedagogical type: EVIDENCE, VOCABULARY, MAIN_IDEA, DOUBT
   pageNumber?: number;
   anchor: any; // JSON

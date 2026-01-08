@@ -20,6 +20,9 @@ export * from './sessions.api';
 // Groups API (NEW)
 export * from './groups.api';
 
+// PKM API (NEW)
+export * from './pkm.api';
+
 // Default export of the axios instance
 import api from '@/lib/api';
 export default api;

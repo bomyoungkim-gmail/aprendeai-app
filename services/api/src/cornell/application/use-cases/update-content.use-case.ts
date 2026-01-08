@@ -4,6 +4,7 @@ import {
   NotFoundException,
   ForbiddenException,
 } from "@nestjs/common";
+import { ScopeType } from "@prisma/client";
 import { IContentRepository } from "../../domain/content.repository.interface";
 import { Content } from "../../domain/content.entity";
 import { ContentAccessService } from "../../services/content-access.service";
@@ -30,7 +31,7 @@ export class UpdateContentUseCase {
     // Check Write Access
     // Assuming canAccessContent covers read, but we need WRITE.
     // For now reusing canAccessContent, but ideally we have canManageContent
-    if (content.ownerType === "USER" && content.ownerId !== userId) {
+    if (content.scopeType === ScopeType.USER && content.scopeId !== userId) {
       throw new ForbiddenException("Only owner can update content");
     }
     // TODO: Add Family/Institution Admin logic

@@ -6,8 +6,7 @@
 
 import React from 'react';
 import { SIDEBAR_TABS_CONFIG } from '@/lib/cornell/unified-config';
-
-export type SidebarTab = 'toc' | 'stream' | 'synthesis' | 'analytics' | 'chat';
+import type { SidebarTab } from '@/lib/types/unified-stream';
 
 export interface CornellTabNavigationProps {
   activeTab: SidebarTab;

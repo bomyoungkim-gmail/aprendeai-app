@@ -5,7 +5,7 @@ import { ContentAccessService } from "../../services/content-access.service";
 import { Content } from "../../domain/content.entity";
 import { NotFoundException, ForbiddenException } from "@nestjs/common";
 
-import { ContentType } from "@prisma/client";
+import { ContentType, ScopeType } from "@prisma/client";
 
 describe("GetContentUseCase", () => {
   let useCase: GetContentUseCase;
@@ -16,8 +16,8 @@ describe("GetContentUseCase", () => {
     id: "content-1",
     title: "Test Content",
     type: ContentType.ARTICLE,
-    ownerId: "user-1",
-    ownerType: "USER",
+    scopeId: "user-1",
+    scopeType: ScopeType.USER,
     createdAt: new Date(),
     updatedAt: new Date(),
   });

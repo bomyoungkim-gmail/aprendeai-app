@@ -18,9 +18,19 @@ const MAX_RETRIES = 3;
 
 class OfflineQueueClass {
   private queue: QueuedOperation[] = [];
+  private listeners: Set<() => void> = new Set();
 
   constructor() {
     this.loadQueue();
+  }
+
+  subscribe(listener: () => void) {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  private notify() {
+    this.listeners.forEach(listener => listener());
   }
 
   private loadQueue() {
@@ -55,6 +65,7 @@ class OfflineQueueClass {
 
     this.queue.push(queuedOp);
     this.saveQueue();
+    this.notify();
     
     console.log('📥 Queued operation:', queuedOp.type);
     return queuedOp.id;
@@ -63,6 +74,7 @@ class OfflineQueueClass {
   remove(id: string) {
     this.queue = this.queue.filter((op) => op.id !== id);
     this.saveQueue();
+    this.notify();
   }
 
   getAll(): QueuedOperation[] {
@@ -95,6 +107,7 @@ class OfflineQueueClass {
             this.remove(op.id);
           } else {
             this.saveQueue();
+            this.notify(); // Changed retry count, obscure state change but good to notify
           }
         }
       }
@@ -104,6 +117,7 @@ class OfflineQueueClass {
   clear() {
     this.queue = [];
     this.saveQueue();
+    this.notify();
   }
 
   get length(): number {

@@ -41,7 +41,10 @@ const customJestConfig = {
     '!**/.next/**',
   ],
   
-
+  // Transform ESM modules
+  transformIgnorePatterns: [
+    'node_modules/(?!(uuid)/)',
+  ],
   
   // Module file extensions
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],

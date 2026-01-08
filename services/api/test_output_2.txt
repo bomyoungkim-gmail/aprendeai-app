@@ -1,0 +1,44 @@
+
+> api@0.0.1 test
+> jest src/graph/__tests__/graph-enhancements.e2e-spec.ts
+
+FAIL src/graph/__tests__/graph-enhancements.e2e-spec.ts
+  Graph Automation (e2e)
+    /metrics/graph (GET)
+      √ should return 200 and Prometheus formatted metrics (27 ms)
+    /health/graph-automation (GET)
+      × should return 200 and health status (10 ms)
+    /graph/diff/:userId (GET)
+      √ should return 200 and diff structure (6 ms)
+      √ should support contentId parameter (5 ms)
+
+  ● Graph Automation (e2e) › /health/graph-automation (GET) › should return 200 and health status
+
+    expect(received).toHaveProperty(path)
+
+    Expected path: "status"
+    Received path: []
+
+    Received value: {"averageConfidence": 0, "graphsNeedingComparison": 0, "lastComparisonJob": {"lastFailure": null, "lastRun": null, "lastSuccess": null, "message": "Job has never run", "name": "graph-comparison", "status": "warning"}, "lastDecayJob": {"lastFailure": null, "lastRun": null, "lastSuccess": null, "message": "Job has never run", "name": "graph-decay", "status": "warning"}, "totalLearnerGraphs": 10}
+
+      79 |         .get('/health/graph-automation')
+      80 |         .expect(200)
+    > 81 |         .expect((res) => {
+         |          ^
+      82 |           expect(res.body).toHaveProperty('status');
+      83 |           expect(res.body).toHaveProperty('timestamp');
+      84 |           expect(res.body).toHaveProperty('jobs');
+
+      at Object.<anonymous> (src/graph/__tests__/graph-enhancements.e2e-spec.ts:81:10)
+      ----
+      at src/graph/__tests__/graph-enhancements.e2e-spec.ts:82:28
+      at node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (node_modules/supertest/lib/test.js:120:14)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 3 passed, 4 total
+Snapshots:   0 total
+Time:        5.047 s, estimated 8 s
+Ran all test suites matching /src\\graph\\__tests__\\graph-enhancements.e2e-spec.ts/i.

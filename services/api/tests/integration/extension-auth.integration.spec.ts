@@ -44,7 +44,7 @@ describe("Extension Auth Integration Tests (e2e)", () => {
         id: `user-ext-${Date.now()}`,
         email: userData.email,
         name: userData.name,
-        password_hash: "hash", // Mock hash
+
         last_context_role: "STUDENT",
         status: "ACTIVE",
         schooling_level: "HIGHER_EDUCATION",

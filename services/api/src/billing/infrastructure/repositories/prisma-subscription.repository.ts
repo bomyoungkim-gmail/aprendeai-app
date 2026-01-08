@@ -29,7 +29,7 @@ export class PrismaSubscriptionRepository implements ISubscriptionRepository {
         status: subscription.status as SubscriptionStatus,
         source: "INTERNAL",
         current_period_start: subscription.startDate,
-        provider_subscription_id: subscription.stripeSubscriptionId,
+        provider_subscription_id: subscription.stripeSubscriptionId || null, // Use null instead of empty string
         metadata: subscription.metadata as any,
         updated_at: new Date(),
       },

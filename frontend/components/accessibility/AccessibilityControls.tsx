@@ -14,6 +14,7 @@
 import React from 'react';
 import { Type, Eye, Focus, Keyboard, Zap, RotateCcw } from 'lucide-react';
 import { AccessibilitySettings } from '@/lib/accessibility/accessibility-settings';
+import { toast } from 'react-hot-toast';
 
 interface AccessibilityControlsProps {
   settings: AccessibilitySettings;
@@ -56,6 +57,7 @@ export function AccessibilityControls({
         <div className="flex items-center gap-4">
           <input
             id="font-size-slider"
+            data-testid="font-size-slider"
             type="range"
             min="12"
             max="24"
@@ -117,6 +119,7 @@ export function AccessibilityControls({
           {(['normal', 'high', 'low'] as const).map((contrast) => (
             <button
               key={contrast}
+              data-testid={`contrast-${contrast}`}
               onClick={() => onChange({ contrast })}
               className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
                 settings.contrast === contrast
@@ -126,6 +129,7 @@ export function AccessibilityControls({
               role="radio"
               aria-checked={settings.contrast === contrast}
               aria-label={`Contraste ${contrast === 'normal' ? 'normal' : contrast === 'high' ? 'alto' : 'baixo'}`}
+              name={contrast === 'normal' ? 'Normal' : contrast === 'high' ? 'Alto' : 'Baixo'}
             >
               {contrast === 'normal' ? 'Normal' : contrast === 'high' ? 'Alto' : 'Baixo'}
             </button>
@@ -151,13 +155,21 @@ export function AccessibilityControls({
         </div>
         <button
           id="focus-mode-toggle"
-          onClick={() => onChange({ focusMode: !settings.focusMode })}
+          data-testid="focus-mode-toggle"
+          onClick={() => {
+            const newValue = !settings.focusMode;
+            onChange({ focusMode: newValue });
+            if (newValue) {
+              toast.success('Modo foco ativado');
+            }
+          }}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
             settings.focusMode ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
           }`}
           role="switch"
           aria-checked={settings.focusMode}
           aria-label="Alternar modo foco"
+          name="modo foco"
         >
           <span
             className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -185,6 +197,7 @@ export function AccessibilityControls({
         </div>
         <button
           id="keyboard-nav-toggle"
+          data-testid="keyboard-nav-toggle"
           onClick={() => onChange({ keyboardNavigation: !settings.keyboardNavigation })}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
             settings.keyboardNavigation ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
@@ -219,6 +232,7 @@ export function AccessibilityControls({
         </div>
         <button
           id="reduced-motion-toggle"
+          data-testid="reduced-motion-toggle"
           onClick={() => onChange({ reducedMotion: !settings.reducedMotion })}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
             settings.reducedMotion ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
@@ -226,6 +240,7 @@ export function AccessibilityControls({
           role="switch"
           aria-checked={settings.reducedMotion}
           aria-label="Alternar redução de animações"
+          name="reduzir animações"
         >
           <span
             className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${

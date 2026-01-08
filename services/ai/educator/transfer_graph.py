@@ -51,6 +51,7 @@ def create_transfer_graph():
     from educator.nodes.transfer.pkm_node import handle as pkm_handle
     from educator.nodes.transfer.metacognition_node import handle as metacognition_handle
     from educator.nodes.transfer.high_road_node import handle as high_road_handle  # AGENT SCRIPT B
+    from educator.nodes.transfer.sentence_node import handle as sentence_handle # New Tool
     
     workflow = StateGraph(TransferState)
     
@@ -69,6 +70,7 @@ def create_transfer_graph():
     workflow.add_node("pkm", pkm_handle)
     workflow.add_node("metacognition", metacognition_handle)
     workflow.add_node("high_road", high_road_handle)  # AGENT SCRIPT B
+    workflow.add_node("sentence_analysis", sentence_handle)
     
     # Set entry point to scaffolding node (AGENT SCRIPT C)
     workflow.set_entry_point("scaffolding")
@@ -89,6 +91,7 @@ def create_transfer_graph():
             "pkm": "pkm",
             "metacognition": "metacognition",
             "high_road": "high_road",  # AGENT SCRIPT B
+            "sentence_analysis": "sentence_analysis",
         }
     )
     
@@ -104,6 +107,7 @@ def create_transfer_graph():
     workflow.add_edge("pkm", END)
     workflow.add_edge("metacognition", END)
     workflow.add_edge("high_road", END)  # AGENT SCRIPT B
+    workflow.add_edge("sentence_analysis", END)
     
     logger.info("Transfer graph compiled (stateless, just-in-time)")
     

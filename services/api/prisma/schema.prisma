@@ -45,7 +45,7 @@ model annotation_shares {
 model annotations {
   id                String               @id @default(uuid())
   content_id        String
-  user_id           String
+  user_id           String? // ✅ Issue #7: Nullable to preserve audit trail
   type              AnnotationType
   start_offset      Int
   end_offset        Int
@@ -62,7 +62,7 @@ model annotations {
   study_groups      study_groups?        @relation(fields: [group_id], references: [id], onDelete: Cascade)
   annotations       annotations?         @relation("annotationsToannotations", fields: [parent_id], references: [id], onDelete: Cascade)
   other_annotations annotations[]        @relation("annotationsToannotations")
-  users             users                @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  users             users?               @relation(fields: [user_id], references: [id], onDelete: SetNull) // ✅ Issue #7: Preserve annotations
   annotation_shares annotation_shares[]
 
   @@index([content_id])
@@ -102,17 +102,21 @@ model assessment_answers {
 }
 
 model assessment_attempts {
-  id            String    @id @default(uuid())
-  assessment_id String
-  user_id       String
-  started_at    DateTime  @default(now())
-  finished_at   DateTime?
-  score_raw     Float?
-  score_percent Float?
+  id             String    @id @default(uuid())
+  assessment_id  String
+  user_id        String
+  institution_id String?
+  started_at     DateTime  @default(now())
+  finished_at    DateTime?
+  score_raw      Float?
+  score_percent  Float?
 
   assessment_answers assessment_answers[]
   assessments        assessments          @relation(fields: [assessment_id], references: [id])
   users              users                @relation(fields: [user_id], references: [id])
+  institutions       institutions?        @relation(fields: [institution_id], references: [id])
+
+  @@index([institution_id])
 }
 
 model assessment_questions {
@@ -421,8 +425,6 @@ model contents {
   scope_id       String?
   source_url     String?
   duration       Int?
-  owner_type     String?
-  owner_id       String?
 
   // Content Mode (Sprint 1)
   mode        ContentMode?
@@ -448,6 +450,7 @@ model contents {
   highlights                highlights[]
   learning_assets           learning_assets[]
   lessons                   lessons[]
+  vocab_items               vocab_items[]
   reading_sessions          reading_sessions[]
   user_library_items        user_library_items[]
   user_vocabularies         user_vocabularies[]
@@ -495,31 +498,39 @@ model courses {
 }
 
 model daily_activities {
-  id                  String   @id
+  id                  String        @id
   user_id             String
-  date                DateTime @db.Date
-  minutes_studied     Int      @default(0)
-  sessions_count      Int      @default(0)
-  contents_read       Int      @default(0)
-  annotations_created Int      @default(0)
-  minutes_spent       Int      @default(0)
-  lessons_completed   Int      @default(0)
-  goal_met            Boolean  @default(false)
-  created_at          DateTime @default(now())
-  users               users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  institution_id      String?
+  date                DateTime      @db.Date
+  minutes_studied     Int           @default(0)
+  sessions_count      Int           @default(0)
+  contents_read       Int           @default(0)
+  annotations_created Int           @default(0)
+  minutes_spent       Int           @default(0)
+  lessons_completed   Int           @default(0)
+  goal_met            Boolean       @default(false)
+  created_at          DateTime      @default(now())
+  users               users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  institutions        institutions? @relation(fields: [institution_id], references: [id])
 
-  @@unique([user_id, date])
+  @@unique([user_id, date, institution_id])
   @@index([user_id, date])
+  @@index([institution_id])
 }
 
 model daily_goals {
-  id         String        @id
-  user_id    String
-  goal_type  DailyGoalType
-  goal_value Int
-  created_at DateTime      @default(now())
-  updated_at DateTime
-  users      users         @relation(fields: [user_id], references: [id])
+  id             String        @id
+  user_id        String
+  institution_id String?
+  goal_type      DailyGoalType
+  goal_value     Int
+  created_at     DateTime      @default(now())
+  updated_at     DateTime
+  users          users         @relation(fields: [user_id], references: [id])
+  institutions   institutions? @relation(fields: [institution_id], references: [id])
+
+  @@index([user_id])
+  @@index([institution_id])
 }
 
 model enrollments {
@@ -550,7 +561,7 @@ model entitlement_overrides {
 
 model entitlement_snapshots {
   id         String               @id @default(uuid())
-  user_id    String
+  user_id    String? // ✅ Issue #7: Nullable to preserve audit trail
   scope_type EntitlementScopeType
   scope_id   String
 
@@ -563,7 +574,7 @@ model entitlement_snapshots {
   expires_at   DateTime?
   updated_at   DateTime  @updatedAt
 
-  users users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  users users? @relation(fields: [user_id], references: [id], onDelete: SetNull) // ✅ Issue #7: Preserve entitlement history
 
   @@unique([user_id, scope_type, scope_id])
   @@index([user_id, scope_type])
@@ -625,8 +636,10 @@ model extension_grants {
 model families {
   id            String  @id @default(uuid())
   name          String?
-  join_code     String? @unique
-  owner_user_id String  @map("owner_id")
+  join_code            String?   @unique
+  join_code_expires_at DateTime? // ✅ Issue #9
+  join_code_created_at DateTime? // ✅ Issue #9
+  owner_user_id        String    @map("owner_id")
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
@@ -637,6 +650,7 @@ model families {
   family_policies     family_policies[]
   provider_usage      provider_usage[]
   subscriptions       subscriptions[]
+  study_groups        study_groups[] // Issue #3: Explicit FK
 
   @@map("families")
 }
@@ -659,25 +673,25 @@ model family_members {
 }
 
 model family_policies {
-  id                        String      @id
-  family_id                 String
-  learner_user_id           String
-  timebox_default_min       Int         @default(15)
-  daily_min_minutes         Int         @default(15)
-  daily_review_cap          Int         @default(20)
-  co_reading_days           Int[]
-  co_reading_time           String?
-  tool_words_gate_enabled   Boolean     @default(true)
-  privacy_mode              PrivacyMode @default(AGGREGATED_ONLY)
-  scaffolding_level_default Int         @default(2)
-  fading_enabled            Boolean     @default(true)
-  llm_budget_daily_tokens   Int         @default(5000)
-  llm_hard_rate_limit_per_min Int       @default(10)
-  decision_policy_json      Json        @default("{}")
-  created_at                DateTime    @default(now())
-  updated_at                DateTime
-  families                  families    @relation(fields: [family_id], references: [id], onDelete: Cascade)
-  users                     users       @relation(fields: [learner_user_id], references: [id], onDelete: Cascade)
+  id                          String      @id
+  family_id                   String
+  learner_user_id             String
+  timebox_default_min         Int         @default(15)
+  daily_min_minutes           Int         @default(15)
+  daily_review_cap            Int         @default(20)
+  co_reading_days             Int[]
+  co_reading_time             String?
+  tool_words_gate_enabled     Boolean     @default(true)
+  privacy_mode                PrivacyMode @default(AGGREGATED_ONLY)
+  scaffolding_level_default   Int         @default(2)
+  fading_enabled              Boolean     @default(true)
+  llm_budget_daily_tokens     Int         @default(5000)
+  llm_hard_rate_limit_per_min Int         @default(10)
+  decision_policy_json        Json        @default("{}")
+  created_at                  DateTime    @default(now())
+  updated_at                  DateTime
+  families                    families    @relation(fields: [family_id], references: [id], onDelete: Cascade)
+  users                       users       @relation(fields: [learner_user_id], references: [id], onDelete: Cascade)
 
   @@unique([family_id, learner_user_id])
 }
@@ -714,39 +728,45 @@ model files {
 }
 
 model game_progress {
-  id          String    @id
-  user_id     String
-  game_id     String
-  stars       Int       @default(0)
-  bestScore   Float     @default(0)
-  total_plays Int       @default(0)
-  streak      Int       @default(0)
-  last_played DateTime?
-  created_at  DateTime  @default(now())
-  updated_at  DateTime
-  users       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id             String        @id
+  user_id        String
+  institution_id String?
+  game_id        String
+  stars          Int           @default(0)
+  bestScore      Float         @default(0)
+  total_plays    Int           @default(0)
+  streak         Int           @default(0)
+  last_played    DateTime?
+  created_at     DateTime      @default(now())
+  updated_at     DateTime
+  users          users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  institutions   institutions? @relation(fields: [institution_id], references: [id])
 
-  @@unique([user_id, game_id])
+  @@unique([user_id, game_id, institution_id])
   @@index([game_id])
   @@index([user_id])
+  @@index([institution_id])
 }
 
 model game_results {
-  id         String   @id
-  user_id    String
-  content_id String
-  game_type  String
-  score      Float
-  metadata   Json?
-  played_at  DateTime @default(now())
-  contents   contents @relation(fields: [content_id], references: [id], onDelete: Cascade)
-  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id             String        @id
+  user_id        String
+  institution_id String?
+  content_id     String
+  game_type      String
+  score          Float
+  metadata       Json?
+  played_at      DateTime      @default(now())
+  contents       contents      @relation(fields: [content_id], references: [id], onDelete: Cascade)
+  users          users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  institutions   institutions? @relation(fields: [institution_id], references: [id])
 
   @@index([game_type])
   @@index([played_at])
   @@index([user_id, content_id])
   @@index([content_id])
   @@index([user_id])
+  @@index([institution_id])
 }
 
 model gradebook_exports {
@@ -848,7 +868,7 @@ model highlights {
   content_id          String
   user_id             String
   kind                HighlightKind
-  target_type         TargetType
+  target_type         ContentType
   page_number         Int?
   anchor_json         Json
   color_key           String                @default("yellow")
@@ -912,7 +932,7 @@ model institution_invites {
 model institution_members {
   id             String          @id @default(uuid())
   institution_id String
-  user_id        String          @unique
+  user_id        String // ✅ Security Fix Issue #6: Removed @unique to allow multi-tenant
   role           InstitutionRole
   status         MemberStatus    @default(ACTIVE)
   joined_at      DateTime        @default(now())
@@ -921,7 +941,9 @@ model institution_members {
   institutions institutions @relation(fields: [institution_id], references: [id], onDelete: Cascade)
   users        users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@unique([institution_id, user_id]) // ✅ Composite unique: user can be in multiple institutions
   @@index([institution_id, status])
+  @@index([user_id]) // ✅ Added for findFirst performance
 }
 
 model institution_policies {
@@ -972,6 +994,17 @@ model institutions {
   subscriptions             subscriptions[]
   teacher_verifications     teacher_verifications[]
   classrooms                classrooms[]
+  assessment_attempts       assessment_attempts[]
+  game_results              game_results[]
+  game_progress             game_progress[]
+  daily_activities          daily_activities[]
+  daily_goals               daily_goals[]
+  streaks                   streaks[]
+  user_badges               user_badges[]
+  user_vocabularies         user_vocabularies[]
+  reading_sessions          reading_sessions[]
+  hourly_activity_cache     hourly_activity_cache[]
+  study_groups              study_groups[] // Issue #3: Explicit FK
 
   @@index([slug])
 }
@@ -1042,18 +1075,8 @@ model learning_assets {
   @@index([prompt_version])
 }
 
-model legacy_cornell_notes {
-  id                 String           @id
-  user_id            String
-  reading_session_id String
-  main_notes         Json
-  cue_column         String?
-  summary            String?
-  created_at         DateTime         @default(now())
-  updated_at         DateTime
-  reading_sessions   reading_sessions @relation(fields: [reading_session_id], references: [id])
-  users              users            @relation(fields: [user_id], references: [id])
-}
+// REMOVED: legacy_cornell_notes table (Phase 1 cleanup)
+// Data migrated to cornell_notes. See migration: drop_legacy_cornell_notes
 
 model lesson_progress {
   id           String       @id
@@ -1165,51 +1188,25 @@ model provider_usage {
 }
 
 model question_analytics {
-  id              String        @id
-  question_id     String        @unique
-  total_attempts  Int           @default(0)
+  id              String    @id
+  item_id         String    @unique
+  total_attempts  Int       @default(0)
   success_rate    Float
   avg_score       Float
   avg_time        Int
   avg_self_rating Float?
   common_mistakes Json
-  is_difficult    Boolean       @default(false)
+  is_difficult    Boolean   @default(false)
   updated_at      DateTime
-  question_bank   question_bank @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  item_bank       item_bank @relation(fields: [item_id], references: [id], onDelete: Cascade)
 }
 
-model question_bank {
-  id                    String                  @id
-  language              String
-  universal_concept_id  String?
-  has_translations      Boolean                 @default(false)
-  game_type             String
-  subject               String
-  topic                 String
-  difficulty            Int
-  education_level       String
-  question              Json
-  answer                Json
-  metadata              Json?
-  source_type           String
-  source_content_id     String?
-  times_used            Int                     @default(0)
-  avg_score             Float?
-  created_at            DateTime                @default(now())
-  updated_at            DateTime
-  question_analytics    question_analytics?
-  question_results      question_results[]
-  question_translations question_translations[]
-
-  @@index([education_level, difficulty])
-  @@index([language, game_type, subject, topic])
-  @@index([universal_concept_id])
-}
+// model question_bank removed (Phase 3.2 Unification)
 
 model question_results {
-  id              String        @id
+  id              String    @id
   user_id         String
-  question_id     String
+  item_id         String
   game_session_id String?
   score           Int
   time_taken      Int
@@ -1217,30 +1214,30 @@ model question_results {
   self_rating     Int?
   user_answer     Json?
   mistakes        Json?
-  created_at      DateTime      @default(now())
-  question_bank   question_bank @relation(fields: [question_id], references: [id], onDelete: Cascade)
-  users           users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  created_at      DateTime  @default(now())
+  item_bank       item_bank @relation(fields: [item_id], references: [id], onDelete: Cascade)
+  users           users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@index([question_id])
+  @@index([item_id])
   @@index([user_id, created_at])
 }
 
 model question_translations {
-  id                 String        @id
-  source_question_id String
-  target_language    String
-  question           Json
-  answer             Json
-  subject            String
-  topic              String
-  is_ai_translated   Boolean       @default(true)
-  is_reviewed        Boolean       @default(false)
-  reviewed_by        String?
-  created_at         DateTime      @default(now())
-  updated_at         DateTime
-  question_bank      question_bank @relation(fields: [source_question_id], references: [id], onDelete: Cascade)
+  id               String    @id
+  item_id          String
+  target_language  String
+  question         Json
+  answer           Json
+  subject          String
+  topic            String
+  is_ai_translated Boolean   @default(true)
+  is_reviewed      Boolean   @default(false)
+  reviewed_by      String?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime
+  item_bank        item_bank @relation(fields: [item_id], references: [id], onDelete: Cascade)
 
-  @@unique([source_question_id, target_language])
+  @@unique([item_id, target_language])
   @@index([target_language])
 }
 
@@ -1257,20 +1254,22 @@ model reading_sessions {
   goal_statement     String?
   prediction_text    String?
   target_words_json  Json?
-  analytics_json     Json?            // SCRIPT 07: Aggregated KPIs (deep_reading_index, ui_load_index, etc.)
-  aggregated_at      DateTime?        // SCRIPT 07: Last aggregation timestamp
+  analytics_json     Json? // SCRIPT 07: Aggregated KPIs (deep_reading_index, ui_load_index, etc.)
+  aggregated_at      DateTime? // SCRIPT 07: Last aggregation timestamp
 
-  co_reading_sessions  co_reading_sessions?
-  legacy_cornell_notes legacy_cornell_notes[]
-  contents             contents               @relation(fields: [content_id], references: [id])
-  content_versions     content_versions?      @relation(fields: [content_version_id], references: [id])
-  users                users                  @relation(fields: [user_id], references: [id])
-  vocab_attempts       vocab_attempts[]
-  session_events       session_events[]
-  session_outcomes     session_outcomes?
+  co_reading_sessions co_reading_sessions?
+  contents            contents             @relation(fields: [content_id], references: [id])
+  content_versions    content_versions?    @relation(fields: [content_version_id], references: [id])
+  users               users                @relation(fields: [user_id], references: [id])
+  institutions        institutions?        @relation(fields: [institution_id], references: [id])
+  institution_id      String?
+  vocab_attempts      vocab_attempts[]
+  session_events      session_events[]
+  session_outcomes    session_outcomes?
 
   @@index([user_id, started_at(sort: Desc)], map: "user_sessions_list")
   @@index([user_id, phase, started_at], map: "user_sessions_phase")
+  @@index([institution_id])
 }
 
 model seat_allocation_events {
@@ -1286,7 +1285,7 @@ model seat_allocation_events {
 model session_events {
   id                 String            @id @default(uuid())
   reading_session_id String?
-  event_type         EventType         @map("eventType")
+  event_type         EventType
   payload_json       Json
   created_at         DateTime          @default(now())
   reading_sessions   reading_sessions? @relation(fields: [reading_session_id], references: [id], onDelete: Cascade)
@@ -1340,13 +1339,17 @@ model sso_configurations {
 }
 
 model streaks {
-  user_id            String    @id
-  current_streak     Int       @default(0)
-  best_streak        Int       @default(0)
-  last_goal_met_date DateTime? @db.Date
-  freeze_tokens      Int       @default(1)
+  user_id            String        @id
+  current_streak     Int           @default(0)
+  best_streak        Int           @default(0)
+  last_goal_met_date DateTime?     @db.Date
+  freeze_tokens      Int           @default(1)
   updated_at         DateTime
-  users              users     @relation(fields: [user_id], references: [id])
+  users              users         @relation(fields: [user_id], references: [id])
+  institutions       institutions? @relation(fields: [institution_id], references: [id])
+  institution_id     String?
+
+  @@index([institution_id])
 }
 
 model study_group_members {
@@ -1363,21 +1366,35 @@ model study_group_members {
 }
 
 model study_groups {
-  id            String     @id @default(uuid())
+  id            String   @id @default(uuid())
   owner_user_id String
-  scope_type    ScopeType?
-  scope_id      String?
   name          String
-  created_at    DateTime   @default(now())
+  created_at    DateTime @default(now())
 
+  // Explicit Foreign Keys (Security Fix - Issue #3)
+  // Replaces generic scope_type/scope_id pattern
+  institution_id   String?
+  family_id        String?
+  personal_user_id String? // Renamed from user_id to avoid conflict with owner_user_id
+
+  // Legacy fields (deprecated, will be removed after migration)
+  scope_type ScopeType? @map("scope_type_legacy")
+  scope_id   String?    @map("scope_id_legacy")
+
+  // Relations
   annotations         annotations[]
   group_sessions      group_sessions[]
   provider_usage      provider_usage[]
   study_group_members study_group_members[]
   users_owner         users                 @relation(fields: [owner_user_id], references: [id])
+  institutions        institutions?         @relation(fields: [institution_id], references: [id], onDelete: Cascade)
+  families            families?             @relation(fields: [family_id], references: [id], onDelete: Cascade)
+  users_personal      users?                @relation("study_groups_personal", fields: [personal_user_id], references: [id], onDelete: Cascade)
 
   @@index([owner_user_id])
-  @@index([scope_type, scope_id])
+  @@index([institution_id])
+  @@index([family_id])
+  @@index([personal_user_id])
 }
 
 model study_sessions {
@@ -1527,14 +1544,36 @@ model usage_events {
 }
 
 model user_badges {
-  id         String   @id
-  user_id    String
-  badge_id   String
-  awarded_at DateTime @default(now())
-  badges     badges   @relation(fields: [badge_id], references: [id])
-  users      users    @relation(fields: [user_id], references: [id])
+  id             String        @id
+  user_id        String
+  badge_id       String
+  awarded_at     DateTime      @default(now())
+  badges         badges        @relation(fields: [badge_id], references: [id])
+  users          users         @relation(fields: [user_id], references: [id])
+  institutions   institutions? @relation(fields: [institution_id], references: [id])
+  institution_id String?
 
   @@unique([user_id, badge_id])
+  @@index([institution_id])
+}
+
+model user_identities {
+  id            String    @id @default(uuid())
+  user_id       String
+  provider      String
+  provider_id   String
+  email         String?
+  password_hash String?
+  metadata      Json?
+  last_login_at DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  users users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider, provider_id])
+  @@index([user_id])
+  @@index([email])
 }
 
 model user_library_items {
@@ -1591,10 +1630,13 @@ model user_vocabularies {
   contents        contents?        @relation(fields: [content_id], references: [id])
   users           users            @relation(fields: [user_id], references: [id])
   vocab_attempts  vocab_attempts[]
+  institution_id  String?
+  institutions    institutions?    @relation(fields: [institution_id], references: [id])
 
   @@unique([user_id, word, language])
   @@index([srs_stage])
   @@index([user_id, due_at])
+  @@index([institution_id])
 }
 
 model telemetry_events {
@@ -1633,14 +1675,11 @@ model users {
   id                  String      @id @default(uuid())
   name                String
   email               String      @unique
-  password_hash       String?
   system_role         SystemRole?
   last_context_role   ContextRole @default(OWNER)
   last_institution_id String?
 
-  oauth_provider         String?
-  oauth_id               String?
-  oauth_picture          String?
+  // @deprecated - Use learner_profiles.education_level instead
   schooling_level        String?
   age                    Int?
   sex                    String?
@@ -1652,15 +1691,13 @@ model users {
   avatar_url             String?
   bio                    String?
   settings               Json?     @default("{}")
-  sso_provider           String?
-  sso_subject            String?   @unique
   address                String?
   birthday               DateTime?
   password_reset_token   String?   @unique
   password_reset_expires DateTime?
 
   institutions          institutions?          @relation(fields: [last_institution_id], references: [id])
-  institution_members   institution_members?
+  institution_members   institution_members[] // ✅ Issue #6: Changed to array for multi-tenant support
   teacher_verifications teacher_verifications?
 
   annotation_comments          annotation_comments[]
@@ -1690,7 +1727,6 @@ model users {
   institution_invites          institution_invites[]
   layer_eligibility            layer_eligibility?
   learner_profiles             learner_profiles?
-  legacy_cornell_notes         legacy_cornell_notes[]
   pending_user_approvals       pending_user_approvals[]
   provider_usage               provider_usage[]
   question_results             question_results[]
@@ -1704,20 +1740,22 @@ model users {
   payment_methods              payment_methods[]
   usage_events                 usage_events[]
   user_badges                  user_badges[]
+  user_identities              user_identities[]
   user_library_items           user_library_items[]
 
-  user_topic_mastery user_topic_mastery[]
-  user_vocabularies  user_vocabularies[]
-  comments           comments[]
-  telemetry_events   telemetry_events[]
-  reading_progress   reading_progress[]
-  bookmarks          bookmarks[]
-  transfer_attempts  transfer_attempts[]
-  decision_logs      decision_logs[]
-  pkm_notes          pkm_notes[]
-  topic_edge_votes   topic_edge_votes[] // GRAPH SCRIPT 01
-
-  @@unique([oauth_provider, oauth_id])
+  user_topic_mastery    user_topic_mastery[]
+  user_vocabularies     user_vocabularies[]
+  comments              comments[]
+  telemetry_events      telemetry_events[]
+  reading_progress      reading_progress[]
+  bookmarks             bookmarks[]
+  transfer_attempts     transfer_attempts[]
+  decision_logs         decision_logs[]
+  pkm_notes             pkm_notes[]
+  topic_edge_votes      topic_edge_votes[] // GRAPH SCRIPT 01
+  hourly_activity_cache hourly_activity_cache[]
+  vocab_items           vocab_items[]
+  study_groups_personal study_groups[]          @relation("study_groups_personal") // Issue #3: Personal groups
 }
 
 model vocab_attempts {
@@ -1756,6 +1794,7 @@ model pkm_notes {
   content_id      String?
   session_id      String?
   mission_id      String?
+  topic_node_id   String? // Link to knowledge graph node
   title           String
   body_md         String
   tags_json       Json          @default("[]")
@@ -1765,13 +1804,15 @@ model pkm_notes {
   created_at      DateTime      @default(now())
   updated_at      DateTime      @updatedAt
 
-  users    users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  contents contents? @relation(fields: [content_id], references: [id], onDelete: SetNull)
+  users       users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  contents    contents?    @relation(fields: [content_id], references: [id], onDelete: SetNull)
+  topic_nodes topic_nodes? @relation(fields: [topic_node_id], references: [id], onDelete: SetNull)
 
   @@index([user_id])
   @@index([content_id])
   @@index([session_id])
   @@index([mission_id])
+  @@index([topic_node_id])
   @@index([status])
   @@index([created_at])
 }
@@ -1880,7 +1921,7 @@ model transfer_attempts {
 
 model decision_logs {
   id                String          @id @default(uuid())
-  user_id           String
+  user_id           String? // ✅ Issue #7: Nullable to preserve audit trail
   session_id        String
   content_id        String?
   chunk_id          String?
@@ -1894,15 +1935,15 @@ model decision_logs {
   // v2 fields for improved auditability
   candidate_action        DecisionAction?
   final_action            DecisionAction?
-  suppressed              Boolean         @default(false)
-  suppress_reasons_json   Json            @default("[]")
+  suppressed              Boolean          @default(false)
+  suppress_reasons_json   Json             @default("[]")
   channel_before          DecisionChannel?
   channel_after           DecisionChannel?
   budget_remaining_tokens Int?
   cooldown_until          DateTime?
-  policy_snapshot_json    Json            @default("{}")
+  policy_snapshot_json    Json             @default("{}")
 
-  users          users           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  users          users?          @relation(fields: [user_id], references: [id], onDelete: SetNull) // ✅ Issue #7: Preserve decision logs
   contents       contents?       @relation(fields: [content_id], references: [id], onDelete: SetNull)
   content_chunks content_chunks? @relation(fields: [chunk_id], references: [id], onDelete: SetNull)
 
@@ -2306,26 +2347,7 @@ enum SystemRole {
 }
 
 // TODO: [TECH DEBT] Consolidate TargetType into ContentType
-// TargetType is semantically identical to ContentType and should be unified.
-// Migration plan:
-// 1. ALTER TABLE highlights ALTER COLUMN target_type TYPE ContentType
-// 2. Drop TargetType enum
-// 3. Update all references in codebase
-// Risk: Requires careful migration of existing highlight records
-// Benefit: Single source of truth, eliminates redundancy
-enum TargetType {
-  PDF
-  IMAGE
-  DOCX
-  VIDEO
-  AUDIO
-  ARTICLE
-  TEXT
-  NEWS
-  ARXIV
-  SCHOOL_MATERIAL
-  WEB_CLIP
-}
+// Enum TargetType removed/merged into ContentType (Phase 2)
 
 enum TeacherVerificationStatus {
   PENDING
@@ -2426,16 +2448,16 @@ enum SuppressReason {
 
 enum PkmNoteStatus {
   GENERATED // Created by system, pending user save
-  SAVED     // Confirmed/Saved by user
-  ARCHIVED  // Soft deleted or hidden
+  SAVED // Confirmed/Saved by user
+  ARCHIVED // Soft deleted or hidden
 }
 
 // ========== GRAPH SCRIPT 01: Knowledge Graph Enums ==========
 
 enum GraphType {
-  BASELINE  // Pre-processing graph (deterministic from content)
-  LEARNER   // User-specific graph (built during reading)
-  CURATED   // Merged/curated graph (optional)
+  BASELINE // Pre-processing graph (deterministic from content)
+  LEARNER // User-specific graph (built during reading)
+  CURATED // Merged/curated graph (optional)
 }
 
 enum GraphScopeType {
@@ -2447,51 +2469,52 @@ enum GraphScopeType {
 }
 
 enum GraphSource {
-  PREPROCESS    // Generated during content preprocessing
+  PREPROCESS // Generated during content preprocessing
   DETERMINISTIC // Rule-based extraction
-  USER          // User-created
-  TEACHER       // Teacher-created
-  LLM           // AI-generated
+  USER // User-created
+  TEACHER // Teacher-created
+  LLM // AI-generated
 }
 
 enum EdgeType {
-  PREREQUISITE    // A is prerequisite for B
-  SUPPORTS        // A supports B
-  EXPLAINS        // A explains B
-  CAUSES          // A causes B
-  CONTRASTS       // A contrasts with B
-  ANALOGY         // A is analogous to B
-  PART_OF         // A is part of B
-  APPLIES_IN      // A applies in domain B
-  EXAMPLE_OF      // A is example of B
-  MENTIONS        // A mentions B
-  COVERS          // A covers B
-  LINKS_TO        // A links to B
+  PREREQUISITE // A is prerequisite for B
+  SUPPORTS // A supports B
+  EXPLAINS // A explains B
+  CAUSES // A causes B
+  CONTRASTS // A contrasts with B
+  ANALOGY // A is analogous to B
+  PART_OF // A is part of B
+  APPLIES_IN // A applies in domain B
+  EXAMPLE_OF // A is example of B
+  MENTIONS // A mentions B
+  COVERS // A covers B
+  LINKS_TO // A links to B
 }
 
 enum EvidenceType {
-  CHUNK           // Evidence from content chunk
-  PAGE_AREA       // Evidence from page region
-  TIMESTAMP       // Evidence from timestamp
-  HIGHLIGHT       // Evidence from user highlight
-  CORNELL_CUE     // Evidence from Cornell note cue
+  CHUNK // Evidence from content chunk
+  PAGE_AREA // Evidence from page region
+  TIMESTAMP // Evidence from timestamp
+  HIGHLIGHT // Evidence from user highlight
+  CORNELL_CUE // Evidence from Cornell note cue
   CORNELL_SUMMARY // Evidence from Cornell summary
 }
 
 // ========== GRAPH SCRIPT 01: Knowledge Graph Models ==========
 
 model topic_graphs {
-  id              String         @id @default(uuid())
-  type            GraphType
-  scope_type      GraphScopeType
-  scope_id        String? // userId | familyId | institutionId | studyGroupId | null if GLOBAL
-  content_id      String? // graph can be per content (baseline/learner) OR global (registry)
-  title           String?
-  version         String         @default("1.0.0")
-  policy_version  String? // snapshot of policy (DecisionService/UI policy)
-  created_by      String? // userId
-  created_at      DateTime       @default(now())
-  updated_at      DateTime       @updatedAt
+  id               String         @id @default(uuid())
+  type             GraphType
+  scope_type       GraphScopeType
+  scope_id         String? // userId | familyId | institutionId | studyGroupId | null if GLOBAL
+  content_id       String? // graph can be per content (baseline/learner) OR global (registry)
+  title            String?
+  version          String         @default("1.0.0")
+  policy_version   String? // snapshot of policy (DecisionService/UI policy)
+  created_by       String? // userId
+  last_compared_at DateTime? // GRAPH SCRIPT 19.9: Comparison Optimization
+  created_at       DateTime       @default(now())
+  updated_at       DateTime       @updatedAt
 
   contents    contents?     @relation(fields: [content_id], references: [id], onDelete: SetNull)
   topic_nodes topic_nodes[]
@@ -2502,52 +2525,55 @@ model topic_graphs {
 }
 
 model topic_nodes {
-  id               String      @id @default(uuid())
-  graph_id         String
-  canonical_label  String
-  slug             String
-  aliases_json     Json        @default("[]") // synonyms/variations
-  domain_tags_json Json        @default("[]") // ex: "biology", "finance", "rhetoric"
-  tier2_json       Json        @default("[]") // bridge terms associated
-  attributes_json  Json        @default("{}") // optional: short definition, examples
-  confidence       Float       @default(0.5)
-  source           GraphSource @default(DETERMINISTIC)
-  created_at       DateTime    @default(now())
-  updated_at       DateTime    @updatedAt
+  id                 String      @id @default(uuid())
+  graph_id           String
+  canonical_label    String
+  slug               String
+  aliases_json       Json        @default("[]") // synonyms/variations
+  domain_tags_json   Json        @default("[]") // ex: "biology", "finance", "rhetoric"
+  tier2_json         Json        @default("[]") // bridge terms associated
+  attributes_json    Json        @default("{}") // optional: short definition, examples
+  confidence         Float       @default(0.5)
+  source             GraphSource @default(DETERMINISTIC)
+  last_reinforced_at DateTime? // GRAPH SCRIPT 19.10: Temporal Decay
+  created_at         DateTime    @default(now())
+  updated_at         DateTime    @updatedAt
 
-  topic_graphs     topic_graphs  @relation(fields: [graph_id], references: [id], onDelete: Cascade)
-  edges_from       topic_edges[] @relation("edge_from")
-  edges_to         topic_edges[] @relation("edge_to")
+  topic_graphs topic_graphs  @relation(fields: [graph_id], references: [id], onDelete: Cascade)
+  edges_from   topic_edges[] @relation("edge_from")
+  edges_to     topic_edges[] @relation("edge_to")
+  pkm_notes    pkm_notes[] // Collaborative annotations linked to this node
 
   @@unique([graph_id, slug])
   @@index([graph_id, canonical_label])
+  @@index([last_reinforced_at]) // GRAPH SCRIPT 19.10: Decay query optimization
 }
 
 model topic_edges {
-  id              String      @id @default(uuid())
-  graph_id        String
-  from_node_id    String
-  to_node_id      String
-  edge_type       EdgeType
-  direction       String? // "A_TO_B" | "BIDIR" | null (when non-directional)
-  rationale_json  Json        @default("{}") // structure: {claim, mapping?, constraints?, notes?}
-  confidence      Float       @default(0.5)
-  source          GraphSource @default(DETERMINISTIC)
-  created_at      DateTime    @default(now())
-  updated_at      DateTime    @updatedAt
+  id             String      @id @default(uuid())
+  graph_id       String
+  from_node_id   String
+  to_node_id     String
+  edge_type      EdgeType
+  direction      String? // "A_TO_B" | "BIDIR" | null (when non-directional)
+  rationale_json Json        @default("{}") // structure: {claim, mapping?, constraints?, notes?}
+  confidence     Float       @default(0.5)
+  source         GraphSource @default(DETERMINISTIC)
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
 
-  topic_graphs         topic_graphs          @relation(fields: [graph_id], references: [id], onDelete: Cascade)
-  from_node            topic_nodes           @relation("edge_from", fields: [from_node_id], references: [id], onDelete: Cascade)
-  to_node              topic_nodes           @relation("edge_to", fields: [to_node_id], references: [id], onDelete: Cascade)
-  topic_edge_evidence  topic_edge_evidence[]
-  topic_edge_votes     topic_edge_votes[]
+  topic_graphs        topic_graphs          @relation(fields: [graph_id], references: [id], onDelete: Cascade)
+  from_node           topic_nodes           @relation("edge_from", fields: [from_node_id], references: [id], onDelete: Cascade)
+  to_node             topic_nodes           @relation("edge_to", fields: [to_node_id], references: [id], onDelete: Cascade)
+  topic_edge_evidence topic_edge_evidence[]
+  topic_edge_votes    topic_edge_votes[]
 
   @@index([graph_id, edge_type])
   @@index([from_node_id, to_node_id])
 }
 
 model topic_edge_evidence {
-  id              String        @id @default(uuid())
+  id              String       @id @default(uuid())
   edge_id         String
   evidence_type   EvidenceType
   content_id      String?
@@ -2559,13 +2585,13 @@ model topic_edge_evidence {
   highlight_id    String?
   cornell_note_id String?
   excerpt         String? // small excerpt allowed (avoid storing long texts)
-  created_at      DateTime      @default(now())
+  created_at      DateTime     @default(now())
 
-  topic_edges   topic_edges    @relation(fields: [edge_id], references: [id], onDelete: Cascade)
-  contents      contents?      @relation(fields: [content_id], references: [id], onDelete: SetNull)
+  topic_edges    topic_edges     @relation(fields: [edge_id], references: [id], onDelete: Cascade)
+  contents       contents?       @relation(fields: [content_id], references: [id], onDelete: SetNull)
   content_chunks content_chunks? @relation(fields: [chunk_id], references: [id], onDelete: SetNull)
-  highlights    highlights?    @relation(fields: [highlight_id], references: [id], onDelete: SetNull)
-  cornell_notes cornell_notes? @relation(fields: [cornell_note_id], references: [id], onDelete: SetNull)
+  highlights     highlights?     @relation(fields: [highlight_id], references: [id], onDelete: SetNull)
+  cornell_notes  cornell_notes?  @relation(fields: [cornell_note_id], references: [id], onDelete: SetNull)
 
   @@index([edge_id])
   @@index([content_id])
@@ -2675,15 +2701,15 @@ model edge_priors {
 }
 
 model deterministic_build_runs {
-  id           String                    @id @default(uuid())
+  id           String                   @id @default(uuid())
   scope_type   DeterministicSourceScope
   scope_id     String?
   content_id   String?
   mode         String?
-  dry_run      Boolean                   @default(false)
-  started_at   DateTime                  @default(now())
+  dry_run      Boolean                  @default(false)
+  started_at   DateTime                 @default(now())
   finished_at  DateTime?
-  summary_json Json                      @default("{}")
+  summary_json Json                     @default("{}")
   created_by   String?
 
   @@index([scope_type, scope_id])
@@ -2693,50 +2719,179 @@ model deterministic_build_runs {
 // ========== GRAPH SCRIPT 09: Decision Weighting Layer (DWL) ==========
 
 model determinism_scores {
-  id            String             @id @default(uuid())
-  scope_type    GraphScopeType
-  scope_id      String?
-  content_id    String
-  
+  id         String         @id @default(uuid())
+  scope_type GraphScopeType
+  scope_id   String?
+  content_id String
+
   // Section reference (at least one should exist for granular scoring)
-  chunk_id      String?
-  chunk_index   Int?
-  page_number   Int?
-  timestamp_ms  Int?
-  
+  chunk_id     String?
+  chunk_index  Int?
+  page_number  Int?
+  timestamp_ms Int?
+
   // DCS and weights
-  dcs           Float              @default(0.0)  // Determinism Confidence Score [0..1]
-  w_det         Float              @default(0.0)  // Weight deterministic = dcs
-  w_llm         Float              @default(1.0)  // Weight LLM = 1 - dcs
-  
+  dcs   Float @default(0.0) // Determinism Confidence Score [0..1]
+  w_det Float @default(0.0) // Weight deterministic = dcs
+  w_llm Float @default(1.0) // Weight LLM = 1 - dcs
+
   // Component breakdown for observability
-  components_json Json             @default("{}")  // {coverage, matchQuality, evidenceStrength, stability, curation, docSupport}
-  
-  computed_at   DateTime           @default(now())
-  updated_at    DateTime           @updatedAt
-  
+  components_json Json @default("{}") // {coverage, matchQuality, evidenceStrength, stability, curation, docSupport}
+
+  computed_at DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
   @@index([scope_type, scope_id, content_id])
   @@index([content_id, chunk_id, page_number, timestamp_ms])
 }
 
 model decision_weight_events {
-  id               String   @id @default(uuid())
+  id               String  @id @default(uuid())
   session_id       String?
   user_id          String?
   content_id       String?
-  section_ref_json Json     @default("{}")  // {chunkId, pageNumber, timestampMs}
-  
-  dcs              Float
-  w_det            Float
-  w_llm            Float
-  
-  action           String            // NO_OP/ASK_PROMPT/CALL_AGENT/CALL_AI_SERVICE
-  suppressed       Boolean  @default(false)  // LLM call suppressed by high DCS
-  reason           String?
-  
-  created_at       DateTime @default(now())
-  
+  section_ref_json Json    @default("{}") // {chunkId, pageNumber, timestampMs}
+
+  dcs   Float
+  w_det Float
+  w_llm Float
+
+  action     String // NO_OP/ASK_PROMPT/CALL_AGENT/CALL_AI_SERVICE
+  suppressed Boolean @default(false) // LLM call suppressed by high DCS
+  reason     String?
+
+  created_at DateTime @default(now())
+
   @@index([session_id])
   @@index([content_id])
 }
 
+model hourly_activity_cache {
+  id             String        @id @default(uuid())
+  user_id        String
+  period         String
+  time_slot      String
+  minutes        Int           @default(0)
+  last_updated   DateTime      @default(now())
+  institutions   institutions? @relation(fields: [institution_id], references: [id])
+  institution_id String?
+
+  users users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, period, time_slot, institution_id])
+  @@index([user_id, period])
+  @@index([institution_id])
+}
+
+// ============================================================
+// SRS (Spaced Repetition System) - Vocabulary Management
+// ============================================================
+
+model vocab_items {
+  id         String  @id @default(uuid())
+  user_id    String
+  content_id String // Conteúdo onde a palavra foi encontrada pela PRIMEIRA vez
+  word       String // Palavra marcada
+  context    String? // Exemplo de uso (frase completa)
+
+  // SRS Fields
+  srs_stage        SrsStage  @default(NEW)
+  due_at           DateTime // Próxima revisão agendada
+  last_reviewed_at DateTime? // Data da última revisão realizada (para analytics)
+
+  // Metrics
+  mastery_score Int @default(0) // 0-100 para tracking de proficiência
+  lapse_count   Int @default(0) // Quantas vezes falhou (para identificar "leechs")
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  users    users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  contents contents @relation(fields: [content_id], references: [id])
+
+  // Indexes & Constraints
+  @@unique([user_id, word]) // Garante que cada usuário tenha apenas um registro por palavra
+  @@index([user_id, due_at]) // Otimiza busca de "o que revisar hoje"
+  @@index([word]) // Otimiza análise global de vocabulário
+}
+
+// ============================================================
+// ITEM BANK - Question Bank Unification (Phase 3.2)
+// ============================================================
+
+enum ItemType {
+  MULTIPLE_CHOICE
+  OPEN_ENDED
+  TRUE_FALSE
+  FILL_IN_THE_BLANK
+  MATCHING
+  ORDERING
+}
+
+enum BloomTaxonomy {
+  REMEMBER
+  UNDERSTAND
+  APPLY
+  ANALYZE
+  EVALUATE
+  CREATE
+}
+
+enum ItemVisibility {
+  PRIVATE // Only creator can access
+  INSTITUTION // All members of the institution
+  PUBLIC // All users across all institutions
+}
+
+model item_bank {
+  id             String   @id @default(uuid())
+  type           ItemType
+  text           String
+  options        Json? // Options for MC, etc.
+  correct_answer Json? // Validation logic
+  explanation    String? // Feedback
+
+  // Categorization
+  language    Language
+  difficulty  Float? // 0.0 - 1.0 (normalized)
+  bloom_level BloomTaxonomy?
+
+  // Metadata
+  tags     String[]
+  metadata Json?
+
+  // Isolation & Visibility (Security Fix - Issue #1)
+  scope_type ScopeType      @default(GLOBAL)
+  scope_id   String? // institution_id, family_id, or user_id
+  visibility ItemVisibility @default(PRIVATE)
+
+  // Audit
+  created_by String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Legacy/Migration tracking
+  legacy_id String?
+
+  question_analytics    question_analytics?
+  question_results      question_results[]
+  question_translations question_translations[]
+
+  @@index([language, difficulty])
+  @@index([type])
+  @@index([scope_type, scope_id, language]) // Multi-tenant queries
+  @@index([visibility, language]) // Public item discovery
+  @@index([created_by]) // Creator lookup
+}
+
+model graph_comparison_outcomes {
+  id          String   @id @default(uuid())
+  user_id     String
+  had_changes Boolean
+  recorded_at DateTime @default(now())
+
+  @@index([user_id])
+  @@index([recorded_at(sort: Desc)])
+  @@index([user_id, recorded_at(sort: Desc)])
+}

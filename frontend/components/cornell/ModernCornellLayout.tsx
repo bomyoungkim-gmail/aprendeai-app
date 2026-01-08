@@ -719,6 +719,10 @@ function ModernCornellLayoutInternal({
               contentId,
               threadContext,
             }}
+            graphProps={{
+              contentId,
+              onNavigate,
+            }}
           />
         </div>
       </div>

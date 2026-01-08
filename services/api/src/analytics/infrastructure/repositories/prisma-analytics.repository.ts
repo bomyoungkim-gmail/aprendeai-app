@@ -126,19 +126,51 @@ export class PrismaAnalyticsRepository implements IAnalyticsRepository {
   }
 
   async getHourlyPerformance(userId: string, since: Date): Promise<any[]> {
+    // This query calculates total activity minutes per 30-minute slot
+    // Sessions spanning multiple slots are split proportionally
     return this.prisma.$queryRaw<any[]>`
+      WITH time_slots AS (
+        SELECT 
+          generate_series(
+            date_trunc('hour', start_time),
+            date_trunc('hour', COALESCE(end_time, start_time + interval '2 hours')),
+            interval '30 minutes'
+          ) AS slot_start,
+          start_time,
+          COALESCE(end_time, start_time + interval '2 hours') AS end_time,
+          accuracy_rate,
+          focus_score
+        FROM study_sessions
+        WHERE user_id = ${userId}
+          AND start_time >= ${since}
+          AND duration_minutes IS NOT NULL
+      ),
+      minutes_per_slot AS (
+        SELECT 
+          EXTRACT(HOUR FROM slot_start)::integer AS hour,
+          EXTRACT(MINUTE FROM slot_start)::integer AS minute,
+          EXTRACT(EPOCH FROM (
+            LEAST(slot_start + interval '30 minutes', end_time) - 
+            GREATEST(slot_start, start_time)
+          )) / 60 AS minutes_in_slot,
+          accuracy_rate,
+          focus_score
+        FROM time_slots
+      )
       SELECT 
-        EXTRACT(HOUR FROM start_time)::integer AS hour,
+        CASE 
+          WHEN minute = 0 THEN hour || ':00'
+          ELSE hour || ':30'
+        END AS time_slot,
+        hour,
+        minute,
         AVG(accuracy_rate)::float AS avg_accuracy,
         AVG(focus_score)::float AS avg_focus_score,
-        COUNT(*)::bigint AS total_sessions,
-        SUM(duration_minutes)::bigint AS total_minutes
-      FROM study_sessions
-      WHERE user_id = ${userId}
-        AND start_time >= ${since}
-        AND duration_minutes IS NOT NULL
-      GROUP BY EXTRACT(HOUR FROM start_time)
-      ORDER BY hour
+        SUM(minutes_in_slot)::bigint AS total_sessions,
+        SUM(minutes_in_slot)::bigint AS total_minutes
+      FROM minutes_per_slot
+      GROUP BY hour, minute
+      ORDER BY hour, minute
     `;
   }
 

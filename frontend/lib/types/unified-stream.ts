@@ -201,4 +201,4 @@ export function sortStreamItems(items: UnifiedStreamItem[]): UnifiedStreamItem[]
   });
 }
 
-export type SidebarTab = 'toc' | 'stream' | 'synthesis' | 'analytics' | 'chat';
+export type SidebarTab = 'toc' | 'stream' | 'synthesis' | 'analytics' | 'chat' | 'graph';

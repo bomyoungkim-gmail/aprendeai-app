@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { IHighlightsRepository } from "../../domain/interfaces/highlights.repository.interface";
 import { Highlight } from "../../domain/entities/highlight.entity";
-import { HighlightKind, TargetType } from "@prisma/client";
+import { HighlightKind, ContentType } from "@prisma/client";
 
 @Injectable()
 export class PrismaHighlightsRepository implements IHighlightsRepository {
@@ -33,7 +33,7 @@ export class PrismaHighlightsRepository implements IHighlightsRepository {
         content_id: highlight.contentId,
         user_id: highlight.userId,
         kind: highlight.kind as HighlightKind,
-        target_type: highlight.targetType as TargetType,
+        target_type: highlight.targetType as ContentType,
         type: highlight.type as any, // Pedagogical type
         page_number: highlight.pageNumber,
         anchor_json: highlight.anchor,

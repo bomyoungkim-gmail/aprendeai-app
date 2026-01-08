@@ -80,6 +80,27 @@ export class PrismaAssessmentRepository implements IAssessmentRepository {
     return found.map((a) => this.mapToDomain(a));
   }
 
+  async findQuestionById(questionId: string): Promise<any | null> {
+    const question = await this.prisma.assessment_questions.findUnique({
+      where: { id: questionId },
+      include: {
+        assessments: true,
+      },
+    });
+
+    if (!question) return null;
+
+    return {
+      id: question.id,
+      assessmentId: question.assessment_id,
+      questionType: question.question_type,
+      questionText: question.question_text,
+      options: question.options,
+      correctAnswer: question.correct_answer,
+      skills: question.skills || [],
+    };
+  }
+
   async createAttempt(
     attempt: AssessmentAttempt,
     answers: any[],

@@ -256,7 +256,7 @@ describe("Sprint 2: Solo Sessions (Integration)", () => {
         data: {
           email: "other@example.com",
           name: "Other User",
-          password_hash: "hash",
+
           status: "ACTIVE",
           updated_at: new Date(),
         } as any,

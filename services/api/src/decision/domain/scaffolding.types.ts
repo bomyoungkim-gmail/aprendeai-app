@@ -91,3 +91,78 @@ export interface MasterySignal {
   value?: number; // Optional value (e.g., quiz score)
   timestamp: Date;
 }
+
+// ============================================================================
+// SCRIPT 03: Mode-Aware Scaffolding & Fading
+// ============================================================================
+
+/**
+ * Learner profile data for scaffolding initialization
+ * 
+ * Used by ScaffoldingInitializerService to determine initial scaffolding level
+ * based on ContentMode and learner characteristics.
+ */
+export interface LearnerProfileForScaffolding {
+  /** Whether this is a new user (no mastery history) */
+  isNewUser: boolean;
+  
+  /** Average mastery across all domains (0.0-1.0) */
+  avgMastery: number;
+  
+  /** Recent performance metric (0.0-1.0) */
+  recentPerformance: number;
+}
+
+/**
+ * Parameters for mode-aware scaffolding initialization
+ * 
+ * GAP 6: Includes policyOverride to respect institution-level settings.
+ */
+export interface ScaffoldingInitParams {
+  /** Content mode (DIDACTIC, NARRATIVE, TECHNICAL, SCIENTIFIC, NEWS) */
+  mode: import('@prisma/client').ContentMode;
+  
+  /** Learner profile data */
+  learnerProfile: LearnerProfileForScaffolding;
+  
+  /** 
+   * GAP 6: Policy override from decision_policy.scaffolding.defaultLevel
+   * If provided and valid (0-3), takes precedence over mode-based logic.
+   */
+  policyOverride?: number;
+}
+
+/**
+ * Signal types for scaffolding adjustment
+ * 
+ * SCRIPT 03 - Fase 2: Signal-Based Adjustment
+ */
+export type ScaffoldingSignalType = 'INCREASE' | 'DECREASE' | 'MAINTAIN';
+
+/**
+ * Signal detected from learner performance
+ * 
+ * Used by ScaffoldingSignalDetectorService to recommend scaffolding adjustments.
+ */
+export interface ScaffoldingSignal {
+  /** Type of adjustment recommended */
+  type: ScaffoldingSignalType;
+  
+  /** Reason for the signal (e.g., 'doubt_spike', 'consistent_mastery') */
+  reason: string;
+  
+  /** Confidence level (0.0-1.0) */
+  confidence: number;
+  
+  /** Evidence supporting the signal */
+  evidence: {
+    doubtSpike?: boolean;
+    checkpointQuality?: number;
+    quizAccuracy?: number;
+    deepReadingIndex?: number;
+    rehighlightRate?: number; // GAP 3: Rehighlight tracking
+    consecutiveSessions?: number; // GAP 5: Consecutive sessions for fading
+  };
+}
+
+

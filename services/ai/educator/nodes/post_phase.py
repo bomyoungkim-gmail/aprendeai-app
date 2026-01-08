@@ -60,14 +60,37 @@ Sem olhar o texto, o que você entendeu/aprendeu?"""
     if not has_done_activity(parsed_events, 'QUIZ_RESPONSE'):
         logger.debug("Generating quiz question")
         
-        # Simple quiz based on target words
-        target_words = session.get('targetWords', [])
+        # Prioritize questions from user's MAIN_IDEA annotations
+        session_annotations = context.get('sessionAnnotations', {})
+        main_ideas = session_annotations.get('mainIdeas', [])
+        doubts = session_annotations.get('doubts', [])
         
-        if target_words and len(target_words) > 0:
-            word = target_words[0]
+        question = None
+        
+        # Strategy 1: Use MAIN_IDEA annotations (what user marked as important)
+        if main_ideas and len(main_ideas) > 0:
+            idea = main_ideas[0]  # Take the most recent
+            idea_text = idea.get('text', '')[:80]  # Truncate for readability
+            question = f'Explique em suas palavras: "{idea_text}..."'
+            logger.debug(f"Quiz from MAIN_IDEA annotation")
+        
+        # Strategy 2: Use DOUBT annotations (what user didn't understand)
+        elif doubts and len(doubts) > 0:
+            doubt = doubts[0]
+            doubt_text = doubt.get('text', '')[:80]
+            question = f'Você marcou dúvida em: "{doubt_text}...". O que você entendeu agora?'
+            logger.debug(f"Quiz from DOUBT annotation")
+        
+        # Strategy 3: Fallback to target words (vocabulary)
+        elif session.get('targetWords'):
+            word = session['targetWords'][0]
             question = f'Qual o significado de "{word}" no contexto do texto?'
+            logger.debug(f"Quiz from target words")
+        
+        # Strategy 4: Generic comprehension
         else:
             question = "Qual foi a principal conclusão do texto?"
+            logger.debug(f"Quiz generic")
         
         state['next_prompt'] = f"""Quiz:
 

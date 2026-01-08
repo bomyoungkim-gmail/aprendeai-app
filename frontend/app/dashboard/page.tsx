@@ -11,10 +11,11 @@ import { ContentItem } from '@/components/content-item';
 import { ContentUploadModal } from '@/components/content/ContentUploadModal';
 import { ActivityHeatmap } from '@/components/dashboard/ActivityHeatmap';
 import { ActivityStats } from '@/components/dashboard/ActivityStats';
+import { StudyQualityCard } from '@/components/dashboard/StudyQualityCard';
 import { HourlyPerformanceChart } from '@/components/analytics/HourlyPerformanceChart';
-import { QualityOverviewCard } from '@/components/analytics/QualityOverviewCard';
 import { useActivityHeatmap, useActivityStats } from '@/hooks/profile';
 import { Loader2, BookOpen, Upload } from 'lucide-react';
+import { BadgesCard } from '@/components/badges-card';
 
 type GamificationData = {
   dailyActivity: {
@@ -31,6 +32,17 @@ type GamificationData = {
     bestStreak: number;
     freezeTokens: number;
   };
+  recentBadges: Array<{
+    badge_id: string;
+    awarded_at: string;
+    badges: {
+      id: string;
+      name: string;
+      description: string;
+      icon_url?: string;
+      category?: string;
+    };
+  }>;
 };
 
 async function fetchGamification() {
@@ -101,43 +113,31 @@ export default function DashboardPage() {
         ) : null}
       </div>
 
-      {/* NEW: Study Quality Analytics Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <HourlyPerformanceChart days={30} />
-        <QualityOverviewCard period="week" />
-      </div>
+      {/* Study Quality Section */}
+      {activityStats && (
+        <StudyQualityCard 
+          stats={{
+            averageFocus: 0, // TODO: Get from analytics API
+            accuracyRate: 0, // TODO: Get from analytics API
+            currentStreak: activityStats.currentStreak,
+            dailyGoalProgress: gameStats?.dailyActivity?.minutesSpent || 0,
+            dailyGoalTarget: gameStats?.dailyGoal?.goalValue || 90,
+          }}
+          period="7 dias"
+        />
+      )}
+
+      {/* Hourly Performance Chart */}
+      <HourlyPerformanceChart days={30} />
 
       {isLoading || statsLoading ? (
         <div className="flex h-32 items-center justify-center">
             <Loader2 className="animate-spin text-blue-500" />
         </div>
       ) : (gameStats && activityStats) ? (
-        <div className="grid grid-cols-1 gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {/* Streak Card - using activityStats for correct values */}
-          <StreakCard 
-            currentStreak={activityStats.currentStreak} 
-            bestStreak={activityStats.longestStreak}
-            freezeTokens={gameStats.streak.freezeTokens}
-          />
-
-          {/* Daily Goal Card */}
-          <DailyGoalCard 
-            minutesSpent={gameStats.dailyActivity.minutesSpent}
-            goalValue={gameStats.dailyGoal.goalValue}
-          />
-          
-          {/* Helper Card / Continue (Placeholder) */}
-          <div className="overflow-hidden rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 shadow text-white">
-            <div className="p-5 h-full flex flex-col justify-between">
-                <div>
-                    <div className="font-bold text-lg">Continuar Estudo</div>
-                    <div className="text-indigo-100 text-sm mt-1">Nenhuma aula em andamento.</div>
-                </div>
-                <button className="mt-4 bg-white text-indigo-600 px-4 py-2 rounded font-medium text-sm self-start hover:bg-gray-50">
-                    Ir para Biblioteca
-                </button>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 gap-4 md:gap-6 md:grid-cols-1 lg:grid-cols-1">
+          {/* Badges Card */}
+          <BadgesCard badges={gameStats.recentBadges || []} />
         </div>
       ) : (
           <div className="text-gray-500">Não foi possível carregar dados de progresso.</div>
@@ -171,10 +171,10 @@ function CornellUploadButton() {
     <>
       <button
         onClick={() => setShowUploadModal(true)}
-        className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-sm hover:shadow-md"
+        className="flex items-center justify-center w-10 h-10 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm hover:shadow-md"
+        title="Fazer Upload"
       >
-        <Upload className="w-4 h-4" />
-        Fazer Upload
+        <Upload className="w-5 h-5" />
       </button>
 
       <ContentUploadModal 

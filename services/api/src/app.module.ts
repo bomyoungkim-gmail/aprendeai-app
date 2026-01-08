@@ -17,6 +17,7 @@ import { AdminModule } from "./admin/admin.module";
 import { BillingModule } from "./billing/billing.module";
 import { ObservabilityModule } from "./observability/observability.module";
 import { MetricsInterceptor } from "./common/interceptors/metrics.interceptor";
+import { ContextInterceptor } from "./common/interceptors/context.interceptor";
 // V4 SRS Modules
 import { SrsModule } from "./srs/srs.module";
 import { VocabModule } from "./vocab/vocab.module";
@@ -60,6 +61,8 @@ import { PkmModule } from "./pkm/pkm.module"; // SCRIPT 09: PKM Atomic Notes
 import { GraphModule } from "./graph/graph.module"; // GRAPH SCRIPT 03: Learner Graph Builder
 import { RedisModule } from "./common/redis/redis.module";
 import { AiServiceModule } from "./ai-service/ai-service.module";
+import { LearningModule } from "./learning/learning.module"; // Learning Orchestrator
+import { ItemBankModule } from "./item-bank/item-bank.module";
 
 import { ServeStaticModule } from "@nestjs/serve-static";
 import { join } from "path";
@@ -174,6 +177,9 @@ import { PrismaService } from "./prisma/prisma.service";
     RedisModule,
     // AI Service Client
     AiServiceModule,
+    // Learning Orchestrator
+    LearningModule,
+    ItemBankModule,
   ],
   controllers: [AppController],
   providers: [
@@ -189,6 +195,10 @@ import { PrismaService } from "./prisma/prisma.service";
     {
       provide: APP_INTERCEPTOR,
       useClass: MetricsInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ContextInterceptor,
     },
   ],
 })

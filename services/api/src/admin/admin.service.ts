@@ -9,6 +9,7 @@ import {
   IAuditLogsRepository,
 } from "./domain/admin.repository.interface";
 import { AuditLog } from "./domain/audit-log.entity";
+import { IDecisionLogRepository } from "../decision/domain/decision-log.repository.interface";
 
 @Injectable()
 export class AdminService {
@@ -21,6 +22,8 @@ export class AdminService {
     private readonly flagsRepo: IFeatureFlagsRepository,
     @Inject(IAuditLogsRepository)
     private readonly auditRepo: IAuditLogsRepository,
+    @Inject(IDecisionLogRepository)
+    private readonly decisionLogRepo: IDecisionLogRepository,
   ) {}
 
   // Feature Flags
@@ -249,5 +252,10 @@ export class AdminService {
 
   async getAuditLogs(params: any) {
     return this.auditRepo.findMany(params);
+  }
+
+  // Decision Metrics (Item 10.1)
+  async getDecisionMetrics(startDate: Date, endDate: Date) {
+    return this.decisionLogRepo.getDecisionMetrics(startDate, endDate);
   }
 }

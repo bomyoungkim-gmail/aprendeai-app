@@ -20,6 +20,19 @@ class ContentPedagogicalData(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class InteractionContext(BaseModel):
+    """
+    Context for a user interaction with the Educator agent.
+    
+    Expected fields in 'data' dict:
+    - decision_policy (dict): DecisionPolicyV1 policy object
+    - message (str): User's message text
+    - text (str): Alternative field for user text
+    - selection (str): User-selected text from document
+    - has_image (bool): Whether interaction includes an image
+    - full_text (str): Full document text (if allowTextExtraction=True)
+    - document_text (str): Alternative field for full text
+    - annotations (list): List of MAIN_IDEA/DOUBT annotations from backend
+    """
     user_id: str
     content_id: str
     interaction_type: str  # 'question', 'highlight', 'note', 'chat'

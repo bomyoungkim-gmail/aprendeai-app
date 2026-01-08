@@ -14,6 +14,7 @@ export type TransferIntent =
   | 'PKM'
   | 'MISSION_FEEDBACK'
   | 'METACOGNITION'
+  | 'SENTENCE_ANALYSIS' // Tool: Analise de Sentenca
   | 'HIGH_ROAD'; // AGENT SCRIPT B
 
 export interface TransferTaskDto {

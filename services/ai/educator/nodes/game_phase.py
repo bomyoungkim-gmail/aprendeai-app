@@ -7,6 +7,7 @@ Triggered when user_text = "START_GAME" or when in active game.
 from typing import Dict, Any
 import logging
 from ..state import EducatorState
+from educator.policies.decision_policy import parse_decision_policy
 from games.registry import game_registry
 from games.middleware import GamePipeline, CorrelationIdMiddleware, MetricsMiddleware, EventEmitterMiddleware
 
@@ -33,6 +34,18 @@ async def handle(state: EducatorState) -> EducatorState:
     4. Return updated state with prompt and quick replies
     """
     logger.info("Game phase handler called")
+    
+    # Check decision_policy gate
+    policy_dict = state.get("decision_policy", {})
+    policy = parse_decision_policy(policy_dict)
+    
+    if not policy.features.gamesEnabled:
+        logger.info("Games disabled by decision_policy")
+        return {
+            **state,
+            'next_prompt': "⚠️ Os jogos estão desabilitados no momento.",
+            'quick_replies': [],
+        }
     
     user_text = state.get('user_text', '').strip()
     game_mode = state.get('game_mode')

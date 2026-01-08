@@ -33,6 +33,10 @@ export class PrismaService
     "daily_goals",
     "streaks",
     "user_badges",
+    "assessment_attempts",
+    "game_results",
+    "game_progress",
+    "daily_activities",
   ];
 
   async onModuleInit() {

@@ -78,4 +78,52 @@ export class PrismaDecisionLogRepository implements IDecisionLogRepository {
   private generateId(): string {
     return `dec_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   }
+
+  /**
+   * Get decision metrics for a time range
+   * Aggregates decisions by channel to verify 80/20 rule (Deterministic vs LLM)
+   */
+  async getDecisionMetrics(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<{
+    total: number;
+    byChannel: Record<string, number>;
+    deterministicRatio: number;
+  }> {
+    // Count all non-NO_OP decisions in the time range
+    const decisions = await this.prisma.decision_logs.findMany({
+      where: {
+        created_at: {
+          gte: startDate,
+          lte: endDate,
+        },
+        final_action: {
+          not: 'NO_OP',
+        },
+      },
+      select: {
+        channel_after: true,
+      },
+    });
+
+    const total = decisions.length;
+    const byChannel: Record<string, number> = {};
+
+    // Count by channel
+    for (const decision of decisions) {
+      const channel = decision.channel_after || 'UNKNOWN';
+      byChannel[channel] = (byChannel[channel] || 0) + 1;
+    }
+
+    // Calculate deterministic ratio
+    const deterministicCount = byChannel['DETERMINISTIC'] || 0;
+    const deterministicRatio = total > 0 ? deterministicCount / total : 0;
+
+    return {
+      total,
+      byChannel,
+      deterministicRatio,
+    };
+  }
 }

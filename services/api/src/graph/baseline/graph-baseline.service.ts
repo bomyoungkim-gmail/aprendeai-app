@@ -75,6 +75,21 @@ export class GraphBaselineService {
   }
 
   /**
+   * GRAPH SCRIPT 19.8: Find existing baseline graph for content
+   * Used by ContentBaselineListener for idempotency check
+   */
+  async findBaseline(contentId: string, scopeType: string = 'GLOBAL', scopeId: string = 'system') {
+    return (this.prisma as any).topic_graphs.findFirst({
+      where: {
+        type: 'BASELINE',
+        scope_type: scopeType,
+        scope_id: scopeId,
+        content_id: contentId,
+      },
+    });
+  }
+
+  /**
    * Ensure a BASELINE graph exists
    */
   private async ensureBaselineGraph(dto: BuildBaselineDto) {
@@ -292,6 +307,7 @@ export class GraphBaselineService {
           slug,
           confidence: source === 'DETERMINISTIC' ? 0.8 : 0.6,
           source,
+          last_reinforced_at: new Date(), // GRAPH SCRIPT 19.10: Initialize for decay
         },
       });
       this.logger.debug(`Created new node: ${node.canonical_label} (${node.id})`);

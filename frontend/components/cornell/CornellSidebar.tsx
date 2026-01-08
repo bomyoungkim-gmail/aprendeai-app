@@ -6,7 +6,8 @@
 
 import React from 'react';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
-import { CornellTabNavigation, type SidebarTab } from './CornellTabNavigation';
+import { CornellTabNavigation } from './CornellTabNavigation';
+import type { SidebarTab } from '@/lib/types/unified-stream';
 import { SIDEBAR_TABS_CONFIG } from '@/lib/cornell/unified-config';
 import { CornellTocTab, type CornellTocTabProps } from './tabs/CornellTocTab';
 import { CornellAnalyticsTab, type CornellAnalyticsTabProps } from './tabs/CornellAnalyticsTab';
@@ -14,6 +15,7 @@ import { CornellBookmarksTab, type CornellBookmarksTabProps } from './tabs/Corne
 import { CornellStreamTab, type CornellStreamTabProps } from './tabs/CornellStreamTab';
 import { CornellSynthesisTab, type CornellSynthesisTabProps } from './tabs/CornellSynthesisTab';
 import { CornellConversationsTab, type CornellConversationsTabProps } from './tabs/CornellConversationsTab';
+import { CornellGraphTab, type CornellGraphTabProps } from './tabs/CornellGraphTab';
 
 export interface CornellSidebarProps {
   // Sidebar state
@@ -29,6 +31,7 @@ export interface CornellSidebarProps {
   streamProps: CornellStreamTabProps;
   synthesisProps: CornellSynthesisTabProps;
   conversationsProps: CornellConversationsTabProps;
+  graphProps: CornellGraphTabProps;
   containerRef?: React.RefObject<HTMLElement>;
 }
 
@@ -43,6 +46,7 @@ export function CornellSidebar({
   streamProps,
   synthesisProps,
   conversationsProps,
+  graphProps,
   containerRef,
 }: CornellSidebarProps) {
   return (
@@ -97,6 +101,7 @@ export function CornellSidebar({
             {activeTab === 'synthesis' && <CornellSynthesisTab {...synthesisProps} />}
             {activeTab === 'analytics' && <CornellAnalyticsTab {...analyticsProps} />}
             {activeTab === 'chat' && <CornellConversationsTab {...conversationsProps} />}
+            {activeTab === 'graph' && <CornellGraphTab {...graphProps} />}
             {/* TODO: Future Implementation - {activeTab === 'bookmarks' && <CornellBookmarksTab {...bookmarksProps} />} */}
           </div>
         </>

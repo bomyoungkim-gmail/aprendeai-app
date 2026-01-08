@@ -100,7 +100,7 @@ Este documento consolida todas as tarefas pendentes, melhorias futuras e regras 
 
 ### 1. Verificação de Workers
 
-- [ ] **Validar Workers em Runtime**
+- [x] **Validar Workers em Runtime**
   - **Contexto**: Checklist de implementação de workers.
   - **Status**: ✅ IMPLEMENTADO
   - **Lista**:

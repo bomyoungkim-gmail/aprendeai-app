@@ -25,6 +25,8 @@ import { AiServiceClient } from "../ai-service/ai-service.client";
 import { VocabCaptureListener } from "./listeners/vocab-capture.listener";
 import { ActivityModule } from "../activity/activity.module";
 import { CornellModule } from "../cornell/cornell.module";
+import { SrsModule } from "../srs/srs.module";
+import { DecisionModule } from "../decision/decision.module"; // SCRIPT 03: For ScaffoldingInitializerService
 
 @Module({
   imports: [
@@ -37,6 +39,8 @@ import { CornellModule } from "../cornell/cornell.module";
     GatingModule,
     ActivityModule,
     CornellModule,
+    SrsModule,
+    DecisionModule, // SCRIPT 03: Mode-aware scaffolding initialization
   ],
   controllers: [ReadingSessionsController],
   providers: [

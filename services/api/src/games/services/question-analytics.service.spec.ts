@@ -15,9 +15,7 @@ describe("QuestionAnalyticsService", () => {
       create: jest.fn(),
       update: jest.fn(),
     },
-    question_bank: {
-      update: jest.fn(),
-    },
+    // question_bank removed - service doesn't use it directly
   };
 
   beforeEach(async () => {
@@ -63,7 +61,7 @@ describe("QuestionAnalyticsService", () => {
 
       expect(prisma.question_results.create).toHaveBeenCalled();
       expect(prisma.question_analytics.create).toHaveBeenCalled();
-      expect(prisma.question_bank.update).toHaveBeenCalled();
+      // question_bank.update removed - not used by service
     });
 
     it("should update existing analytics", async () => {
@@ -90,7 +88,7 @@ describe("QuestionAnalyticsService", () => {
 
       expect(prisma.question_results.create).toHaveBeenCalled();
       expect(prisma.question_analytics.update).toHaveBeenCalled();
-      expect(prisma.question_bank.update).toHaveBeenCalled();
+      // question_bank.update removed - not used by service
     });
   });
 });

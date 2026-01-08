@@ -66,8 +66,8 @@ export class CornellService {
       contentType: content.type,
       original_language: content.originalLanguage,
       raw_text: content.rawText,
-      owner_type: content.ownerType,
-      owner_id: content.ownerId,
+      owner_type: content.scopeType,
+      owner_id: content.scopeId,
       created_at: content.createdAt,
       updated_at: content.updatedAt,
       metadata: content.metadata,
@@ -91,8 +91,8 @@ export class CornellService {
       contentType: content.type,
       original_language: content.originalLanguage,
       raw_text: content.rawText,
-      owner_type: content.ownerType,
-      owner_id: content.ownerId,
+      owner_type: content.scopeType,
+      owner_id: content.scopeId,
       scope_type: content.scopeType,
       scope_id: content.scopeId,
       metadata: content.metadata,
@@ -115,6 +115,11 @@ export class CornellService {
 
   async updateContent(id: string, userId: string, dto: UpdateContentDto) {
     const updated = await this.updateContentUseCase.execute(id, userId, dto);
+    
+    // TODO (Issue #19.8): Trigger auto-baseline build
+    // After content update/import, we should queue a job to rebuild the Baseline Graph
+    // this.eventEmitter.emit('content.updated', { contentId: id });
+
     return {
       id: updated.id,
       title: updated.title,

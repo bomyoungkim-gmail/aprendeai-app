@@ -60,11 +60,11 @@ describe("WebSocket Gateway (Integration)", () => {
       create: {
         email: "ws-user1@example.com",
         name: "WS User 1",
-        password_hash: "hash",
+
         last_context_role: ContextRole.STUDENT,
         schooling_level: "ADVANCED_USER",
       },
-      update: { password_hash: "hash" },
+      update: { },
     });
 
     const user2 = await prisma.users.upsert({
@@ -72,7 +72,7 @@ describe("WebSocket Gateway (Integration)", () => {
       create: {
         email: "ws-user2@example.com",
         name: "WS User 2",
-        password_hash: "hash",
+
         last_context_role: ContextRole.STUDENT,
         schooling_level: "ADVANCED_USER",
       },

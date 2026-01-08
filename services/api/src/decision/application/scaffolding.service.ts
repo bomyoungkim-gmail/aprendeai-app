@@ -433,4 +433,26 @@ export class ScaffoldingService {
 
     this.logger.log(`Mastery updated for user ${userId} from assessment ${assessmentAttemptId}`);
   }
+
+  /**
+   * Update mastery from checkpoint answer
+   * Used for granular micro-learning interactions
+   * 
+   * @param userId - The user ID
+   * @param skill - The skill being tested
+   * @param isCorrect - Whether the answer was correct
+   */
+  async updateMasteryFromCheckpoint(
+    userId: string,
+    skill: string,
+    isCorrect: boolean,
+  ): Promise<void> {
+    this.logger.debug(`Updating mastery from checkpoint for user ${userId}, skill: ${skill}, correct: ${isCorrect}`);
+
+    await this.updateMastery(userId, {
+      type: isCorrect ? 'checkpoint_passed' : 'checkpoint_failed',
+      domain: skill,
+      timestamp: new Date(),
+    });
+  }
 }

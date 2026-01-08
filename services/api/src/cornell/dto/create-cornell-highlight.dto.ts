@@ -19,9 +19,9 @@ import {
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   AnnotationVisibility,
-  TargetType,
   VisibilityScope,
   ContextType,
+  ContentType,
 } from "../../common/constants/enums";
 import {
   CornellType,
@@ -63,14 +63,14 @@ export class CreateCornellHighlightDto {
   kind?: "TEXT" | "AREA";
 
   @ApiProperty({
-    enum: TargetType,
+    enum: ContentType,
     description: "Media type being annotated",
     example: "PDF",
   })
-  @IsEnum(TargetType, {
+  @IsEnum(ContentType, {
     message: "Target type must be PDF, IMAGE, DOCX, VIDEO, or AUDIO",
   })
-  target_type: TargetType;
+  target_type: ContentType;
 
   // ========================================
   // CONDITIONAL ANCHORING
@@ -83,7 +83,7 @@ export class CreateCornellHighlightDto {
   })
   @ValidateIf(
     (o) =>
-      o.target_type === TargetType.PDF || o.target_type === TargetType.DOCX,
+      o.target_type === ContentType.PDF || o.target_type === ContentType.DOCX,
   )
   @IsInt()
   @Min(1)
@@ -95,7 +95,7 @@ export class CreateCornellHighlightDto {
   })
   @ValidateIf(
     (o) =>
-      o.target_type === TargetType.PDF || o.target_type === TargetType.IMAGE,
+      o.target_type === ContentType.PDF || o.target_type === ContentType.IMAGE,
   )
   @IsObject()
   anchor_json?: AnchorGeometry;
@@ -107,7 +107,7 @@ export class CreateCornellHighlightDto {
   })
   @ValidateIf(
     (o) =>
-      o.target_type === TargetType.VIDEO || o.target_type === TargetType.AUDIO,
+      o.target_type === ContentType.VIDEO || o.target_type === ContentType.AUDIO,
   )
   @IsInt()
   @Min(0)
@@ -120,7 +120,7 @@ export class CreateCornellHighlightDto {
   })
   @ValidateIf(
     (o) =>
-      o.target_type === TargetType.VIDEO || o.target_type === TargetType.AUDIO,
+      o.target_type === ContentType.VIDEO || o.target_type === ContentType.AUDIO,
   )
   @IsOptional()
   @IsInt()

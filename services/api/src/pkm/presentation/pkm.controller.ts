@@ -20,8 +20,12 @@ import { IPkmNoteRepository } from '../domain/repositories/pkm-note.repository.i
 import { GeneratePkmDto } from '../application/dto/generate-pkm.dto';
 import { UpdatePkmNoteDto } from '../application/dto/update-pkm-note.dto';
 import { PkmNoteDto } from '../application/dto/pkm-note.dto';
+import { CreatePkmNoteDto } from '../application/dto/create-pkm-note.dto';
 import { DecisionService } from '../../decision/application/decision.service';
 import { Inject } from '@nestjs/common';
+import { PkmNote } from '../domain/entities/pkm-note.entity';
+import { PkmNoteStatus } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
 
 @Controller('pkm')
 @UseGuards(JwtAuthGuard)
@@ -32,6 +36,40 @@ export class PkmController {
     @Inject(IPkmNoteRepository)
     private readonly pkmNoteRepository: IPkmNoteRepository,
   ) {}
+
+  /**
+   * POST /pkm/notes
+   * Create a new PKM note manually
+   */
+  @Post('notes')
+  @HttpCode(HttpStatus.CREATED)
+  async create(
+    @Body() dto: CreatePkmNoteDto,
+    @Request() req: any,
+  ): Promise<PkmNoteDto> {
+    const userId = req.user.userId;
+
+    const note = new PkmNote(
+      uuidv4(),
+      userId,
+      null, // contentId
+      null, // sessionId
+      null, // missionId
+      dto.topicNodeId || null, // topicNodeId
+      dto.title,
+      dto.bodyMd,
+      dto.tags || [],
+      // Cast to expected types - in real app, use validation pipes
+      (dto.backlinks as any) || { nearDomain: '', farDomain: '' }, 
+      (dto.sourceMetadata as any) || { sectionIds: [], conceptsUsed: [] },
+      PkmNoteStatus.SAVED,
+      new Date(),
+      new Date(),
+    );
+
+    const created = await this.pkmNoteRepository.create(note);
+    return this.toDto(created);
+  }
 
   /**
    * POST /pkm/generate
@@ -73,16 +111,29 @@ export class PkmController {
   /**
    * GET /pkm/notes
    * List PKM notes for current user with pagination
+   * Optional: Filter by topicNodeId for collaborative graph annotations
    */
   @Get('notes')
   async list(
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
+    @Query('topicNodeId') topicNodeId?: string,
     @Request() req?: any,
   ): Promise<PkmNoteDto[]> {
     const userId = req.user.userId;
     const limitNum = limit ? parseInt(limit, 10) : 20;
     const offsetNum = offset ? parseInt(offset, 10) : 0;
+
+    // If topicNodeId is provided, filter by it
+    if (topicNodeId) {
+      const notes = await this.pkmNoteRepository.findByTopicNodeId(
+        topicNodeId,
+        userId,
+        limitNum,
+        offsetNum,
+      );
+      return notes.map((note) => this.toDto(note));
+    }
 
     const notes = await this.pkmNoteRepository.findByUserId(
       userId,
@@ -210,6 +261,7 @@ export class PkmController {
       contentId: note.contentId ?? undefined,
       sessionId: note.sessionId ?? undefined,
       missionId: note.missionId ?? undefined,
+      topicNodeId: note.topicNodeId ?? undefined,
       title: note.title,
       bodyMd: note.bodyMd,
       tags: note.tags,

@@ -22,7 +22,7 @@ export class SubmitAssessmentUseCase {
     userId: string,
     assessmentId: string,
     dto: SubmitAssessmentDto,
-  ): Promise<AssessmentAttempt> {
+  ): Promise<{ attempt: AssessmentAttempt; missedSkills: string[] }> {
     const assessment = await this.assessmentRepository.findById(assessmentId);
     if (!assessment) {
       throw new NotFoundException("Assessment not found");
@@ -126,6 +126,25 @@ export class SubmitAssessmentUseCase {
       console.error('Failed to update mastery from assessment:', error);
     }
 
-    return createdAttempt;
+    // Return enriched result
+    const missedSkills: string[] = [];
+    
+    // Identify skills from incorrect answers
+    for (const answer of assessmentAnswers) {
+      if (!answer.isCorrect) {
+        const question = assessment.questions?.find(q => q.id === answer.questionId);
+        if (question && question.skills && question.skills.length > 0) {
+           missedSkills.push(...question.skills);
+        }
+      }
+    }
+
+    // Deduplicate skills
+    const uniqueMissedSkills = [...new Set(missedSkills)];
+
+    return {
+      attempt: createdAttempt,
+      missedSkills: uniqueMissedSkills
+    };
   }
 }

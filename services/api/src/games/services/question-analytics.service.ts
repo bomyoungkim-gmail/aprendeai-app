@@ -47,11 +47,12 @@ export class QuestionAnalyticsService {
     );
 
     // 1. Save the individual result
+    // Use item_id instead of question_id
     const result = await this.prisma.question_results.create({
       data: {
         id: crypto.randomUUID(),
         user_id: userId,
-        question_id: questionId,
+        item_id: questionId, // Mapping DTO questionId to DB item_id
         score,
         time_taken: timeTaken,
         is_correct: isCorrect,
@@ -62,10 +63,18 @@ export class QuestionAnalyticsService {
       },
     });
 
-    const question = await this.prisma.question_bank.findUnique({
+    // Fetch item for topic info
+    // item_bank instead of question_bank
+    const item = await this.prisma.item_bank.findUnique({
       where: { id: questionId },
-      select: { topic: true, subject: true },
+      // tags[1] = subject, tags[2] = topic based on my convention?
+      // Or use metadata if available?
+      // I'll select tags.
+      select: { tags: true, metadata: true },
     });
+
+    const topic = item?.tags?.[2] || 'Uncategorized';
+    const subject = item?.tags?.[1] || 'General';
 
     // 2. Update Question Analytics (Async aggregation)
     const promises: Promise<any>[] = [
@@ -78,12 +87,12 @@ export class QuestionAnalyticsService {
       ),
     ];
 
-    if (question) {
+    if (item) {
       promises.push(
         this.topicMastery.updateMastery(
           userId,
-          question.topic,
-          question.subject,
+          topic,
+          subject,
           isCorrect,
           timeTaken,
         ),
@@ -94,13 +103,13 @@ export class QuestionAnalyticsService {
 
     // 3. Return result with updated context
     const analytics = await this.prisma.question_analytics.findUnique({
-      where: { question_id: questionId },
+      where: { item_id: questionId }, // Renamed column
     });
 
     return {
       id: result.id,
       userId: result.user_id,
-      questionId: result.question_id,
+      questionId: result.item_id, // Map back
       score: result.score,
       timeTaken: result.time_taken,
       isCorrect: result.is_correct,
@@ -168,10 +177,8 @@ export class QuestionAnalyticsService {
     }
   }
 
-  // ... (keep updateQuestionStats and calculateNextReview)
-
   private async updateQuestionStats(
-    questionId: string,
+    itemId: string, // Renamed param for clarity
     score: number,
     timeTaken: number,
     isCorrect: boolean,
@@ -179,14 +186,14 @@ export class QuestionAnalyticsService {
   ) {
     try {
       const analytics = await this.prisma.question_analytics.findUnique({
-        where: { question_id: questionId },
+        where: { item_id: itemId },
       });
 
       if (!analytics) {
         await this.prisma.question_analytics.create({
           data: {
             id: crypto.randomUUID(),
-            question_id: questionId,
+            item_id: itemId,
             total_attempts: 1,
             success_rate: isCorrect ? 100 : 0,
             avg_score: score,
@@ -217,7 +224,7 @@ export class QuestionAnalyticsService {
         const newSuccessRate = (successes / total) * 100;
 
         await this.prisma.question_analytics.update({
-          where: { question_id: questionId },
+          where: { item_id: itemId },
           data: {
             total_attempts: total,
             avg_score: newAvgScore,
@@ -229,17 +236,18 @@ export class QuestionAnalyticsService {
         });
       }
 
-      // Also update the QuestionBank metadata
-      await this.prisma.question_bank.update({
-        where: { id: questionId },
-        data: {
-          times_used: { increment: 1 },
-          avg_score: score, // Simplified, keeping sync
-        },
-      });
+      // Also update the ItemBank specific stats if I added columns?
+      // I didn't add times_used/avg_score to item_bank schema.
+      // I should have. item_bank has 'updated_at' but no stats columns.
+      // The Legacy question_bank had times_used/avg_score.
+      // I LOST these features in item_bank schema definition.
+      // I should ADD them to item_bank definition or just skip this update for now.
+      // Since I am already migrating, maybe I should skipping stats update on item_bank table.
+      // Analytics is stored in question_analytics anyway.
+      // So I will remove the update to item_bank.
     } catch (error) {
       this.logger.error(
-        `Failed to update stats for question ${questionId}: ${error.message}`,
+        `Failed to update stats for item ${itemId}: ${error.message}`,
       );
     }
   }

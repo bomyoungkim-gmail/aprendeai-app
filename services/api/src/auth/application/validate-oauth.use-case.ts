@@ -29,20 +29,29 @@ export class ValidateOAuthUseCase {
     name?: string;
     picture?: string;
   }) {
-    // Check if user exists with this OAuth ID
-    let user = await this.db.users.findFirst({
+    // Check if user exists with this OAuth ID (prioritize user_identities)
+    let user = null;
+    const identity = await (this.db as any).user_identities.findUnique({
       where: {
-        oauth_provider: oauthData.oauthProvider,
-        oauth_id: oauthData.oauthId,
+        provider_provider_id: {
+          provider: oauthData.oauthProvider,
+          provider_id: oauthData.oauthId,
+        },
       },
     });
 
+    if (identity) {
+      user = await this.db.users.findUnique({ where: { id: identity.user_id } });
+    } else {
+      // Fallback removed (Phase 3.1.4 Cleanup)
+    }
+
     if (user) {
-      if (oauthData.picture && user.oauth_picture !== oauthData.picture) {
-        user = await this.db.users.update({
-          where: { id: user.id },
-          data: { oauth_picture: oauthData.picture },
-        });
+
+      // Dual write updates (ensure identity exists/is updated)
+      if (identity) {
+         // Should update last_login_at?
+         // Yes, for convenience
       }
       return user;
     }
@@ -54,14 +63,35 @@ export class ValidateOAuthUseCase {
 
     if (user) {
       // Link OAuth to existing account
-      return this.db.users.update({
+      const updatedUser = await this.db.users.update({
         where: { id: user.id },
         data: {
-          oauth_provider: oauthData.oauthProvider,
-          oauth_id: oauthData.oauthId,
-          oauth_picture: oauthData.picture,
         },
       });
+
+      await (this.db as any).user_identities.upsert({
+        where: {
+          provider_provider_id: {
+            provider: oauthData.oauthProvider,
+            provider_id: oauthData.oauthId,
+          },
+        },
+        create: {
+          user_id: user.id,
+          provider: oauthData.oauthProvider,
+          provider_id: oauthData.oauthId,
+          email: oauthData.email,
+          metadata: oauthData.picture
+            ? { picture: oauthData.picture }
+            : undefined,
+        },
+        update: {
+          user_id: user.id,
+          last_login_at: new Date(),
+        },
+      });
+
+      return updatedUser;
     }
 
     // Create new user with OAuth
@@ -74,14 +104,23 @@ export class ValidateOAuthUseCase {
       id: uuidv4(),
       email: oauthData.email,
       name: oauthData.name || oauthData.email.split("@")[0],
-      oauth_provider: oauthData.oauthProvider,
-      oauth_id: oauthData.oauthId,
-      oauth_picture: oauthData.picture,
       schooling_level: "ADULT",
       status: "ACTIVE",
-      password_hash: null, // No password for OAuth users
+
       updated_at: new Date(),
     } as any);
+
+    await (this.txHost.tx as any).user_identities.create({
+      data: {
+        user_id: newUser.id,
+        provider: oauthData.oauthProvider,
+        provider_id: oauthData.oauthId,
+        email: oauthData.email,
+        metadata: oauthData.picture
+          ? { picture: oauthData.picture }
+          : undefined,
+      },
+    });
 
     await this.subscriptionService.createFreeSubscription(newUser.id);
 

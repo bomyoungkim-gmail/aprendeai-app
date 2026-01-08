@@ -3,7 +3,7 @@ export enum CoReadingPhase {
   PRE = "PRE",
   DURING = "DURING",
   POST = "POST",
-  CLOSE = "CLOSE",
+  FINISHED = "FINISHED",
 }
 
 export interface CoReadingContext {

@@ -11,6 +11,8 @@ import { GamificationService } from "../gamification/gamification.service";
 import { VocabService } from "../vocab/vocab.service";
 import { OutcomesService } from "../outcomes/outcomes.service";
 import { GatingService } from "../gating/gating.service";
+import { SrsService } from "../srs/srs.service";
+import { extractVocabFromEvents } from "./helpers/vocab-extractor";
 import { PrePhaseDto } from "./dto/reading-sessions.dto";
 import { StartSessionDto, FinishSessionDto } from "./dto/start-session.dto";
 import { PromptMessageDto } from "./dto/prompt-message.dto";
@@ -35,6 +37,7 @@ import { GetBookmarksUseCase } from "./application/use-cases/get-bookmarks.use-c
 import { DeleteBookmarkUseCase } from "./application/use-cases/delete-bookmark.use-case";
 import { UpdateReadingProgressDto } from "./dto/reading-progress.dto";
 import { CreateBookmarkDto } from "./dto/bookmarks.dto";
+import { normalizeEventsToWrite } from "../utils/normalize-events-to-write";
 
 @Injectable()
 export class ReadingSessionsService {
@@ -47,6 +50,7 @@ export class ReadingSessionsService {
     private vocabService: VocabService,
     private outcomesService: OutcomesService,
     private gatingService: GatingService,
+    private srsService: SrsService,
     private quickCommandParser: QuickCommandParser,
     private aiServiceClient: AiServiceClient,
     private providerUsageService: ProviderUsageService,
@@ -127,6 +131,40 @@ export class ReadingSessionsService {
           `Failed to compute outcomes for session ${sessionId}:`,
           outcomesError,
         );
+      }
+
+      // Schedule SRS reviews for marked vocabulary
+      try {
+        const events = await this.prisma.session_events.findMany({
+          where: { reading_session_id: sessionId },
+        });
+
+        const vocabList = extractVocabFromEvents(events);
+
+        if (vocabList.length > 0) {
+          this.logger.log(
+            `Scheduling SRS reviews for ${vocabList.length} vocab items from session ${sessionId}`,
+          );
+
+          for (const vocab of vocabList) {
+            await this.srsService.scheduleNextReview(
+              user_id,
+              updated.contentId,
+              vocab.word,
+              vocab.context,
+            );
+          }
+
+          this.logger.log(
+            `Successfully scheduled ${vocabList.length} vocab items for SRS review`,
+          );
+        }
+      } catch (srsError) {
+        this.logger.error(
+          `Failed to schedule SRS reviews for session ${sessionId}:`,
+          srsError,
+        );
+        // Don't fail session finish if SRS scheduling fails
       }
     }
 
@@ -315,6 +353,22 @@ export class ReadingSessionsService {
       },
     });
 
+    // Script 02: Persist UI mode override if requested
+    if (dto.uiMode && dto.persistUiMode) {
+      await this.prisma.contents.update({
+        where: { id: dto.contentId },
+        data: {
+          mode: dto.uiMode as any, // Cast to ContentMode enum
+          mode_source: 'USER',
+          mode_set_by: user_id,
+          mode_set_at: new Date(),
+        },
+      });
+      this.logger.log(
+        `Persisted UI mode override: ${dto.uiMode} for content ${dto.contentId}`,
+      );
+    }
+
     // Generate threadId for LangGraph
     const threadId = uuid();
 
@@ -332,6 +386,7 @@ export class ReadingSessionsService {
   /**
    * Enrich prompt context with compact state, recent history, and content slice
    * Phase 3: Token optimization (40K → 6K tokens)
+   * Phase 4: Context Resurrection (cross-session awareness)
    */
   private async enrichPromptContext(
     sessionId: string,
@@ -392,11 +447,183 @@ export class ReadingSessionsService {
       this.logger.warn(`Failed to load content slice: ${err.message}`);
     }
 
+    // 4. Fetch session annotations for quiz generation
+    let sessionAnnotations = { mainIdeas: [], doubts: [] };
+    try {
+      const annotations = await this.prisma.annotations.findMany({
+        where: {
+          user_id,
+          content_id,
+          type: { in: ['MAIN_IDEA', 'DOUBT'] },
+        },
+        select: {
+          type: true,
+          text: true,
+          selected_text: true,
+        },
+        orderBy: { created_at: 'desc' },
+        take: 10, // Limit to recent annotations
+      });
+
+      sessionAnnotations = {
+        mainIdeas: annotations
+          .filter((a) => a.type === 'MAIN_IDEA')
+          .map((a) => ({ text: a.text || a.selected_text || '' })),
+        doubts: annotations
+          .filter((a) => a.type === 'DOUBT')
+          .map((a) => ({ text: a.text || a.selected_text || '' })),
+      };
+
+      this.logger.debug(
+        `Loaded ${sessionAnnotations.mainIdeas.length} MAIN_IDEA and ${sessionAnnotations.doubts.length} DOUBT annotations`,
+      );
+    } catch (err) {
+      this.logger.warn(`Failed to load annotations: ${err.message}`);
+    }
+
+    // 5. Context Resurrection: Fetch previous session data
+    let resurrection = null;
+    try {
+      // 4a. Last session for SAME content (for "return to material A" scenario)
+      const lastSameContentSession = await this.prisma.reading_sessions.findFirst({
+        where: {
+          user_id,
+          content_id,
+          id: { not: sessionId }, // Exclude current session
+          phase: { in: ["FINISHED", "POST"] }, // Only completed or advanced sessions
+        },
+        orderBy: { finished_at: "desc" },
+        select: {
+          id: true,
+          finished_at: true,
+          phase: true,
+          session_outcomes: {
+            select: {
+              comprehension_score: true,
+              production_score: true,
+            },
+          },
+        },
+      });
+
+      // 4b. Fetch cornell_notes and reading_progress separately (they're keyed by user_id + content_id)
+      const [cornellNotes, readingProgress] = await Promise.all([
+        this.prisma.cornell_notes.findUnique({
+          where: {
+            content_id_user_id: {
+              content_id,
+              user_id,
+            },
+          },
+          select: {
+            summary_text: true,
+          },
+        }),
+        this.prisma.reading_progress.findUnique({
+          where: {
+            user_id_content_id: {
+              user_id,
+              content_id,
+            },
+          },
+          select: {
+            last_page: true,
+            last_scroll_pct: true,
+          },
+        }),
+      ]);
+
+      // 4c. Last global activity (ANY content, for "what did I do last?" scenario)
+      const lastGlobalActivity = await this.prisma.reading_sessions.findFirst({
+        where: {
+          user_id,
+          id: { not: sessionId },
+          finished_at: { not: null },
+        },
+        orderBy: { finished_at: "desc" },
+        select: {
+          id: true,
+          finished_at: true,
+          contents: {
+            select: {
+              title: true,
+              type: true,
+            },
+          },
+        },
+      });
+
+      // Build resurrection context
+      if (lastSameContentSession || lastGlobalActivity) {
+        resurrection = {
+          last_session_summary: null as string | null,
+          last_global_activity: null as string | null,
+        };
+
+        // Format same-content summary
+        if (lastSameContentSession) {
+          const parts: string[] = [];
+          
+          if (readingProgress?.last_page) {
+            parts.push(`Página ${readingProgress.last_page}`);
+          } else if (readingProgress?.last_scroll_pct) {
+            parts.push(`${Math.round(readingProgress.last_scroll_pct)}% do texto`);
+          }
+
+          if (cornellNotes?.summary_text) {
+            const summary = cornellNotes.summary_text.substring(0, 200);
+            parts.push(`Resumo: "${summary}${summary.length >= 200 ? '...' : ''}"`);
+          }
+
+          if (lastSameContentSession.session_outcomes) {
+            const outcome = lastSameContentSession.session_outcomes;
+            parts.push(`Compreensão: ${outcome.comprehension_score}%`);
+          }
+
+          if (parts.length > 0) {
+            resurrection.last_session_summary = parts.join(". ");
+          }
+        }
+
+        // Format global activity
+        if (lastGlobalActivity && lastGlobalActivity.id !== lastSameContentSession?.id) {
+          const timeSince = lastGlobalActivity.finished_at
+            ? Math.floor(
+                (Date.now() - new Date(lastGlobalActivity.finished_at).getTime()) /
+                  (1000 * 60 * 60),
+              )
+            : null;
+
+          resurrection.last_global_activity = 
+            `Estudou "${lastGlobalActivity.contents.title}" ${
+              timeSince ? `há ${timeSince}h` : "recentemente"
+            }`;
+        }
+
+        this.logger.debug(
+          `Context resurrection loaded: same=${!!resurrection.last_session_summary}, global=${!!resurrection.last_global_activity}`,
+        );
+
+        // Emit telemetry event for resurrection usage tracking
+        this.eventEmitter.emit("context.resurrection.used", {
+          sessionId,
+          userId: user_id,
+          contentId: content_id,
+          hasSameContentSummary: !!resurrection.last_session_summary,
+          hasGlobalActivity: !!resurrection.last_global_activity,
+        });
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to load resurrection context: ${err.message}`);
+    }
+
     return {
       pedState: pedState || {},
       lastTurns: formattedTurns,
       contentSlice,
       memoriesTopK: 6, // For AI service retrieval
+      resurrection, // Cross-session context
+      sessionAnnotations, // User annotations for quiz generation
       contextPlan: {
         prefixVersion: "CANONICAL_PREFIX_V1",
         lastTurnsWindow: 6,
@@ -556,7 +783,154 @@ export class ReadingSessionsService {
       this.logger.error(`Failed to compute outcomes for ${sessionId}`, err);
     });
 
+    // Track activity in daily_activities table
+    try {
+      const sessionDuration = session.session.finished_at
+        ? Math.floor(
+            (new Date(session.session.finished_at).getTime() -
+              new Date(session.session.created_at).getTime()) /
+              (1000 * 60),
+          )
+        : 0;
+
+      // Count annotations created during this session
+      const annotationsCount = await this.prisma.session_events.count({
+        where: {
+          reading_session_id: sessionId,
+          event_type: 'MARK_UNKNOWN_WORD',
+        },
+      });
+
+      const todayDate = new Date(new Date().toISOString().split('T')[0]);
+      
+      const existingActivity = await this.prisma.daily_activities.findFirst({
+        where: {
+          user_id: user_id,
+          date: todayDate,
+        },
+      });
+
+      if (existingActivity) {
+        await this.prisma.daily_activities.update({
+          where: { id: existingActivity.id },
+          data: {
+            minutes_studied: { increment: sessionDuration },
+            sessions_count: { increment: 1 },
+            contents_read: { increment: 1 },
+            annotations_created: { increment: annotationsCount },
+          },
+        });
+      } else {
+        await this.prisma.daily_activities.create({
+          data: {
+            id: uuid(),
+            user_id: user_id,
+            date: todayDate,
+            minutes_studied: sessionDuration,
+            sessions_count: 1,
+            contents_read: 1,
+            annotations_created: annotationsCount,
+          },
+        });
+      }
+
+      this.logger.log(
+        `Tracked activity: ${sessionDuration}min, ${annotationsCount} annotations`,
+      );
+
+      // Award badges based on milestones
+      await this.awardBadgesIfEligible(user_id, {
+        sessionDuration,
+        annotationsCount,
+      });
+    } catch (err) {
+      this.logger.warn(`Failed to track daily activity: ${err.message}`);
+    }
+
     return { ok: true, session: updated };
+  }
+
+  /**
+   * Award badges to user if they've reached milestones
+   */
+  private async awardBadgesIfEligible(
+    userId: string,
+    metrics: { sessionDuration: number; annotationsCount: number },
+  ) {
+    try {
+      // Get user's total stats
+      const [totalSessions, totalMinutes, totalAnnotations, currentStreak] =
+        await Promise.all([
+          this.prisma.reading_sessions.count({
+            where: { user_id: userId, phase: 'FINISHED' },
+          }),
+          this.prisma.daily_activities.aggregate({
+            where: { user_id: userId },
+            _sum: { minutes_studied: true },
+          }),
+          this.prisma.session_events.count({
+            where: {
+              reading_sessions: { user_id: userId },
+              event_type: 'MARK_UNKNOWN_WORD',
+            },
+          }),
+          this.prisma.streaks
+            .findUnique({ where: { user_id: userId } })
+            .then((s) => s?.current_streak || 0),
+        ]);
+
+      const totalHours = Math.floor(
+        (totalMinutes._sum.minutes_studied || 0) / 60,
+      );
+
+      // Define badge eligibility
+      const badgesToAward: string[] = [];
+
+      // First session
+      if (totalSessions === 1) badgesToAward.push('badge-first-session');
+
+      // Session milestones
+      if (totalSessions === 10) badgesToAward.push('badge-sessions-10');
+      if (totalSessions === 50) badgesToAward.push('badge-sessions-50');
+      if (totalSessions === 100) badgesToAward.push('badge-sessions-100');
+
+      // Time milestones
+      if (totalHours === 10) badgesToAward.push('badge-hours-10');
+      if (totalHours === 50) badgesToAward.push('badge-hours-50');
+      if (totalHours === 100) badgesToAward.push('badge-hours-100');
+
+      // Annotation milestones
+      if (totalAnnotations === 25) badgesToAward.push('badge-notes-25');
+      if (totalAnnotations === 100) badgesToAward.push('badge-notes-100');
+      if (totalAnnotations === 500) badgesToAward.push('badge-notes-500');
+
+      // Streak milestones
+      if (currentStreak === 3) badgesToAward.push('badge-streak-3');
+      if (currentStreak === 7) badgesToAward.push('badge-streak-7');
+      if (currentStreak === 30) badgesToAward.push('badge-streak-30');
+
+      // Award badges (skip if already awarded)
+      for (const badgeId of badgesToAward) {
+        await this.prisma.user_badges
+          .create({
+            data: {
+              id: uuid(),
+              users: { connect: { id: userId } },
+              badges: { connect: { id: badgeId } },
+              awarded_at: new Date(),
+            },
+          })
+          .catch(() => {
+            // Ignore duplicate errors (badge already awarded)
+          });
+      }
+
+      if (badgesToAward.length > 0) {
+        this.logger.log(`Awarded ${badgesToAward.length} badges to ${userId}`);
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to award badges: ${err.message}`);
+    }
   }
 
   /**
@@ -566,11 +940,22 @@ export class ReadingSessionsService {
     // Note: Validation happens in QuickCommandParser for now
     // Add DTO validation here in future if needed
 
+    // [MICROPATCH] Normalize events to ensure consistent eventType/payload
+    const normalized = normalizeEventsToWrite(events);
+
+    if (events.length !== normalized.length) {
+      this.logger.debug(
+        `Normalized events dropped invalid items: ${events.length} received -> ${normalized.length} valid`,
+      );
+    }
+
+    if (normalized.length === 0) return;
+
     await this.prisma.session_events.createMany({
-      data: events.map((e) => ({
+      data: normalized.map((e) => ({
         id: uuid(),
         reading_session_id: sessionId,
-        event_type: e.eventType,
+        event_type: e.eventType as any,
         payload_json: e.payloadJson,
         created_at: new Date(), // Add created_at since schema probably requires or uses it
       })),
@@ -579,7 +964,7 @@ export class ReadingSessionsService {
     // Emit event to trigger vocab capture and other listeners
     this.eventEmitter.emit("session.events.created", {
       sessionId,
-      eventTypes: events.map((e) => e.eventType),
+      eventTypes: normalized.map((e) => e.eventType),
     });
   }
 
@@ -812,5 +1197,46 @@ export class ReadingSessionsService {
 
   async deleteBookmark(bookmarkId: string, user_id: string) {
     return this.deleteBookmarkUseCase.execute(bookmarkId, user_id);
+  }
+
+  /**
+   * Get recent session statistics for signal enrichment
+   * Used by Learning Orchestrator to calculate context signals
+   */
+  async getRecentSessionStats(
+    sessionId: string,
+    minutes: number = 15,
+  ): Promise<{ doubtsCount: number; timeSpent: number }> {
+    const since = new Date(Date.now() - minutes * 60 * 1000);
+
+    // Count doubt-related events in the time window
+    const doubtsCount = await this.prisma.session_events.count({
+      where: {
+        reading_session_id: sessionId,
+        created_at: { gte: since },
+        event_type: 'MARK_UNKNOWN_WORD', // Primary doubt signal
+      },
+    });
+
+    // Calculate time spent (approximate from event timestamps)
+    const events = await this.prisma.session_events.findMany({
+      where: {
+        reading_session_id: sessionId,
+        created_at: { gte: since },
+      },
+      select: { created_at: true },
+      orderBy: { created_at: 'asc' },
+    });
+
+    const timeSpent =
+      events.length > 1
+        ? Math.floor(
+            (events[events.length - 1].created_at.getTime() -
+              events[0].created_at.getTime()) /
+              (1000 * 60),
+          )
+        : 0;
+
+    return { doubtsCount, timeSpent };
   }
 }

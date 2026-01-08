@@ -21,8 +21,8 @@ export class CoReadingStateMachine {
       [CoReadingPhase.BOOT]: [CoReadingPhase.PRE],
       [CoReadingPhase.PRE]: [CoReadingPhase.DURING],
       [CoReadingPhase.DURING]: [CoReadingPhase.POST],
-      [CoReadingPhase.POST]: [CoReadingPhase.CLOSE],
-      [CoReadingPhase.CLOSE]: [], // Terminal state
+      [CoReadingPhase.POST]: [CoReadingPhase.FINISHED],
+      [CoReadingPhase.FINISHED]: [], // Terminal state
     };
 
     return validTransitions[from]?.includes(to) ?? false;
@@ -91,8 +91,8 @@ export class CoReadingStateMachine {
         return "READ_DURING_MARK_RULE";
       case CoReadingPhase.POST:
         return "READ_POST_FREE_RECALL";
-      case CoReadingPhase.CLOSE:
-        return "EDU_CLOSE_SCRIPT";
+      case CoReadingPhase.FINISHED:
+        return "EDU_FINISHED_SCRIPT";
       default:
         return "OPS_QUEUE_NEXT";
     }
@@ -188,13 +188,13 @@ export class CoReadingStateMachine {
    */
   async post(context: CoReadingContext): Promise<PhaseTransitionResult> {
     // POST completes after metacog + educator closure
-    return this.transition(context, CoReadingPhase.CLOSE);
+    return this.transition(context, CoReadingPhase.FINISHED);
   }
 
   /**
-   * CLOSE phase: Finalize session, update snapshots
+   * FINISHED phase: Finalize session, update snapshots
    */
-  async close(context: CoReadingContext): Promise<PhaseTransitionResult> {
+  async finish(context: CoReadingContext): Promise<PhaseTransitionResult> {
     // Log final event
     await this.familyEventService.logCoSessionFinished(
       context.readingSessionId,
@@ -220,7 +220,7 @@ export class CoReadingStateMachine {
 
     return {
       success: true,
-      newPhase: CoReadingPhase.CLOSE,
+      newPhase: CoReadingPhase.FINISHED,
       message: "Session completed",
     };
   }

@@ -10,6 +10,9 @@ export interface SessionMetrics {
   dominantMode: string;
   startTime: string;
   endTime: string;
+  comprehensionScore?: number;
+  productionScore?: number;
+  frustrationIndex?: number;
 }
 
 export interface DailyEngagement {

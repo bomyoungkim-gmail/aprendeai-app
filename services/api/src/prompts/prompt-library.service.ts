@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { CanonicalPrompt, PromptVariables } from "./dto/canonical-prompt.dto";
+import { PromptContext } from "./types/prompt-context";
 import * as prompts from "./canonical-prompts.json";
 
 @Injectable()
@@ -50,6 +51,26 @@ export class PromptLibraryService {
     phase: "PLAN" | "PRE" | "DURING" | "POST" | "BOOT",
   ): CanonicalPrompt[] {
     return Array.from(this.prompts.values()).filter((p) => p.phase === phase);
+  }
+
+  /**
+   * Interpolate variables in a prompt using PromptContext
+   * This is a convenience wrapper around getPrompt() for dynamic contexts
+   */
+  interpolateVariables(
+    prompt: CanonicalPrompt,
+    context: PromptContext,
+  ): CanonicalPrompt {
+    // Convert PromptContext to PromptVariables (both are Record<string, any>)
+    const variables = context as PromptVariables;
+
+    return {
+      ...prompt,
+      nextPrompt: this.interpolate(prompt.nextPrompt, variables),
+      quickReplies: prompt.quickReplies.map((reply) =>
+        this.interpolate(reply, variables),
+      ),
+    };
   }
 
   /**

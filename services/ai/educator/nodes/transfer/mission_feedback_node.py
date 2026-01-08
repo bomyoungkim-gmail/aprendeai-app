@@ -5,6 +5,7 @@ This is the core node for grading user submissions against mission rubrics.
 """
 
 from educator.transfer_state import TransferState
+from educator.policies.decision_policy import parse_decision_policy
 from llm_factory import llm_factory
 from langchain.prompts import ChatPromptTemplate
 import logging
@@ -24,6 +25,18 @@ def handle(state: TransferState) -> TransferState:
         Updated state with feedback and structured scores
     """
     logger.info("Mission Feedback node executing")
+    
+    # Check decision_policy gate
+    policy_dict = state.get("decision_policy", {})
+    policy = parse_decision_policy(policy_dict)
+    
+    if not policy.features.missionFeedbackEnabled:
+        logger.info("Mission feedback disabled by decision_policy")
+        return {
+            **state,
+            "response_text": "⚠️ Feedback de missões está desabilitado no momento.",
+            "current_node": "mission_feedback",
+        }
     
     mission_data = state.get('mission_data', {})
     

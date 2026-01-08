@@ -149,7 +149,7 @@ describe("CoReadingStateMachine", () => {
     it("should log CO_SESSION_FINISHED event", async () => {
       const context = createMockContext(CoReadingPhase.POST);
 
-      await service.close(context);
+      await service.finish(context);
 
       expect(mockFamilyEventService.logCoSessionFinished).toHaveBeenCalledWith(
         "rs_789",

@@ -9,6 +9,7 @@ import { QuestionSelectionService } from "./services/question-selection.service"
 import { AIQuestionGeneratorService } from "./services/ai-question-generator.service";
 import { PrismaModule } from "../prisma/prisma.module";
 import { LLMModule } from "../llm/llm.module";
+import { ItemBankModule } from "../item-bank/item-bank.module";
 
 import { TopicMasteryModule } from "../analytics/topic-mastery.module";
 import { GamificationModule } from "../gamification/gamification.module";
@@ -26,6 +27,7 @@ import { UpdateGameProgressUseCase } from "./application/use-cases/update-game-p
     TopicMasteryModule,
     LLMModule,
     GamificationModule,
+    ItemBankModule,
   ],
   controllers: [GamesController],
   providers: [

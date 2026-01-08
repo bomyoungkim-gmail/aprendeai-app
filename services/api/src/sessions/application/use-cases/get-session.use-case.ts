@@ -5,12 +5,19 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { ISessionsRepository } from "../../domain/sessions.repository.interface";
+import { buildSessionContext } from "../../helpers/context-builder";
+import { PrismaService } from "../../../prisma/prisma.service";
+import { GamificationService } from "../../../gamification/gamification.service";
+import { ScaffoldingInitializerService } from "../../../decision/application/scaffolding-initializer.service"; // SCRIPT 03
 
 @Injectable()
 export class GetSessionUseCase {
   constructor(
     @Inject(ISessionsRepository)
     private readonly sessionsRepository: ISessionsRepository,
+    private readonly prisma: PrismaService,
+    private readonly gamificationService: GamificationService,
+    private readonly scaffoldingInitializer: ScaffoldingInitializerService, // SCRIPT 03
   ) {}
 
   async execute(sessionId: string, userId: string): Promise<any> {
@@ -58,11 +65,32 @@ export class GetSessionUseCase {
       ? lastEventWithReplies.payload.quickReplies
       : [];
 
+    // Build decision_policy from context-builder
+    let decision_policy = null;
+    try {
+      const contextWithPolicy = await buildSessionContext(
+        sessionId,
+        userId,
+        session.contentId,
+        { 
+          prisma: this.prisma, 
+          gamificationService: this.gamificationService,
+          scaffoldingInitializer: this.scaffoldingInitializer, // SCRIPT 03
+        },
+        undefined, // No uiMode override in get-session
+      );
+      decision_policy = contextWithPolicy.decision_policy;
+    } catch (error) {
+      // Log but don't fail if policy fetch fails
+      console.warn('Failed to fetch decision_policy:', error);
+    }
+
     return {
       session,
       content: session.content,
       messages,
       quickReplies,
+      decision_policy, // Include decision_policy for Python AI Service
     };
   }
 }

@@ -5,6 +5,7 @@ AGENT SCRIPT C: Dynamic support based on mastery state.
 """
 
 from educator.transfer_state import TransferState
+from educator.policies.decision_policy import parse_decision_policy
 import logging
 
 logger = logging.getLogger(__name__)
@@ -72,6 +73,18 @@ def handle(state: TransferState) -> TransferState:
     This node runs BEFORE intent routing to enrich state with context-aware settings.
     """
     logger.info("Scaffolding node executing")
+    
+    # Check decision_policy gate for transfer graph
+    policy_dict = state.get("decision_policy", {})
+    policy = parse_decision_policy(policy_dict)
+    
+    if not policy.features.transferGraphEnabled:
+        logger.info("Transfer graph disabled by decision_policy")
+        return {
+            **state,
+            "response_text": "⚠️ As ferramentas de transferência estão desabilitadas no momento.",
+            "current_node": "scaffolding",
+        }
     
     user_profile = state.get('user_profile', {})
     transfer_metadata = state.get('transfer_metadata', {})

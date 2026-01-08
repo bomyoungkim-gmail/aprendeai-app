@@ -23,7 +23,7 @@ RUN npx prisma generate --schema=/app/prisma/schema.prisma
 
 # Copy ONLY source code (not node_modules thanks to .dockerignore)
 COPY services/api/src ./src
-COPY services/api/test ./test
+COPY services/api/tests ./tests
 COPY services/api/tsconfig*.json ./
 COPY services/api/nest-cli.json ./
 
@@ -48,7 +48,7 @@ COPY --from=builder /app/prisma ./prisma
 
 # Copy application source
 COPY --from=builder /app/src ./src
-COPY --from=builder /app/test ./test
+COPY --from=builder /app/tests ./tests
 COPY --from=builder /app/tsconfig*.json ./
 COPY --from=builder /app/nest-cli.json ./
 

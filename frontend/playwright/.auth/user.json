@@ -1,0 +1,25 @@
+{
+  "cookies": [
+    {
+      "name": "auth-token",
+      "value": "mock-e2e-test-token",
+      "domain": "127.0.0.1",
+      "path": "/",
+      "expires": 1767915304.232,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "http://127.0.0.1:3000",
+      "localStorage": [
+        {
+          "name": "auth-storage",
+          "value": "{\"state\":{\"token\":null,\"user\":null,\"_hasHydrated\":true},\"version\":0}"
+        }
+      ]
+    }
+  ]
+}

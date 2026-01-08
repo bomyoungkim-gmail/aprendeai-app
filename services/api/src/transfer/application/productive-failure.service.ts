@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { DecisionService } from '../../decision/application/decision.service';
 import { TelemetryService } from '../../telemetry/telemetry.service';
 import { TelemetryEventType } from '../../telemetry/domain/telemetry.constants';
+import { EventEmitter2 } from '@nestjs/event-emitter'; // GRAPH SCRIPT 19.10
 
 /**
  * Productive Failure Service
@@ -23,6 +24,7 @@ export class ProductiveFailureService {
     private readonly prisma: PrismaService,
     private readonly decisionService: DecisionService,
     private readonly telemetryService: TelemetryService,
+    private readonly eventEmitter: EventEmitter2, // GRAPH SCRIPT 19.10
   ) {}
 
   /**
@@ -333,6 +335,17 @@ export class ProductiveFailureService {
         score: score,
       },
     }, attempt.user_id);
+
+    // GRAPH SCRIPT 19.10: Emit event for graph reinforcement
+    this.eventEmitter.emit('mission.completed', {
+      userId: attempt.user_id,
+      contentId: attempt.content_id,
+      missionData: {
+        missionId: attempt.mission_id,
+        score: score,
+        missionType: attempt.transfer_missions.type,
+      },
+    });
 
     this.logger.log(`Mission completed: ${attempt.mission_id}, score: ${score}`);
   }

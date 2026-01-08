@@ -1,0 +1,14 @@
+# ============================================
+# GRAPH AUTOMATION CONFIGURATION
+# ============================================
+
+# Temporal Decay Settings (Item 19.10)
+GRAPH_DECAY_HALF_LIFE=14
+GRAPH_MIN_CONFIDENCE=0.2
+
+# Periodic Comparison Settings (Item 19.9)
+GRAPH_COMPARISON_ACTIVITY_THRESHOLD=5
+
+# Internal API Security (for Python worker integration)
+# Generate with: openssl rand -hex 32
+INTERNAL_API_SECRET=change-me-in-production

@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Accessibility CSS Variables */
+:root {
+  --base-font-size: 16px;
+  --animation-duration: 300ms;
+}
+
+/* High contrast mode */
+[data-contrast="high"] {
+  --text-primary: #000000;
+  --bg-primary: #ffffff;
+  --border-color: #000000;
+}
+
+/* Focus mode */
+[data-focus-mode="true"] {
+  --distraction-opacity: 0.3;
+}
+
 /* React PDF styles */
 /* Commented out - causing build errors, react-pdf works without these */
 /* @import 'react-pdf/dist/Page/AnnotationLayer.css'; */

@@ -45,8 +45,7 @@ export class WebClipsService {
         tags: dto.tags || ["webclip"],
         captured_at: new Date().toISOString(),
       },
-      ownerId: user_id, // assuming user_id goes here for ownership
-      ownerType: "USER", // assuming OWNER_TYPE is correct
+
       scopeType: "USER",
       scopeId: user_id,
       // source_url is handled via metadata in repo implementation for now
@@ -76,7 +75,7 @@ export class WebClipsService {
 
     if (
       !content ||
-      content.ownerId !== user_id ||
+      content.scopeId !== user_id ||
       content.type !== "WEB_CLIP"
     ) {
       throw new BadRequestException("WebClip not found or access denied");
@@ -135,7 +134,7 @@ export class WebClipsService {
 
     if (
       !content ||
-      content.ownerId !== user_id ||
+      content.scopeId !== user_id ||
       content.type !== "WEB_CLIP"
     ) {
       throw new BadRequestException("WebClip not found");

@@ -33,6 +33,47 @@ def handle(state: EducatorState) -> EducatorState:
     
     logger.info(f"PRE phase handler for session {session['id']}")
     
+    # NEW: Context Resurrection - Greet returning users
+    resurrection = context.get('resurrection')
+    if resurrection and not session.get('goalStatement'):
+        # First interaction in this session - show resurrection context
+        greeting_parts = []
+        
+        if resurrection.get('last_session_summary'):
+            greeting_parts.append(f"📚 Bem-vindo de volta! {resurrection['last_session_summary']}")
+        
+        if resurrection.get('last_global_activity'):
+            greeting_parts.append(f"🌍 {resurrection['last_global_activity']}")
+        
+        if greeting_parts:
+            greeting = "\n\n".join(greeting_parts)
+            state['next_prompt'] = f"""{greeting}
+
+Meta do dia: em 1 linha, o que você quer entender neste texto?"""
+            state['quick_replies'] = [
+                "Continuar de onde parei",
+                "Novo objetivo",
+                "Revisar conceitos"
+            ]
+            
+            # Telemetry: Track resurrection context usage
+            state['events_to_write'] = [{
+                "eventType": "CONTEXT_RESURRECTION_DISPLAYED",
+                "payloadJson": {
+                    "has_last_session": bool(resurrection.get('last_session_summary')),
+                    "has_global_activity": bool(resurrection.get('last_global_activity'))
+                }
+            }]
+            
+            # If user just provided goal, append it
+            if user_text and len(user_text) > 10:
+                state['events_to_write'].append({
+                    "eventType": "GOAL_SET",
+                    "payloadJson": {"goalStatement": user_text}
+                })
+            
+            return state
+    
     # 1. Check if goal needed
     if not session.get('goalStatement'):
         logger.debug("Requesting goal statement")

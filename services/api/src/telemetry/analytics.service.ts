@@ -13,61 +13,139 @@ export class AnalyticsService {
     contentId: string,
     userId: string,
   ): Promise<SessionMetricsDto> {
-    // For MVP, "Session" is implicitly defined by contentId + User + Time window (last 24h?)
-    // Or we use the actual sessionId passed from frontend if we tracked it in 'data' json.
-    // Sprint 1 TelemetryEvent has 'data' Json.
-    // Let's aggregate by contentId for the user for now (Life-time stats for this content).
-    // Or simpler: Aggregate ALL events for this user/content.
+    // Fetch the latest FINISHED session for this content and user
+    const session = await this.prisma.reading_sessions.findFirst({
+      where: {
+        user_id: userId,
+        content_id: contentId,
+        phase: 'FINISHED',
+      },
+      orderBy: {
+        finished_at: 'desc',
+      },
+      include: {
+        session_outcomes: true,
+      },
+    });
 
-    // 1. Time Spent
+    // If no finished session found, fall back to telemetry aggregation
+    if (!session) {
+      return this.getSessionMetricsFromTelemetry(contentId, userId);
+    }
+
+    // Calculate time from session timestamps
+    const totalTimeMs = session.finished_at && session.started_at
+      ? session.finished_at.getTime() - session.started_at.getTime()
+      : 0;
+
+    // Fetch interaction metrics from telemetry (scroll, highlights, notes)
+    const [scrollEvents, interactions] = await Promise.all([
+      this.prisma.telemetry_events.findMany({
+        where: {
+          user_id: userId,
+          content_id: contentId,
+          event_type: 'SCROLL_DEPTH',
+        },
+        select: { data: true },
+      }),
+      this.prisma.telemetry_events.groupBy({
+        by: ['event_type'],
+        where: {
+          user_id: userId,
+          content_id: contentId,
+          event_type: {
+            in: ['ANNOTATION_CREATED', 'NOTE_CREATED'],
+          },
+        },
+        _count: true,
+      }),
+    ]);
+
+    const maxScroll = scrollEvents.reduce(
+      (max, e) => Math.max(max, (e.data as any)?.scrollPercent || 0),
+      0,
+    );
+
+    const highlightsCount =
+      interactions.find((i) => i.event_type === 'ANNOTATION_CREATED')?._count ||
+      0;
+    const notesCount =
+      interactions.find((i) => i.event_type === 'NOTE_CREATED')?._count || 0;
+
+    // Fetch mode from telemetry
+    const modeEvent = await this.prisma.telemetry_events.findFirst({
+      where: {
+        user_id: userId,
+        content_id: contentId,
+        event_type: 'CHANGE_MODE',
+      },
+      orderBy: { created_at: 'desc' },
+    });
+    const dominantMode = (modeEvent?.data as any)?.newMode || 'NARRATIVE';
+
+    return {
+      sessionId: session.id,
+      totalTimeMs,
+      scrollDepth: maxScroll,
+      highlightsCount,
+      notesCount,
+      dominantMode,
+      startTime: session.started_at || new Date(),
+      endTime: session.finished_at || new Date(),
+      comprehensionScore: session.session_outcomes?.comprehension_score,
+      productionScore: session.session_outcomes?.production_score,
+      frustrationIndex: session.session_outcomes?.frustration_index,
+    };
+  }
+
+  /**
+   * Fallback method for sessions without outcomes (legacy or incomplete sessions)
+   */
+  private async getSessionMetricsFromTelemetry(
+    contentId: string,
+    userId: string,
+  ): Promise<SessionMetricsDto> {
+    // Original telemetry-based aggregation logic
     const timeEvents = await this.prisma.telemetry_events.findMany({
       where: {
         user_id: userId,
         content_id: contentId,
-        event_type: { in: ["TIME_SPENT", "TIME_HEARTBEAT"] },
+        event_type: { in: ['TIME_SPENT', 'TIME_HEARTBEAT'] },
       },
-      orderBy: { created_at: "desc" },
-      take: 100, // Limit for perf
+      orderBy: { created_at: 'desc' },
+      take: 100,
     });
 
-    // Simple sum of TIME_SPENT events (assuming they are increments or final summaries)
-    // Our frontend sends "totalDurationMs" in TIME_SPENT.
-    // If we have multiple sessions, we sum the distinct final events?
-    // Complex. For MVP, let's sum "activeDurationMs" from heartbeats if available, or just count events.
-    // Better: Frontend TIME_SPENT has 'totalDurationMs' for THAT session.
-    // We sum all TIME_SPENT.totalDurationMs
     const totalTimeMs = timeEvents
-      .filter((e) => e.event_type === "TIME_SPENT")
+      .filter((e) => e.event_type === 'TIME_SPENT')
       .reduce(
         (acc, curr) => acc + ((curr.data as any)?.totalDurationMs || 0),
         0,
       );
 
-    // 2. Interactions
     const interactions = await this.prisma.telemetry_events.groupBy({
-      by: ["event_type"],
+      by: ['event_type'],
       where: {
         user_id: userId,
         content_id: contentId,
         event_type: {
-          in: ["ANNOTATION_CREATED", "NOTE_CREATED", "SCROLL_DEPTH"],
+          in: ['ANNOTATION_CREATED', 'NOTE_CREATED', 'SCROLL_DEPTH'],
         },
       },
       _count: true,
     });
 
     const highlightsCount =
-      interactions.find((i) => i.event_type === "ANNOTATION_CREATED")?._count ||
+      interactions.find((i) => i.event_type === 'ANNOTATION_CREATED')?._count ||
       0;
     const notesCount =
-      interactions.find((i) => i.event_type === "NOTE_CREATED")?._count || 0;
+      interactions.find((i) => i.event_type === 'NOTE_CREATED')?._count || 0;
 
-    // 3. Max Scroll
     const scrollEvents = await this.prisma.telemetry_events.findMany({
       where: {
         user_id: userId,
         content_id: contentId,
-        event_type: "SCROLL_DEPTH",
+        event_type: 'SCROLL_DEPTH',
       },
       select: { data: true },
     });
@@ -76,55 +154,59 @@ export class AnalyticsService {
       0,
     );
 
-    // 4. Mode
     const modeEvents = await this.prisma.telemetry_events.findFirst({
       where: {
         user_id: userId,
         content_id: contentId,
-        event_type: "CHANGE_MODE",
+        event_type: 'CHANGE_MODE',
       },
-      orderBy: { created_at: "desc" },
+      orderBy: { created_at: 'desc' },
     });
-    const dominantMode = (modeEvents?.data as any)?.newMode || "NARRATIVE";
+    const dominantMode = (modeEvents?.data as any)?.newMode || 'NARRATIVE';
 
     return {
-      sessionId: "aggregate", // Placeholder
+      sessionId: 'aggregate',
       totalTimeMs,
       scrollDepth: maxScroll,
       highlightsCount,
       notesCount,
       dominantMode,
-      startTime: new Date(), // Placeholder
+      startTime: new Date(),
       endTime: new Date(),
     };
   }
 
   async getDailyStats(userId: string): Promise<DailyEngagementDto> {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const todayDateString = today.toISOString().split('T')[0];
+    const todayDate = new Date(todayDateString);
 
-    const count = await this.prisma.telemetry_events.count({
+    // Query daily_activities table for today's data
+    const activity = await this.prisma.daily_activities.findFirst({
       where: {
         user_id: userId,
-        created_at: { gte: today },
+        date: todayDate,
       },
     });
 
-    // Distinct contents
-    const contents = await this.prisma.telemetry_events.groupBy({
-      by: ["content_id"],
-      where: {
-        user_id: userId,
-        created_at: { gte: today },
-        event_type: "VIEW_CONTENT",
-      },
-    });
+    // If no activity found, return zeros
+    if (!activity) {
+      return {
+        date: todayDateString,
+        totalTimeMs: 0,
+        contentsRead: 0,
+        sessionsCount: 0,
+      };
+    }
+
+    // Convert minutes to milliseconds for frontend compatibility
+    const totalTimeMs = activity.minutes_studied * 60 * 1000;
 
     return {
-      date: today.toISOString().split("T")[0],
-      totalTimeMs: 0, // TODO: Aggregate time for today
-      contentsRead: contents.length,
-      sessionsCount: 0, // Placeholder
+      date: todayDateString,
+      totalTimeMs,
+      contentsRead: activity.contents_read,
+      sessionsCount: activity.sessions_count,
     };
   }
 

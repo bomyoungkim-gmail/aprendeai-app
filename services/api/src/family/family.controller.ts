@@ -176,18 +176,31 @@ export class FamilyController {
 
   @Post("co-sessions/:id/prompt")
   @ApiOperation({ summary: "Get co-reading session prompt" })
-  getCoSessionPrompt(
+  async getCoSessionPrompt(
     @Param("id") sessionId: string,
     @Body() body: { phase: string },
+    @Req() req,
   ) {
-    // Return appropriate prompt based on current phase
-    const promptKeys = {
-      BOOT: "OPS_DAILY_BOOT_LEARNER",
-      PRE: "READ_PRE_CHOICE_SKIM",
-      DURING: "READ_DURING_MARK_RULE",
-      POST: "READ_POST_FREE_RECALL",
-    };
-    return this.opsCoachService.getDailyBootLearner(); // TODO (Issue #1): Use phase-based logic
+    const phase = body.phase as 'BOOT' | 'PRE' | 'DURING' | 'POST' | 'FINISHED';
+    
+    // Validate phase
+    const validPhases = ['BOOT', 'PRE', 'DURING', 'POST', 'FINISHED'];
+    if (!validPhases.includes(phase)) {
+      throw new Error(`Invalid phase: ${phase}. Must be one of: ${validPhases.join(', ')}`);
+    }
+    
+    // For FINISHED phase, use context-aware version with gamification
+    if (phase === 'FINISHED') {
+      return this.opsCoachService.getDailyBootLearnerWithContext(
+        phase,
+        req.user.id,
+        sessionId,
+        sessionId, // Use sessionId as contentId proxy
+      );
+    }
+    
+    // Return phase-specific prompt (non-FINISHED phases)
+    return this.opsCoachService.getDailyBootLearner(phase);
   }
 
   @Post("teachback/:id/prompt")

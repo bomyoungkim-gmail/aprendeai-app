@@ -67,6 +67,14 @@ export function AnalyticsDashboard({ contentId }: AnalyticsDashboardProps) {
           icon={FileText} 
           description="Notas e dúvidas registradas"
         />
+        {metrics.comprehensionScore !== undefined && (
+          <StatCard 
+            title="Compreensão" 
+            value={`${metrics.comprehensionScore}%`} 
+            icon={Activity} 
+            description="Score de compreensão do conteúdo"
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4">

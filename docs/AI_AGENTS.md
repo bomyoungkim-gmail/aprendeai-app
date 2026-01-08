@@ -254,6 +254,20 @@ sequenceDiagram
     Educator-->>User: Feedback + Next round
 ```
 
+#### 🔄 7. CONTEXT RESURRECTION (Memória entre Sessões)
+
+**Trigger:** Início de sessão (`PRE` Phase).
+
+**Objetivo:** Permitir que o agente lembre de atividades passadas ao retornar a um material ou trocar de contexto.
+
+**Funcionalidades:**
+
+- ✅ **Last Session Context:** Injeta resumo da última sessão do mesmo material (Página, Cornell, Compreensão).
+- ✅ **Global Activity:** Injeta resumo da última atividade em _qualquer_ material.
+- ✅ **Greeting Personalizado:** Agente saúda o aluno com base no histórico ("Bem-vindo de volta! Paramos na página 42").
+
+---
+
 ---
 
 ### 🎭 2.5 Adaptabilidade por Modo de Leitura
@@ -880,6 +894,32 @@ sequenceDiagram
     API-->>FE: OpsCoachResponse
 ```
 
+### 🧩 Interação Usuário-Interface-Agente
+
+A interação não é apenas texto. A UI interpreta eventos estruturados para exibir componentes ricos.
+
+#### Componentes de Interface (UI)
+
+1.  **Chat Stream:** Renderiza mensagens de texto e markdown em tempo real.
+2.  **Quick Reples:** Botões de ação rápida sugeridos pelo agente.
+3.  **Mission Card:** Cards laterais que mostram objetivos ativos (ex: "Encontre 3 definições").
+4.  **Interactive Elements:**
+    - `mark_unknown`: UI destaca palavras no texto.
+    - `quiz`: Renderiza formulário de múltipla escolha.
+    - `production`: Abre editor de texto para redação.
+
+#### Ciclo de Feedback
+
+1.  **Ação do Usuário:** Clica em um Quick Reply ou digita.
+2.  **Evento Otimista:** UI atualiza imediatamente (ex: mostra mensagem do usuário).
+3.  **Processamento:** Backend processa intenção + Agente gera resposta.
+4.  **Renderização de Eventos:** Payload do agente contém `eventsToWrite`. A UI escuta esses eventos para:
+    - Atualizar barra de progresso.
+    - Desbloquear próxima fase.
+    - Exibir confetes (gamification).
+
+---
+
 ---
 
 ## 📈 Monitoramento e Observabilidade
@@ -966,6 +1006,23 @@ Permite que instituições ajustem os limiares (thresholds) dos índices sem alt
 - [ ] **Fine-tuning:** Modelos customizados para tarefas específicas
 - [ ] **RAG Optimization:** Melhorar retrieval de contexto com embeddings
 - [ ] **Cost Optimization:** Auto-seleção de modelo baseada em budget
+
+---
+
+## 📊 Status de Implementação e Ativação
+
+| Funcionalidade                | Backend (Agente) | Frontend (Ativação) | Descrição do Gatilho                                                              |
+| :---------------------------- | :--------------: | :-----------------: | :-------------------------------------------------------------------------------- |
+| **Context Resurrection**      |     ✅ Ativo     |    ✅ Automático    | Injetado silenciosamente no início da sessão. Gera saudação "Bem-vindo de volta". |
+| **Quiz de Sessão**            |     ✅ Ativo     |    ✅ Automático    | Disparado automaticamente ao finalizar a leitura (fase POST).                     |
+| **Quiz Baseado em Anotações** |     ✅ Ativo     |    ✅ Automático    | Prioriza perguntas sobre trechos marcados como `MAIN_IDEA` ou `DOUBT`.            |
+| **Doubt Spike Detection**     |     ✅ Ativo     |    ✅ Automático    | Intervenção proativa se o usuário marcar muitas dúvidas em pouco tempo.           |
+| **Registro de Dúvida**        |     ✅ Ativo     |      ✅ Manual      | Menu de contexto > "Marcar Dúvida". Agente confirma registro.                     |
+| **Micro-Aulas (Tier 2)**      |     ✅ Ativo     |     🚧 **TODO**     | Requer botão "Explicar Termo" ou "Aprofundar" (não implementado na UI).           |
+| **Análise Morfológica**       |     ✅ Ativo     |     🚧 **TODO**     | Falta botão explícito para solicitar análise estrutural da palavra.               |
+| **Productive Failure**        |     ✅ Ativo     |     ✅ Indireto     | Ativado quando o usuário erra repetidamente (detectado por `scaffoldingLevel`).   |
+| **Grafo de Conhecimento**     |     ✅ Ativo     |     ✅ Indireto     | Constrói arestas `EVIDENCE` silenciosamente conforme o usuário estuda.            |
+| **Resumo Guiado**             |     ✅ Ativo     |    ✅ Automático    | Solicita síntese ao final da sessão se o resumo automático for insuficiente.      |
 
 ---
 

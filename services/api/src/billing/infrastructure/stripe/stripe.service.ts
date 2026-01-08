@@ -27,8 +27,35 @@ export class StripeService {
     });
   }
 
-  async cancelSubscription(subscriptionId: string) {
-    return this.stripe.subscriptions.cancel(subscriptionId);
+  async cancelSubscription(
+    subscriptionId: string,
+    cancelAtPeriodEnd: boolean = true, // YouTube-style default
+  ) {
+    if (cancelAtPeriodEnd) {
+      // Keep access until period ends
+      return this.stripe.subscriptions.update(subscriptionId, {
+        cancel_at_period_end: true,
+      });
+    } else {
+      // Immediate cancellation
+      return this.stripe.subscriptions.cancel(subscriptionId);
+    }
+  }
+
+  async updateSubscription(
+    subscriptionId: string,
+    newPriceId: string,
+    prorationBehavior: 'always_invoice' | 'none' = 'always_invoice',
+  ) {
+    return this.stripe.subscriptions.update(subscriptionId, {
+      items: [
+        {
+          id: (await this.stripe.subscriptions.retrieve(subscriptionId)).items.data[0].id,
+          price: newPriceId,
+        },
+      ],
+      proration_behavior: prorationBehavior,
+    });
   }
 
   async createInvoice(subscriptionId: string) {

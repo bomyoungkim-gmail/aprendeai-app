@@ -1,0 +1,104 @@
+FAIL src/graph/__tests__/decay-predictor.spec.ts
+  DecayPredictorService
+    getPredictedHalfLife
+      √ should return default half-life for new user with no data (12 ms)
+      √ should predict longer half-life for active user (2 ms)
+      × should predict shorter half-life for inactive user (2 ms)
+      × should cache predictions (2 ms)
+      √ should respect min/max bounds (1 ms)
+    clearCache
+      × should clear cache for specific user (1 ms)
+      × should clear all caches when no user specified (1 ms)
+    getStatistics
+      × should return statistics with features (2 ms)
+
+  ● DecayPredictorService › getPredictedHalfLife › should predict shorter half-life for inactive user
+
+    expect(received).toBeLessThan(expected)
+
+    Expected: < 14
+    Received:   18.65
+
+      108 |
+      109 |       // Inactive user should get shorter half-life
+    > 110 |       expect(halfLife).toBeLessThan(14); // Below default
+          |                        ^
+      111 |       expect(halfLife).toBeGreaterThanOrEqual(7);
+      112 |     });
+      113 |
+
+      at Object.<anonymous> (src/graph/__tests__/decay-predictor.spec.ts:110:24)
+
+  ● DecayPredictorService › getPredictedHalfLife › should cache predictions
+
+    expect(jest.fn()).toHaveBeenCalledTimes(expected)
+
+    Expected number of calls: 1
+    Received number of calls: 3
+
+      124 |
+      125 |       // Should only query once
+    > 126 |       expect(mockPrismaService.highlights.count).toHaveBeenCalledTimes(1);
+          |                                                  ^
+      127 |     });
+      128 |
+      129 |     it('should respect min/max bounds', async () => {
+
+      at Object.<anonymous> (src/graph/__tests__/decay-predictor.spec.ts:126:50)
+
+  ● DecayPredictorService › clearCache › should clear cache for specific user
+
+    expect(jest.fn()).toHaveBeenCalledTimes(expected)
+
+    Expected number of calls: 2
+    Received number of calls: 6
+
+      160 |
+      161 |       // Should query twice (cache was cleared)
+    > 162 |       expect(mockPrismaService.highlights.count).toHaveBeenCalledTimes(2);
+          |                                                  ^
+      163 |     });
+      164 |
+      165 |     it('should clear all caches when no user specified', async () => {
+
+      at Object.<anonymous> (src/graph/__tests__/decay-predictor.spec.ts:162:50)
+
+  ● DecayPredictorService › clearCache › should clear all caches when no user specified
+
+    expect(jest.fn()).toHaveBeenCalledTimes(expected)
+
+    Expected number of calls: 4
+    Received number of calls: 12
+
+      177 |
+      178 |       // Should query 4 times total (2 before clear, 2 after)
+    > 179 |       expect(mockPrismaService.highlights.count).toHaveBeenCalledTimes(4);
+          |                                                  ^
+      180 |     });
+      181 |   });
+      182 |
+
+      at Object.<anonymous> (src/graph/__tests__/decay-predictor.spec.ts:179:50)
+
+  ● DecayPredictorService › getStatistics › should return statistics with features
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 25
+    Received: 0
+
+      201 |       expect(stats.predictedHalfLife).toBeLessThanOrEqual(30);
+      202 |       expect(stats.features.activityFrequency).toBe(1); // 30/30
+    > 203 |       expect(stats.features.avgSessionDuration).toBe(25);
+          |                                                 ^
+      204 |       expect(stats.features.retentionRate).toBe(0.8); // 40/50
+      205 |       expect(stats.features.rehighlightRate).toBe(0.2); // 20/100
+      206 |       expect(stats.usingDefault).toBe(false);
+
+      at Object.<anonymous> (src/graph/__tests__/decay-predictor.spec.ts:203:49)
+
+Test Suites: 1 failed, 1 total
+Tests:       5 failed, 3 passed, 8 total
+Snapshots:   0 total
+Time:        4.748 s, estimated 5 s
+Ran all test suites matching /src\\graph\\__tests__\\decay-predictor.spec.ts/i.

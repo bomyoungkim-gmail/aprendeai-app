@@ -38,7 +38,7 @@ describe("Study Session Analytics (Integration)", () => {
       create: {
         name: "Analytics Test User",
         email: `analytics-test@test.com`,
-        password_hash: "hashed",
+
         last_context_role: ContextRole.STUDENT,
         schooling_level: "HIGH_SCHOOL",
       },

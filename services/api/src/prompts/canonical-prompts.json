@@ -27,7 +27,7 @@
     "key": "OPS_DAILY_BOOT_LEARNER",
     "audience": "LEARNER",
     "phase": "BOOT",
-    "nextPrompt": "Meta de hoje: O que vamos ler? Por quê?",
+    "nextPrompt": "Olá, {LEARNER}! Meta de hoje: O que vamos ler? Por quê?",
     "quickReplies": ["Continuar plano", "Escolher novo tema"],
     "notes": "Daily goal setting for learner"
   },
@@ -43,7 +43,7 @@
     "key": "OPS_TIME_LOG",
     "audience": "LEARNER",
     "phase": "POST",
-    "nextPrompt": "Registre seu tempo (exemplo: '/log 15m foco ok'):",
+    "nextPrompt": "Registre seu tempo, {LEARNER} (exemplo: '/log 15m foco ok'):",
     "quickReplies": ["/log 15m foco ok", "/log 10m travou"],
     "notes": "Quick time logging"
   },
@@ -75,7 +75,7 @@
     "key": "READ_PRE_CHOICE_SKIM",
     "audience": "LEARNER",
     "phase": "PRE",
-    "nextPrompt": "Antes de começar: quer dar uma olhada rápida (skim)?",
+    "nextPrompt": "Antes de começar: quer dar uma olhada rápida (skim), {LEARNER}?",
     "quickReplies": ["Sim, dar uma olhada", "Ir direto"],
     "notes": "Pre-reading skim option"
   },
@@ -91,7 +91,7 @@
     "key": "READ_DURING_MARK_RULE",
     "audience": "LEARNER",
     "phase": "DURING",
-    "nextPrompt": "Durante a leitura, marque: '/mark unknown: palavra' ou '/keyidea: texto curto'.",
+    "nextPrompt": "{LEARNER}, durante a leitura, marque: '/mark unknown: palavra' ou '/keyidea: texto curto'.",
     "quickReplies": ["/mark unknown: ...", "/keyidea: ..."],
     "notes": "During-reading marking commands"
   },
@@ -152,10 +152,10 @@
     "notes": "Struggle intervention menu (A/B/C pattern)"
   },
   {
-    "key": "EDU_CLOSE_SCRIPT",
+    "key": "EDU_FINISHED_SCRIPT",
     "audience": "EDUCATOR",
-    "phase": "POST",
-    "nextPrompt": "Sessão finalizada! Dê parabéns pelo esforço e sugira 1 ajuste para próxima vez.",
+    "phase": "FINISHED",
+    "nextPrompt": "Parabéns, {LEARNER}! Você estudou por {MIN} minutos e ganhou {XP_TODAY} XP hoje. {WORDS_MARKED} palavras foram marcadas para revisão. Continue assim! 🎉",
     "quickReplies": ["Dar feedback", "Finalizar sem comentário"],
     "notes": "Session closure script"
   },
@@ -250,5 +250,29 @@
     "nextPrompt": "Aluno {NAME} solicitou ajuda em {TOPIC}. Iniciar sessão 1:1?",
     "quickReplies": ["Iniciar 1:1", "Enviar dica via chat"],
     "notes": "Student help request trigger (privacy gate)"
+  },
+  {
+    "key": "READ_FINISHED_SUMMARY",
+    "audience": "LEARNER",
+    "phase": "FINISHED",
+    "nextPrompt": "Sessão concluída! 🎉 Você ganhou {XP} XP. Próxima revisão em {DAYS} dias.",
+    "quickReplies": ["Ver conquistas", "Próxima sessão"],
+    "notes": "Session completion summary with gamification"
+  },
+  {
+    "key": "READ_FINISHED_NEXT_STEPS",
+    "audience": "LEARNER",
+    "phase": "FINISHED",
+    "nextPrompt": "Quer continuar? Sugestões: A) Nova leitura B) Revisar vocabulário C) Descansar",
+    "quickReplies": ["A - Nova leitura", "B - Revisar vocab", "C - Encerrar"],
+    "notes": "Next action suggestions after session"
+  },
+  {
+    "key": "EDU_SESSION_COMPLETE",
+    "audience": "EDUCATOR",
+    "phase": "FINISHED",
+    "nextPrompt": "Sessão finalizada! {LEARNER} completou {MIN} min. Compreensão: {COMP}%.",
+    "quickReplies": ["Ver relatório", "Agendar próxima"],
+    "notes": "Educator session completion notification"
   }
 ]

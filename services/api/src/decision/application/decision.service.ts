@@ -186,12 +186,72 @@ export class DecisionService {
     policy: DecisionPolicy,
     multipliers: { doubtSensitivity: number },
   ): { action: DecisionAction; channelHint: DecisionChannel; reason: DecisionReason; payload?: any } {
+    // 0. Chat Context Analysis (Highest Priority for natural language)
+    if (signals.chatContext?.text) {
+      const text = signals.chatContext.text.trim();
+      
+      // 0a. Quick Reply Button Detection (Exact Match)
+      const quickReplyAction = this.detectQuickReplyAction(text);
+      if (quickReplyAction) {
+        return this.handleExplicitActionProposal(quickReplyAction);
+      }
+      
+      // 0b. Natural Language Intent Detection (Regex)
+      const intent = this.detectChatIntent(text, signals.chatContext.hasSelection);
+      
+      if (intent === 'SENTENCE_ANALYSIS') {
+        return this.handleExplicitActionProposal('USER_ASKS_SENTENCE_ANALYSIS');
+      }
+      
+      // Fallback: Proactive discovery (Quick Replies) if text is substantial
+      if (text.length > 10 && !signals.explicitUserAction) {
+         return {
+          action: 'ASK_PROMPT',
+          channelHint: 'DETERMINISTIC',
+          reason: 'USER_EXPLICIT_ASK',
+          payload: { 
+            promptType: 'discovery',
+            message: 'Recebido. O que você gostaria de fazer com esse trecho?',
+            quickReplies: [
+              'Analisar Sintaxe',
+              'Explicar Termos',
+              'Analogia',
+              'Morfologia',
+              'Bridging',
+              'Abstração'
+            ]
+          },
+        };
+      }
+    }
+
     // Explicit user actions (highest priority)
+    // 3. Check for specific user triggers (Action Shortcuts)
     if (signals.explicitUserAction) {
+      if ((signals.explicitUserAction as string) === 'help') {
+        return {
+          action: 'ASK_PROMPT',
+          reason: 'USER_EXPLICIT_ASK',
+          channelHint: 'DETERMINISTIC',
+          payload: { promptType: 'generic_help' },
+        };
+      }
+      // If it's another explicit action, handle it generally
       return this.handleExplicitActionProposal(signals.explicitUserAction);
     }
+
+    // 4. Check for LOW_FLOW state (Excessive Doubts)
+    if (signals.flowState === 'LOW_FLOW' || (signals.doubtsInWindow || 0) > 3) {
+      return {
+        action: 'ASK_PROMPT',
+        reason: 'DOUBT_SPIKE',
+        channelHint: 'DETERMINISTIC',
+        payload: { promptType: 'reflection', context: 'struggle_detected' },
+      };
+    }
+
     // Doubt spike (with scaffolding multiplier)
-    else if (this.isDoubtSpike(signals, policy, multipliers.doubtSensitivity)) {
+    if (this.isDoubtSpike(signals, policy, multipliers.doubtSensitivity)) {
       return {
         action: 'ASK_PROMPT',
         channelHint: 'DETERMINISTIC',
@@ -425,6 +485,50 @@ export class DecisionService {
   }
 
   /**
+   * Helper to detect intent from chat text (Regex-based)
+   */
+  private detectChatIntent(text: string, hasSelection: boolean): 'SENTENCE_ANALYSIS' | null {
+    if (!text) return null;
+    
+    // Regex for sentence analysis keywords
+    const analysisRegex = /(analise|sintaxe|oração|sentence|structure|gramática|sujeito)/i;
+    
+    if (analysisRegex.test(text)) {
+      // Guardrail: meaningful analysis usually requires a selection or context
+      // But we allow if the text itself is "Analise esta frase: [texto]"
+      // For now, allow trigger if regex matches
+      return 'SENTENCE_ANALYSIS';
+    }
+    
+    return null;
+  }
+
+  /**
+   * Helper to map Quick Reply button text to explicitUserAction
+   */
+  private detectQuickReplyAction(text: string): string | null {
+    // Exact match mapping (case-insensitive)
+    const normalizedText = text.toLowerCase().trim();
+    
+    switch (normalizedText) {
+      case 'analisar sintaxe':
+        return 'USER_ASKS_SENTENCE_ANALYSIS';
+      case 'explicar termos':
+        return 'USER_ASKS_TIER2';
+      case 'analogia':
+        return 'USER_ASKS_ANALOGY';
+      case 'morfologia':
+        return 'USER_ASKS_MORPHOLOGY';
+      case 'bridging':
+        return 'USER_ASKS_BRIDGING';
+      case 'abstração':
+        return 'USER_ASKS_HIGH_ROAD';
+      default:
+        return null;
+    }
+  }
+
+  /**
    * SCRIPT 10: Check intervention frequency (last N minutes)
    */
   private async checkInterventionFrequency(
@@ -525,6 +629,38 @@ export class DecisionService {
           channelHint: 'DETERMINISTIC',
           reason: 'USER_EXPLICIT_ASK',
           payload: { hintType: 'TIER2' },
+        };
+
+      case 'USER_ASKS_SENTENCE_ANALYSIS':
+        return {
+          action: 'CALL_AGENT',
+          channelHint: 'CACHED_LLM',
+          reason: 'USER_EXPLICIT_ASK',
+          payload: { intent: 'SENTENCE_ANALYSIS' },
+        };
+
+      case 'USER_ASKS_TIER2':
+        return {
+          action: 'CALL_AGENT',
+          channelHint: 'CACHED_LLM',
+          reason: 'USER_EXPLICIT_ASK',
+          payload: { intent: 'TIER2' },
+        };
+
+      case 'USER_ASKS_MORPHOLOGY':
+        return {
+          action: 'CALL_AGENT',
+          channelHint: 'CACHED_LLM',
+          reason: 'USER_EXPLICIT_ASK',
+          payload: { intent: 'BRIDGING' },
+        };
+
+      case 'USER_ASKS_HIGH_ROAD':
+        return {
+          action: 'CALL_AGENT',
+          channelHint: 'CACHED_LLM',
+          reason: 'USER_EXPLICIT_ASK',
+          payload: { intent: 'HIGH_ROAD' },
         };
 
       default:

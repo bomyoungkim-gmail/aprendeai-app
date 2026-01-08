@@ -27,7 +27,7 @@ describe("Migration: Scope & Ownership Mapping (Subfase 5.1)", () => {
           id: uuidv4(),
           email: `legacy-admin-${uuidv4()}@example.com`,
           name: "Legacy Admin",
-          password_hash: "hash",
+
           system_role: SystemRole.ADMIN, // Use Enum
           schooling_level: "Ensino Médio",
           updated_at: new Date(),
@@ -49,7 +49,7 @@ describe("Migration: Scope & Ownership Mapping (Subfase 5.1)", () => {
           id: uuidv4(),
           email: `legacy-content-user-${uuidv4()}@example.com`,
           name: "Legacy Content User",
-          password_hash: "hash",
+
           schooling_level: "Superior",
           updated_at: new Date(),
         },

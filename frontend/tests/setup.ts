@@ -62,3 +62,11 @@ jest.mock('next/navigation', () => ({
 
 // Mock scrollIntoView
 Element.prototype.scrollIntoView = jest.fn();
+
+// Mock uuid to avoid ESM transformation issues
+jest.mock('uuid', () => ({
+  v4: () => 'test-uuid-1234',
+  v1: () => 'test-uuid-v1-1234',
+  v3: () => 'test-uuid-v3-1234',
+  v5: () => 'test-uuid-v5-1234',
+}));

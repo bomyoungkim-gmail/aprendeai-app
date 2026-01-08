@@ -4,6 +4,8 @@ import { AiServiceModule } from '../ai-service/ai-service.module'; // AGENT SCRI
 import { DecisionWeightingModule } from './weighting/decision-weighting.module'; // GRAPH SCRIPT 09
 import { DecisionService } from './application/decision.service';
 import { ScaffoldingService } from './application/scaffolding.service';
+import { ScaffoldingInitializerService } from './application/scaffolding-initializer.service'; // SCRIPT 03
+import { ScaffoldingSignalDetectorService } from './application/scaffolding-signal-detector.service'; // SCRIPT 03 - Fase 2
 import { CornellTriggerService } from './application/cornell-trigger.service';
 import { DecisionController } from './decision.controller';
 import { PrismaDecisionLogRepository } from './infrastructure/repositories/prisma-decision-log.repository';
@@ -24,12 +26,14 @@ import { IDecisionLogRepository } from './domain/decision-log.repository.interfa
   providers: [
     DecisionService,
     ScaffoldingService,
+    ScaffoldingInitializerService, // SCRIPT 03: Mode-aware initialization
+    ScaffoldingSignalDetectorService, // SCRIPT 03 - Fase 2: Signal detection
     CornellTriggerService,
     {
       provide: IDecisionLogRepository,
       useClass: PrismaDecisionLogRepository,
     },
   ],
-  exports: [DecisionService, ScaffoldingService, CornellTriggerService],
+  exports: [DecisionService, ScaffoldingService, ScaffoldingInitializerService, CornellTriggerService, IDecisionLogRepository], // SCRIPT 03
 })
 export class DecisionModule {}

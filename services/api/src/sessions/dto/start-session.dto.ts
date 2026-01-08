@@ -3,6 +3,7 @@ import {
   IsEnum,
   IsNumber,
   IsOptional,
+  IsBoolean,
   Min,
   Max,
   ValidateNested,
@@ -44,6 +45,22 @@ export class StartSessionDto {
   @IsOptional()
   @ValidateNested()
   longText?: LongTextConfigDto;
+
+  /**
+   * UI override for ContentMode (Script 02 - P2)
+   * Allows frontend to override inferred content mode for this session
+   */
+  @IsOptional()
+  @IsEnum(['TECHNICAL', 'DIDACTIC', 'NARRATIVE', 'NEWS', 'SCIENTIFIC', 'LANGUAGE'])
+  uiMode?: 'TECHNICAL' | 'DIDACTIC' | 'NARRATIVE' | 'NEWS' | 'SCIENTIFIC' | 'LANGUAGE';
+
+  /**
+   * Whether to persist the uiMode override to the database
+   * If true, saves uiMode with mode_source='USER'
+   */
+  @IsOptional()
+  @IsBoolean()
+  persistUiMode?: boolean;
 }
 
 export class FinishSessionDto {

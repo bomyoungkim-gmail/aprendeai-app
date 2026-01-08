@@ -15,9 +15,7 @@ export class PrismaContentRepository implements IContentRepository {
         type: data.type!,
         original_language: data.originalLanguage!,
         raw_text: data.rawText,
-        owner_type: data.ownerType!,
-        owner_id: data.ownerId!,
-        owner_user_id: data.ownerType === "USER" ? data.ownerId : undefined,
+        owner_user_id: data.scopeType === "USER" ? data.scopeId : undefined,
         institution_id:
           data.scopeType === "INSTITUTION" ? data.scopeId : undefined,
         scope_type: data.scopeType!,
@@ -105,8 +103,7 @@ export class PrismaContentRepository implements IContentRepository {
       type: prismaContent.type,
       originalLanguage: prismaContent.original_language,
       rawText: prismaContent.raw_text,
-      ownerType: prismaContent.owner_type,
-      ownerId: prismaContent.owner_id,
+
       scopeType: prismaContent.scope_type,
       scopeId: prismaContent.scope_id,
       metadata: prismaContent.metadata,

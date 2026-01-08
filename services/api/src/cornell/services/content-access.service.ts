@@ -2,6 +2,7 @@ import { Injectable, Inject } from "@nestjs/common";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from "cache-manager";
 import { PrismaService } from "../../prisma/prisma.service";
+import { ScopeType } from "@prisma/client";
 
 @Injectable()
 export class ContentAccessService {
@@ -40,10 +41,8 @@ export class ContentAccessService {
       where: { id: contentId },
       select: {
         id: true,
-        owner_type: true,
-        owner_id: true,
-        owner_user_id: true,
         created_by: true,
+        owner_user_id: true,
         scope_type: true,
         scope_id: true,
         institution_id: true,
@@ -69,7 +68,7 @@ export class ContentAccessService {
 
   private isOwner(content: any, userId: string): boolean {
     const isDirectUserOwner =
-      content.owner_type === "USER" && content.owner_id === userId;
+      content.scope_type === ScopeType.USER && content.scope_id === userId;
     return (
       content.owner_user_id === userId ||
       isDirectUserOwner ||
@@ -83,7 +82,7 @@ export class ContentAccessService {
    */
   getOwnerFilter(userId: string) {
     return [
-      { owner_type: "USER", owner_id: userId },
+      { scope_type: ScopeType.USER, scope_id: userId },
       { owner_user_id: userId },
       { created_by: userId },
     ];
@@ -97,7 +96,20 @@ export class ContentAccessService {
     content: any,
     userId: string,
   ): Promise<boolean> {
-    if (content.scope_type !== "FAMILY" && content.scope_type !== "USER") {
+    if (content.scope_type === "FAMILY" && content.scope_id) {
+      const familyMember = await this.prisma.family_members.findUnique({
+        where: {
+          family_id_user_id: {
+            family_id: content.scope_id,
+            user_id: userId,
+          },
+        },
+        select: { status: true },
+      });
+      return familyMember?.status === "ACTIVE";
+    }
+
+    if (content.scope_type !== "USER") {
       return false;
     }
 
@@ -138,14 +150,15 @@ export class ContentAccessService {
       return false;
     }
 
-    if (!content.institution_id) return false;
+    const targetInstitutionId = content.scope_id || content.institution_id;
+    if (!targetInstitutionId) return false;
 
     const user = await this.prisma.users.findUnique({
       where: { id: userId },
       select: { last_institution_id: true },
     });
 
-    return user?.last_institution_id === content.institution_id;
+    return user?.last_institution_id === targetInstitutionId;
   }
 
   /**

@@ -26,7 +26,7 @@ describe("Migration: FK Constraints (Subfase 5.1)", () => {
           id: uuidv4(),
           email: `test-fk-${uuidv4()}@example.com`,
           name: "Test FK User",
-          password_hash: "hash",
+
           schooling_level: "Ensino Médio",
           updated_at: new Date(),
         },
@@ -85,7 +85,7 @@ describe("Migration: FK Constraints (Subfase 5.1)", () => {
           id: uuidv4(),
           email: `test-content-${uuidv4()}@example.com`,
           name: "Test Content User",
-          password_hash: "hash",
+
           schooling_level: "Ensino Médio",
           updated_at: new Date(),
         },

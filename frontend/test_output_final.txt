@@ -1,0 +1,85 @@
+🔐 Setting up authentication...
+Attempting login at http://127.0.0.1:3000/login...
+⚠️  Real login failed, creating mock authentication state...
+Error: page.waitForURL: Timeout 15000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "load"
+  navigated to "http://127.0.0.1:3000/login"
+  navigated to "http://127.0.0.1:3000/login"
+============================================================
+💾 Authentication state saved to C:\projects\aprendeai-app\frontend\playwright\.auth\user.json
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests\e2e\sprint6-complete.spec.ts:202:8 › Sprint 6: Offline & Accessibility › I2.1: Should save annotation offline when network is down
+[1A[2K[chromium] › tests\e2e\sprint6-complete.spec.ts:202:8 › Sprint 6: Offline & Accessibility › I2.1: Should save annotation offline when network is down
+Browser: %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold
+
+[1A[2KBrowser: [auth-store] onRehydrateStorage called, state: {token: null, user: null, _hasHydrated: true, setHasHydrated: , setAuth: }
+
+[1A[2KBrowser: [auth-store] Setting _hasHydrated to true
+
+[1A[2KBrowser: WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE
+
+[1A[2KBrowser: [SW] Service Worker registered successfully: http://127.0.0.1:3000/
+
+[1A[2KBrowser: %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold
+
+[1A[2KBrowser: [auth-store] onRehydrateStorage called, state: {token: null, user: null, _hasHydrated: true, setHasHydrated: , setAuth: }
+
+[1A[2KBrowser: [auth-store] Setting _hasHydrated to true
+
+[1A[2KBrowser: WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE
+
+[1A[2KBrowser: [SW] Service Worker registered successfully: http://127.0.0.1:3000/
+
+[1A[2KBrowser: 🔴 Went offline
+
+[1A[2KBrowser: TEST-PAGE: Creating item type=evidence text=This is an important...
+
+[1A[2KBrowser: TEST-PAGE: Attempting to add to offline queue...
+
+[1A[2KBrowser: 📥 Queued operation: CREATE
+
+[1A[2KBrowser: TEST-PAGE: Item queued successfully. New Queue Length: 1
+
+[1A[2KBrowser: The resource http://127.0.0.1:3000/_next/static/media/e4af272ccee01ff0-s.p.woff2 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+
+[1A[2K  1) [chromium] › tests\e2e\sprint6-complete.spec.ts:202:8 › Sprint 6: Offline & Accessibility › I2.1: Should save annotation offline when network is down 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('text=/pendente/i')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('text=/pendente/i')[22m
+
+
+      228 |     
+      229 |     // Verify pending count (Matches "1 item pendente" or "itens pendentes")
+    > 230 |     await expect(page.locator('text=/pendente/i')).toBeVisible();
+          |                                                    ^
+      231 |
+      232 |     // Switch to Annotations tab to verify sidebar content
+      233 |     await page.getByRole('tab', { name: /anotações/i }).click();
+        at C:\projects\aprendeai-app\frontend\tests\e2e\sprint6-complete.spec.ts:230:52
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\sprint6-complete-Sprint-6--c4b78-ffline-when-network-is-down-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results\sprint6-complete-Sprint-6--c4b78-ffline-when-network-is-down-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\sprint6-complete-Sprint-6--c4b78-ffline-when-network-is-down-chromium\error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] › tests\e2e\sprint6-complete.spec.ts:202:8 › Sprint 6: Offline & Accessibility › I2.1: Should save annotation offline when network is down 
+
+[36m  Serving HTML report at http://localhost:64589. Press Ctrl+C to quit.[39m

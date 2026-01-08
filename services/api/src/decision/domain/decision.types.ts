@@ -15,7 +15,18 @@ export interface DecisionSignals {
   explicitUserAction?: 
     | 'USER_ASKS_ANALOGY' 
     | 'CLICK_TIER2_HELP'
-    | 'USER_EXPLICIT_ASK';
+    | 'USER_EXPLICIT_ASK'
+    | 'USER_ASKS_SENTENCE_ANALYSIS'
+    | 'USER_ASKS_TIER2'
+    | 'USER_ASKS_MORPHOLOGY'
+    | 'USER_ASKS_BRIDGING'
+    | 'USER_ASKS_HIGH_ROAD';
+    
+  /** User chat text for intent detection */
+  chatContext?: {
+      text: string;
+      hasSelection: boolean;
+  };
   
   /** Number of doubts marked in the last 90 seconds */
   doubtsInWindow: number;

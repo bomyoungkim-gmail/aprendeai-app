@@ -6,6 +6,7 @@ export interface IAssessmentRepository {
   findById(id: string): Promise<Assessment | null>;
   findByContentId(contentId: string): Promise<Assessment[]>;
   findAllByUser(userId: string): Promise<Assessment[]>;
+  findQuestionById(questionId: string): Promise<any | null>;
   createAttempt(
     attempt: AssessmentAttempt,
     answers: any[],

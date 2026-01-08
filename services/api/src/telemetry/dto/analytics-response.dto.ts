@@ -24,6 +24,15 @@ export class SessionMetricsDto {
 
   @ApiProperty()
   endTime: Date;
+
+  @ApiProperty({ required: false })
+  comprehensionScore?: number;
+
+  @ApiProperty({ required: false })
+  productionScore?: number;
+
+  @ApiProperty({ required: false })
+  frustrationIndex?: number;
 }
 
 export class DailyEngagementDto {

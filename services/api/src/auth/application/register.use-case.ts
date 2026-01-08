@@ -81,7 +81,8 @@ export class RegisterUseCase {
     }
 
     const user = await this.registerWithInviteTransaction(registerDto, invite);
-
+    // Create subscription AFTER transaction commits
+    await this.subscriptionService.createFreeSubscription(user.id);
     this.sendWelcomeEmail(user.email, user.name);
     return user;
   }
@@ -96,12 +97,22 @@ export class RegisterUseCase {
       id: uuidv4(),
       name: registerDto.name,
       email: registerDto.email,
-      password_hash: passwordHash,
+
       last_institution_id: invite.institutionId,
       schooling_level: "ADULT",
       status: "ACTIVE",
       updated_at: new Date(),
     } as any);
+
+    await this.txHost.tx.user_identities.create({
+      data: {
+        user_id: newUser.id,
+        provider: "password",
+        provider_id: registerDto.email,
+        email: registerDto.email,
+        password_hash: passwordHash,
+      },
+    });
 
     await this.txHost.tx.institution_members.create({
       data: {
@@ -113,7 +124,7 @@ export class RegisterUseCase {
       },
     });
 
-    await this.subscriptionService.createFreeSubscription(newUser.id);
+    // Subscription creation moved outside transaction
 
     await (this.txHost.tx as PrismaService).institution_invites.update({
       // Cast needed? txHost.tx is usually typed if generic provided.
@@ -134,6 +145,8 @@ export class RegisterUseCase {
       registerDto,
       domainConfig,
     );
+    // Create subscription AFTER transaction commits
+    await this.subscriptionService.createFreeSubscription(user.id);
     this.sendWelcomeEmail(user.email, user.name);
     return user;
   }
@@ -148,12 +161,22 @@ export class RegisterUseCase {
       id: uuidv4(),
       name: registerDto.name,
       email: registerDto.email,
-      password_hash: passwordHash,
+
       last_institution_id: domainConfig.institutionId,
       schooling_level: "ADULT",
       status: "ACTIVE",
       updated_at: new Date(),
     } as any);
+
+    await this.txHost.tx.user_identities.create({
+      data: {
+        user_id: newUser.id,
+        provider: "password",
+        provider_id: registerDto.email,
+        email: registerDto.email,
+        password_hash: passwordHash,
+      },
+    });
 
     await this.txHost.tx.institution_members.create({
       data: {
@@ -165,13 +188,15 @@ export class RegisterUseCase {
       },
     });
 
-    await this.subscriptionService.createFreeSubscription(newUser.id);
+    // Subscription creation moved outside transaction
 
     return newUser;
   }
 
   private async registerNormalUser(registerDto: RegisterDto) {
     const user = await this.registerNormalUserTransaction(registerDto);
+    // Create subscription AFTER transaction commits
+    await this.subscriptionService.createFreeSubscription(user.id);
     this.sendWelcomeEmail(user.email, user.name);
     return user;
   }
@@ -183,15 +208,24 @@ export class RegisterUseCase {
       id: uuidv4(),
       name: registerDto.name,
       email: registerDto.email,
-      password_hash: passwordHash,
+
       last_context_role: "OWNER",
       schooling_level: "ADULT",
       status: "ACTIVE",
       updated_at: new Date(),
     } as any);
 
-    await this.subscriptionService.createFreeSubscription(newUser.id);
+    await this.txHost.tx.user_identities.create({
+      data: {
+        user_id: newUser.id,
+        provider: "password",
+        provider_id: registerDto.email,
+        email: registerDto.email,
+        password_hash: passwordHash,
+      },
+    });
 
+    // Subscription creation moved outside transaction
     return newUser;
   }
 

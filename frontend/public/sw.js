@@ -59,8 +59,35 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // Skip API requests from caching (always fetch fresh)
+  // API requests - Network First with cache fallback for offline support
   if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          // Cache successful API responses for offline access
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          // Network failed, try cache
+          return caches.match(request).then((cachedResponse) => {
+            if (cachedResponse) {
+              console.log('[SW] Serving cached API response:', request.url);
+              return cachedResponse;
+            }
+            // No cache available, return error
+            return new Response(JSON.stringify({ error: 'Offline' }), {
+              status: 503,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          });
+        })
+    );
     return;
   }
   
@@ -83,7 +110,7 @@ self.addEventListener('fetch', (event) => {
       
       // Not in cache, fetch from network
       return fetch(request).then((networkResponse) => {
-        // Cache successful responses
+        // Cache successful responses (including HTML pages for offline navigation)
         if (networkResponse && networkResponse.status === 200) {
           const responseClone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -94,7 +121,16 @@ self.addEventListener('fetch', (event) => {
       }).catch(() => {
         // Network failed and not in cache - show offline page
         if (request.mode === 'navigate') {
-          return caches.match('/offline');
+          return caches.match('/offline').then((offlinePage) => {
+            if (offlinePage) {
+              return offlinePage;
+            }
+            // Fallback offline response
+            return new Response(
+              '<html><body><h1>Offline</h1><p>Você está offline. Algumas funcionalidades podem estar limitadas.</p></body></html>',
+              { headers: { 'Content-Type': 'text/html' } }
+            );
+          });
         }
       });
     })

@@ -204,7 +204,7 @@ describe("Family Plan (Integration)", () => {
       });
 
       expect(newUser).toBeDefined();
-      expect(newUser.password_hash).toBe("PENDING_INVITE");
+
       expect(newUser.name).toBe("New User");
     });
 

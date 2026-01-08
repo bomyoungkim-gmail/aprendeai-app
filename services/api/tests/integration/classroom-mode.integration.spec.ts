@@ -46,7 +46,7 @@ describe("Classroom Mode Integration Tests (e2e)", () => {
         id: `teacher-${Date.now()}`,
         email: teacherEmail,
         name: "Teacher Test",
-        password_hash: "hash",
+
         last_context_role: "TEACHER",
         schooling_level: "HIGHER_EDUCATION",
         status: "ACTIVE",
@@ -90,7 +90,7 @@ describe("Classroom Mode Integration Tests (e2e)", () => {
         id: `student-${Date.now()}`,
         email: studentEmail,
         name: "Student Maria",
-        password_hash: "hash",
+
         last_context_role: "STUDENT",
         schooling_level: "ELEMENTARY",
         status: "ACTIVE",

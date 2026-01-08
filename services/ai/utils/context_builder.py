@@ -9,6 +9,8 @@ from typing import Dict
 from .nestjs_client import nestjs_client
 import asyncio
 import logging
+from educator.policies.decision_policy import parse_decision_policy
+from educator.prompts.mode_prompts import get_mode_instructions  # Script 02
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +40,8 @@ class ContextPackBuilder:
                 "learner": {...},
                 "session": {...},
                 "vocabFocus": {...},
-                "content": {...}
+                "content": {...},
+                "decision_policy": {...}  # DecisionPolicyV1
             }
         """
         try:
@@ -73,6 +76,10 @@ class ContextPackBuilder:
                 content = {"title": "Unknown", "originalLanguage": "PT"}
             
             # Assemble ContextPack
+            # Extract content mode (Script 02: RB-CONTENT-MODE)
+            content_mode = content.get('mode', 'TECHNICAL')  # Default to TECHNICAL
+            mode_instructions = get_mode_instructions(content_mode)
+            
             context_pack = {
                 "learner": {
                     "educationLevel": learner.get('educationLevel', 'MEDIO'),
@@ -97,7 +104,15 @@ class ContextPackBuilder:
                     "title": content.get('title', 'Unknown'),
                     "language": content.get('originalLanguage', 'PT'),
                     "difficulty": content.get('difficulty', 'medium'),
-                }
+                    "mode": content_mode,  # Script 02: Include mode in context
+                },
+                # Script 02: Mode-specific system instructions
+                "modeInstructions": mode_instructions,
+                # Parse and validate decision_policy (if present in session data)
+                # Falls back to defaults if not present or invalid
+                "decision_policy": parse_decision_policy(
+                    session.get('decision_policy')
+                ).model_dump(),
             }
             
             logger.debug(f"Built context pack for session {session_id}")

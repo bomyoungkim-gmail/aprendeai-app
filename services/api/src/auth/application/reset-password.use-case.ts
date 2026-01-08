@@ -21,10 +21,26 @@ export class ResetPasswordUseCase {
 
     const password_hash = await bcrypt.hash(dto.password, 10);
 
+    // Verify identity exists
+    const identity = await (this.prisma as any).user_identities.findUnique({
+      where: {
+        provider_provider_id: {
+          provider: "password",
+          provider_id: user.email,
+        },
+      },
+    });
+
+    if (identity) {
+      await (this.prisma as any).user_identities.update({
+        where: { id: identity.id },
+        data: { password_hash },
+      });
+    }
+
     await this.prisma.users.update({
       where: { id: user.id },
       data: {
-        password_hash,
         password_reset_token: null,
         password_reset_expires: null,
       },

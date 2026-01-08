@@ -6,8 +6,7 @@ export class Content {
   type: ContentType;
   originalLanguage: Language;
   rawText?: string;
-  ownerType: string;
-  ownerId: string;
+
   scopeType: ScopeType;
   scopeId?: string;
   metadata?: Record<string, any>;

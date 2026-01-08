@@ -118,7 +118,7 @@ describe("Family Owner Dashboard (Integration)", () => {
         data: {
           email: "child@family-test.com",
           name: "Test Child",
-          password_hash: "hashed",
+
           schooling_level: "ELEMENTARY",
         },
       });
@@ -137,7 +137,7 @@ describe("Family Owner Dashboard (Integration)", () => {
         data: {
           email: "invited@family-test.com",
           name: "Invited Parent",
-          password_hash: "hashed",
+
           schooling_level: "ADULT",
         },
       });

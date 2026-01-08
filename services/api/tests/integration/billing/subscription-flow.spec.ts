@@ -48,7 +48,7 @@ describe("Subscription Flow (Integration)", () => {
       data: {
         email: testEmail,
         name: "Billing Test User",
-        password_hash: "hashed",
+
         last_context_role: "STUDENT",
         schooling_level: "SUPERIOR",
       },

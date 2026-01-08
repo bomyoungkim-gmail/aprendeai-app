@@ -41,7 +41,7 @@ describe("Study Groups API (Integration)", () => {
       create: {
         email: "test-groups@example.com",
         name: "Test User",
-        password_hash: "hash", // In real test, use bcrypt
+
         last_context_role: ContextRole.STUDENT,
         schooling_level: "ADULT",
         status: "ACTIVE",
@@ -213,7 +213,7 @@ describe("Study Groups API (Integration)", () => {
         create: {
           email: "user2-groups@example.com",
           name: "User 2",
-          password_hash: "hash",
+
           last_context_role: ContextRole.STUDENT,
           schooling_level: "ADVANCED_USER",
           status: "ACTIVE",
@@ -318,7 +318,7 @@ describe("Study Groups API (Integration)", () => {
         create: {
           email: "member2-groups@example.com",
           name: "Member 2",
-          password_hash: "hash",
+
           last_context_role: ContextRole.STUDENT,
           schooling_level: "ADULT",
           status: "ACTIVE",
@@ -510,7 +510,7 @@ describe("Study Groups API (Integration)", () => {
         create: {
           email: "member-only@example.com",
           name: "Member Only",
-          password_hash: "hash",
+
           last_context_role: ContextRole.STUDENT,
           schooling_level: "ADULT",
           status: "ACTIVE",

@@ -13,8 +13,8 @@ export class GamificationService {
 
     // Fetch in parallel
     const [dailyActivity, dailyGoal, streak, badges] = await Promise.all([
-      this.prisma.daily_activities.findUnique({
-        where: { user_id_date: { user_id: userId, date: today } },
+      this.prisma.daily_activities.findFirst({
+        where: { user_id: userId, date: today },
       }),
       this.prisma.daily_goals.findFirst({
         where: { user_id: userId },
@@ -73,8 +73,8 @@ export class GamificationService {
     today.setHours(0, 0, 0, 0);
 
     // 1. Get or Create Daily Activity
-    let activity = await this.prisma.daily_activities.findUnique({
-      where: { user_id_date: { user_id: userId, date: today } },
+    let activity = await this.prisma.daily_activities.findFirst({
+      where: { user_id: userId, date: today },
     });
 
     if (!activity) {

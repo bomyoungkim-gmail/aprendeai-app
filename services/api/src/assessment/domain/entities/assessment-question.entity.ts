@@ -5,6 +5,7 @@ export class AssessmentQuestion {
   questionText: string;
   options: string[] | any; // JSON in prisma
   correctAnswer: any; // JSON in prisma
+  skills?: string[]; // Array of strings (mapped from Prisma String[])
   createdAt?: Date;
   updatedAt?: Date;
 

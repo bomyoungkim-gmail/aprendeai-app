@@ -13,4 +13,6 @@ export class GraphComparatorController {
   async compareGraphs(@Body() dto: CompareGraphsDto) {
     return this.graphComparatorService.compareGraphs(dto.userId, dto.contentId);
   }
+
+
 }

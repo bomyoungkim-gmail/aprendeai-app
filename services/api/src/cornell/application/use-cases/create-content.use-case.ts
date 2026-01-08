@@ -73,12 +73,7 @@ export class CreateContentUseCase {
     });
 
     // 4. Owner Resolution
-    let ownerType = "USER";
-    let ownerId = userId;
-    if (dto.scopeType === "FAMILY" || dto.scopeType === "INSTITUTION") {
-      ownerType = dto.scopeType;
-      ownerId = dto.scopeId || userId;
-    }
+
 
     // 5. Create Content Entity via Repository
     const content = await this.contentRepository.create({
@@ -87,8 +82,6 @@ export class CreateContentUseCase {
       type: this.getContentType(file.mimetype),
       originalLanguage: dto.originalLanguage,
       rawText,
-      ownerType,
-      ownerId,
       scopeType: dto.scopeType,
       scopeId: dto.scopeId,
       file: {

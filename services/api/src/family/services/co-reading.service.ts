@@ -102,13 +102,13 @@ export class CoReadingService {
    * Transitions co-reading session to next phase
    *
    * @param coSessionId - Session ID
-   * @param targetPhase - Target phase (PRE, DURING, POST, CLOSE)
+   * @param targetPhase - Target phase (PRE, DURING, POST, FINISHED)
    * @param context - Current session context
    * @returns Success status, new phase, and next prompt
    * @throws {BadRequestException} If transition is invalid
    *
-   * Valid transitions: BOOT→PRE→DURING→POST→CLOSE
-   * Updates session status to COMPLETED when transitioning to CLOSE
+   * Valid transitions: BOOT→PRE→DURING→POST→FINISHED
+   * Updates session status to COMPLETED when transitioning to FINISHED
    */
   async transitionPhase(
     coSessionId: string,
@@ -119,7 +119,7 @@ export class CoReadingService {
 
     if (result.success) {
       // Update session status in DB if needed
-      if (targetPhase === CoReadingPhase.CLOSE) {
+      if (targetPhase === CoReadingPhase.FINISHED) {
         await this.prisma.co_reading_sessions.update({
           where: { id: coSessionId },
           data: {
@@ -187,7 +187,7 @@ export class CoReadingService {
    * Finish session
    */
   async finish(coSessionId: string, context: CoReadingContext) {
-    const result = await this.stateMachine.close(context);
+    const result = await this.stateMachine.finish(context);
 
     await this.prisma.co_reading_sessions.update({
       where: { id: coSessionId },

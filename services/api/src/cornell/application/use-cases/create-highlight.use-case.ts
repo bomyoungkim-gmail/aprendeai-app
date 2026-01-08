@@ -63,6 +63,14 @@ export class CreateHighlightUseCase {
       activityType: "highlight",
     });
 
+    // GRAPH SCRIPT 19.10: Emit event for graph reinforcement
+    this.eventEmitter.emit("highlight.created", {
+      highlightId: highlight.id,
+      userId,
+      contentId,
+      selectedText: highlight.anchor?.text || "",
+    });
+
     return this.highlightsRepository.create(highlight);
   }
 

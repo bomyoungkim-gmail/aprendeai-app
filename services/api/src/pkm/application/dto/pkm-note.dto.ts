@@ -6,6 +6,7 @@ export class PkmNoteDto {
   contentId?: string;
   sessionId?: string;
   missionId?: string;
+  topicNodeId?: string; // Link to knowledge graph node
   title: string;
   bodyMd: string;
   tags: string[];

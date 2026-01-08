@@ -6,6 +6,7 @@ export class Plan {
   entitlements: any;
   monthlyPrice?: number;
   yearlyPrice?: number;
+  stripePriceId?: string; // Stripe Price ID for subscription updates
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

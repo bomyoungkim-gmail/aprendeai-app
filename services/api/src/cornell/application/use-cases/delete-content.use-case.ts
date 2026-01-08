@@ -4,6 +4,7 @@ import {
   NotFoundException,
   ForbiddenException,
 } from "@nestjs/common";
+import { ScopeType } from "@prisma/client";
 import { IContentRepository } from "../../domain/content.repository.interface";
 import { ContentAccessService } from "../../services/content-access.service";
 
@@ -20,7 +21,7 @@ export class DeleteContentUseCase {
     if (!content) throw new NotFoundException("Content not found");
 
     // Check Delete Access (Strict Owner)
-    if (content.ownerType === "USER" && content.ownerId !== userId) {
+    if (content.scopeType === ScopeType.USER && content.scopeId !== userId) {
       throw new ForbiddenException("Only owner can delete content");
     }
 

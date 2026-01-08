@@ -99,4 +99,56 @@ export class GraphCacheService {
        this.logger.error(`Redis error setUndecidedResolution: ${error}`);
     }
   }
+
+  /**
+   * Get cached learner graph visualization
+   */
+  async getVisualization(userId: string, contentId: string): Promise<any | null> {
+    if (!this.redisService) return null;
+    const key = `graph:learner:${userId}:${contentId}`;
+    try {
+      const cached = await this.redisService.get(key) as unknown as string;
+      if (cached) {
+        this.logger.log(`Cache HIT for visualization: ${key}`);
+        // Check if it's already an object or string
+        if (typeof cached === 'object') return cached;
+        return JSON.parse(cached);
+      }
+    } catch (error) {
+      this.logger.error(`Redis error getVisualization: ${error}`);
+    }
+    this.logger.debug(`Cache MISS for visualization: graph:learner:${userId}:${contentId}`);
+    return null;
+  }
+
+  /**
+   * Set cached learner graph visualization
+   * TTL: 5 minutes (300 seconds)
+   */
+  async setVisualization(userId: string, contentId: string, value: any): Promise<void> {
+    if (!this.redisService) return;
+    const key = `graph:learner:${userId}:${contentId}`;
+    const TTL_VISUALIZATION = 60 * 5; // 5 minutes
+    try {
+      await this.redisService.set(key, JSON.stringify(value), TTL_VISUALIZATION);
+      this.logger.log(`Cached visualization: ${key}`);
+    } catch (error) {
+      this.logger.error(`Redis error setVisualization: ${error}`);
+    }
+  }
+
+  /**
+   * Invalidate cached learner graph visualization
+   * Call this when user creates highlights, edges, or status changes
+   */
+  async invalidateVisualization(userId: string, contentId: string): Promise<void> {
+    if (!this.redisService) return;
+    const key = `graph:learner:${userId}:${contentId}`;
+    try {
+      await this.redisService.del(key);
+      this.logger.log(`Invalidated visualization cache: ${key}`);
+    } catch (error) {
+      this.logger.error(`Redis error invalidateVisualization: ${error}`);
+    }
+  }
 }

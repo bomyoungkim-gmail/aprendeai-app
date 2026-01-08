@@ -54,8 +54,8 @@ describe("ContentService", () => {
   describe("canAccessContent", () => {
     it("should allow access if user is the direct owner", async () => {
       mockPrisma.content.findUnique.mockResolvedValue({
-        ownerType: "USER",
-        ownerId: "user-123",
+        scope_type: "USER",
+        scope_id: "user-123",
       });
 
       const result = await service.canAccessContent("content-1", "user-123");
@@ -64,8 +64,8 @@ describe("ContentService", () => {
 
     it("should deny access if user is not the owner", async () => {
       mockPrisma.content.findUnique.mockResolvedValue({
-        ownerType: "USER",
-        ownerId: "other-user",
+        scope_type: "USER",
+        scope_id: "other-user",
       });
 
       const result = await service.canAccessContent("content-1", "user-123");
@@ -74,8 +74,8 @@ describe("ContentService", () => {
 
     it("should allow access if user is family member for FAMILY content", async () => {
       mockPrisma.content.findUnique.mockResolvedValue({
-        ownerType: "FAMILY",
-        ownerId: "fam-123",
+        scope_type: "FAMILY",
+        scope_id: "fam-123",
       });
       mockPrisma.familyMember.findFirst.mockResolvedValue({ id: "member-1" });
 
@@ -88,8 +88,8 @@ describe("ContentService", () => {
 
     it("should deny access if user is not family member for FAMILY content", async () => {
       mockPrisma.content.findUnique.mockResolvedValue({
-        ownerType: "FAMILY",
-        ownerId: "fam-123",
+        scope_type: "FAMILY",
+        scope_id: "fam-123",
       });
       mockPrisma.familyMember.findFirst.mockResolvedValue(null);
 
@@ -99,8 +99,8 @@ describe("ContentService", () => {
 
     it("should allow access if user is institution member for INSTITUTION content", async () => {
       mockPrisma.content.findUnique.mockResolvedValue({
-        ownerType: "INSTITUTION",
-        ownerId: "inst-123",
+        scope_type: "INSTITUTION",
+        scope_id: "inst-123",
       });
       mockPrisma.institutionMember.findFirst.mockResolvedValue({
         id: "member-1",
@@ -112,7 +112,7 @@ describe("ContentService", () => {
 
     it("should fallback to ownerUserId check if ownerType missing", async () => {
       mockPrisma.content.findUnique.mockResolvedValue({
-        ownerUserId: "user-123",
+        owner_user_id: "user-123",
         // no ownerType/ownerId
       });
 
@@ -138,8 +138,8 @@ describe("ContentService", () => {
       expect(mockPrisma.content.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            ownerType: "USER",
-            ownerId: "user-123",
+            scope_type: "USER",
+            scope_id: "user-123",
           }),
         }),
       );
@@ -162,8 +162,8 @@ describe("ContentService", () => {
       expect(mockPrisma.content.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            ownerType: "INSTITUTION",
-            ownerId: "inst-123",
+            scope_type: "INSTITUTION",
+            scope_id: "inst-123",
           }),
         }),
       );

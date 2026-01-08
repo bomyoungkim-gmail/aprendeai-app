@@ -16,6 +16,7 @@ import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { OfflineManager } from '@/lib/offline/offline-manager';
 import { IndexedDBStorage } from '@/lib/offline/indexeddb-storage';
+import { offlineQueue } from '@/lib/cornell/offline-queue';
 import api from '@/services/api';
 
 // Singleton instances
@@ -24,15 +25,23 @@ const offlineManager = new OfflineManager(storage);
 
 export function useOfflineSync() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [pendingCount, setPendingCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(() => offlineQueue.length);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Subscribe to offlineQueue changes for reactive updates
+  useEffect(() => {
+    const unsubscribe = offlineQueue.subscribe(() => {
+      setPendingCount(offlineQueue.length);
+    });
+    return () => { unsubscribe(); };
+  }, []);
 
   // Initialize on mount
   useEffect(() => {
     storage.init()
       .then(() => offlineManager.loadQueue())
       .then(() => {
-        setPendingCount(offlineManager.getPendingCount());
+        setPendingCount(offlineQueue.length); // Use offlineQueue instead of offlineManager
         setIsInitialized(true);
       })
       .catch((error) => {
@@ -77,7 +86,7 @@ export function useOfflineSync() {
       return await offlineManager.sync(api);
     },
     onSuccess: ({ success, failed }) => {
-      setPendingCount(offlineManager.getPendingCount());
+      setPendingCount(offlineQueue.length); // Use offlineQueue
 
       if (success > 0) {
         toast.success(`${success} ${success === 1 ? 'item sincronizado' : 'itens sincronizados'}`);
@@ -105,7 +114,7 @@ export function useOfflineSync() {
 
     try {
       await offlineManager.saveOffline(entity, action, data);
-      setPendingCount(offlineManager.getPendingCount());
+      setPendingCount(offlineQueue.length); // Use offlineQueue
       
       if (!isOnline) {
         toast.info('Salvo offline. Será sincronizado quando voltar online.');

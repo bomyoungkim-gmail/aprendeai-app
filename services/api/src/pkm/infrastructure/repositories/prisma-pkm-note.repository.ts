@@ -18,6 +18,7 @@ export class PrismaPkmNoteRepository implements IPkmNoteRepository {
         content_id: note.contentId,
         session_id: note.sessionId,
         mission_id: note.missionId,
+        topic_node_id: note.topicNodeId,
         title: note.title,
         body_md: note.bodyMd,
         tags_json: note.tags,
@@ -60,6 +61,26 @@ export class PrismaPkmNoteRepository implements IPkmNoteRepository {
     const notes = await (this.prisma as any).pkm_notes.findMany({
       where: { session_id: sessionId },
       orderBy: { created_at: 'desc' },
+    });
+
+    return notes.map((note) => this.toDomain(note));
+  }
+
+  async findByTopicNodeId(
+    topicNodeId: string,
+    userId: string,
+    limit: number = 20,
+    offset: number = 0,
+  ): Promise<PkmNote[]> {
+    const notes = await (this.prisma as any).pkm_notes.findMany({
+      where: {
+        topic_node_id: topicNodeId,
+        user_id: userId,
+        status: { not: 'ARCHIVED' }, // Only return active notes
+      },
+      orderBy: { created_at: 'desc' },
+      take: limit,
+      skip: offset,
     });
 
     return notes.map((note) => this.toDomain(note));
@@ -141,6 +162,7 @@ export class PrismaPkmNoteRepository implements IPkmNoteRepository {
       prismaNote.content_id,
       prismaNote.session_id,
       prismaNote.mission_id,
+      prismaNote.topic_node_id,
       prismaNote.title,
       prismaNote.body_md,
       Array.isArray(prismaNote.tags_json) ? prismaNote.tags_json : [],

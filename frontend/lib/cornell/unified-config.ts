@@ -17,6 +17,7 @@ import {
   BarChart3,        // 📊 Analytics
   MessageCircle,    // 💬 Chat
   List,             // 📋 Sumário/TOC
+  Network,          // 🕸️ Grafo
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -154,6 +155,13 @@ export const SIDEBAR_TABS_CONFIG: Record<string, SidebarTabConfig> = {
     description: 'Conversas e discussões colaborativas',
     icon: MessageCircle,
     testId: 'tab-chat',
+  },
+  GRAPH: {
+    id: 'graph',
+    label: 'Grafo',
+    description: 'Visualização do grafo de conhecimento',
+    icon: Network,
+    testId: 'tab-graph',
   },
   /* 
   TODO: Future Implementation - BOOKMARKS tab

@@ -44,7 +44,7 @@ describe("WebClip Creation Integration Tests", () => {
         id: uuidv4(),
         email: userData.email,
         name: userData.name,
-        password_hash: "hash",
+
         status: "ACTIVE",
         schooling_level: "HIGHER_EDUCATION",
         updated_at: new Date(),

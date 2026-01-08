@@ -2,12 +2,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { GraphLearnerService } from './graph-learner.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GraphEventType } from './dto/graph-event.dto';
+import { GraphCacheService } from '../cache/graph-cache.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 describe('GraphLearnerService', () => {
   let service: GraphLearnerService;
   let prisma: PrismaService;
+  let cacheService: GraphCacheService;
+  let eventEmitter: EventEmitter2;
 
   const mockPrisma = {
+    // ... existing mocks
     topic_graphs: {
       findFirst: jest.fn(),
       create: jest.fn(),
@@ -26,6 +31,19 @@ describe('GraphLearnerService', () => {
       create: jest.fn(),
       count: jest.fn(),
     },
+    pkm_notes: {
+      groupBy: jest.fn(),
+    },
+  };
+
+  const mockCacheService = {
+    getVisualization: jest.fn(),
+    setVisualization: jest.fn(),
+    invalidateVisualization: jest.fn(),
+  };
+
+  const mockEventEmitter = {
+    emit: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -36,11 +54,21 @@ describe('GraphLearnerService', () => {
           provide: PrismaService,
           useValue: mockPrisma,
         },
+        {
+          provide: GraphCacheService,
+          useValue: mockCacheService,
+        },
+        {
+          provide: EventEmitter2,
+          useValue: mockEventEmitter,
+        },
       ],
     }).compile();
 
     service = module.get<GraphLearnerService>(GraphLearnerService);
     prisma = module.get<PrismaService>(PrismaService);
+    cacheService = module.get<GraphCacheService>(GraphCacheService);
+    eventEmitter = module.get<EventEmitter2>(EventEmitter2);
   });
 
   afterEach(() => {
@@ -152,6 +180,57 @@ describe('GraphLearnerService', () => {
             edge_type: 'APPLIES_IN',
           }),
         }),
+      );
+    });
+  });
+
+  describe('getVisualizationGraph', () => {
+    it('should return cached value if available', async () => {
+      const cachedGraph = { nodes: [], edges: [], metadata: {} };
+      (mockCacheService.getVisualization as jest.Mock).mockResolvedValue(cachedGraph);
+
+      const result = await service.getVisualizationGraph('user-1', 'content-1');
+
+      expect(mockCacheService.getVisualization).toHaveBeenCalledWith('user-1', 'content-1');
+      expect(result).toBe(cachedGraph);
+      expect(mockPrisma.topic_graphs.findFirst).not.toHaveBeenCalled();
+    });
+
+    it('should generate, merge and cache graph if cache miss', async () => {
+      (mockCacheService.getVisualization as jest.Mock).mockResolvedValue(null);
+
+      const mockBaseline = {
+        id: 'bg-1',
+        topic_nodes: [{ id: 'n1', slug: 'topic-1', canonical_label: 'Topic 1' }],
+        topic_edges: [],
+      };
+      
+      const mockLearner = {
+        id: 'lg-1',
+        topic_nodes: [{ id: 'n1', slug: 'topic-1', status: 'MASTERED', confidence: 0.9 }],
+        topic_edges: [],
+      };
+
+      mockPrisma.topic_graphs.findFirst
+        .mockResolvedValueOnce(mockBaseline) // Baseline
+        .mockResolvedValueOnce(mockLearner); // Learner
+
+      (mockPrisma.pkm_notes.groupBy as jest.Mock).mockResolvedValue([
+        { topic_node_id: 'n1', _count: { id: 3 } }
+      ]);
+
+      const result = await service.getVisualizationGraph('user-1', 'content-1');
+
+      // Check merging
+      expect(result.nodes[0].status).toBe('MASTERED');
+      expect(result.nodes[0].confidence).toBe(0.9);
+      expect(result.nodes[0].annotationCount).toBe(3);
+
+      // Check caching
+      expect(mockCacheService.setVisualization).toHaveBeenCalledWith(
+        'user-1', 
+        'content-1', 
+        expect.anything()
       );
     });
   });

@@ -16,7 +16,29 @@ export class AnnotationService {
     private wsGateway: StudyGroupsWebSocketGateway,
   ) {}
 
+  /**
+   * Validate that user is an active member of the group (Security Fix - Issue #4)
+   */
+  private async validateGroupMembership(userId: string, groupId: string): Promise<void> {
+    const membership = await this.prisma.study_group_members.findUnique({
+      where: {
+        group_id_user_id: { group_id: groupId, user_id: userId }
+      }
+    });
+    
+    if (!membership || membership.status !== 'ACTIVE') {
+      throw new ForbiddenException(
+        `User ${userId} is not an active member of group ${groupId}`
+      );
+    }
+  }
+
   async create(contentId: string, userId: string, dto: CreateAnnotationDto) {
+    // ✅ Security: Validate membership if creating group annotation (Issue #4)
+    if (dto.visibility === "GROUP" && dto.groupId) {
+      await this.validateGroupMembership(userId, dto.groupId);
+    }
+
     const annotation = await this.prisma.annotations.create({
       data: {
         content_id: contentId,
@@ -46,12 +68,33 @@ export class AnnotationService {
   }
 
   async getByContent(contentId: string, userId: string, groupId?: string) {
+    // ✅ Security: Get user's group memberships for filtering (Issue #4)
+    const userGroupIds: string[] = [];
+    if (groupId) {
+      // Validate membership in requested group
+      const membership = await this.prisma.study_group_members.findUnique({
+        where: {
+          group_id_user_id: { group_id: groupId, user_id: userId }
+        }
+      });
+      if (membership && membership.status === 'ACTIVE') {
+        userGroupIds.push(groupId);
+      }
+    } else {
+      // Get all groups user is member of
+      const memberships = await this.prisma.study_group_members.findMany({
+        where: { user_id: userId, status: 'ACTIVE' },
+        select: { group_id: true }
+      });
+      userGroupIds.push(...memberships.map(m => m.group_id));
+    }
+
     return this.prisma.annotations.findMany({
       where: {
         content_id: contentId,
         OR: [
-          { user_id: userId, visibility: "PRIVATE" },
-          { group_id: groupId, visibility: "GROUP" },
+          { user_id: userId },  // Own annotations
+          { group_id: { in: userGroupIds }, visibility: "GROUP" },  // ✅ Only groups user is member of
           { visibility: "PUBLIC" },
         ],
       },

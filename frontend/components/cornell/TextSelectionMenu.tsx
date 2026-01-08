@@ -20,6 +20,9 @@ export function TextSelectionMenu({ selectionInfo, onAction }: TextSelectionMenu
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [visible, setVisible] = useState(false);
+  // CRITICAL: Preserve the selected text in local state
+  // This prevents loss when browser selection is cleared
+  const [preservedText, setPreservedText] = useState<string>('');
 
   useEffect(() => {
     if (selectionInfo?.rect && selectionInfo.text) {
@@ -31,12 +34,16 @@ export function TextSelectionMenu({ selectionInfo, onAction }: TextSelectionMenu
       
       setPosition({ top, left });
       setVisible(true);
+      // PRESERVE the text when menu appears
+      setPreservedText(selectionInfo.text);
     } else {
       setVisible(false);
+      // Clear preserved text when menu is hidden
+      setPreservedText('');
     }
   }, [selectionInfo]);
 
-  if (!visible || !selectionInfo) return null;
+  if (!visible || !preservedText) return null;
 
   const buttonClass = "flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors gap-1 min-w-[60px]";
   const iconClass = "h-4 w-4 text-gray-700 dark:text-gray-300";
@@ -46,13 +53,14 @@ export function TextSelectionMenu({ selectionInfo, onAction }: TextSelectionMenu
     <div
       ref={menuRef}
       className="fixed z-50 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 flex items-center p-1 animate-in fade-in zoom-in-95 duration-200"
-      style={{ 
-        top: position.top, 
+      style={{
+        top: position.top,
         left: position.left,
-        transform: 'translateX(-50%)' 
+        transform: 'translateX(-50%)'
       }}
       role="dialog"
       aria-label="Menu de seleção de texto"
+      data-testid="text-selection-menu"
     >
       {['EVIDENCE', 'VOCABULARY', 'MAIN_IDEA', 'DOUBT'].map((key) => {
         const config = CORNELL_CONFIG[key];
@@ -76,7 +84,7 @@ export function TextSelectionMenu({ selectionInfo, onAction }: TextSelectionMenu
         return (
           <button 
             key={key}
-            onClick={() => onAction(config.id as SelectionAction, selectionInfo.text)}
+            onClick={() => onAction(config.id as SelectionAction, preservedText)}
             className={buttonClass}
             aria-label={config.label}
             title={`${config.label}${shortcut}`}
@@ -93,7 +101,7 @@ export function TextSelectionMenu({ selectionInfo, onAction }: TextSelectionMenu
 
       {/* AI - 🤖 (Animated) */}
       <button 
-        onClick={() => onAction('ai', selectionInfo.text)}
+        onClick={() => onAction('ai', preservedText)}
         className={`${buttonClass} relative group`}
         aria-label={ACTION_LABELS.AI}
         title="Atalho: /"

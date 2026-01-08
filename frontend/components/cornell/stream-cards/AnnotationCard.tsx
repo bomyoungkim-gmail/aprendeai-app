@@ -74,6 +74,7 @@ export function AnnotationCard({ item, onClick, onEdit, onDelete, onSaveEdit }: 
   
   return (
     <div 
+      data-testid="annotation-card"
       className="group relative p-3 rounded-lg border-2 hover:shadow-md transition-all cursor-pointer bg-white dark:bg-gray-800/50"
       style={{ borderColor: rgb }}
       onClick={onClick}

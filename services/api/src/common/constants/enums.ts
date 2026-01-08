@@ -11,7 +11,7 @@
 import {
   AnnotationVisibility,
   ContentType,
-  TargetType,
+
   FamilyRole,
   GroupRole,
   GroupMemberStatus,
@@ -22,7 +22,7 @@ import {
 export {
   AnnotationVisibility,
   ContentType,
-  TargetType,
+
   FamilyRole,
   GroupRole,
   GroupMemberStatus,

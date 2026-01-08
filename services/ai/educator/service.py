@@ -2,6 +2,7 @@ from typing import List, Dict, Any, Optional
 import logging
 
 from .schemas import InteractionContext, EducatorResponse, ContentPedagogicalData
+from .guardrails import PolicyGuardrails
 
 logger = logging.getLogger(__name__)
 
@@ -12,8 +13,9 @@ class EducatorService:
     """
 
     def __init__(self):
+        # Initialize guardrails (domain service)
+        self.guardrails = PolicyGuardrails()
         # We might inject repositories here for context loading
-        pass
 
     async def process_interaction(self, context: InteractionContext) -> EducatorResponse:
         """
@@ -21,6 +23,44 @@ class EducatorService:
         """
         logger.info(f"Processing interaction: {context.interaction_type} for user {context.user_id}")
 
+        # === GUARDRAILS CHECK (Script 06) ===
+        # Extract policy and user message from context
+        policy_dict = context.data.get("decision_policy", {})
+        user_message = context.data.get('message', '') or context.data.get('text', '')
+        
+        # Check policy guardrails before processing
+        refusal = self.guardrails.check_guardrails(
+            user_message=user_message,
+            policy_dict=policy_dict,
+            context_data=context.data
+        )
+        
+        if refusal:
+            # Guardrail triggered - log event and return refusal
+            if refusal.get('payload', {}).get('event'):
+                event = refusal['payload']['event']
+                logger.info(f"Guardrail triggered: {event['payloadJson']['reason']}")
+                # TODO: Emit event to telemetry system
+            
+            return EducatorResponse(
+                response_type=refusal['response_type'],
+                content=refusal['content'],
+                payload=refusal.get('payload')
+            )
+        
+        # === CONTINUE WITH NORMAL PROCESSING ===
+        
+        # === CONTENT MODE INSTRUCTIONS (Script 02) ===
+        # Extract content mode and get corresponding instructions
+        from educator.prompts.mode_prompts import get_mode_instructions
+        
+        content_mode = context.data.get('content_mode', 'TECHNICAL')
+        mode_instructions = get_mode_instructions(content_mode)
+        
+        # Inject mode instructions into context for use by handlers
+        context.data['mode_instructions'] = mode_instructions
+        logger.info(f"Content mode: {content_mode}")
+        
         # 1. Load Pedagogical Context (TODO: Integrate with ContentPedagogicalData)
         pedagogical_data = await self._load_pedagogical_context(context.content_id)
         

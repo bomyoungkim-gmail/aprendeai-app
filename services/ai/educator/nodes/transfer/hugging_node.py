@@ -6,6 +6,7 @@ AGENT SCRIPT B: Strict JSON output - 1 question + 2 examples.
 
 from educator.transfer_state import TransferState
 from educator.prompts.transfer_prompts import HUGGING_PROMPT
+from educator.policies.decision_policy import parse_decision_policy
 from llm_factory import llm_factory
 import logging
 import json
@@ -16,6 +17,18 @@ logger = logging.getLogger(__name__)
 def handle(state: TransferState) -> TransferState:
     """Generate hugging (generality) prompt with strict JSON output."""
     logger.info("Hugging node executing")
+    
+    # Check decision_policy gate
+    policy_dict = state.get("decision_policy", {})
+    policy = parse_decision_policy(policy_dict)
+    
+    if not policy.features.huggingEnabled:
+        logger.info("Hugging disabled by decision_policy")
+        return {
+            **state,
+            "response_text": "⚠️ Prompts de generalização estão desabilitados no momento.",
+            "current_node": "hugging",
+        }
     
     transfer_metadata = state.get('transfer_metadata', {})
     concept = transfer_metadata.get('concept', 'este conceito')

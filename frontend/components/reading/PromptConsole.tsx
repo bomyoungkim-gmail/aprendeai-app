@@ -6,6 +6,7 @@ import { ChatHistory } from './ChatHistory';
 import { QuickReplies } from './QuickReplies';
 import { PromptInput } from './PromptInput';
 import { ShortcutsMenu } from './ShortcutsMenu';
+import { PolicyIndicatorCompact } from './PolicyIndicator';
 import './prompt-console.css';
 
 
@@ -47,13 +48,35 @@ export function PromptConsole({ sessionId, onComplete }: PromptConsoleProps) {
     <div className="prompt-console" data-testid="prompt-console">
       <div className="prompt-console-header">
         <h2>Conversa com o Educador</h2>
-        <button
-          onClick={() => setShowShortcuts(!showShortcuts)}
-          className="shortcuts-toggle"
-          aria-label="Atalhos de comando"
-        >
-          <span>💡</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <PolicyIndicatorCompact policy={undefined} /> {/* TODO: Get from session */}
+          
+          {/* 
+            TODO: FUTURE POLICY IMPLEMENTATIONS
+            Ref: Script 06 - Policy Frontend Awareness
+            
+            The following buttons should be implemented/wrapped with PolicyAwareFeature:
+            
+            1. [ ] OCR Button -> Check 'allowOcr'
+            2. [ ] Summarize All -> Check 'allowTextExtraction'
+            3. [ ] Sentence Analysis -> Check 'isSentenceAnalysisEnabled'
+            4. [ ] Mission Feedback -> Check 'isMissionFeedbackEnabled'
+            5. [ ] Hugging/Generality -> Check 'isHuggingEnabled'
+            
+            Example:
+            <PolicyAwareFeature featureGate="ocr" policy={session?.decision_policy}>
+              <OcrButton />
+            </PolicyAwareFeature>
+          */}
+          
+          <button
+            onClick={() => setShowShortcuts(!showShortcuts)}
+            className="shortcuts-toggle"
+            aria-label="Atalhos de comando"
+          >
+            <span>💡</span>
+          </button>
+        </div>
       </div>
 
       {showShortcuts && (

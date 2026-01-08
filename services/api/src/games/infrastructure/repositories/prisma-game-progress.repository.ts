@@ -20,9 +20,10 @@ export class PrismaGameProgressRepository implements IGameProgressRepository {
     userId: string,
     gameId: string,
   ): Promise<GameProgress | null> {
-    const progress = await this.prisma.game_progress.findUnique({
+    const progress = await this.prisma.game_progress.findFirst({
       where: {
-        user_id_game_id: { user_id: userId, game_id: gameId },
+        user_id: userId,
+        game_id: gameId,
       },
     });
     return progress ? this.mapToDomain(progress) : null;
@@ -41,13 +42,24 @@ export class PrismaGameProgressRepository implements IGameProgressRepository {
       updated_at: new Date(),
     };
 
-    const saved = await this.prisma.game_progress.upsert({
+    const existing = await this.prisma.game_progress.findFirst({
       where: {
-        user_id_game_id: { user_id: progress.userId, game_id: progress.gameId },
+        user_id: progress.userId,
+        game_id: progress.gameId,
       },
-      create: { ...data, created_at: progress.createdAt || new Date() },
-      update: data,
     });
+
+    let saved;
+    if (existing) {
+      saved = await this.prisma.game_progress.update({
+        where: { id: existing.id },
+        data: data,
+      });
+    } else {
+      saved = await this.prisma.game_progress.create({
+        data: { ...data, created_at: progress.createdAt || new Date() },
+      });
+    }
 
     return this.mapToDomain(saved);
   }

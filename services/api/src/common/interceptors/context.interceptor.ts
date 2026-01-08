@@ -31,7 +31,7 @@ export class ContextInterceptor implements NestInterceptor {
         user: {
           id: user.id,
           institutionId: user.institutionId,
-          role: user.role,
+          role: user.contextRole || user.systemRole,
           email: user.email,
         },
         correlationId,

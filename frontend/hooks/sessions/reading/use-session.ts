@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '@/lib/api';
+import type { DecisionPolicyV1 } from '@/types/session';
 
 interface ReadingSession {
   id: string;
@@ -14,6 +15,7 @@ interface ReadingSession {
   startedAt: string;
   finishedAt?: string;
   minTargetWords?: number;
+  decision_policy?: DecisionPolicyV1; // Policy for this session
   content?: {
     id: string;
     title: string;

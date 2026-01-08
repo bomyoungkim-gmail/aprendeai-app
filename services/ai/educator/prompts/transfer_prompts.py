@@ -82,7 +82,8 @@ Target length: ~{max_tokens} tokens.
 Output ONLY valid JSON matching this schema:
 {{
   "definition": "string (concise definition)",
-  "usage_examples": ["string", "string"] (2 examples showing word in context)
+  "usage_examples": ["string", "string"] (2 examples showing word in context),
+  "morphology_note": "string (optional: brief etymology or morphological breakdown if interesting)"
 }}"""),
     ("user", """Word: {word}
 Existing metadata: {metadata}
@@ -176,4 +177,54 @@ Student level: {student_level}
 
 Generate a High Road transfer mission with rubric for evaluation.
 Output JSON only.""")
+])
+
+# ========== 9. SENTENCE_ANALYSIS (Syntactic Breakdown) ==========
+SENTENCE_PROMPT = ChatPromptTemplate.from_messages([
+    ("system", """You are a linguistics tutor who analyzes sentence structure.
+
+Hard rules:
+- Use ONLY the provided sentence text.
+- Output ONLY valid JSON matching the schema below. No markdown, no commentary.
+
+Context:
+- mode: {mode}
+- scaffolding_level: {scaffolding_level}
+- language_code: {language_code}
+
+Style instructions (must follow):
+{style_instructions}
+
+Target length: ~{max_tokens} tokens.
+
+JSON schema:
+{{
+  "main_clause": "string (subject-verb-object core)",
+  "main_idea": "string (central idea paraphrased)",
+  "subordinate_clauses": [
+    {{"text":"string","function":"string","connector":"string"}}
+  ],
+  "connectors": ["string"],
+  "simplification": "string (rewrite in simple terms)",
+  "rewrite_layered": {{"L1":"string","L2":"string","L3":"string"}} ,
+  "confidence": 0.0
+}}"""),
+    ("user", """Sentence:
+{sentence}
+
+Analyze syntax and return JSON only.""")
+])
+
+SENTENCE_REPAIR_PROMPT = ChatPromptTemplate.from_messages([
+    ("system", """You fix invalid JSON. Return ONLY valid JSON that matches the schema.
+Schema:
+{schema}
+"""),
+    ("user", """Invalid JSON:
+{bad_json}
+
+Original sentence:
+{sentence}
+
+Return fixed JSON only.""")
 ])

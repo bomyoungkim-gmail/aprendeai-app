@@ -197,3 +197,59 @@ sempre escolher evolucao incremental ao inves de substituir quando ha schema mis
 ## conciliacao
 script 4 totalmente implementado? conciliar para ver se algo de fora e atualize documento de conciliacao. nao implemente.
 
+
+
+Você tem razão: na ordem que eu listei, eu **não incluí** os scripts **[SCRIPT 01]**, **[SCRIPT 04]** e **[SCRIPT 05]** (do bloco “chat-only + sintaxe”). A melhor forma é **colocar esses três antes** (ou junto) da tool, porque eles definem o contrato de negócio e o encaixe no fluxo do Educator.
+
+Aqui vai a **ordem consolidada**, com **todos** os títulos (incluindo 1, 4 e 5), na sequência que minimiza risco e retrabalho:
+
+(ok) 1. **[SCRIPT 01] RB-CHAT-ONLY — Regra de Negócio “IA só via Chat Educator” (sem conflito)**
+
+(ok) 2. **[MICROPATCH ÚNICO] Normalizar `events_to_write`: `"type" -> "eventType"` + garantir `payloadJson/domain` (NestJS)**
+
+(ok) 3. **[SCRIPT] Consolidar `decision_policy_json` (Família/Instituição) com Schema Único Validado (Zod no NestJS + Pydantic no Python)**
+
+(ok) 4. **[SCRIPT 06] POLICY-GUARDRAILS — Não violar “sem extração de texto” e evitar respostas indevidas**
+
+(ok) 5. **[SCRIPT 02] RB-CONTENT-MODE — Modo de Leitura por Tipo de Material (Didático/Técnico/Narrativo/News/etc.)**
+
+() 6. **[SCRIPT 03] RB-SCAFFOLDING-FADING — Andaimes e Desvanecimento por Mode + Sinais de Maestria**
+
+7. **[SCRIPT] SENTENCE_ANALYSIS (TransferGraph) — Implementação alinhada ao TransferState real + events_to_write (eventType/payloadJson)**
+
+8. **[SCRIPT 05] AGENT-INTEGRATION — Integração no Educator (DURING Phase) com sub-rotas de Sintaxe**
+
+9. **[SCRIPT 04] FEATURE-SYNTAX — Ferramenta “Oração/Sentença” (Syntax Analyzer) acoplada ao Educator**
+   *(Observação: aqui “FEATURE-SYNTAX” é o pacote conceitual; na prática, ele se concretiza via a tool `SENTENCE_ANALYSIS` + integração. Se vocês preferirem, este item vira “validação + fallback heurístico + prompt refinado”, mas a ordem continua a mesma.)*
+
+10. **[SCRIPT 07] TELEMETRIA & KPIs — Medir ganho real do “entendimento de oração/sentença” + fading**
+
+11. **[SCRIPT 07] FRONTEND — UX de “Sintaxe” SEM SAIR DO CHAT (Quick Replies + cards opcionais + seleção ✨ IA)**
+
+Se você quiser deixar ainda mais “executável”, dá para agrupar em 3 fases:
+
+* **Fase A (Governança/Compat):** 1 → 2 → 3 → 4
+* **Fase B (Comportamento Pedagógico):** 5 → 6
+* **Fase C (Entrega da Feature):** 7 → 8 → 9 → 10 → 11
+
+
+
+
+Immediate
+ Create unit tests for 
+AnswerCheckpointUseCase
+ Create integration tests for endpoint
+ Test LLM feedback quality with real questions
+Future Enhancements
+ A/B test LLM vs template feedback effectiveness
+ Add feedback rating system (thumbs up/down)
+ Personalize feedback based on learner profile
+ Support multi-attempt tracking with progressive hints
+Immediate
+ Monitor cron jobs in production (logs at 2 AM and 3 AM)
+ Tune threshold values based on user behavior
+ Add Grafana dashboard for graph metrics
+Future Enhancements
+ ML-based decay (personalized half-life per user)
+ Adaptive thresholds (learn optimal trigger points)
+ Graph diff visualization (show what changed in comparison)

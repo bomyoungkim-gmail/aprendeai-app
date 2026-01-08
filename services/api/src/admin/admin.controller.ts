@@ -462,6 +462,45 @@ export class AdminController {
   }
 
   // ========================================
+  // Decision Engine Metrics (Item 10.1)
+  // ========================================
+
+  @Get('metrics/decisions')
+  @Roles(SystemRole.ADMIN, SystemRole.OPS)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get Decision Engine metrics (80/20 rule verification)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns decision counts by channel and deterministic ratio',
+  })
+  async getDecisionMetrics(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    // Default to last 24 hours if not specified
+    const end = endDate ? new Date(endDate) : new Date();
+    const start = startDate ? new Date(startDate) : new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const metrics = await this.adminService.getDecisionMetrics(start, end);
+
+    return {
+      success: true,
+      timeRange: {
+        start: start.toISOString(),
+        end: end.toISOString(),
+      },
+      metrics,
+      evaluation: {
+        target: 0.8,
+        achieved: metrics.deterministicRatio >= 0.8,
+        message: metrics.deterministicRatio >= 0.8
+          ? '✅ Target achieved: 80%+ decisions are deterministic'
+          : `⚠️ Below target: Only ${(metrics.deterministicRatio * 100).toFixed(1)}% deterministic`,
+      },
+    };
+  }
+
+  // ========================================
   // Helpers
   // ========================================
 

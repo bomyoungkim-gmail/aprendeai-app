@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, X, Bot, User, AlertCircle } from 'lucide-react';
 import { CHAT_LABELS } from '@/lib/cornell/labels';
 import { URLS } from '@/lib/config/urls';
+import { SentenceAnalysisView } from '@/components/ai/SentenceAnalysisView';
 
 
 
@@ -10,6 +11,9 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  quickReplies?: string[]; // Quick action buttons from AI
+  structuredOutput?: any; // JSON data from tools (e.g., SENTENCE_ANALYSIS)
+  toolType?: string; // Tool identifier (e.g., 'SENTENCE_ANALYSIS', 'MORPHOLOGY')
 }
 
 interface AIChatPanelProps {
@@ -91,8 +95,11 @@ export function AIChatPanel({ onSendMessage, initialInput = '', selection = '', 
         const aiResponse: ChatMessage = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: data.content || 'Sem resposta.',
+          content: data.content || data.responseText || 'Sem resposta.',
           timestamp: new Date(),
+          quickReplies: data.quickReplies || data.quick_replies || [],
+          structuredOutput: data.structuredOutput || data.structured_output,
+          toolType: data.toolType || data.tool_type,
         };
         setMessages(prev => [...prev, aiResponse]);
         setIsTyping(false);
@@ -127,30 +134,65 @@ export function AIChatPanel({ onSendMessage, initialInput = '', selection = '', 
         {messages.map((msg) => (
           <div 
             key={msg.id} 
-            className={`flex items-start gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+            className="space-y-2"
           >
-            <div 
-              className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                msg.role === 'user' 
-                  ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                  : 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
-              }`}
-            >
-              {msg.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+            <div className={`flex items-start gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+              <div 
+                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                  msg.role === 'user' 
+                    ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
+                    : 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
+                }`}
+              >
+                {msg.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+              </div>
+              
+              <div 
+                className={`max-w-[80%] ${
+                  msg.role === 'user'
+                    ? 'bg-blue-600 text-white rounded-lg p-3 text-sm'
+                    : ''
+                }`}
+              >
+                {/* Conditional Rendering: Structured Output vs Plain Text */}
+                {msg.role === 'assistant' && msg.toolType === 'SENTENCE_ANALYSIS' && msg.structuredOutput ? (
+                  // Rich visualization for sentence analysis
+                  <SentenceAnalysisView data={msg.structuredOutput} />
+                ) : (
+                  // Default text bubble
+                  <div className={msg.role === 'user' ? '' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 shadow-sm rounded-lg p-3 text-sm'}>
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                  </div>
+                )}
+                
+                <span className={`text-[10px] mt-1 block opacity-70 ${msg.role === 'user' ? 'text-blue-100' : 'text-gray-400'}`}>
+                  {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
             </div>
-            
-            <div 
-              className={`max-w-[80%] rounded-lg p-3 text-sm ${
-                msg.role === 'user'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 shadow-sm'
-              }`}
-            >
-              <p className="whitespace-pre-wrap">{msg.content}</p>
-              <span className={`text-[10px] mt-1 block opacity-70 ${msg.role === 'user' ? 'text-blue-100' : 'text-gray-400'}`}>
-                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
-            </div>
+
+            {/* Quick Replies - Only for assistant messages */}
+            {msg.role === 'assistant' && msg.quickReplies && msg.quickReplies.length > 0 && (
+              <div className="flex flex-wrap gap-2 ml-11">
+                {msg.quickReplies.map((reply, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setInput(reply);
+                      // Auto-submit after a brief delay to allow user to see the populated input
+                      setTimeout(() => {
+                        const form = document.querySelector('form');
+                        if (form) form.requestSubmit();
+                      }, 100);
+                    }}
+                    className="px-3 py-1.5 text-xs font-medium rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors"
+                    disabled={isTyping}
+                  >
+                    {reply}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ))}
         {isTyping && (

@@ -13,37 +13,44 @@ export class PrismaActivityRepository implements IActivityRepository {
     date: Date,
     data: Partial<Omit<Activity, "id" | "userId" | "date">>,
   ): Promise<void> {
-    await this.prisma.daily_activities.upsert({
+    const existing = await this.prisma.daily_activities.findFirst({
       where: {
-        user_id_date: {
-          user_id: userId,
-          date: date,
-        },
-      },
-      create: {
-        id: uuidv4(),
         user_id: userId,
         date: date,
-        minutes_studied: data.minutesStudied || 0,
-        sessions_count: data.sessionsCount || 0,
-        contents_read: data.contentsRead || 0,
-        annotations_created: data.annotationsCreated || 0,
-      },
-      update: {
-        minutes_studied: data.minutesStudied
-          ? { increment: data.minutesStudied }
-          : undefined,
-        sessions_count: data.sessionsCount
-          ? { increment: data.sessionsCount }
-          : undefined,
-        contents_read: data.contentsRead
-          ? { increment: data.contentsRead }
-          : undefined,
-        annotations_created: data.annotationsCreated
-          ? { increment: data.annotationsCreated }
-          : undefined,
       },
     });
+
+    if (existing) {
+      await this.prisma.daily_activities.update({
+        where: { id: existing.id },
+        data: {
+          minutes_studied: data.minutesStudied
+            ? { increment: data.minutesStudied }
+            : undefined,
+          sessions_count: data.sessionsCount
+            ? { increment: data.sessionsCount }
+            : undefined,
+          contents_read: data.contentsRead
+            ? { increment: data.contentsRead }
+            : undefined,
+          annotations_created: data.annotationsCreated
+            ? { increment: data.annotationsCreated }
+            : undefined,
+        },
+      });
+    } else {
+      await this.prisma.daily_activities.create({
+        data: {
+          id: uuidv4(),
+          user_id: userId,
+          date: date,
+          minutes_studied: data.minutesStudied || 0,
+          sessions_count: data.sessionsCount || 0,
+          contents_read: data.contentsRead || 0,
+          annotations_created: data.annotationsCreated || 0,
+        },
+      });
+    }
   }
 
   async getActivityHeatmap(userId: string, days: number): Promise<Activity[]> {

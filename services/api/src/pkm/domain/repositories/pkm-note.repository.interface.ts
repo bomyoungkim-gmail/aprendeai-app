@@ -23,6 +23,16 @@ export interface IPkmNoteRepository {
   findBySessionId(sessionId: string): Promise<PkmNote[]>;
 
   /**
+   * Find PKM notes by topic node ID (for collaborative graph annotations)
+   */
+  findByTopicNodeId(
+    topicNodeId: string,
+    userId: string,
+    limit?: number,
+    offset?: number,
+  ): Promise<PkmNote[]>;
+
+  /**
    * Find a single PKM note by ID
    */
   findById(id: string): Promise<PkmNote | null>;

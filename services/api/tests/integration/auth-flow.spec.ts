@@ -100,8 +100,17 @@ describe("Integration: Auth & Context Flow", () => {
           id: userId,
           email: email,
           name: "Auth Tester",
-          password_hash: hashedPassword,
           updated_at: new Date(),
+        },
+      });
+
+      await (prisma as any).user_identities.create({
+        data: {
+          user_id: user.id,
+          provider: "password",
+          provider_id: email,
+          email: email,
+          password_hash: hashedPassword,
         },
       });
 

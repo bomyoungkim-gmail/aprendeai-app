@@ -18,6 +18,7 @@ export class PkmNote {
     public readonly contentId: string | null,
     public readonly sessionId: string | null,
     public readonly missionId: string | null,
+    public readonly topicNodeId: string | null, // Link to knowledge graph node
     public readonly title: string,
     public readonly bodyMd: string,
     public readonly tags: string[],
@@ -34,6 +35,7 @@ export class PkmNote {
     contentId?: string;
     sessionId?: string;
     missionId?: string;
+    topicNodeId?: string;
     title: string;
     bodyMd: string;
     tags?: string[];
@@ -47,6 +49,7 @@ export class PkmNote {
       props.contentId ?? null,
       props.sessionId ?? null,
       props.missionId ?? null,
+      props.topicNodeId ?? null,
       props.title,
       props.bodyMd,
       props.tags ?? [],

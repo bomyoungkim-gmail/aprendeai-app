@@ -5,7 +5,7 @@ import { StorageService } from "../../services/storage.service";
 import { VideoService } from "../../../video/video.service";
 import { Content } from "../../domain/content.entity";
 import { UploadContentDto } from "../../dto/upload-content.dto";
-import { ContentType, Language } from "@prisma/client";
+import { ContentType, Language, ScopeType } from "@prisma/client";
 
 describe("CreateContentUseCase", () => {
   let useCase: CreateContentUseCase;
@@ -29,8 +29,8 @@ describe("CreateContentUseCase", () => {
     id: "content-1",
     title: "New Content",
     type: ContentType.PDF, // Use PDF as default fallback in UseCase
-    ownerId: "user-1",
-    ownerType: "USER",
+    scopeId: "user-1",
+    scopeType: ScopeType.USER,
     createdAt: new Date(),
     updatedAt: new Date(),
   });
@@ -80,7 +80,7 @@ describe("CreateContentUseCase", () => {
       expect.objectContaining({
         title: "New Content",
         type: "PDF",
-        ownerId: "user-1",
+        scopeId: "user-1",
       }),
     );
   });
