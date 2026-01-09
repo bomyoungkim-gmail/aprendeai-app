@@ -9,20 +9,9 @@ import {
 } from "class-validator";
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
+import { Gender } from "../../shared/domain/user.types";
+import { EducationLevel } from "../../shared/domain/education.types";
 
-export enum Gender {
-  MALE = "MALE",
-  FEMALE = "FEMALE",
-  OTHER = "OTHER",
-  PREFER_NOT_TO_SAY = "PREFER_NOT_TO_SAY",
-}
-
-export enum EducationLevel {
-  FUNDAMENTAL = "FUNDAMENTAL",
-  MEDIO = "MEDIO",
-  SUPERIOR = "SUPERIOR",
-  POS_GRADUACAO = "POS_GRADUACAO",
-}
 
 export class UpdateUserProfileDto {
   @ApiPropertyOptional({ example: "João da Silva" })

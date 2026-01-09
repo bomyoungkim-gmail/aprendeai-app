@@ -12,13 +12,8 @@ import {
 } from "class-validator";
 import { Language } from "@prisma/client";
 import { Transform } from "class-transformer";
+import { Gender } from "../../shared/domain/user.types";
 
-export enum Gender {
-  MALE = "MALE",
-  FEMALE = "FEMALE",
-  OTHER = "OTHER",
-  PREFER_NOT_TO_SAY = "PREFER_NOT_TO_SAY",
-}
 
 export class UpdateProfileDto {
   @IsOptional()

@@ -8,12 +8,10 @@ import {
   Max,
 } from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { EducationLevel, educationLevelToLowercase } from "../../shared/domain/education.types";
 
-export enum EducationLevel {
-  FUNDAMENTAL = "fundamental",
-  MEDIO = "medio",
-  SUPERIOR = "superior",
-}
+// Re-export for backward compatibility
+export { EducationLevel } from "../../shared/domain/education.types";
 
 export enum SourceType {
   AI_GENERATED = "AI_GENERATED",
