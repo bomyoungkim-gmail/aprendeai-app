@@ -166,6 +166,24 @@ class NestJSClient:
                 logger.error(f"Failed to fetch content: {e}")
                 raise
 
+    async def get_cornell_highlights(self, content_id: str, user_id: str) -> List[Dict]:
+        """
+        Get Cornell highlights for retrieval context
+        Calls internal endpoint
+        """
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            url = f"{self.base_url}/cornell/contents/{content_id}/highlights-internal"
+            params = {"userId": user_id}
+            logger.debug(f"Fetching cornell highlights: {url} for user {user_id}")
+            
+            try:
+                response = await client.get(url, params=params)
+                response.raise_for_status()
+                return response.json()
+            except httpx.HTTPStatusError as e:
+                logger.error(f"Failed to fetch cornell highlights: {e}")
+                return []  # Return empty on failure to ensure resilience
+
 
 # Global client instance
 nestjs_client = NestJSClient()

@@ -24,6 +24,8 @@ import {
   HttpStatus,
   Sse,
   MessageEvent,
+  Query,
+  BadRequestException,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -84,6 +86,27 @@ export class CornellHighlightsController {
     @Param("contentId") contentId: string,
     @CurrentUser("id") userId: string,
   ) {
+    return this.highlightsService.getHighlights(contentId, userId);
+  }
+
+  /**
+   * Internal endpoint for AI Agent to fetch highlights
+   * Should be protected by network or API key in production
+   */
+  @Get("contents/:contentId/highlights-internal")
+  @ApiOperation({
+    summary: "Get content highlights (Internal)",
+    description: "Get highlights for content by explicit userId (System use)",
+  })
+  @ApiResponse({ status: 200, description: "Highlights retrieved successfully" })
+  async getHighlightsInternal(
+    @Param("contentId") contentId: string,
+    @Query("userId") userId: string,
+  ) {
+    // Basic validation
+    if (!userId) {
+      throw new BadRequestException("UserId required for internal fetch");
+    }
     return this.highlightsService.getHighlights(contentId, userId);
   }
 

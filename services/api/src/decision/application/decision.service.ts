@@ -4,6 +4,7 @@ import { IDecisionLogRepository } from '../domain/decision-log.repository.interf
 import { ScaffoldingService } from './scaffolding.service';
 import { ScaffoldingSignalDetectorService } from './scaffolding-signal-detector.service'; // SCRIPT 03 - Fase 2
 import { FlowStateDetectorService } from './flow-state-detector.service'; // SCRIPT 03 - GAP 8
+import { AssessmentEvaluationService } from '../../assessment/application/assessment-evaluation.service'; // SCRIPT 09
 import { TelemetryService } from '../../telemetry/telemetry.service';
 import { TelemetryEventType } from '../../telemetry/domain/telemetry.constants';
 import {
@@ -53,6 +54,7 @@ export class DecisionService {
     private readonly scaffoldingService: ScaffoldingService,
     private readonly scaffoldingSignalDetector: ScaffoldingSignalDetectorService, // SCRIPT 03 - Fase 2
     private readonly flowStateDetector: FlowStateDetectorService, // SCRIPT 03 - GAP 8
+    private readonly assessmentEvaluator: AssessmentEvaluationService, // SCRIPT 09
     private readonly telemetryService: TelemetryService,
     private readonly aiServiceClient: AiServiceClient, // AGENT SCRIPT A
     private readonly dcsCalculatorService: DcsCalculatorService, // GRAPH SCRIPT 09
@@ -112,7 +114,23 @@ export class DecisionService {
       `DCS snapshot: dcs=${dcsSnapshot.dcs.toFixed(3)}, w_det=${dcsSnapshot.w_det.toFixed(3)}, w_llm=${dcsSnapshot.w_llm.toFixed(3)}`,
     );
 
-    // 5. Enforce constraints (policy, budget, phase, cooldown, DCS weighting)
+    // 5. Derive session phase dynamically (AC6)
+    const sessionPhase = await this.deriveSessionPhase(input.sessionId, input.contentId);
+
+    // GAP 8: Detect flow state to suppress interventions during HIGH_FLOW
+    const flowState = await this.flowStateDetector.detectFlowState(
+      input.userId,
+      input.contentId || '',
+      input.sessionId,
+    );
+
+    this.logger.debug(
+      `Flow state: isInFlow=${flowState.isInFlow}, confidence=${flowState.confidence.toFixed(2)}`,
+    );
+
+    // 6. Enforce constraints (policy, budget, phase, cooldown, DCS weighting, flow state)
+    const enforcementPhase = (sessionPhase === 'PRE' || sessionPhase === 'GAME') ? 'DURING' : sessionPhase;
+    
     const resultV2 = await this.enforce(
       proposal,
       policy,
@@ -121,11 +139,12 @@ export class DecisionService {
       !!input.signals.explicitUserAction,
       input.signals.flowState === 'LOW_FLOW',
       budgetRemaining,
-      'POST', // TODO: Derive from session phase
+      enforcementPhase as 'DURING' | 'POST',
       input.userId, // SCRIPT 10: Pass userId for intervention frequency check
       dcsSnapshot, // GRAPH SCRIPT 09: Pass DCS for weighting
       input.contentId, // GRAPH SCRIPT 09: For event logging
       input.sessionId, // GRAPH SCRIPT 09: For event logging
+      flowState.isInFlow, // GAP 8: Pass HIGH_FLOW state
     );
 
     // 6. Log the decision (v2)
@@ -311,11 +330,12 @@ export class DecisionService {
   }
 
   /**
-   * Enforce constraints (policy, budget, phase, cooldown, DCS weighting)
+   * Enforce constraints (policy, budget, phase, cooldown, DCS weighting, HIGH_FLOW)
    * Uses centralized suppression logic from decision.suppress.ts
    * 
    * SCRIPT 10: Now async to support intervention frequency check
    * GRAPH SCRIPT 09: Now applies DCS weighting to thresholds, budgets, and depth policy
+   * GAP 8: Now suppresses interventions during HIGH_FLOW states
    */
   private async enforce(
     proposal: { action: DecisionAction; channelHint: DecisionChannel; reason: DecisionReason; payload?: any },
@@ -330,6 +350,7 @@ export class DecisionService {
     dcsSnapshot?: { dcs: number; w_det: number; w_llm: number }, // GRAPH SCRIPT 09
     contentId?: string, // GRAPH SCRIPT 09
     sessionId?: string, // GRAPH SCRIPT 09
+    isInHighFlow?: boolean, // GAP 8: HIGH_FLOW state detection
   ): Promise<DecisionResultV2> {
     const channelBefore = proposal.channelHint;
     let finalAction = proposal.action;
@@ -390,6 +411,15 @@ export class DecisionService {
 
     // Low Flow: silence interventions
     if (lowFlow && finalAction !== 'NO_OP') {
+      finalAction = 'NO_OP';
+    }
+
+    // GAP 8: HIGH_FLOW suppression - avoid interrupting productive flow states
+    // Only suppress if NOT an explicit ask (user-initiated actions should always be honored)
+    if (isInHighFlow && !explicitAsk && finalAction !== 'NO_OP') {
+      this.logger.debug(
+        'HIGH_FLOW detected: suppressing intervention to preserve flow state',
+      );
       finalAction = 'NO_OP';
     }
 
@@ -500,6 +530,66 @@ export class DecisionService {
         this.logger.error('Failed to detect/apply scaffolding signal:', error);
         // Don't fail the entire decision if scaffolding detection fails
       }
+
+      // ========================================================================
+      // SCRIPT 09: Assessment-Based Scaffolding Adjustment
+      // ========================================================================
+      try {
+        const assessmentSignal = await this.checkAssessmentPerformance(userId);
+        
+        if (assessmentSignal.shouldAdjust) {
+          // Fetch current scaffolding state for assessment-based adjustment
+          const learnerProfile = await this.prisma.learner_profiles.findUnique({
+            where: { user_id: userId },
+            select: { scaffolding_state_json: true },
+          });
+
+          const currentScaffoldingState = learnerProfile?.scaffolding_state_json as any || {
+            currentLevel: scaffoldingLevel,
+          };
+
+          const currentLevel = currentScaffoldingState.currentLevel || scaffoldingLevel;
+          const newLevel = this.calculateNewScaffoldingLevel(
+            currentLevel,
+            assessmentSignal.direction,
+          );
+
+          if (newLevel !== currentLevel) {
+            this.logger.log(
+              `Assessment-based adjustment: L${currentLevel} → L${newLevel} (${assessmentSignal.reason})`,
+            );
+
+            await this.scaffoldingService.updateLevel(
+              userId,
+              newLevel as ScaffoldingLevel,
+              assessmentSignal.reason,
+              await this.getContentMode(contentId),
+              assessmentSignal.direction,
+            );
+
+            // Emit telemetry event
+            if (sessionId) {
+              await this.telemetryService.track({
+                eventType: 'SCAFFOLDING_LEVEL_SET' as any,
+                eventVersion: '1.0.0',
+                contentId: contentId,
+                sessionId: sessionId,
+                data: {
+                  from: currentLevel,
+                  to: newLevel,
+                  reason: assessmentSignal.reason,
+                  mode: await this.getContentMode(contentId),
+                  phase: phase,
+                  assessmentData: assessmentSignal.evidence,
+                },
+              }, userId);
+            }
+          }
+        }
+      } catch (error) {
+        this.logger.error('Failed to check assessment performance:', error);
+        // Don't fail the entire decision if assessment check fails
+      }
     }
 
     // Budget: exceeded
@@ -518,6 +608,7 @@ export class DecisionService {
       phase,
       explicitAsk: !!explicitAsk,
       lowFlow,
+      isInHighFlow: !!isInHighFlow, // GAP 8: HIGH_FLOW state
       cooldownActive: false, // TODO: Implement cooldown tracking
       policyTransferEnabled: policy.transferEnabled,
       llmEnabled: true, // TODO: Add llmEnabled to policy if needed
@@ -1126,5 +1217,174 @@ export class DecisionService {
       return Math.max(0, currentLevel - 1);
     }
     return currentLevel;
+  }
+
+  /**
+   * AC6: Derive session phase from session data
+   * 
+   * Logic:
+   * - PRE: Session not started or no progress
+   * - DURING: Session active with reading progress
+   * - POST: Session completed or reading finished
+   * - GAME: Content mode is GAME (overrides other logic)
+   */
+  private async deriveSessionPhase(
+    sessionId: string,
+    contentId?: string,
+  ): Promise<'PRE' | 'DURING' | 'POST' | 'GAME'> {
+    try {
+      // Check if content is GAME mode first
+      if (contentId) {
+        const content = await this.prisma.contents.findUnique({
+          where: { id: contentId },
+          select: { mode: true },
+        });
+        
+        if ((content?.mode as any) === 'GAME') {
+          return 'GAME';
+        }
+      }
+
+      // Get session data
+      const session = await this.prisma.reading_sessions.findUnique({
+        where: { id: sessionId },
+        select: {
+          finished_at: true,
+          phase: true,
+          started_at: true,
+        },
+      });
+
+      if (!session) {
+        // No session found, default to POST (safest)
+        return 'POST';
+      }
+
+      // POST: Session completed or explicit POST phase
+      if (session.finished_at || session.phase === 'POST') {
+        return 'POST';
+      }
+
+      // DURING: Session started
+      if (session.started_at || session.phase === 'DURING') {
+        return 'DURING';
+      }
+
+      // PRE: Default
+      return 'PRE';
+    } catch (error) {
+      this.logger.warn(`Failed to derive session phase: ${error.message}`);
+      // Default to POST (most restrictive for safety)
+      return 'POST';
+    }
+  }
+
+  /**
+   * SCRIPT 09: Check recent assessment performance
+   * 
+   * Logic:
+   * - Fetch last 5 assessment attempts
+   * - If 2+ attempts with score < 0.5 → INCREASE scaffolding
+   * - If 3+ attempts with score > 0.8 → DECREASE scaffolding (fade)
+   * - Otherwise → MAINTAIN
+   */
+  private async checkAssessmentPerformance(
+    userId: string,
+  ): Promise<{
+    shouldAdjust: boolean;
+    direction: 'INCREASE' | 'DECREASE' | 'MAINTAIN';
+    reason: string;
+    evidence: any;
+  }> {
+    try {
+      // Fetch recent assessment attempts (last 5)
+      const recentAttempts = await this.prisma.assessment_attempts.findMany({
+        where: {
+          user_id: userId,
+          finished_at: { not: null }, // Only completed attempts
+        },
+        orderBy: {
+          finished_at: 'desc',
+        },
+        take: 5,
+        select: {
+          id: true,
+          score_raw: true,
+          score_percent: true,
+          finished_at: true,
+        },
+      });
+
+      if (recentAttempts.length === 0) {
+        return {
+          shouldAdjust: false,
+          direction: 'MAINTAIN',
+          reason: 'no_assessment_data',
+          evidence: { attemptCount: 0 },
+        };
+      }
+
+      // Count poor and excellent performances
+      const poorPerformances = recentAttempts.filter(
+        (a) => a.score_raw !== null && a.score_raw < 0.5,
+      );
+      const excellentPerformances = recentAttempts.filter(
+        (a) => a.score_raw !== null && a.score_raw > 0.8,
+      );
+
+      // Decision logic
+      if (poorPerformances.length >= 2) {
+        return {
+          shouldAdjust: true,
+          direction: 'INCREASE',
+          reason: 'poor_assessment_performance',
+          evidence: {
+            totalAttempts: recentAttempts.length,
+            poorCount: poorPerformances.length,
+            avgScore: this.calculateAvgScore(recentAttempts),
+          },
+        };
+      }
+
+      if (excellentPerformances.length >= 3) {
+        return {
+          shouldAdjust: true,
+          direction: 'DECREASE',
+          reason: 'excellent_assessment_performance',
+          evidence: {
+            totalAttempts: recentAttempts.length,
+            excellentCount: excellentPerformances.length,
+            avgScore: this.calculateAvgScore(recentAttempts),
+          },
+        };
+      }
+
+      return {
+        shouldAdjust: false,
+        direction: 'MAINTAIN',
+        reason: 'assessment_performance_stable',
+        evidence: {
+          totalAttempts: recentAttempts.length,
+          avgScore: this.calculateAvgScore(recentAttempts),
+        },
+      };
+    } catch (error) {
+      this.logger.error(`Failed to check assessment performance: ${error.message}`);
+      return {
+        shouldAdjust: false,
+        direction: 'MAINTAIN',
+        reason: 'assessment_check_error',
+        evidence: { error: error.message },
+      };
+    }
+  }
+
+  /**
+   * Calculate average score from attempts
+   */
+  private calculateAvgScore(attempts: Array<{ score_raw: number | null }>): number {
+    const validScores = attempts.filter((a) => a.score_raw !== null).map((a) => a.score_raw!);
+    if (validScores.length === 0) return 0;
+    return validScores.reduce((sum, score) => sum + score, 0) / validScores.length;
   }
 }

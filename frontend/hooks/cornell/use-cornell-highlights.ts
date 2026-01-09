@@ -186,6 +186,7 @@ export function useCreateHighlight(contentId: string) {
 
       // Transform CreateHighlightDto to CreateHighlightPayload expected by API
       const apiPayload: import('@/lib/types/cornell').CreateHighlightPayload = {
+        kind: 'TEXT', // Default to TEXT highlights
         type: backendType,
         target_type: data.target_type,
         page_number: data.page_number,
@@ -203,9 +204,48 @@ export function useCreateHighlight(contentId: string) {
       const response = await cornellApi.createHighlight(contentId, apiPayload);
       return response;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: cornellKeys.list(contentId) });
+      
+      // Emit telemetry events
+      const sessionId = localStorage.getItem(`session_${contentId}`);
+      if (sessionId) {
+        // Import dynamically to avoid circular dependencies
+        import('@/services/telemetry.service').then(({ telemetryService }) => {
+          import('@/lib/constants/enums').then(({ ContentMode }) => {
+            const tag = variables.tags_json?.[0]?.toUpperCase();
+            
+            // Check if this is a synthesis note
+            if (tag === 'SYNTHESIS' || tag === 'SUMMARY') {
+              telemetryService.trackNoteCreated(
+                contentId,
+                sessionId,
+                ContentMode.NARRATIVE, // Default mode for reading
+                {
+                  type: 'SYNTHESIS',
+                  text: variables.comment_text || '',
+                  relatedHighlights: []
+                }
+              );
+            } 
+            // Check if this is a standard highlight type
+            else if (['EVIDENCE', 'VOCABULARY', 'MAIN_IDEA', 'DOUBT'].includes(tag || '')) {
+              telemetryService.trackHighlightCreated(
+                contentId,
+                sessionId,
+                ContentMode.NARRATIVE,
+                {
+                  type: tag as 'EVIDENCE' | 'VOCABULARY' | 'MAIN_IDEA' | 'DOUBT',
+                  kind: 'TEXT',
+                  targetType: variables.target_type as 'PDF' | 'IMAGE' | 'VIDEO' | 'AUDIO',
+                  commentText: variables.comment_text
+                }
+              );
+            }
+          });
+        });
+      }
     },
   });
 }

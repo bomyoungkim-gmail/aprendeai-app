@@ -16,6 +16,7 @@ export enum SuppressReason {
   COOLDOWN_ACTIVE = 'COOLDOWN_ACTIVE',
   PHASE_DURING_INVISIBLE = 'PHASE_DURING_INVISIBLE',
   LOW_FLOW_SILENCE = 'LOW_FLOW_SILENCE',
+  HIGH_FLOW_PRESERVE = 'HIGH_FLOW_PRESERVE', // GAP 8: Suppress during productive flow
   SAFETY_GUARD = 'SAFETY_GUARD',
   MISSING_INPUTS = 'MISSING_INPUTS',
   DEGRADED_CAPABILITY = 'DEGRADED_CAPABILITY',
@@ -29,6 +30,7 @@ export type SuppressionContext = {
   phase: 'DURING' | 'POST';
   explicitAsk: boolean;
   lowFlow: boolean;
+  isInHighFlow: boolean; // GAP 8: HIGH_FLOW state detection
   cooldownActive: boolean;
   policyTransferEnabled: boolean;
   llmEnabled: boolean;
@@ -67,6 +69,7 @@ export function computeSuppressReasons(ctx: SuppressionContext): SuppressReason[
 
   // 3. Flow / Behavior
   if (ctx.lowFlow) reasons.push(SuppressReason.LOW_FLOW_SILENCE);
+  if (ctx.isInHighFlow && !ctx.explicitAsk) reasons.push(SuppressReason.HIGH_FLOW_PRESERVE); // GAP 8
   if (ctx.cooldownActive) reasons.push(SuppressReason.COOLDOWN_ACTIVE);
 
   // 4. Capacity / Cost

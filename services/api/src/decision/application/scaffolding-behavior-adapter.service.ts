@@ -185,6 +185,17 @@ export class ScaffoldingBehaviorAdapterService {
         adjusted.tone = 'conversational';
         break;
 
+      case 'GAME' as ContentMode:
+        // AC6: GAME mode - minimal intervention always
+        // Don't interrupt game flow with scaffolding
+        adjusted.responseFormat = 'MINIMAL';
+        adjusted.useSocraticMode = false;
+        adjusted.includeExamples = false;
+        adjusted.includeVerification = false;
+        adjusted.quickReplies = [];
+        adjusted.tone = 'minimal';
+        break;
+
       default:
         // Keep defaults
         break;

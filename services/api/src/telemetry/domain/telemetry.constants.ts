@@ -15,6 +15,7 @@ export const TelemetryEventType = {
   SECTION_VIEWED: 'section_viewed',
   SCROLL_PATTERN: 'scroll_pattern',
   CONTEXT_SWITCH: 'context_switch',
+  FLOW_STATE_DETECTED: 'flow_state_detected', // SCRIPT 03 - GAP 8: Flow state metrics
 
   // B) Interface Load
   TOOLBOX_OPENED: 'toolbox_opened',
@@ -72,6 +73,14 @@ export interface ScrollPatternPayload {
 export interface ContextSwitchPayload {
   to: 'notes' | 'glossary' | 'menu' | 'other_app';
   count: number;
+}
+
+export interface FlowStateDetectedPayload {
+  confidence: number;
+  readingVelocity: number;
+  doubtCount: number;
+  rehighlightRate: number;
+  sessionDuration: number;
 }
 
 // B) Interface Load Payloads
@@ -143,6 +152,7 @@ export interface TelemetryPayloadMap {
   [TelemetryEventType.SECTION_VIEWED]: SectionViewedPayload;
   [TelemetryEventType.SCROLL_PATTERN]: ScrollPatternPayload;
   [TelemetryEventType.CONTEXT_SWITCH]: ContextSwitchPayload;
+  [TelemetryEventType.FLOW_STATE_DETECTED]: FlowStateDetectedPayload;
   [TelemetryEventType.TOOLBOX_OPENED]: ToolboxOpenedPayload;
   [TelemetryEventType.MENU_OPENED]: MenuOpenedPayload;
   [TelemetryEventType.ACTION_SHORTCUT_USED]: ActionShortcutUsedPayload;

@@ -162,6 +162,8 @@ export interface ScaffoldingSignal {
     deepReadingIndex?: number;
     rehighlightRate?: number; // GAP 3: Rehighlight tracking
     consecutiveSessions?: number; // GAP 5: Consecutive sessions for fading
+    flowScore?: number;
+    flowIndicators?: any;
   };
 }
 

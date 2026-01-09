@@ -5,7 +5,7 @@
       "value": "mock-e2e-test-token",
       "domain": "127.0.0.1",
       "path": "/",
-      "expires": 1767915304.232,
+      "expires": 1768018305.925,
       "httpOnly": true,
       "secure": false,
       "sameSite": "Lax"

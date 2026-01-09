@@ -73,38 +73,60 @@ O que você entendeu sobre este trecho?"""
         
         return state
     
-    # 3. If user is just reading (no special events), generate checkpoint
-    # Simple heuristic: every ~3-4 interactions
-    # In production, this would be based on content structure
+    # 3. Highlight-Driven Interventions (Gap 8)
+    highlights = context.get('content', {}).get('highlights', {})
+    flow_state = context.get('flowState', {}) # From NestJS enrichment
     
-    if "continuar" in user_text.lower() or "pronto" in user_text.lower():
-        logger.debug("Generating checkpoint")
+    # 3a. Prioritize Doubts (if any)
+    if highlights.get('doubts'):
+        recent_doubt = highlights['doubts'][-1] # Most recent
+        # Check if we haven't addressed it yet (simple heuristic or use parsed events history)
+        # For now, if user hasn't asked anything specific, offer help on doubt
         
-        # Generate simple checkpoint question
-        level = context['learner']['educationLevel']
+        logger.info(f"Addressing recent doubt: {recent_doubt['text']}")
         
-        if level in ['FUNDAMENTAL_1', 'FUNDAMENTAL_2']:
-            question = "O que aconteceu nesta parte do texto?"
-        elif level == 'MEDIO':
-            question = "Qual é a ideia principal deste trecho?"
+        state['next_prompt'] = f"""Vi que você marcou uma dúvida em: "{recent_doubt['text']}".
+        
+Quer que eu explique isso melhor ou prefere seguir adiante?"""
+        state['quick_replies'] = ["Explicar", "Seguir"]
+        return state
+
+    # 3b. Flow State Check (suppress proactive interruptions)
+    if flow_state.get('isInFlow') and flow_state.get('confidence', 0) > 0.8:
+        logger.info("User in High Flow - suppressing proactive checkpoint")
+        # Only respond if user explicitly asked something, otherwise be quiet/supportive
+        if not user_text or len(user_text) < 5:
+             state['next_prompt'] = None # No-op (or minimal ack)
+             # Note: In a chat interface, returning None might mean no message. 
+             # Or return a passive "standing by" indicator.
+             # For now, let's just let them read unless they explicitly engaged.
+             state['next_prompt'] = "..." # Subtle indicator
+             return state
+
+    # 3c. Generate Checkpoint from Main Ideas (if adequate content marked)
+    if "checkpoint" in user_text.lower() or ("continuar" in user_text.lower() and len(parsed_events) > 3):
+        logger.debug("Generating checkpoint from highlights")
+        
+        main_ideas = highlights.get('mainItems', [])
+        question = ""
+        
+        if main_ideas:
+             # Use a main idea to form a question
+             target_idea = main_ideas[-1]['text']
+             question = f"Sobre '{target_idea[:30]}...', qual é a conclusão principal?"
         else:
-            question = "Como este trecho se relaciona com o objetivo da sua leitura?"
-        
-        state['next_prompt'] = f"""Checkpoint (responda em 1 linha):
+             # Fallback to level-based generic
+             level = context['learner']['educationLevel']
+             if level in ['FUNDAMENTAL_1', 'FUNDAMENTAL_2']:
+                question = "O que aconteceu nesta parte do texto?"
+             else:
+                question = "Qual é a ideia principal deste trecho?"
+
+        state['next_prompt'] = f"""Checkpoint:
 
 {question}"""
-        
         state['quick_replies'] = []
-        
-        # Record checkpoint generated
-        state['events_to_write'] = [{
-            "eventType": "CHECKPOINT_GENERATED",
-            "payloadJson": {
-                "question": question,
-                "blockId": "auto"
-            }
-        }]
-        
+        state['events_to_write'] = [{"eventType": "CHECKPOINT_GENERATED", "payloadJson": {"question": question, "blockId": "auto"}}]
         return state
     
     # 4. Default: encourage continuation

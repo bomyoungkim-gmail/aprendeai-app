@@ -1,18 +1,25 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { PrismaService } from '../../prisma/prisma.service';
-import { QuestionType } from '@prisma/client';
+import { QuestionType, ContentMode } from '@prisma/client';
+import { AiServiceClient } from '../../ai-service/ai-service.client';
 
 /**
  * Assessment Generation Service
  * 
  * Generates assessments from learning_assets (quiz_post_json or checkpoints_json)
  * Priority: quiz_post_json > checkpoints_json
+ * Also supports dynamic context-aware generation from Cornell notes.
  */
 @Injectable()
 export class AssessmentGenerationService {
   private readonly logger = new Logger(AssessmentGenerationService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly aiService: AiServiceClient,
+  ) {}
 
   /**
    * Generate assessment from learning assets
@@ -230,5 +237,177 @@ export class AssessmentGenerationService {
    */
   private generateQuestionId(): string {
     return `q_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  }
+
+  // ==========================================
+  // DYNAMIC GENERATION (Cornell Integration)
+  // ==========================================
+
+  /**
+   * Generate a context-aware quiz based on scaffolding level and Cornell notes
+   */
+  async generateQuiz(
+    contentId: string,
+    userId: string,
+    scaffoldingLevel: number,
+    mode: ContentMode,
+  ): Promise<any> {
+    this.logger.debug(
+      `Generating quiz for content ${contentId} (L${scaffoldingLevel}, ${mode})`,
+    );
+
+    // 1. Gather Context (Cornell Highlights)
+    const context = await this.gatherContext(contentId, userId);
+
+    if (!context.hasHighlights) {
+      this.logger.warn(`No highlights found for content ${contentId}. Using raw text only.`);
+    }
+
+    // 2. Determine Quiz Strategy based on Level
+    const strategy = this.getStrategyForLevel(scaffoldingLevel);
+
+    // 3. Build Prompt for LLM
+    const prompt = this.buildPrompt(context, strategy, mode);
+
+    // 4. Generate Questions via LLM
+    const questions = await this.aiService.generateQuiz(prompt);
+
+    return {
+      questions,
+      difficulty: strategy.difficulty,
+      scaffoldingLevel,
+      generatedAt: new Date(),
+    };
+  }
+
+  private async gatherContext(contentId: string, userId: string) {
+    // Fetch highlights (Evidence, Main Ideas, Doubts)
+    const highlights = await this.prisma.highlights.findMany({
+      where: {
+        content_id: contentId,
+        user_id: userId,
+        type: { in: ['EVIDENCE', 'MAIN_IDEA', 'DOUBT'] },
+      },
+      select: {
+        id: true,
+        type: true,
+        comment_text: true, // User's note
+        anchor_json: true,
+      },
+    });
+
+    // Separate highlights by type for strategic use
+    const evidenceHighlights = highlights.filter(h => h.type === 'EVIDENCE');
+    const mainIdeaHighlights = highlights.filter(h => h.type === 'MAIN_IDEA');
+    const doubtHighlights = highlights.filter(h => h.type === 'DOUBT');
+
+    // Format each type separately
+    const formatHighlight = (h: any) => {
+      const text = (h.anchor_json as any)?.text || 'Content reference';
+      const note = h.comment_text ? ` (Note: ${h.comment_text})` : '';
+      return `${text}${note}`;
+    };
+
+    return {
+      hasHighlights: highlights.length > 0,
+      evidence: evidenceHighlights.map(formatHighlight),
+      mainIdeas: mainIdeaHighlights.map(formatHighlight),
+      doubts: doubtHighlights.map(formatHighlight),
+      highlights,
+    };
+  }
+
+  private getStrategyForLevel(level: number) {
+    switch (level) {
+      case 3: // High Scaffolding -> Easy
+        return {
+          type: 'MULTIPLE_CHOICE',
+          count: 3,
+          difficulty: 0.3,
+          focus: 'RECOGNITION',
+        };
+      case 2: // Moderate
+        return {
+          type: 'FILL_BLANK',
+          count: 3,
+          difficulty: 0.5,
+          focus: 'RECALL',
+        };
+      case 1: // Low
+        return {
+          type: 'SHORT_ANSWER',
+          count: 2,
+          difficulty: 0.7,
+          focus: 'ANALYSIS',
+        };
+      case 0: // No Scaffolding -> Hard
+        return {
+          type: 'ESSAY',
+          count: 1,
+          difficulty: 0.9,
+          focus: 'SYNTHESIS',
+        };
+      default:
+        return { type: 'MULTIPLE_CHOICE', count: 3, difficulty: 0.5, focus: 'RECALL' };
+    }
+  }
+
+  private buildPrompt(context: any, strategy: any, mode: ContentMode): string {
+    // Build context sections based on highlight types
+    let contextSection = '';
+    
+    if (context.doubts.length > 0) {
+      contextSection += `\n**Areas of Confusion (Student marked as DOUBT)**:\n${context.doubts.map((d: string, i: number) => `${i + 1}. ${d}`).join('\n')}\n`;
+    }
+    
+    if (context.evidence.length > 0) {
+      contextSection += `\n**Key Evidence (Student highlighted)**:\n${context.evidence.map((e: string, i: number) => `${i + 1}. ${e}`).join('\n')}\n`;
+    }
+    
+    if (context.mainIdeas.length > 0) {
+      contextSection += `\n**Main Ideas (Student identified)**:\n${context.mainIdeas.map((m: string, i: number) => `${i + 1}. ${m}`).join('\n')}\n`;
+    }
+
+    // Strategic instructions based on highlight types
+    let strategyInstructions = '';
+    if (context.doubts.length > 0) {
+      strategyInstructions += '\n- PRIORITY: Create remedial/diagnostic questions targeting the areas marked as DOUBT to help clarify confusion.';
+    }
+    if (context.evidence.length > 0) {
+      strategyInstructions += '\n- Use EVIDENCE highlights for recognition and recall questions.';
+    }
+    if (context.mainIdeas.length > 0) {
+      strategyInstructions += '\n- Use MAIN_IDEA highlights for conceptual and analytical questions.';
+    }
+
+    return `
+Generate a ${strategy.count}-question quiz for a student learning in ${mode} mode.
+
+**Quiz Strategy**:
+- Question Type: ${strategy.type}
+- Difficulty Level (0-1): ${strategy.difficulty}
+- Cognitive Focus: ${strategy.focus}${strategyInstructions}
+
+**Student Context**:${contextSection || '\n(No highlights available - generate generic questions based on typical content for this mode)'}
+
+**Output Format**:
+Return a valid JSON array of questions. Each question must have:
+- text: string (the question)
+- options: string[] (for MULTIPLE_CHOICE) or null
+- correctAnswer: string
+- explanation: string (brief explanation of the correct answer)
+- targetedHighlight: string (which highlight type this question addresses: "DOUBT", "EVIDENCE", "MAIN_IDEA", or "GENERIC")
+
+Example:
+[
+  {
+    "text": "What is the main concept discussed?",
+    "options": ["A", "B", "C", "D"],
+    "correctAnswer": "B",
+    "explanation": "The text explicitly states...",
+    "targetedHighlight": "MAIN_IDEA"
+  }
+]
+    `.trim();
   }
 }

@@ -40,7 +40,7 @@ class TelemetryService {
   private apiBaseUrl: string;
 
   constructor() {
-    this.apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    this.apiBaseUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000';
     this.startFlushInterval();
     
     // Flush on page unload
@@ -210,14 +210,18 @@ class TelemetryService {
     this.eventBuffer = []; // Clear buffer immediately
 
     try {
-      const response = await fetch(`${this.apiBaseUrl}/telemetry/track`, {
+      const isBatch = eventsToSend.length > 1;
+      const endpoint = isBatch ? '/telemetry/batch' : '/telemetry/track';
+      const body = isBatch ? JSON.stringify(eventsToSend) : JSON.stringify(eventsToSend[0]);
+
+      const response = await fetch(`${this.apiBaseUrl}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           // Add auth token if needed
         },
         credentials: 'include',
-        body: JSON.stringify(eventsToSend[0]), // Send first event (will batch later)
+        body,
       });
 
       if (!response.ok) {

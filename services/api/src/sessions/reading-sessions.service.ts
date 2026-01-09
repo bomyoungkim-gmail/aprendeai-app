@@ -38,6 +38,7 @@ import { DeleteBookmarkUseCase } from "./application/use-cases/delete-bookmark.u
 import { UpdateReadingProgressDto } from "./dto/reading-progress.dto";
 import { CreateBookmarkDto } from "./dto/bookmarks.dto";
 import { normalizeEventsToWrite } from "../utils/normalize-events-to-write";
+import { FlowStateDetectorService } from "../decision/application/flow-state-detector.service";
 
 @Injectable()
 export class ReadingSessionsService {
@@ -67,6 +68,7 @@ export class ReadingSessionsService {
     private createBookmarkUseCase: CreateBookmarkUseCase,
     private getBookmarksUseCase: GetBookmarksUseCase,
     private deleteBookmarkUseCase: DeleteBookmarkUseCase,
+    private flowStateDetector: FlowStateDetectorService, // Injected
   ) {}
 
   async startSession(user_id: string, content_id: string) {
@@ -617,6 +619,19 @@ export class ReadingSessionsService {
       this.logger.warn(`Failed to load resurrection context: ${err.message}`);
     }
 
+    // 6. Flow State Detection (SCRIPT 03 - Gap 8)
+    let flowState = { isInFlow: false, confidence: 0 };
+    try {
+       flowState = await this.flowStateDetector.detectFlowState(
+         user_id,
+         content_id,
+         sessionId
+       );
+       this.logger.debug(`Flow State: isInFlow=${flowState.isInFlow} (${flowState.confidence.toFixed(2)})`);
+    } catch (err) {
+       this.logger.warn(`Failed to detect flow state: ${err.message}`);
+    }
+
     return {
       pedState: pedState || {},
       lastTurns: formattedTurns,
@@ -624,6 +639,7 @@ export class ReadingSessionsService {
       memoriesTopK: 6, // For AI service retrieval
       resurrection, // Cross-session context
       sessionAnnotations, // User annotations for quiz generation
+      flowState, // NEW: Flow State
       contextPlan: {
         prefixVersion: "CANONICAL_PREFIX_V1",
         lastTurnsWindow: 6,

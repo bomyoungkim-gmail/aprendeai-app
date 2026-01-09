@@ -1,36 +1,50 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Get,
-  UseGuards,
-  Request,
-  Query,
-} from "@nestjs/common";
-import { AuthGuard } from "@nestjs/passport";
-import { AssessmentService } from "./assessment.service";
-import { CreateAssessmentDto } from "./dto/assessment.dto";
-import { ApiKeyGuard } from "../auth/infrastructure/api-key.guard";
-import { Public } from "../auth/presentation/decorators/public.decorator";
+import { Controller, Post, Body, Param, Get } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AssessmentGenerationService } from './application/assessment-generation.service';
+import { FeedbackGenerationService } from './application/feedback-generation.service'; // Using existing service
+import { ContentMode } from '@prisma/client';
 
-@Controller("assessment")
-@UseGuards(AuthGuard("jwt"))
+export class GenerateQuizDto {
+  contentId: string;
+  userId: string;
+  scaffoldingLevel: number;
+  mode: ContentMode;
+}
+
+export class EvaluateAnswerDto {
+  questionId: string;
+  userAnswer: string;
+  correctAnswer: any; // For MVP, pass correct answer if simpler, OR lookup (better)
+  questionText?: string;
+}
+
+@ApiTags('assessments')
+@Controller('assessments')
 export class AssessmentController {
-  constructor(private readonly assessmentService: AssessmentService) {}
+  constructor(
+    private readonly generator: AssessmentGenerationService,
+    private readonly feedback: FeedbackGenerationService,
+  ) {}
 
-  @Post()
-  @UseGuards(ApiKeyGuard) // Allow workers to create assessments
-  @Public()
-  // TODO: Add specific rate limiting for worker endpoints if volume increases
-  create(@Body() createAssessmentDto: CreateAssessmentDto) {
-    return this.assessmentService.create(createAssessmentDto);
+  @Post('generate')
+  @ApiOperation({ summary: 'Generate a context-aware quiz' })
+  async generate(@Body() dto: GenerateQuizDto) {
+    return this.generator.generateQuiz(
+      dto.contentId,
+      dto.userId,
+      dto.scaffoldingLevel,
+      dto.mode,
+    );
   }
 
-  @Get()
-  findAll(@Request() req: any, @Query("contentId") contentId?: string) {
-    if (contentId) {
-      return this.assessmentService.findByContent(contentId);
-    }
-    return this.assessmentService.findAllByUser(req.user.id);
+  @Post('feedback')
+  @ApiOperation({ summary: 'Get feedback for an answer' })
+  async getFeedback(@Body() dto: EvaluateAnswerDto) {
+    // Construct simplified object for service
+    return this.feedback.generateFeedback(
+      { id: dto.questionId, text: dto.questionText },
+      dto.userAnswer,
+      dto.correctAnswer
+    );
   }
 }

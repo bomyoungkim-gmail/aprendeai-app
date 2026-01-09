@@ -55,11 +55,12 @@ class ContextPackBuilder:
             content_id = session['contentId']
             
             # Parallel fetch for efficiency
-            learner, vocab, content = await asyncio.gather(
+            learner, vocab, content, highlights_list = await asyncio.gather(
                 nestjs_client.get_learner_profile(user_id),
                 nestjs_client.get_vocab_focus(user_id, limit=50),
                 nestjs_client.get_content_metadata(content_id),
-                return_exceptions=True  # Don't fail entire build if one fails
+                nestjs_client.get_cornell_highlights(content_id, user_id),
+                return_exceptions=True
             )
             
             # Handle potential errors
@@ -79,6 +80,23 @@ class ContextPackBuilder:
             # Extract content mode (Script 02: RB-CONTENT-MODE)
             content_mode = content.get('mode', 'TECHNICAL')  # Default to TECHNICAL
             mode_instructions = get_mode_instructions(content_mode)
+            
+            # Structure highlights
+            highlights = {"doubts": [], "evidence": [], "mainItems": []}
+            if not isinstance(highlights_list, Exception):
+                 for h in highlights_list:
+                     h_type = h.get('type')
+                     h_text = h.get('text') or h.get('selected_text') or ""
+                     h_comment = h.get('comment_text') or ""
+                     
+                     item = {"text": h_text, "note": h_comment, "id": h.get('id')}
+                     
+                     if h_type == 'DOUBT':
+                         highlights['doubts'].append(item)
+                     elif h_type == 'EVIDENCE':
+                         highlights['evidence'].append(item)
+                     elif h_type == 'MAIN_IDEA':
+                         highlights['mainItems'].append(item)
             
             context_pack = {
                 "learner": {
@@ -104,7 +122,8 @@ class ContextPackBuilder:
                     "title": content.get('title', 'Unknown'),
                     "language": content.get('originalLanguage', 'PT'),
                     "difficulty": content.get('difficulty', 'medium'),
-                    "mode": content_mode,  # Script 02: Include mode in context
+                    "mode": content_mode,
+                    "highlights": highlights, # Enriched highlights
                 },
                 # Script 02: Mode-specific system instructions
                 "modeInstructions": mode_instructions,

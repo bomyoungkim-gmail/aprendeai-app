@@ -236,6 +236,7 @@ export class ScaffoldingSignalDetectorService {
    * Avalia sinais e retorna recomendação de ajuste.
    * 
    * GAP 5: Verifica consecutiveSuccesses para fading.
+   * GAP 8: Detecta flow state para NARRATIVE mode.
    * 
    * @private
    */
@@ -271,6 +272,45 @@ export class ScaffoldingSignalDetectorService {
         confidence: 0.8,
         evidence: data,
       };
+    }
+
+    // GAP 8: NARRATIVE Flow State Detection
+    // When in NARRATIVE mode with high deep reading index and low interruptions,
+    // recommend fading to L0 to preserve flow state
+    if (data.mode === ContentMode.NARRATIVE) {
+      // Flow indicators:
+      // - High deep reading index (sustained reading)
+      // - No doubts
+      // - Low rehighlight rate
+      const flowIndicators = {
+        sustainedReading: data.deepReadingIndex > 0.6,
+        noDoubtSpike: !data.doubtSpike,
+        lowRehighlight: data.rehighlightRate < 0.2,
+      };
+
+      const flowScore = 
+        (flowIndicators.sustainedReading ? 0.4 : 0) +
+        (flowIndicators.noDoubtSpike ? 0.3 : 0) +
+        (flowIndicators.lowRehighlight ? 0.3 : 0);
+
+      // If flow score is high (>0.7), recommend fading even without 3+ sessions
+      // This is NARRATIVE-specific: we prioritize not interrupting flow
+      if (flowScore >= 0.7 && currentState.currentLevel > 0) {
+        this.logger.log(
+          `Signal: DECREASE (narrative_flow_state, score=${flowScore.toFixed(2)})`
+        );
+
+        return {
+          type: 'DECREASE',
+          reason: 'narrative_flow_state',
+          confidence: flowScore,
+          evidence: {
+            ...data,
+            flowScore,
+            flowIndicators,
+          },
+        };
+      }
     }
 
     // DECREASE (Fading): Alta performance consistente
@@ -313,18 +353,6 @@ export class ScaffoldingSignalDetectorService {
           },
         };
       }
-    }
-
-    // NARRATIVE: Fading mais fácil
-    if (data.mode === ContentMode.NARRATIVE && data.deepReadingIndex > 0.6) {
-      this.logger.log('Signal: DECREASE (narrative_flow)');
-
-      return {
-        type: 'DECREASE',
-        reason: 'narrative_flow',
-        confidence: 0.7,
-        evidence: data,
-      };
     }
 
     // Default: MAINTAIN
