@@ -17,7 +17,6 @@ export class UpdateCornellDto {
   summary_text?: string;
 }
 
-
 import { CornellType } from "../constants/cornell-type-map";
 
 export class UpdateHighlightDto {

@@ -35,5 +35,5 @@ export interface TransferMetadataEntity {
 }
 
 export const ITransferMetadataRepository = Symbol(
-  'ITransferMetadataRepository',
+  "ITransferMetadataRepository",
 );

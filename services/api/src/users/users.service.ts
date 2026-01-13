@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { Prisma, users } from "@prisma/client";
+import { users } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 import { UpdateProfileDto, UpdateSettingsDto } from "./dto/user.dto";
 import { v4 as uuidv4 } from "uuid";
@@ -79,7 +79,10 @@ export class UsersService {
 
   async createUser(data: any): Promise<users> {
     const salt = await bcrypt.genSalt();
-    const password_hash = await bcrypt.hash(data.password_hash || "temp123", salt);
+    const password_hash = await bcrypt.hash(
+      data.password_hash || "temp123",
+      salt,
+    );
     // Remove password_hash from user data
     const { password_hash: ph, ...userData } = data;
 
@@ -284,7 +287,7 @@ export class UsersService {
     });
 
     if (!identity || !identity.password_hash) {
-       throw new UnauthorizedException("No password setup for this user");
+      throw new UnauthorizedException("No password setup for this user");
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -325,18 +328,21 @@ export class UsersService {
         },
       },
     });
-    
+
     if (identity && identity.password_hash) {
-        const isPasswordValid = await bcrypt.compare(password, identity.password_hash);
-        if (!isPasswordValid) {
-            throw new UnauthorizedException("Password is incorrect");
-        }
+      const isPasswordValid = await bcrypt.compare(
+        password,
+        identity.password_hash,
+      );
+      if (!isPasswordValid) {
+        throw new UnauthorizedException("Password is incorrect");
+      }
     } else {
-        // If no password identity (e.g. OAuth only), maybe allow deletion or require different verification?
-        // For now, if provided password but no identity, fail.
-        // Or if OAuth user calls this? Frontend should probably not prompt for password if OAuth.
-        // We will assume password is required if endpoint provided it.
-        throw new UnauthorizedException("Password not found for this user");
+      // If no password identity (e.g. OAuth only), maybe allow deletion or require different verification?
+      // For now, if provided password but no identity, fail.
+      // Or if OAuth user calls this? Frontend should probably not prompt for password if OAuth.
+      // We will assume password is required if endpoint provided it.
+      throw new UnauthorizedException("Password not found for this user");
     }
 
     // Delete user (cascade will handle related records)

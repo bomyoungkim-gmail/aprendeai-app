@@ -1,30 +1,30 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
 
 /**
  * Threshold Optimizer Service
- * 
+ *
  * Dynamically adjusts the activity threshold for graph comparisons
  * based on comparison effectiveness (% of comparisons with actual changes).
- * 
+ *
  * TODO: AC2: Adaptive Thresholds - Verify 20% reduction in unnecessary comparisons
  */
 @Injectable()
 export class ThresholdOptimizerService {
   private readonly logger = new Logger(ThresholdOptimizerService.name);
-  
+
   // Configuration
   private readonly MIN_THRESHOLD = 3;
   private readonly MAX_THRESHOLD = 10;
   private readonly DEFAULT_THRESHOLD = 5;
-  
+
   // Thresholds for adjustment
-  private readonly LOW_CHANGE_RATE = 0.3;  // < 30% of comparisons had changes
+  private readonly LOW_CHANGE_RATE = 0.3; // < 30% of comparisons had changes
   private readonly HIGH_CHANGE_RATE = 0.7; // > 70% of comparisons had changes
-  
+
   // Damping: only adjust after N comparisons
   private readonly MIN_COMPARISONS_FOR_ADJUSTMENT = 10;
-  
+
   // In-memory threshold storage (TODO: persist to DB)
   private thresholds = new Map<string, number>();
 
@@ -32,11 +32,14 @@ export class ThresholdOptimizerService {
 
   /**
    * Record the outcome of a comparison
-   * 
+   *
    * @param userId - User ID
    * @param hadChanges - Whether the comparison detected changes
    */
-  async recordComparisonOutcome(userId: string, hadChanges: boolean): Promise<void> {
+  async recordComparisonOutcome(
+    userId: string,
+    hadChanges: boolean,
+  ): Promise<void> {
     try {
       // Store outcome in a tracking table (we'll create this)
       await this.prisma.graph_comparison_outcomes.create({
@@ -50,14 +53,16 @@ export class ThresholdOptimizerService {
       // Check if we should recalculate threshold
       await this.maybeRecalculateThreshold(userId);
     } catch (error) {
-      this.logger.error(`Failed to record comparison outcome: ${error.message}`);
+      this.logger.error(
+        `Failed to record comparison outcome: ${error.message}`,
+      );
       // Don't throw - this is best-effort optimization
     }
   }
 
   /**
    * Get the current threshold for a user
-   * 
+   *
    * @param userId - User ID
    * @returns Activity threshold (3-10)
    */
@@ -80,7 +85,7 @@ export class ThresholdOptimizerService {
         user_id: userId,
         recorded_at: { gte: thirtyDaysAgo },
       },
-      orderBy: { recorded_at: 'desc' },
+      orderBy: { recorded_at: "desc" },
       take: 50, // Consider last 50 comparisons
     });
 
@@ -90,7 +95,7 @@ export class ThresholdOptimizerService {
     }
 
     // Calculate change rate
-    const changesDetected = outcomes.filter(o => o.had_changes).length;
+    const changesDetected = outcomes.filter((o) => o.had_changes).length;
     const changeRate = changesDetected / outcomes.length;
 
     this.logger.debug(
@@ -126,7 +131,10 @@ export class ThresholdOptimizerService {
    * Update user's threshold in memory
    * TODO: Persist to database when user_preferences table is available
    */
-  private async updateThreshold(userId: string, threshold: number): Promise<void> {
+  private async updateThreshold(
+    userId: string,
+    threshold: number,
+  ): Promise<void> {
     this.thresholds.set(userId, threshold);
   }
 
@@ -150,8 +158,9 @@ export class ThresholdOptimizerService {
       },
     });
 
-    const changesDetected = outcomes.filter(o => o.had_changes).length;
-    const changeRate = outcomes.length > 0 ? changesDetected / outcomes.length : 0;
+    const changesDetected = outcomes.filter((o) => o.had_changes).length;
+    const changeRate =
+      outcomes.length > 0 ? changesDetected / outcomes.length : 0;
 
     return {
       currentThreshold: threshold,

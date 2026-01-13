@@ -63,7 +63,30 @@ Este documento consolida todas as tarefas pendentes, melhorias futuras e regras 
 
 ## ⚠️ Prioridade Média
 
-### 1. Avaliação de Pronúncia (Pronunciation Feedback)
+### 1. UI Sentence Analysis (Button)
+
+- [ ] **Implementar Botão UI para Sentence Analysis**
+  - **Contexto**: Facilidade de uso da funcionalidade de análise sintática.
+  - **Status**: TODO (Backend pronto no SCRIPT 11).
+  - **Ação**: Adicionar botão "Sintaxe" (ícone: 🔮 ou 🧩) no menu flutuante de seleção de texto (TextSelectionMenu/ReaderContent). Ao clicar, deve enviar o prompt `/sintaxe: [texto]` ou `analise esta frase` junto com a seleção para o backend.
+
+### 1.1 SCRIPT 05 E2E Test Verification
+
+- [ ] **Verificar Teste Manual E2E do SCRIPT 05**
+  - **Contexto**: SCRIPT 05 - Mode-Specific Quick Replies implementado e testado via testes automatizados (16/16 passando).
+  - **Status**: TODO - Teste manual E2E pendente.
+  - **Problema**: Health endpoint `/api/v1/health` retornou "Internal Server Error" durante tentativa de teste manual.
+  - **Ação**:
+    1. Investigar e corrigir erro no health endpoint.
+    2. Executar testes manuais E2E conforme guia em `script05_manual_test_guide.md`.
+    3. Criar 4 conteúdos de teste no banco (SQL em `script05_test_data.sql`).
+    4. Verificar que `quickReplies` são retornados corretamente para cada modo (DIDACTIC, TECHNICAL, NARRATIVE, NEWS).
+  - **Arquivos de Referência**:
+    - `script05_manual_test_guide.md` - Guia passo-a-passo
+    - `script05_test_data.sql` - SQL para criar conteúdos de teste
+    - `script05_curl_tests.md` - Comandos curl para testes via terminal
+
+### 2. Avaliação de Pronúncia (Pronunciation Feedback)
 
 - [ ] **Implementar Feedback de Fala**
   - **Contexto**: `Opção 20` do roadmap.

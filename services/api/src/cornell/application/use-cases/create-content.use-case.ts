@@ -1,4 +1,4 @@
-import { Injectable, Inject, Logger, BadRequestException } from "@nestjs/common";
+import { Injectable, Inject, Logger } from "@nestjs/common";
 import { IContentRepository } from "../../domain/content.repository.interface";
 import { Content } from "../../domain/content.entity";
 import { StorageService } from "../../services/storage.service";
@@ -43,7 +43,8 @@ export class CreateContentUseCase {
         const metadata = await this.videoService.extractVideoMetadata(filePath);
         duration = metadata.duration;
         try {
-          const thumbnailPath = await this.videoService.generateThumbnail(filePath);
+          const thumbnailPath =
+            await this.videoService.generateThumbnail(filePath);
           thumbnailUrl = `/uploads/thumbnails/${path.basename(thumbnailPath)}`;
         } catch (e) {
           this.logger.warn(`Failed to generate thumbnail: ${e.message}`);
@@ -74,7 +75,6 @@ export class CreateContentUseCase {
 
     // 4. Owner Resolution
 
-
     // 5. Create Content Entity via Repository
     const content = await this.contentRepository.create({
       id: uuidv4(),
@@ -104,7 +104,10 @@ export class CreateContentUseCase {
     if (file.mimetype === "application/pdf") {
       return this.extractPdfText(file.buffer);
     }
-    if (file.mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+    if (
+      file.mimetype ===
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ) {
       return this.extractDocxText(file.buffer);
     }
     if (file.mimetype === "text/plain") {

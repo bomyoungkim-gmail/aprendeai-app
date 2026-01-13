@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ScaffoldingService } from './scaffolding.service';
-import { PrismaService } from '../../prisma/prisma.service';
-import { ScaffoldingLevel } from '../domain/scaffolding.types';
+import { Test, TestingModule } from "@nestjs/testing";
+import { ScaffoldingService } from "./scaffolding.service";
+import { PrismaService } from "../../prisma/prisma.service";
+import { ScaffoldingLevel } from "../domain/scaffolding.types";
 
-describe('ScaffoldingService', () => {
+describe("ScaffoldingService", () => {
   let service: ScaffoldingService;
   let prisma: PrismaService;
 
@@ -33,8 +33,8 @@ describe('ScaffoldingService', () => {
     jest.clearAllMocks();
   });
 
-  describe('getScaffoldingConfig', () => {
-    it('should return correct config for each level', () => {
+  describe("getScaffoldingConfig", () => {
+    it("should return correct config for each level", () => {
       const levels: ScaffoldingLevel[] = [0, 1, 2, 3];
       levels.forEach((level) => {
         const config = service.getScaffoldingConfig(level);
@@ -42,44 +42,44 @@ describe('ScaffoldingService', () => {
         expect(config.rules).toBeDefined();
       });
 
-      expect(service.getScaffoldingConfig(3).name).toBe('High');
-      expect(service.getScaffoldingConfig(0).name).toBe('Fade');
+      expect(service.getScaffoldingConfig(3).name).toBe("High");
+      expect(service.getScaffoldingConfig(0).name).toBe("Fade");
     });
   });
 
-  describe('getThresholdMultipliers', () => {
-    it('should return correct multipliers for L3 (High)', () => {
+  describe("getThresholdMultipliers", () => {
+    it("should return correct multipliers for L3 (High)", () => {
       const multipliers = service.getThresholdMultipliers(3);
       expect(multipliers.doubtSensitivity).toBe(1.0);
       expect(multipliers.checkpointFrequency).toBe(1.0);
     });
 
-    it('should return restrictive multipliers for L0 (Fade)', () => {
+    it("should return restrictive multipliers for L0 (Fade)", () => {
       const multipliers = service.getThresholdMultipliers(0);
       expect(multipliers.doubtSensitivity).toBe(99.0);
       expect(multipliers.checkpointFrequency).toBe(0.2);
     });
   });
 
-  describe('calculateFadingLevel', () => {
-    const userId = 'user-123';
+  describe("calculateFadingLevel", () => {
+    const userId = "user-123";
 
-    it('should return L3 if no profile exists', async () => {
+    it("should return L3 if no profile exists", async () => {
       mockPrisma.learner_profiles.findUnique.mockResolvedValue(null);
       const level = await service.calculateFadingLevel(userId);
       expect(level).toBe(3);
     });
 
-    it('should respect FORCE_HIGH override', async () => {
+    it("should respect FORCE_HIGH override", async () => {
       mockPrisma.learner_profiles.findUnique.mockResolvedValue({
         mastery_state_json: {},
-        scaffolding_state_json: { overrideMode: 'FORCE_HIGH' },
+        scaffolding_state_json: { overrideMode: "FORCE_HIGH" },
       });
       const level = await service.calculateFadingLevel(userId);
       expect(level).toBe(3);
     });
 
-    it('should return L0 (Fade) for high mastery and consistency', async () => {
+    it("should return L0 (Fade) for high mastery and consistency", async () => {
       mockPrisma.learner_profiles.findUnique.mockResolvedValue({
         mastery_state_json: {
           domains: {
@@ -88,11 +88,13 @@ describe('ScaffoldingService', () => {
         },
         scaffolding_state_json: {},
       });
-      const level = await service.calculateFadingLevel(userId, { domain: 'biology' });
+      const level = await service.calculateFadingLevel(userId, {
+        domain: "biology",
+      });
       expect(level).toBe(0);
     });
 
-    it('should return L3 for low mastery', async () => {
+    it("should return L3 for low mastery", async () => {
       mockPrisma.learner_profiles.findUnique.mockResolvedValue({
         mastery_state_json: {
           domains: {
@@ -101,11 +103,13 @@ describe('ScaffoldingService', () => {
         },
         scaffolding_state_json: {},
       });
-      const level = await service.calculateFadingLevel(userId, { domain: 'biology' });
+      const level = await service.calculateFadingLevel(userId, {
+        domain: "biology",
+      });
       expect(level).toBe(3);
     });
 
-    it('should return L1 for medium-high mastery but low consistency', async () => {
+    it("should return L1 for medium-high mastery but low consistency", async () => {
       mockPrisma.learner_profiles.findUnique.mockResolvedValue({
         mastery_state_json: {
           domains: {
@@ -114,15 +118,17 @@ describe('ScaffoldingService', () => {
         },
         scaffolding_state_json: {},
       });
-      const level = await service.calculateFadingLevel(userId, { domain: 'biology' });
+      const level = await service.calculateFadingLevel(userId, {
+        domain: "biology",
+      });
       expect(level).toBe(1);
     });
   });
 
-  describe('updateMastery', () => {
-    const userId = 'user-123';
+  describe("updateMastery", () => {
+    const userId = "user-123";
 
-    it('should update domain mastery on success', async () => {
+    it("should update domain mastery on success", async () => {
       const initialMastery = {
         domains: {
           biology: {
@@ -142,8 +148,8 @@ describe('ScaffoldingService', () => {
       });
 
       await service.updateMastery(userId, {
-        type: 'quiz_correct',
-        domain: 'biology',
+        type: "quiz_correct",
+        domain: "biology",
         timestamp: new Date(),
       });
 
@@ -164,7 +170,7 @@ describe('ScaffoldingService', () => {
       );
     });
 
-    it('should reset consistency on failure', async () => {
+    it("should reset consistency on failure", async () => {
       const initialMastery = {
         domains: {
           biology: {
@@ -184,8 +190,8 @@ describe('ScaffoldingService', () => {
       });
 
       await service.updateMastery(userId, {
-        type: 'quiz_incorrect',
-        domain: 'biology',
+        type: "quiz_incorrect",
+        domain: "biology",
         timestamp: new Date(),
       });
 

@@ -71,7 +71,9 @@ export class CornellService {
       created_at: content.createdAt,
       updated_at: content.updatedAt,
       metadata: content.metadata,
-      files: content.file ? { ...content.file, viewUrl: `/files/${content.file.id}/view` } : null,
+      files: content.file
+        ? { ...content.file, viewUrl: `/files/${content.file.id}/view` }
+        : null,
       file: content.file
         ? {
             ...content.file,
@@ -115,7 +117,7 @@ export class CornellService {
 
   async updateContent(id: string, userId: string, dto: UpdateContentDto) {
     const updated = await this.updateContentUseCase.execute(id, userId, dto);
-    
+
     // TODO (Issue #19.8): Trigger auto-baseline build
     // After content update/import, we should queue a job to rebuild the Baseline Graph
     // this.eventEmitter.emit('content.updated', { contentId: id });
@@ -236,11 +238,26 @@ export class CornellService {
   async getConfig() {
     return {
       types: [
-        { id: "EVIDENCE", label: "Evidência", color: "yellow", tag: "evidence" },
+        {
+          id: "EVIDENCE",
+          label: "Evidência",
+          color: "yellow",
+          tag: "evidence",
+        },
         { id: "VOCABULARY", label: "Vocabulário", color: "blue", tag: "vocab" },
-        { id: "MAIN_IDEA", label: "Ideia Central", color: "green", tag: "main-idea" },
+        {
+          id: "MAIN_IDEA",
+          label: "Ideia Central",
+          color: "green",
+          tag: "main-idea",
+        },
         { id: "DOUBT", label: "Dúvida", color: "red", tag: "doubt" },
-        { id: "SYNTHESIS", label: "Síntese", color: "purple", tag: "synthesis" },
+        {
+          id: "SYNTHESIS",
+          label: "Síntese",
+          color: "purple",
+          tag: "synthesis",
+        },
       ],
       tabs: [
         { id: "STREAM", label: "Stream", icon: "activity" },

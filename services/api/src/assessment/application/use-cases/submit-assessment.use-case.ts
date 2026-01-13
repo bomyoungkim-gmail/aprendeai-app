@@ -54,17 +54,20 @@ export class SubmitAssessmentUseCase {
       });
 
       // Emit telemetry for each question answered
-      await this.telemetryService.track({
-        eventType: TelemetryEventType.MICRO_CHECK_ANSWERED,
-        eventVersion: '1.0.0',
-        contentId: assessment.contentId,
-        sessionId: dto.sessionId || 'unknown',
-        data: {
-          correct: isCorrect,
-          latencyMs: (answerDto.timeSpentSeconds || 0) * 1000,
-          difficulty: 'medium', // Default difficulty (not tracked in current schema)
+      await this.telemetryService.track(
+        {
+          eventType: TelemetryEventType.MICRO_CHECK_ANSWERED,
+          eventVersion: "1.0.0",
+          contentId: assessment.contentId,
+          sessionId: dto.sessionId || "unknown",
+          data: {
+            correct: isCorrect,
+            latencyMs: (answerDto.timeSpentSeconds || 0) * 1000,
+            difficulty: "medium", // Default difficulty (not tracked in current schema)
+          },
         },
-      }, userId);
+        userId,
+      );
     }
 
     const scorePercent =
@@ -101,19 +104,22 @@ export class SubmitAssessmentUseCase {
     // Or, for simplicity in this refactor, I might need to skip strict mastery update here or fix the repo.
 
     // SCRIPT 08: Emit ASSESSMENT_COMPLETED telemetry event
-    await this.telemetryService.track({
-      eventType: TelemetryEventType.ASSESSMENT_COMPLETED,
-      eventVersion: '1.0.0',
-      contentId: assessment.contentId,
-      sessionId: dto.sessionId || 'unknown',
-      data: {
-        assessmentId: assessmentId,
-        attemptId: createdAttempt.id,
-        scorePercent: scorePercent,
-        scoreRaw: scorePoints,
-        totalQuestions: totalQuestions,
+    await this.telemetryService.track(
+      {
+        eventType: TelemetryEventType.ASSESSMENT_COMPLETED,
+        eventVersion: "1.0.0",
+        contentId: assessment.contentId,
+        sessionId: dto.sessionId || "unknown",
+        data: {
+          assessmentId: assessmentId,
+          attemptId: createdAttempt.id,
+          scorePercent: scorePercent,
+          scoreRaw: scorePoints,
+          totalQuestions: totalQuestions,
+        },
       },
-    }, userId);
+      userId,
+    );
 
     // SCRIPT 08: Automatically update mastery from assessment results
     try {
@@ -123,18 +129,20 @@ export class SubmitAssessmentUseCase {
       );
     } catch (error) {
       // Log error but don't fail the assessment submission
-      console.error('Failed to update mastery from assessment:', error);
+      console.error("Failed to update mastery from assessment:", error);
     }
 
     // Return enriched result
     const missedSkills: string[] = [];
-    
+
     // Identify skills from incorrect answers
     for (const answer of assessmentAnswers) {
       if (!answer.isCorrect) {
-        const question = assessment.questions?.find(q => q.id === answer.questionId);
+        const question = assessment.questions?.find(
+          (q) => q.id === answer.questionId,
+        );
         if (question && question.skills && question.skills.length > 0) {
-           missedSkills.push(...question.skills);
+          missedSkills.push(...question.skills);
         }
       }
     }
@@ -144,7 +152,7 @@ export class SubmitAssessmentUseCase {
 
     return {
       attempt: createdAttempt,
-      missedSkills: uniqueMissedSkills
+      missedSkills: uniqueMissedSkills,
     };
   }
 }

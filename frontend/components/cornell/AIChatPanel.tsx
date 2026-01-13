@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, X, Bot, User, AlertCircle } from 'lucide-react';
+import { Send, Bot, User } from 'lucide-react';
 import { CHAT_LABELS } from '@/lib/cornell/labels';
 import { URLS } from '@/lib/config/urls';
 import { SentenceAnalysisView } from '@/components/ai/SentenceAnalysisView';
@@ -12,7 +12,7 @@ export interface ChatMessage {
   content: string;
   timestamp: Date;
   quickReplies?: string[]; // Quick action buttons from AI
-  structuredOutput?: any; // JSON data from tools (e.g., SENTENCE_ANALYSIS)
+  structuredOutput?: unknown; // JSON data from tools (e.g., SENTENCE_ANALYSIS)
   toolType?: string; // Tool identifier (e.g., 'SENTENCE_ANALYSIS', 'MORPHOLOGY')
 }
 
@@ -20,10 +20,11 @@ interface AIChatPanelProps {
   onSendMessage?: (message: string) => Promise<void>;
   initialInput?: string;
   selection?: string;
+  initialQuickReplies?: string[]; // SCRIPT 07: Initial suggestions when selection is active
   className?: string;
 }
 
-export function AIChatPanel({ onSendMessage, initialInput = '', selection = '', className = '' }: AIChatPanelProps) {
+export function AIChatPanel({ onSendMessage, initialInput = '', selection = '', initialQuickReplies, className = '' }: AIChatPanelProps) {
   const [input, setInput] = useState(initialInput);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -50,6 +51,20 @@ export function AIChatPanel({ onSendMessage, initialInput = '', selection = '', 
       setInput(initialInput);
     }
   }, [initialInput]);
+
+  // SCRIPT 07: Attach initial quick replies to welcome message when selection is active
+  useEffect(() => {
+    if (initialQuickReplies && initialQuickReplies.length > 0 && messages.length === 1 && messages[0].id === 'welcome') {
+      setMessages(prev => {
+        const updated = [...prev];
+        updated[0] = {
+          ...updated[0],
+          quickReplies: initialQuickReplies
+        };
+        return updated;
+      });
+    }
+  }, [initialQuickReplies, messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,9 +169,13 @@ export function AIChatPanel({ onSendMessage, initialInput = '', selection = '', 
                     : ''
                 }`}
               >
-                {/* Conditional Rendering: Structured Output vs Plain Text */}
-                {msg.role === 'assistant' && msg.toolType === 'SENTENCE_ANALYSIS' && msg.structuredOutput ? (
-                  // Rich visualization for sentence analysis
+                {/* SCRIPT 07: Conditional Rendering - Structured Output vs Plain Text */}
+                {msg.role === 'assistant' && msg.structuredOutput && (
+                  msg.toolType === 'SENTENCE_ANALYSIS' || 
+                  (typeof msg.structuredOutput === 'object' && msg.structuredOutput !== null && 
+                    ('grammar' in msg.structuredOutput || 'main_clause' in msg.structuredOutput))
+                ) ? (
+                  // Rich visualization for sentence analysis (supports both payload formats)
                   <SentenceAnalysisView data={msg.structuredOutput} />
                 ) : (
                   // Default text bubble

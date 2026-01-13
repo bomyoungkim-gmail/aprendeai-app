@@ -10,11 +10,11 @@ export class PrismaStudyGroupsRepository implements IStudyGroupsRepository {
   async create(group: StudyGroup): Promise<StudyGroup> {
     // Determine which FK field to use based on scopeType
     const scopeData: any = {};
-    if (group.scopeType === 'INSTITUTION') {
+    if (group.scopeType === "INSTITUTION") {
       scopeData.institution_id = group.scopeId;
-    } else if (group.scopeType === 'FAMILY') {
+    } else if (group.scopeType === "FAMILY") {
       scopeData.family_id = group.scopeId;
-    } else if (group.scopeType === 'USER') {
+    } else if (group.scopeType === "USER") {
       scopeData.personal_user_id = group.scopeId;
     }
 
@@ -153,13 +153,13 @@ export class PrismaStudyGroupsRepository implements IStudyGroupsRepository {
     let scopeId = null;
 
     if (item.institution_id) {
-      scopeType = 'INSTITUTION';
+      scopeType = "INSTITUTION";
       scopeId = item.institution_id;
     } else if (item.family_id) {
-      scopeType = 'FAMILY';
+      scopeType = "FAMILY";
       scopeId = item.family_id;
     } else if (item.personal_user_id) {
-      scopeType = 'USER';
+      scopeType = "USER";
       scopeId = item.personal_user_id;
     }
 

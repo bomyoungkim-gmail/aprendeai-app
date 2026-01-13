@@ -12,7 +12,6 @@ import { Transform } from "class-transformer";
 import { Gender } from "../../shared/domain/user.types";
 import { EducationLevel } from "../../shared/domain/education.types";
 
-
 export class UpdateUserProfileDto {
   @ApiPropertyOptional({ example: "João da Silva" })
   @IsOptional()

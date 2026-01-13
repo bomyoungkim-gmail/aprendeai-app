@@ -1,10 +1,10 @@
-import { Injectable, NotFoundException, Inject } from '@nestjs/common';
-import { IAssessmentRepository } from '../../domain/interfaces/assessment.repository.interface';
-import { TelemetryService } from '../../../telemetry/telemetry.service';
-import { TelemetryEventType } from '../../../telemetry/domain/telemetry.constants';
-import { ScaffoldingService } from '../../../decision/application/scaffolding.service';
-import { FeedbackGenerationService } from '../feedback-generation.service';
-import * as crypto from 'crypto';
+import { Injectable, NotFoundException, Inject } from "@nestjs/common";
+import { IAssessmentRepository } from "../../domain/interfaces/assessment.repository.interface";
+import { TelemetryService } from "../../../telemetry/telemetry.service";
+import { TelemetryEventType } from "../../../telemetry/domain/telemetry.constants";
+import { ScaffoldingService } from "../../../decision/application/scaffolding.service";
+import { FeedbackGenerationService } from "../feedback-generation.service";
+import * as crypto from "crypto";
 
 export interface AnswerCheckpointDto {
   checkpointId: string;
@@ -23,7 +23,7 @@ export interface AnswerCheckpointResult {
 
 /**
  * Use Case: Answer a single checkpoint question
- * 
+ *
  * Handles granular micro-learning interactions where users answer
  * individual checkpoint questions and receive immediate feedback.
  */
@@ -58,8 +58,8 @@ export class AnswerCheckpointUseCase {
     await this.telemetryService.track(
       {
         eventType: TelemetryEventType.MICRO_CHECK_ANSWERED,
-        eventVersion: '1.0.0',
-        contentId: 'unknown', // Will be enriched from question's assessment
+        eventVersion: "1.0.0",
+        contentId: "unknown", // Will be enriched from question's assessment
         sessionId: dto.sessionId,
         data: {
           checkpointId: dto.checkpointId,
@@ -110,13 +110,13 @@ export class AnswerCheckpointUseCase {
           newLevel: isCorrect ? 1 : 0, // Simplified - actual level from service
         };
       } catch (error) {
-        console.error('Failed to update mastery:', error);
+        console.error("Failed to update mastery:", error);
       }
     }
 
     // 6. Generate feedback
     const feedback = isCorrect
-      ? 'Correct! Well done.'
+      ? "Correct! Well done."
       : await this.feedbackService.generateFeedback(
           question,
           dto.answer,

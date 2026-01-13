@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, MinLength } from 'class-validator';
+import { IsString, IsNotEmpty, MinLength } from "class-validator";
 
 /**
  * DTO for assigning a Productive Failure mission
@@ -23,7 +23,7 @@ export class SubmitPFResponseDto {
 
   @IsString()
   @IsNotEmpty()
-  @MinLength(10, { message: 'Response must be at least 10 characters' })
+  @MinLength(10, { message: "Response must be at least 10 characters" })
   responseText: string;
 }
 

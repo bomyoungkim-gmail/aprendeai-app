@@ -1,14 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
 import {
   ITransferMetadataRepository,
   TransferMetadataEntity,
-} from '../../domain/transfer-metadata.repository.interface';
+} from "../../domain/transfer-metadata.repository.interface";
 
 @Injectable()
-export class PrismaTransferMetadataRepository
-  implements ITransferMetadataRepository
-{
+export class PrismaTransferMetadataRepository implements ITransferMetadataRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async upsert(
@@ -75,7 +73,7 @@ export class PrismaTransferMetadataRepository
 
     const result = await this.prisma.section_transfer_metadata.findFirst({
       where,
-      orderBy: { created_at: 'desc' },
+      orderBy: { created_at: "desc" },
     });
 
     return result ? this.toDomain(result) : null;
@@ -90,7 +88,7 @@ export class PrismaTransferMetadataRepository
         content_id: contentId,
         scope_type: scopeType as any,
       },
-      orderBy: [{ chunk_index: 'asc' }, { page_number: 'asc' }],
+      orderBy: [{ chunk_index: "asc" }, { page_number: "asc" }],
     });
 
     return results.map((r) => this.toDomain(r));

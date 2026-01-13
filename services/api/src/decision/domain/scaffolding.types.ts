@@ -1,6 +1,6 @@
 /**
  * Scaffolding & Fading Types
- * 
+ *
  * Defines the state structures for learner mastery tracking and scaffolding level management.
  * These types are persisted in learner_profiles.mastery_state_json and scaffolding_state_json.
  */
@@ -43,7 +43,7 @@ export type ScaffoldingLevel = 0 | 1 | 2 | 3;
 export interface ScaffoldingState {
   currentLevel: ScaffoldingLevel;
   lastLevelChangeAt: Date;
-  overrideMode?: 'FORCE_HIGH' | 'FORCE_LOW'; // For debugging or teacher override
+  overrideMode?: "FORCE_HIGH" | "FORCE_LOW"; // For debugging or teacher override
   fadingMetrics: {
     consecutiveSuccesses: number; // For fading engine
     interventionDismissalRate: number; // 0.0-1.0
@@ -56,12 +56,12 @@ export interface ScaffoldingState {
  */
 export interface ScaffoldingConfig {
   level: ScaffoldingLevel;
-  name: 'Fade' | 'Low' | 'Medium' | 'High';
+  name: "Fade" | "Low" | "Medium" | "High";
   behavior: string;
   rules: {
     doubtSpikeMultiplier: number; // Multiplier for doubt spike threshold
     checkpointFreqMultiplier: number; // Multiplier for checkpoint frequency
-    autoHints: boolean | 'limited'; // Auto-show hints
+    autoHints: boolean | "limited"; // Auto-show hints
     socraticMode: boolean; // Enable Socratic questioning
     showTriggers: boolean; // Show intervention triggers to user
     minAgentCalls: boolean; // Minimize agent calls (L0 only)
@@ -72,13 +72,13 @@ export interface ScaffoldingConfig {
  * Mastery signal types for updating state
  */
 export type MasterySignalType =
-  | 'quiz_correct'
-  | 'quiz_incorrect'
-  | 'slow_read'
-  | 'asked_for_help'
-  | 'checkpoint_passed'
-  | 'checkpoint_failed'
-  | 'mission_completed';
+  | "quiz_correct"
+  | "quiz_incorrect"
+  | "slow_read"
+  | "asked_for_help"
+  | "checkpoint_passed"
+  | "checkpoint_failed"
+  | "mission_completed";
 
 /**
  * Signal for updating mastery state
@@ -98,34 +98,34 @@ export interface MasterySignal {
 
 /**
  * Learner profile data for scaffolding initialization
- * 
+ *
  * Used by ScaffoldingInitializerService to determine initial scaffolding level
  * based on ContentMode and learner characteristics.
  */
 export interface LearnerProfileForScaffolding {
   /** Whether this is a new user (no mastery history) */
   isNewUser: boolean;
-  
+
   /** Average mastery across all domains (0.0-1.0) */
   avgMastery: number;
-  
+
   /** Recent performance metric (0.0-1.0) */
   recentPerformance: number;
 }
 
 /**
  * Parameters for mode-aware scaffolding initialization
- * 
+ *
  * GAP 6: Includes policyOverride to respect institution-level settings.
  */
 export interface ScaffoldingInitParams {
   /** Content mode (DIDACTIC, NARRATIVE, TECHNICAL, SCIENTIFIC, NEWS) */
-  mode: import('@prisma/client').ContentMode;
-  
+  mode: import("@prisma/client").ContentMode;
+
   /** Learner profile data */
   learnerProfile: LearnerProfileForScaffolding;
-  
-  /** 
+
+  /**
    * GAP 6: Policy override from decision_policy.scaffolding.defaultLevel
    * If provided and valid (0-3), takes precedence over mode-based logic.
    */
@@ -134,26 +134,26 @@ export interface ScaffoldingInitParams {
 
 /**
  * Signal types for scaffolding adjustment
- * 
+ *
  * SCRIPT 03 - Fase 2: Signal-Based Adjustment
  */
-export type ScaffoldingSignalType = 'INCREASE' | 'DECREASE' | 'MAINTAIN';
+export type ScaffoldingSignalType = "INCREASE" | "DECREASE" | "MAINTAIN";
 
 /**
  * Signal detected from learner performance
- * 
+ *
  * Used by ScaffoldingSignalDetectorService to recommend scaffolding adjustments.
  */
 export interface ScaffoldingSignal {
   /** Type of adjustment recommended */
   type: ScaffoldingSignalType;
-  
+
   /** Reason for the signal (e.g., 'doubt_spike', 'consistent_mastery') */
   reason: string;
-  
+
   /** Confidence level (0.0-1.0) */
   confidence: number;
-  
+
   /** Evidence supporting the signal */
   evidence: {
     doubtSpike?: boolean;
@@ -166,5 +166,3 @@ export interface ScaffoldingSignal {
     flowIndicators?: any;
   };
 }
-
-

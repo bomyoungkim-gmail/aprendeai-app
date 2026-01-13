@@ -1,7 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateItemDto } from './dto/create-item.dto';
-import { Prisma, ItemType, Language, ScopeType, ItemVisibility } from '@prisma/client';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { CreateItemDto } from "./dto/create-item.dto";
+import {
+  Prisma,
+  ItemType,
+  Language,
+  ScopeType,
+  ItemVisibility,
+} from "@prisma/client";
 
 @Injectable()
 export class ItemBankService {
@@ -29,20 +35,20 @@ export class ItemBankService {
     type?: ItemType;
     language?: Language;
     tags?: string[];
-    tagsMatchMode?: 'some' | 'every';
+    tagsMatchMode?: "some" | "every";
     difficulty?: number;
     limit?: number;
     // Security filtering (camelCase)
     scopeType?: ScopeType;
     scopeId?: string;
     visibility?: ItemVisibility;
-    includePublic?: boolean;  // Include PUBLIC items in results
+    includePublic?: boolean; // Include PUBLIC items in results
   }) {
     const {
       type,
       language,
       tags,
-      tagsMatchMode = 'some',
+      tagsMatchMode = "some",
       difficulty,
       limit,
       scopeType,
@@ -50,20 +56,20 @@ export class ItemBankService {
       visibility,
       includePublic = true,
     } = params;
-    
+
     // Build where clause
     const where: Prisma.item_bankWhereInput = {};
     if (type) where.type = type;
     if (language) where.language = language;
     if (difficulty) {
-        // Approximate match logic if needed, currently exact or handled by caller logic
+      // Approximate match logic if needed, currently exact or handled by caller logic
     }
     if (tags && tags.length > 0) {
-        if (tagsMatchMode === 'every') {
-             where.tags = { hasEvery: tags };
-        } else {
-             where.tags = { hasSome: tags };
-        }
+      if (tagsMatchMode === "every") {
+        where.tags = { hasEvery: tags };
+      } else {
+        where.tags = { hasSome: tags };
+      }
     }
 
     // Security: Filter by scope and visibility
@@ -86,7 +92,7 @@ export class ItemBankService {
     return this.prisma.item_bank.findMany({
       where,
       take: limit,
-      orderBy: { updated_at: 'desc' }
+      orderBy: { updated_at: "desc" },
     });
   }
 
@@ -104,13 +110,13 @@ export class ItemBankService {
       language?: Language;
       tags?: string[];
       limit?: number;
-    }
+    },
   ) {
     return this.findAll({
       ...filters,
-      scopeType,  // ✅ camelCase parameter
+      scopeType, // ✅ camelCase parameter
       scopeId,
-      includePublic: true,  // Always include public items
+      includePublic: true, // Always include public items
     });
   }
 
@@ -125,7 +131,7 @@ export class ItemBankService {
     itemId: string,
     userId: string,
     scopeType?: ScopeType,
-    scopeId?: string
+    scopeId?: string,
   ): Promise<boolean> {
     const item = await this.prisma.item_bank.findUnique({
       where: { id: itemId },

@@ -1,17 +1,17 @@
 /**
  * Shared Education Types
- * 
+ *
  * Centralized education-related enums to avoid duplication across DTOs.
- * 
+ *
  * NOTE: Using UPPERCASE values as the canonical format.
  * If lowercase is needed (e.g., for legacy compatibility), use a mapper function.
  */
 
 export enum EducationLevel {
-  FUNDAMENTAL = 'FUNDAMENTAL',
-  MEDIO = 'MEDIO',
-  SUPERIOR = 'SUPERIOR',
-  POS_GRADUACAO = 'POS_GRADUACAO',
+  FUNDAMENTAL = "FUNDAMENTAL",
+  MEDIO = "MEDIO",
+  SUPERIOR = "SUPERIOR",
+  POS_GRADUACAO = "POS_GRADUACAO",
 }
 
 /**
@@ -24,7 +24,9 @@ export const educationLevelToLowercase = (level: EducationLevel): string => {
 /**
  * Mapper from lowercase to EducationLevel enum
  */
-export const lowercaseToEducationLevel = (value: string): EducationLevel | null => {
+export const lowercaseToEducationLevel = (
+  value: string,
+): EducationLevel | null => {
   const upperValue = value.toUpperCase();
   if (Object.values(EducationLevel).includes(upperValue as EducationLevel)) {
     return upperValue as EducationLevel;

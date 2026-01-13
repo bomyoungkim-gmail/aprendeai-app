@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
 
 /**
  * Content Mode Analytics Service (Script 02 Enhancement)
@@ -16,12 +16,9 @@ export class ContentModeAnalyticsService {
   async getModeDistribution(userId: string) {
     // Get all content created by or accessible to user
     const modeDistribution = await this.prisma.contents.groupBy({
-      by: ['mode', 'mode_source'],
+      by: ["mode", "mode_source"],
       where: {
-        OR: [
-          { created_by: userId },
-          { owner_user_id: userId },
-        ],
+        OR: [{ created_by: userId }, { owner_user_id: userId }],
         mode: { not: null }, // Only count content with assigned mode
       },
       _count: {
@@ -35,8 +32,8 @@ export class ContentModeAnalyticsService {
     let total = 0;
 
     for (const item of modeDistribution) {
-      const mode = item.mode || 'UNKNOWN';
-      const source = item.mode_source || 'UNKNOWN';
+      const mode = item.mode || "UNKNOWN";
+      const source = item.mode_source || "UNKNOWN";
       const count = item._count.mode;
 
       // Count by mode
@@ -65,7 +62,7 @@ export class ContentModeAnalyticsService {
    */
   async getGlobalModeDistribution() {
     const modeDistribution = await this.prisma.contents.groupBy({
-      by: ['mode'],
+      by: ["mode"],
       where: {
         mode: { not: null },
       },
@@ -92,7 +89,7 @@ export class ContentModeAnalyticsService {
       : { mode_source: { not: null } };
 
     const sourceDistribution = await this.prisma.contents.groupBy({
-      by: ['mode_source'],
+      by: ["mode_source"],
       where,
       _count: {
         mode_source: true,

@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { RedisService } from '../../common/redis/redis.service';
-import { LLMService } from '../../llm/llm.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { RedisService } from "../../common/redis/redis.service";
+import { LLMService } from "../../llm/llm.service";
 
 /**
  * Feedback Generation Service
- * 
+ *
  * Generates actionable feedback for incorrect checkpoint answers.
  * Uses LLM for dynamic feedback generation with caching to reduce costs.
  */
@@ -20,7 +20,7 @@ export class FeedbackGenerationService {
 
   /**
    * Generate feedback for an incorrect answer
-   * 
+   *
    * @param question - The question object
    * @param userAnswer - The user's answer
    * @param correctAnswer - The correct answer
@@ -34,7 +34,7 @@ export class FeedbackGenerationService {
     // 1. Check cache first
     const cacheKey = this.getCacheKey(question.id, userAnswer);
     const cached = await this.redis.get(cacheKey);
-    
+
     if (cached) {
       this.logger.debug(`Cache hit for feedback: ${question.id}`);
       return cached as string;
@@ -62,8 +62,8 @@ export class FeedbackGenerationService {
     userAnswer: any,
     correctAnswer: any,
   ): Promise<string> {
-    const questionText = question.questionText || question.text || '';
-    
+    const questionText = question.questionText || question.text || "";
+
     const prompt = `You are an educational assistant providing feedback on a checkpoint question.
 
 Question: ${questionText}
@@ -81,7 +81,7 @@ Keep it encouraging and focused on learning.`;
       const response = await this.llmService.generateText(prompt, {
         maxTokens: 150,
         temperature: 0.7,
-        model: 'gpt-4o-mini', // Use lightweight model for cost efficiency
+        model: "gpt-4o-mini", // Use lightweight model for cost efficiency
       });
 
       return response.text || this.getFallbackFeedback(question, correctAnswer);
@@ -95,8 +95,8 @@ Keep it encouraging and focused on learning.`;
    * Fallback feedback when LLM fails
    */
   private getFallbackFeedback(question: any, correctAnswer: any): string {
-    const questionText = question.questionText || question.text || '';
-    
+    const questionText = question.questionText || question.text || "";
+
     return `Not quite. The correct answer is: ${JSON.stringify(correctAnswer)}. 
 
 Review the section related to "${questionText.substring(0, 50)}..." to better understand this concept.`;

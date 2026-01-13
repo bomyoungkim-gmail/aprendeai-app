@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { RedisService } from '../common/redis/redis.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { RedisService } from "../common/redis/redis.service";
 
 /**
  * SCRIPT 10: Rate Limiter Service
- * 
+ *
  * Implements sliding window rate limiting using Redis.
  * Prevents LLM abuse by enforcing per-minute request limits.
  */
@@ -15,7 +15,7 @@ export class AiRateLimiterService {
 
   /**
    * Check if a scope (family/institution) has exceeded its rate limit
-   * 
+   *
    * @param scopeId - The scope identifier (family_id or institution_id)
    * @param limit - Maximum requests per minute
    * @returns true if under limit, false if exceeded

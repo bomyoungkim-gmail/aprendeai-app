@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { GraphActivityListener } from './graph-activity.listener';
-import { PrismaService } from '../../prisma/prisma.service';
-import { GraphComparatorService } from '../comparator/graph-comparator.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { GraphActivityListener } from "./graph-activity.listener";
+import { PrismaService } from "../../prisma/prisma.service";
+import { GraphComparatorService } from "../comparator/graph-comparator.service";
 
-describe('GraphActivityListener', () => {
+describe("GraphActivityListener", () => {
   let listener: GraphActivityListener;
   let prisma: PrismaService;
   let comparatorService: GraphComparatorService;
@@ -32,26 +32,28 @@ describe('GraphActivityListener', () => {
 
     listener = module.get<GraphActivityListener>(GraphActivityListener);
     prisma = module.get<PrismaService>(PrismaService);
-    comparatorService = module.get<GraphComparatorService>(GraphComparatorService);
+    comparatorService = module.get<GraphComparatorService>(
+      GraphComparatorService,
+    );
   });
 
-  describe('handleGraphUpdate', () => {
-    it('should increment activity counter', async () => {
-      const payload = { userId: 'user1', contentId: 'content1' };
+  describe("handleGraphUpdate", () => {
+    it("should increment activity counter", async () => {
+      const payload = { userId: "user1", contentId: "content1" };
 
       await listener.handleGraphUpdate(payload);
 
       // Access private property for testing
       const counter = (listener as any).activityCounter;
-      expect(counter.get('user1:content1')).toBe(1);
+      expect(counter.get("user1:content1")).toBe(1);
     });
 
-    it('should trigger comparison when threshold reached', async () => {
-      const payload = { userId: 'user1', contentId: 'content1' };
+    it("should trigger comparison when threshold reached", async () => {
+      const payload = { userId: "user1", contentId: "content1" };
 
       // Mock graph lookup
       (prisma.topic_graphs.findFirst as jest.Mock).mockResolvedValue({
-        id: 'graph-id',
+        id: "graph-id",
       });
 
       // Trigger 5 times to reach threshold
@@ -60,17 +62,17 @@ describe('GraphActivityListener', () => {
       }
 
       expect(comparatorService.compareGraphs).toHaveBeenCalledWith(
-        'user1',
-        'content1',
+        "user1",
+        "content1",
       );
       expect(prisma.topic_graphs.update).toHaveBeenCalled();
     });
 
-    it('should reset counter after comparison', async () => {
-      const payload = { userId: 'user1', contentId: 'content1' };
+    it("should reset counter after comparison", async () => {
+      const payload = { userId: "user1", contentId: "content1" };
 
       (prisma.topic_graphs.findFirst as jest.Mock).mockResolvedValue({
-        id: 'graph-id',
+        id: "graph-id",
       });
 
       // Trigger threshold
@@ -80,32 +82,40 @@ describe('GraphActivityListener', () => {
 
       // Counter should be reset
       const counter = (listener as any).activityCounter;
-      expect(counter.has('user1:content1')).toBe(false);
+      expect(counter.has("user1:content1")).toBe(false);
     });
 
-    it('should handle comparison errors gracefully', async () => {
-      const payload = { userId: 'user1', contentId: 'content1' };
+    it("should handle comparison errors gracefully", async () => {
+      const payload = { userId: "user1", contentId: "content1" };
 
       (prisma.topic_graphs.findFirst as jest.Mock).mockResolvedValue({
-        id: 'graph-id',
+        id: "graph-id",
       });
 
       (comparatorService.compareGraphs as jest.Mock).mockRejectedValue(
-        new Error('Comparison failed'),
+        new Error("Comparison failed"),
       );
 
       // Should not throw
       for (let i = 0; i < 5; i++) {
-        await expect(listener.handleGraphUpdate(payload)).resolves.not.toThrow();
+        await expect(
+          listener.handleGraphUpdate(payload),
+        ).resolves.not.toThrow();
       }
     });
   });
 
-  describe('handleDailyCleanup', () => {
-    it('should clear all activity counters', async () => {
+  describe("handleDailyCleanup", () => {
+    it("should clear all activity counters", async () => {
       // Add some counters
-      await listener.handleGraphUpdate({ userId: 'user1', contentId: 'content1' });
-      await listener.handleGraphUpdate({ userId: 'user2', contentId: 'content2' });
+      await listener.handleGraphUpdate({
+        userId: "user1",
+        contentId: "content1",
+      });
+      await listener.handleGraphUpdate({
+        userId: "user2",
+        contentId: "content2",
+      });
 
       const counterBefore = (listener as any).activityCounter;
       expect(counterBefore.size).toBeGreaterThan(0);

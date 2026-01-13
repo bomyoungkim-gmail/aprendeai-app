@@ -74,8 +74,8 @@ export class GetSessionUseCase {
         sessionId,
         userId,
         session.contentId,
-        { 
-          prisma: this.prisma, 
+        {
+          prisma: this.prisma,
           gamificationService: this.gamificationService,
           scaffoldingInitializer: this.scaffoldingInitializer, // SCRIPT 03
           scaffoldingBehaviorAdapter: this.scaffoldingBehaviorAdapter, // SCRIPT 03 - Fase 3
@@ -85,7 +85,7 @@ export class GetSessionUseCase {
       decision_policy = contextWithPolicy.decision_policy;
     } catch (error) {
       // Log but don't fail if policy fetch fails
-      console.warn('Failed to fetch decision_policy:', error);
+      console.warn("Failed to fetch decision_policy:", error);
     }
 
     return {

@@ -1,11 +1,15 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { IDecisionLogRepository } from '../../domain/decision-log.repository.interface';
-import { DecisionInput, DecisionOutput, DecisionResultV2 } from '../../domain/decision.types';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
+import { IDecisionLogRepository } from "../../domain/decision-log.repository.interface";
+import {
+  DecisionInput,
+  DecisionOutput,
+  DecisionResultV2,
+} from "../../domain/decision.types";
 
 /**
  * Prisma implementation of decision log repository
- * 
+ *
  * Handles persistence of all decision events to the decision_logs table.
  */
 @Injectable()
@@ -49,14 +53,14 @@ export class PrismaDecisionLogRepository implements IDecisionLogRepository {
         session_id: context.sessionId,
         content_id: context.contentId || null,
         chunk_id: context.chunkId || null,
-        
+
         // Legacy fields (for backward compatibility)
         output_action: result.finalAction,
         channel: result.channelAfter,
-        reason: 'NO_TRIGGER', // Will be populated from proposal in future
+        reason: "NO_TRIGGER", // Will be populated from proposal in future
         input_facts_json: result.payload || {},
         ui_policy_version: context.uiPolicyVersion || null,
-        
+
         // v2 fields
         candidate_action: result.candidateAction,
         final_action: result.finalAction,
@@ -65,9 +69,11 @@ export class PrismaDecisionLogRepository implements IDecisionLogRepository {
         channel_before: result.channelBefore,
         channel_after: result.channelAfter,
         budget_remaining_tokens: result.budgetRemainingTokens ?? null,
-        cooldown_until: result.cooldownUntil ? new Date(result.cooldownUntil) : null,
+        cooldown_until: result.cooldownUntil
+          ? new Date(result.cooldownUntil)
+          : null,
         policy_snapshot_json: result.policySnapshot || {},
-        
+
         created_at: new Date(),
       },
     });
@@ -99,7 +105,7 @@ export class PrismaDecisionLogRepository implements IDecisionLogRepository {
           lte: endDate,
         },
         final_action: {
-          not: 'NO_OP',
+          not: "NO_OP",
         },
       },
       select: {
@@ -112,12 +118,12 @@ export class PrismaDecisionLogRepository implements IDecisionLogRepository {
 
     // Count by channel
     for (const decision of decisions) {
-      const channel = decision.channel_after || 'UNKNOWN';
+      const channel = decision.channel_after || "UNKNOWN";
       byChannel[channel] = (byChannel[channel] || 0) + 1;
     }
 
     // Calculate deterministic ratio
-    const deterministicCount = byChannel['DETERMINISTIC'] || 0;
+    const deterministicCount = byChannel["DETERMINISTIC"] || 0;
     const deterministicRatio = total > 0 ? deterministicCount / total : 0;
 
     return {

@@ -192,13 +192,39 @@ Context:
 - scaffolding_level: {scaffolding_level}
 - language_code: {language_code}
 
+TONE ADAPTATION BY MODE (SCRIPT 05):
+- DIDACTIC: Use pedagogical, encouraging tone. Focus on learning.
+- TECHNICAL: Use precise terminology. Focus on grammatical accuracy.
+- NARRATIVE: Focus on author's intent and literary context.
+- NEWS: Focus on facts, numbers, cause-effect relationships.
+
 Style instructions (must follow):
 {style_instructions}
 
 Target length: ~{max_tokens} tokens.
 
-JSON schema:
+JSON schema (SCRIPT 04 + SCRIPT 11/05 combined):
 {{
+  "sentences": [
+    {{
+      "original_text": "string (original sentence)",
+      "clauses": [
+        {{
+          "id": "string (unique ID, e.g., '1', '2')",
+          "text": "string (clause text)",
+          "type": "MAIN|SUBORDINATE|COORDINATE",
+          "head_verb": "string (main verb, e.g., 'saio', 'chova')",
+          "connective": "string|null (connector word, e.g., 'embora')",
+          "parent_id": "string|null (ID of parent clause for subordinates)"
+        }}
+      ]
+    }}
+  ],
+  "main_proposition": "string (core proposition/main idea)",
+  "supporting_propositions": ["string (supporting idea 1)", "string (supporting idea 2)"],
+  "summary_1line": "string (one-line summary)",
+  "rewrite_suggestions": ["string (alternative phrasing 1)", "string (alternative phrasing 2)"],
+  
   "main_clause": "string (subject-verb-object core)",
   "main_idea": "string (central idea paraphrased)",
   "subordinate_clauses": [
@@ -206,9 +232,48 @@ JSON schema:
   ],
   "connectors": ["string"],
   "simplification": "string (rewrite in simple terms)",
-  "rewrite_layered": {{"L1":"string","L2":"string","L3":"string"}} ,
+  "rewrite_layered": {{"L1":"string","L2":"string","L3":"string"}},
+  "quick_replies": ["string", "string"],
   "confidence": 0.0
-}}"""),
+}}
+
+EXAMPLE (SCRIPT 04 structure):
+Input: "Embora estivesse chovendo, eu saio porque preciso."
+Output:
+{{
+  "sentences": [
+    {{
+      "original_text": "Embora estivesse chovendo, eu saio porque preciso.",
+      "clauses": [
+        {{"id": "1", "text": "eu saio", "type": "MAIN", "head_verb": "saio", "connective": null, "parent_id": null}},
+        {{"id": "2", "text": "Embora estivesse chovendo", "type": "SUBORDINATE", "head_verb": "estivesse", "connective": "embora", "parent_id": "1"}},
+        {{"id": "3", "text": "porque preciso", "type": "SUBORDINATE", "head_verb": "preciso", "connective": "porque", "parent_id": "1"}}
+      ]
+    }}
+  ],
+  "main_proposition": "A pessoa sai de casa",
+  "supporting_propositions": ["Está chovendo", "Há necessidade de sair"],
+  "summary_1line": "Pessoa sai apesar da chuva por necessidade",
+  "rewrite_suggestions": ["Eu saio, mesmo chovendo, pois preciso", "A chuva não me impede de sair porque é necessário"],
+  "main_clause": "eu saio",
+  "main_idea": "A pessoa sai de casa",
+  "subordinate_clauses": [
+    {{"text": "Embora estivesse chovendo", "function": "CONTRAST", "connector": "embora"}},
+    {{"text": "porque preciso", "function": "CAUSE", "connector": "porque"}}
+  ],
+  "connectors": ["embora", "porque"],
+  "simplification": "Está chovendo, mas eu saio porque preciso",
+  "rewrite_layered": {{"L1": "Chove. Eu saio. Preciso sair.", "L2": "Está chovendo, mas eu saio porque preciso", "L3": "Embora esteja chovendo, eu saio porque tenho necessidade"}},
+  "quick_replies": ["Faça 2 exercícios", "Reescreva com outro conectivo"],
+  "confidence": 0.9
+}}
+
+QUICK REPLY EXAMPLES BY MODE (suggest 2-3 next actions):
+- DIDACTIC: ["Faça 2 exercícios", "Reescreva com outro conectivo"]
+- TECHNICAL: ["Defina termos-chave", "Explique relação entre cláusulas"]
+- NARRATIVE: ["Qual a intenção do autor?", "Explique contexto"]
+- NEWS: ["Identifique causa/efeito", "Quais os números chave?"]
+"""),
     ("user", """Sentence:
 {sentence}
 

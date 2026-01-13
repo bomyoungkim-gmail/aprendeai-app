@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { DcsCalculatorService } from '../weighting/dcs-calculator.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { DcsCalculatorService } from "../weighting/dcs-calculator.service";
 
 /**
  * DCS Integration Helper
- * 
+ *
  * Provides helper methods for DecisionService to fetch and apply DCS weighting logic.
  * Implements the weighting rules from GRAPH SCRIPT 09:
  * - Threshold adjustment: base + 0.25 * w_det
@@ -35,11 +35,13 @@ export class DcsIntegrationHelper {
         scope_type: scopeType as any,
         scope_id: scopeId,
       },
-      orderBy: { updated_at: 'desc' },
+      orderBy: { updated_at: "desc" },
     });
 
     if (!score) {
-      this.logger.debug(`No DCS found for content ${contentId}, defaulting to w_det=0`);
+      this.logger.debug(
+        `No DCS found for content ${contentId}, defaulting to w_det=0`,
+      );
       return { dcs: 0.0, w_det: 0.0, w_llm: 1.0 };
     }
 
@@ -62,13 +64,20 @@ export class DcsIntegrationHelper {
    */
   isActionAllowed(action: string, w_det: number): boolean {
     // w_det >= 0.80: Only UNDECIDED and STRUCTURAL_ANALOGY_ON_DEMAND
-    if (w_det >= 0.80) {
-      return ['UNDECIDED', 'STRUCTURAL_ANALOGY_ON_DEMAND', 'NO_OP'].includes(action);
+    if (w_det >= 0.8) {
+      return ["UNDECIDED", "STRUCTURAL_ANALOGY_ON_DEMAND", "NO_OP"].includes(
+        action,
+      );
     }
 
     // 0.50 <= w_det < 0.80: Allow EDGE_TYPING, UNDECIDED, ANALOGY
-    if (w_det >= 0.50) {
-      return ['EDGE_TYPING_TOPK_POST', 'UNDECIDED', 'ANALOGY_ON_DEMAND', 'NO_OP'].includes(action);
+    if (w_det >= 0.5) {
+      return [
+        "EDGE_TYPING_TOPK_POST",
+        "UNDECIDED",
+        "ANALOGY_ON_DEMAND",
+        "NO_OP",
+      ].includes(action);
     }
 
     // w_det < 0.50: Allow BOOTSTRAP, EDGE_TYPING, UNDECIDED
@@ -90,7 +99,7 @@ export class DcsIntegrationHelper {
     explicitAsk: boolean,
     w_det: number,
   ): boolean {
-    if (phase === 'DURING' && !explicitAsk && w_det >= 0.5) {
+    if (phase === "DURING" && !explicitAsk && w_det >= 0.5) {
       return true;
     }
     return false;

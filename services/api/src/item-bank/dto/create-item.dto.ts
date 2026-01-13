@@ -1,5 +1,18 @@
-import { IsEnum, IsString, IsOptional, IsNumber, IsObject, IsArray } from 'class-validator';
-import { ItemType, BloomTaxonomy, Language, ScopeType, ItemVisibility } from '@prisma/client';
+import {
+  IsEnum,
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsObject,
+  IsArray,
+} from "class-validator";
+import {
+  ItemType,
+  BloomTaxonomy,
+  Language,
+  ScopeType,
+  ItemVisibility,
+} from "@prisma/client";
 
 export class CreateItemDto {
   @IsEnum(ItemType)

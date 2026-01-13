@@ -58,8 +58,14 @@ describe("ReadingSessionsService - SRS Integration", () => {
         { provide: OutcomesService, useValue: mockOutcomesService },
         // Mocks for other dependencies required by constructor
         { provide: ProfileService, useValue: {} },
-        { provide: GamificationService, useValue: { registerActivity: jest.fn() } },
-        { provide: VocabService, useValue: { createFromTargetWords: jest.fn() } },
+        {
+          provide: GamificationService,
+          useValue: { registerActivity: jest.fn() },
+        },
+        {
+          provide: VocabService,
+          useValue: { createFromTargetWords: jest.fn() },
+        },
         { provide: GatingService, useValue: {} },
         { provide: QuickCommandParser, useValue: {} },
         { provide: AiServiceClient, useValue: {} },
@@ -95,11 +101,11 @@ describe("ReadingSessionsService - SRS Integration", () => {
     const contentId = "content-789";
 
     const mockSessionUpdated = {
-        id: sessionId,
-        userId,
-        contentId,
-        phase: "FINISHED",
-        targetWordsJson: [],
+      id: sessionId,
+      userId,
+      contentId,
+      phase: "FINISHED",
+      targetWordsJson: [],
     };
 
     it("should schedule SRS reviews when session is finished", async () => {
@@ -170,27 +176,35 @@ describe("ReadingSessionsService - SRS Integration", () => {
       mockAdvancePhaseUseCase.execute.mockResolvedValue(mockSessionUpdated);
       prisma.session_events.findMany.mockResolvedValue([
         {
-            eventType: "MARK_UNKNOWN_WORD", // Note: simplified mock
-            payload_json: { word: "fail", context: "ctx" },
-        }
+          eventType: "MARK_UNKNOWN_WORD", // Note: simplified mock
+          payload_json: { word: "fail", context: "ctx" },
+        },
       ]);
       srsService.scheduleNextReview.mockRejectedValue(new Error("SRS Error"));
 
       // Act & Assert
-      await expect(service.advancePhase(sessionId, userId, "FINISHED")).resolves.toEqual(mockSessionUpdated);
+      await expect(
+        service.advancePhase(sessionId, userId, "FINISHED"),
+      ).resolves.toEqual(mockSessionUpdated);
       // Verify validation/logging (implicitly by not throwing)
     });
-    
+
     it("should deduplicate calls if same word appears twice? (Implementation Note: Loop currently processes all events)", async () => {
-         // Current implementation processes ALL events. Deduplication logic is inside SrsService logic (not tested here, or assumed service handles calls)
-         // But let's verify behavior: if 2 events same word, it calls service 2 times.
-         
-          // Arrange
+      // Current implementation processes ALL events. Deduplication logic is inside SrsService logic (not tested here, or assumed service handles calls)
+      // But let's verify behavior: if 2 events same word, it calls service 2 times.
+
+      // Arrange
       mockAdvancePhaseUseCase.execute.mockResolvedValue(mockSessionUpdated);
       srsService.scheduleNextReview.mockResolvedValue(null); // Reset mock to success
       prisma.session_events.findMany.mockResolvedValue([
-        { eventType: "MARK_UNKNOWN_WORD", payload_json: { word: "same", context: "c1" } },
-        { eventType: "MARK_UNKNOWN_WORD", payload_json: { word: "same", context: "c2" } },
+        {
+          eventType: "MARK_UNKNOWN_WORD",
+          payload_json: { word: "same", context: "c1" },
+        },
+        {
+          eventType: "MARK_UNKNOWN_WORD",
+          payload_json: { word: "same", context: "c2" },
+        },
       ]);
 
       // Act

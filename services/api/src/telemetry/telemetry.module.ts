@@ -18,6 +18,6 @@ import { TelemetryAggregatorService } from "./application/telemetry-aggregator.s
     AnalyticsService,
     TelemetryAggregatorService,
   ],
-  exports: [TelemetryService, TelemetryAggregatorService],
+  exports: [TelemetryService, TelemetryAggregatorService, AnalyticsService],
 })
 export class TelemetryModule {}

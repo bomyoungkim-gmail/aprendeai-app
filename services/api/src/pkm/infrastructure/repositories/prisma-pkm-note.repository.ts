@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { IPkmNoteRepository } from '../../domain/repositories/pkm-note.repository.interface';
-import { PkmNote } from '../../domain/entities/pkm-note.entity';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
+import { IPkmNoteRepository } from "../../domain/repositories/pkm-note.repository.interface";
+import { PkmNote } from "../../domain/entities/pkm-note.entity";
 // PkmNoteStatus values: 'GENERATED', 'SAVED', 'ARCHIVED'
 
 @Injectable()
@@ -40,7 +40,7 @@ export class PrismaPkmNoteRepository implements IPkmNoteRepository {
   ): Promise<PkmNote[]> {
     const notes = await (this.prisma as any).pkm_notes.findMany({
       where: { user_id: userId },
-      orderBy: { created_at: 'desc' },
+      orderBy: { created_at: "desc" },
       take: limit,
       skip: offset,
     });
@@ -51,7 +51,7 @@ export class PrismaPkmNoteRepository implements IPkmNoteRepository {
   async findByContentId(contentId: string): Promise<PkmNote[]> {
     const notes = await (this.prisma as any).pkm_notes.findMany({
       where: { content_id: contentId },
-      orderBy: { created_at: 'desc' },
+      orderBy: { created_at: "desc" },
     });
 
     return notes.map((note) => this.toDomain(note));
@@ -60,7 +60,7 @@ export class PrismaPkmNoteRepository implements IPkmNoteRepository {
   async findBySessionId(sessionId: string): Promise<PkmNote[]> {
     const notes = await (this.prisma as any).pkm_notes.findMany({
       where: { session_id: sessionId },
-      orderBy: { created_at: 'desc' },
+      orderBy: { created_at: "desc" },
     });
 
     return notes.map((note) => this.toDomain(note));
@@ -76,9 +76,9 @@ export class PrismaPkmNoteRepository implements IPkmNoteRepository {
       where: {
         topic_node_id: topicNodeId,
         user_id: userId,
-        status: { not: 'ARCHIVED' }, // Only return active notes
+        status: { not: "ARCHIVED" }, // Only return active notes
       },
-      orderBy: { created_at: 'desc' },
+      orderBy: { created_at: "desc" },
       take: limit,
       skip: offset,
     });
@@ -131,7 +131,7 @@ export class PrismaPkmNoteRepository implements IPkmNoteRepository {
     await (this.prisma as any).pkm_notes.update({
       where: { id },
       data: {
-        status: 'ARCHIVED',
+        status: "ARCHIVED",
         updated_at: new Date(),
       },
     });
@@ -143,10 +143,7 @@ export class PrismaPkmNoteRepository implements IPkmNoteRepository {
     });
   }
 
-  async countByUserId(
-    userId: string,
-    status?: string,
-  ): Promise<number> {
+  async countByUserId(userId: string, status?: string): Promise<number> {
     return (this.prisma as any).pkm_notes.count({
       where: {
         user_id: userId,

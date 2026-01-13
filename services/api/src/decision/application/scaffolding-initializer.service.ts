@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ContentMode } from '@prisma/client';
+import { Injectable, Logger } from "@nestjs/common";
+import { ContentMode } from "@prisma/client";
 import {
   ScaffoldingLevel,
   ScaffoldingInitParams,
   LearnerProfileForScaffolding,
-} from '../domain/scaffolding.types';
+} from "../domain/scaffolding.types";
 
 /**
  * Serviço responsável por determinar o nível inicial de scaffolding
@@ -37,18 +37,18 @@ export class ScaffoldingInitializerService {
     // GAP 6: Respeitar policy override
     if (policyOverride !== undefined && this.isValidLevel(policyOverride)) {
       this.logger.log(
-        `Using policy override: L${policyOverride} for mode ${mode}`
+        `Using policy override: L${policyOverride} for mode ${mode}`,
       );
       return policyOverride as ScaffoldingLevel;
     }
 
     // Lógica mode-aware
     const level = this.calculateInitialLevel(mode, learnerProfile);
-    
+
     this.logger.debug(
-      `Calculated initial level L${level} for mode ${mode} (isNew: ${learnerProfile.isNewUser}, avgMastery: ${learnerProfile.avgMastery.toFixed(2)})`
+      `Calculated initial level L${level} for mode ${mode} (isNew: ${learnerProfile.isNewUser}, avgMastery: ${learnerProfile.avgMastery.toFixed(2)})`,
     );
-    
+
     return level;
   }
 
@@ -59,7 +59,7 @@ export class ScaffoldingInitializerService {
    */
   private calculateInitialLevel(
     mode: ContentMode,
-    profile: LearnerProfileForScaffolding
+    profile: LearnerProfileForScaffolding,
   ): ScaffoldingLevel {
     switch (mode) {
       case ContentMode.DIDACTIC:

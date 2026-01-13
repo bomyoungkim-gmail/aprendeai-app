@@ -1,13 +1,11 @@
-import { Injectable, Logger, NotFoundException, Inject } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
-import { PrismaService } from '../../prisma/prisma.service';
-import { QuestionType, ContentMode } from '@prisma/client';
-import { AiServiceClient } from '../../ai-service/ai-service.client';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { QuestionType, ContentMode } from "@prisma/client";
+import { AiServiceClient } from "../../ai-service/ai-service.client";
 
 /**
  * Assessment Generation Service
- * 
+ *
  * Generates assessments from learning_assets (quiz_post_json or checkpoints_json)
  * Priority: quiz_post_json > checkpoints_json
  * Also supports dynamic context-aware generation from Cornell notes.
@@ -23,12 +21,14 @@ export class AssessmentGenerationService {
 
   /**
    * Generate assessment from learning assets
-   * 
+   *
    * @param contentVersionId - The content version ID
    * @returns The created assessment ID
    */
   async generateFromAssets(contentVersionId: string): Promise<string> {
-    this.logger.debug(`Generating assessment from assets for version ${contentVersionId}`);
+    this.logger.debug(
+      `Generating assessment from assets for version ${contentVersionId}`,
+    );
 
     // 1. Fetch content version and associated learning assets
     const contentVersion = await this.prisma.content_versions.findUnique({
@@ -50,7 +50,9 @@ export class AssessmentGenerationService {
     });
 
     if (!contentVersion) {
-      throw new NotFoundException(`Content version ${contentVersionId} not found`);
+      throw new NotFoundException(
+        `Content version ${contentVersionId} not found`,
+      );
     }
 
     const assets = contentVersion.contents.learning_assets;
@@ -65,7 +67,7 @@ export class AssessmentGenerationService {
     const questions = this.extractQuestions(assets);
 
     if (questions.length === 0) {
-      throw new Error('No valid questions found in learning assets');
+      throw new Error("No valid questions found in learning assets");
     }
 
     // 3. Check if assessment already exists
@@ -77,7 +79,9 @@ export class AssessmentGenerationService {
     });
 
     if (existingAssessment) {
-      this.logger.log(`Assessment already exists for version ${contentVersionId}, returning existing ID`);
+      this.logger.log(
+        `Assessment already exists for version ${contentVersionId}, returning existing ID`,
+      );
       return existingAssessment.id;
     }
 
@@ -108,7 +112,9 @@ export class AssessmentGenerationService {
       });
     }
 
-    this.logger.log(`Created assessment ${assessment.id} with ${questions.length} questions`);
+    this.logger.log(
+      `Created assessment ${assessment.id} with ${questions.length} questions`,
+    );
     return assessment.id;
   }
 
@@ -171,13 +177,13 @@ export class AssessmentGenerationService {
     const quizQuestions = Array.isArray(quizData.questions)
       ? quizData.questions
       : Array.isArray(quizData)
-      ? quizData
-      : [];
+        ? quizData
+        : [];
 
     for (const q of quizQuestions) {
       questions.push({
-        type: (q.type as QuestionType) || 'MULTIPLE_CHOICE',
-        text: q.question || q.text || '',
+        type: (q.type as QuestionType) || "MULTIPLE_CHOICE",
+        text: q.question || q.text || "",
         options: q.options || null,
         correctAnswer: q.answer || q.correctAnswer || q.correct_answer || null,
         skills: q.skills || [],
@@ -209,13 +215,13 @@ export class AssessmentGenerationService {
     const checkpoints = Array.isArray(checkpointsData.checkpoints)
       ? checkpointsData.checkpoints
       : Array.isArray(checkpointsData)
-      ? checkpointsData
-      : [];
+        ? checkpointsData
+        : [];
 
     for (const checkpoint of checkpoints) {
       questions.push({
-        type: 'MULTIPLE_CHOICE', // Default type for checkpoints
-        text: checkpoint.question || checkpoint.text || '',
+        type: "MULTIPLE_CHOICE", // Default type for checkpoints
+        text: checkpoint.question || checkpoint.text || "",
         options: checkpoint.options || null,
         correctAnswer: checkpoint.answer || checkpoint.correctAnswer || null,
         skills: checkpoint.skills || [],
@@ -260,7 +266,9 @@ export class AssessmentGenerationService {
     const context = await this.gatherContext(contentId, userId);
 
     if (!context.hasHighlights) {
-      this.logger.warn(`No highlights found for content ${contentId}. Using raw text only.`);
+      this.logger.warn(
+        `No highlights found for content ${contentId}. Using raw text only.`,
+      );
     }
 
     // 2. Determine Quiz Strategy based on Level
@@ -286,7 +294,7 @@ export class AssessmentGenerationService {
       where: {
         content_id: contentId,
         user_id: userId,
-        type: { in: ['EVIDENCE', 'MAIN_IDEA', 'DOUBT'] },
+        type: { in: ["EVIDENCE", "MAIN_IDEA", "DOUBT"] },
       },
       select: {
         id: true,
@@ -297,14 +305,14 @@ export class AssessmentGenerationService {
     });
 
     // Separate highlights by type for strategic use
-    const evidenceHighlights = highlights.filter(h => h.type === 'EVIDENCE');
-    const mainIdeaHighlights = highlights.filter(h => h.type === 'MAIN_IDEA');
-    const doubtHighlights = highlights.filter(h => h.type === 'DOUBT');
+    const evidenceHighlights = highlights.filter((h) => h.type === "EVIDENCE");
+    const mainIdeaHighlights = highlights.filter((h) => h.type === "MAIN_IDEA");
+    const doubtHighlights = highlights.filter((h) => h.type === "DOUBT");
 
     // Format each type separately
     const formatHighlight = (h: any) => {
-      const text = (h.anchor_json as any)?.text || 'Content reference';
-      const note = h.comment_text ? ` (Note: ${h.comment_text})` : '';
+      const text = (h.anchor_json as any)?.text || "Content reference";
+      const note = h.comment_text ? ` (Note: ${h.comment_text})` : "";
       return `${text}${note}`;
     };
 
@@ -321,63 +329,71 @@ export class AssessmentGenerationService {
     switch (level) {
       case 3: // High Scaffolding -> Easy
         return {
-          type: 'MULTIPLE_CHOICE',
+          type: "MULTIPLE_CHOICE",
           count: 3,
           difficulty: 0.3,
-          focus: 'RECOGNITION',
+          focus: "RECOGNITION",
         };
       case 2: // Moderate
         return {
-          type: 'FILL_BLANK',
+          type: "FILL_BLANK",
           count: 3,
           difficulty: 0.5,
-          focus: 'RECALL',
+          focus: "RECALL",
         };
       case 1: // Low
         return {
-          type: 'SHORT_ANSWER',
+          type: "SHORT_ANSWER",
           count: 2,
           difficulty: 0.7,
-          focus: 'ANALYSIS',
+          focus: "ANALYSIS",
         };
       case 0: // No Scaffolding -> Hard
         return {
-          type: 'ESSAY',
+          type: "ESSAY",
           count: 1,
           difficulty: 0.9,
-          focus: 'SYNTHESIS',
+          focus: "SYNTHESIS",
         };
       default:
-        return { type: 'MULTIPLE_CHOICE', count: 3, difficulty: 0.5, focus: 'RECALL' };
+        return {
+          type: "MULTIPLE_CHOICE",
+          count: 3,
+          difficulty: 0.5,
+          focus: "RECALL",
+        };
     }
   }
 
   private buildPrompt(context: any, strategy: any, mode: ContentMode): string {
     // Build context sections based on highlight types
-    let contextSection = '';
-    
+    let contextSection = "";
+
     if (context.doubts.length > 0) {
-      contextSection += `\n**Areas of Confusion (Student marked as DOUBT)**:\n${context.doubts.map((d: string, i: number) => `${i + 1}. ${d}`).join('\n')}\n`;
+      contextSection += `\n**Areas of Confusion (Student marked as DOUBT)**:\n${context.doubts.map((d: string, i: number) => `${i + 1}. ${d}`).join("\n")}\n`;
     }
-    
+
     if (context.evidence.length > 0) {
-      contextSection += `\n**Key Evidence (Student highlighted)**:\n${context.evidence.map((e: string, i: number) => `${i + 1}. ${e}`).join('\n')}\n`;
+      contextSection += `\n**Key Evidence (Student highlighted)**:\n${context.evidence.map((e: string, i: number) => `${i + 1}. ${e}`).join("\n")}\n`;
     }
-    
+
     if (context.mainIdeas.length > 0) {
-      contextSection += `\n**Main Ideas (Student identified)**:\n${context.mainIdeas.map((m: string, i: number) => `${i + 1}. ${m}`).join('\n')}\n`;
+      contextSection += `\n**Main Ideas (Student identified)**:\n${context.mainIdeas.map((m: string, i: number) => `${i + 1}. ${m}`).join("\n")}\n`;
     }
 
     // Strategic instructions based on highlight types
-    let strategyInstructions = '';
+    let strategyInstructions = "";
     if (context.doubts.length > 0) {
-      strategyInstructions += '\n- PRIORITY: Create remedial/diagnostic questions targeting the areas marked as DOUBT to help clarify confusion.';
+      strategyInstructions +=
+        "\n- PRIORITY: Create remedial/diagnostic questions targeting the areas marked as DOUBT to help clarify confusion.";
     }
     if (context.evidence.length > 0) {
-      strategyInstructions += '\n- Use EVIDENCE highlights for recognition and recall questions.';
+      strategyInstructions +=
+        "\n- Use EVIDENCE highlights for recognition and recall questions.";
     }
     if (context.mainIdeas.length > 0) {
-      strategyInstructions += '\n- Use MAIN_IDEA highlights for conceptual and analytical questions.';
+      strategyInstructions +=
+        "\n- Use MAIN_IDEA highlights for conceptual and analytical questions.";
     }
 
     return `
@@ -388,7 +404,7 @@ Generate a ${strategy.count}-question quiz for a student learning in ${mode} mod
 - Difficulty Level (0-1): ${strategy.difficulty}
 - Cognitive Focus: ${strategy.focus}${strategyInstructions}
 
-**Student Context**:${contextSection || '\n(No highlights available - generate generic questions based on typical content for this mode)'}
+**Student Context**:${contextSection || "\n(No highlights available - generate generic questions based on typical content for this mode)"}
 
 **Output Format**:
 Return a valid JSON array of questions. Each question must have:

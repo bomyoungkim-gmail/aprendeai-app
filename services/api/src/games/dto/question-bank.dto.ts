@@ -8,7 +8,7 @@ import {
   Max,
 } from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { EducationLevel, educationLevelToLowercase } from "../../shared/domain/education.types";
+import { EducationLevel } from "../../shared/domain/education.types";
 
 // Re-export for backward compatibility
 export { EducationLevel } from "../../shared/domain/education.types";

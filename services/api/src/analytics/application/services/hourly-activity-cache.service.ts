@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { PrismaService } from "../../../prisma/prisma.service";
 
 @Injectable()
 export class HourlyActivityCacheService {
@@ -8,20 +8,20 @@ export class HourlyActivityCacheService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async getCachedData(userId: string, period: '30d' | '360d') {
+  async getCachedData(userId: string, period: "30d" | "360d") {
     return this.prisma.hourly_activity_cache.findMany({
       where: {
         user_id: userId,
         period: period,
       },
       orderBy: {
-        time_slot: 'asc',
+        time_slot: "asc",
       },
     });
   }
 
-  async rebuildCacheForUser(userId: string, period: '30d' | '360d') {
-    const days = period === '30d' ? 30 : 360;
+  async rebuildCacheForUser(userId: string, period: "30d" | "360d") {
+    const days = period === "30d" ? 30 : 360;
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
     const rawData = await this.prisma.$queryRaw<any[]>`
@@ -67,7 +67,7 @@ export class HourlyActivityCacheService {
 
       if (rawData.length > 0) {
         await tx.hourly_activity_cache.createMany({
-          data: rawData.map(row => ({
+          data: rawData.map((row) => ({
             user_id: userId,
             period,
             time_slot: row.time_slot,
@@ -77,35 +77,37 @@ export class HourlyActivityCacheService {
         });
       }
     });
-    
+
     this.logger.log(`Cache rebuilt for user ${userId} period ${period}`);
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
   async rebuildCacheForAllUsers() {
-    this.logger.log('Starting daily cache rebuild...');
-    
+    this.logger.log("Starting daily cache rebuild...");
+
     const activeUsers = await this.prisma.study_sessions.findMany({
       where: {
         start_time: {
-          gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)
-        }
+          gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000),
+        },
       },
       select: { user_id: true },
-      distinct: ['user_id']
+      distinct: ["user_id"],
     });
 
     this.logger.log(`Found ${activeUsers.length} active users to update.`);
 
     for (const user of activeUsers) {
       try {
-        await this.rebuildCacheForUser(user.user_id, '30d');
-        await this.rebuildCacheForUser(user.user_id, '360d');
+        await this.rebuildCacheForUser(user.user_id, "30d");
+        await this.rebuildCacheForUser(user.user_id, "360d");
       } catch (error) {
-        this.logger.error(`Failed to rebuild cache for user ${user.user_id}: ${error.message}`);
+        this.logger.error(
+          `Failed to rebuild cache for user ${user.user_id}: ${error.message}`,
+        );
       }
     }
 
-    this.logger.log('Daily cache rebuild completed.');
+    this.logger.log("Daily cache rebuild completed.");
   }
 }

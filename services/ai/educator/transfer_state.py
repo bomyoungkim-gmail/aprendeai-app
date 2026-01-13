@@ -54,6 +54,7 @@ class TransferState(TypedDict):
     response_text: str                 # Generated response/feedback
     structured_output: Optional[Dict]  # Structured data (e.g., PKM draft, rubric scores)
     events_to_write: List[Dict]        # Events for telemetry
+    quick_replies: Optional[List[str]] # Mode-specific suggestions (SCRIPT 05)
     
     # === TELEMETRY ===
     tokens_used: Optional[int]

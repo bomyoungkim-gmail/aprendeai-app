@@ -10,12 +10,16 @@ import { RolesGuard } from "./guards/roles.guard";
 import { Roles } from "./decorators/roles.decorator";
 import { SystemRole } from "@prisma/client";
 import { TokenAnalyticsService } from "../analytics/token-analytics.service";
+import { AnalyticsService } from "../telemetry/analytics.service";
 
 @ApiTags("admin-analytics")
 @Controller("admin/ai")
 @UseGuards(AuthGuard("jwt"), RolesGuard)
 export class AiAnalyticsController {
-  constructor(private readonly analyticsService: TokenAnalyticsService) {}
+  constructor(
+    private readonly analyticsService: TokenAnalyticsService,
+    private readonly telemetryAnalyticsService: AnalyticsService,
+  ) {}
 
   @Get("overview")
   @Roles(SystemRole.ADMIN, SystemRole.OPS)
@@ -74,6 +78,25 @@ export class AiAnalyticsController {
   ) {
     const { from, to } = this.parseDateRange(fromStr, toStr);
     return this.analyticsService.getTopConsumers(entity, from, to, limit);
+  }
+
+  /**
+   * SCRIPT 07: Get Syntax Analyzer & Fading Telemetry Metrics
+   */
+  @Get("script07-metrics")
+  @Roles(SystemRole.ADMIN, SystemRole.OPS)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Get SCRIPT 07 Telemetry & KPIs",
+    description:
+      "Measures syntax analyzer usage effectiveness and scaffolding fading health",
+  })
+  async getScript07Metrics(
+    @Query("from") fromStr?: string,
+    @Query("to") toStr?: string,
+  ) {
+    const { from, to } = this.parseDateRange(fromStr, toStr);
+    return this.telemetryAnalyticsService.getScript07Metrics(from, to);
   }
 
   private parseDateRange(fromStr?: string, toStr?: string) {

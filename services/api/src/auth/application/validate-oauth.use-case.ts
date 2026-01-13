@@ -41,17 +41,18 @@ export class ValidateOAuthUseCase {
     });
 
     if (identity) {
-      user = await this.db.users.findUnique({ where: { id: identity.user_id } });
+      user = await this.db.users.findUnique({
+        where: { id: identity.user_id },
+      });
     } else {
       // Fallback removed (Phase 3.1.4 Cleanup)
     }
 
     if (user) {
-
       // Dual write updates (ensure identity exists/is updated)
       if (identity) {
-         // Should update last_login_at?
-         // Yes, for convenience
+        // Should update last_login_at?
+        // Yes, for convenience
       }
       return user;
     }
@@ -65,8 +66,7 @@ export class ValidateOAuthUseCase {
       // Link OAuth to existing account
       const updatedUser = await this.db.users.update({
         where: { id: user.id },
-        data: {
-        },
+        data: {},
       });
 
       await (this.db as any).user_identities.upsert({

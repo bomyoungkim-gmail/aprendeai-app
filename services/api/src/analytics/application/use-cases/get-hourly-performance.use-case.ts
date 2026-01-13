@@ -11,7 +11,7 @@ export class GetHourlyPerformanceUseCase {
   ) {}
 
   async execute(userId: string, days: number = 30) {
-    const period = days > 30 ? '360d' : '30d';
+    const period = days > 30 ? "360d" : "30d";
 
     // 1. Try to get cached data
     let cachedData = await this.cacheService.getCachedData(userId, period);
@@ -24,7 +24,7 @@ export class GetHourlyPerformanceUseCase {
 
     // 3. Transform cached data for frontend
     const transformed = cachedData.map((row) => {
-      const [h, m] = row.time_slot.split(':').map(Number);
+      const [h, m] = row.time_slot.split(":").map(Number);
       return {
         time_slot: row.time_slot,
         hour: h,
@@ -40,7 +40,9 @@ export class GetHourlyPerformanceUseCase {
     const ranked = [...transformed].sort(
       (a, b) => b.sessionCount - a.sessionCount,
     );
-    const peakHours = ranked.slice(0, 3).map((r) => ({ time_slot: r.time_slot }));
+    const peakHours = ranked
+      .slice(0, 3)
+      .map((r) => ({ time_slot: r.time_slot }));
 
     return {
       hourlyBreakdown: transformed,

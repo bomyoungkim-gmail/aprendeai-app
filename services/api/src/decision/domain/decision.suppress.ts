@@ -1,6 +1,6 @@
 /**
  * Decision Suppression Logic
- * 
+ *
  * Centralized suppression reason codes and helpers for DecisionService.
  * Ensures consistent auditability and prevents divergence between service, tests, and dashboards.
  */
@@ -10,16 +10,16 @@
  * These match the Prisma enum `SuppressReason`.
  */
 export enum SuppressReason {
-  POLICY_DISABLED = 'POLICY_DISABLED',
-  BUDGET_EXCEEDED = 'BUDGET_EXCEEDED',
-  RATE_LIMITED = 'RATE_LIMITED',
-  COOLDOWN_ACTIVE = 'COOLDOWN_ACTIVE',
-  PHASE_DURING_INVISIBLE = 'PHASE_DURING_INVISIBLE',
-  LOW_FLOW_SILENCE = 'LOW_FLOW_SILENCE',
-  HIGH_FLOW_PRESERVE = 'HIGH_FLOW_PRESERVE', // GAP 8: Suppress during productive flow
-  SAFETY_GUARD = 'SAFETY_GUARD',
-  MISSING_INPUTS = 'MISSING_INPUTS',
-  DEGRADED_CAPABILITY = 'DEGRADED_CAPABILITY',
+  POLICY_DISABLED = "POLICY_DISABLED",
+  BUDGET_EXCEEDED = "BUDGET_EXCEEDED",
+  RATE_LIMITED = "RATE_LIMITED",
+  COOLDOWN_ACTIVE = "COOLDOWN_ACTIVE",
+  PHASE_DURING_INVISIBLE = "PHASE_DURING_INVISIBLE",
+  LOW_FLOW_SILENCE = "LOW_FLOW_SILENCE",
+  HIGH_FLOW_PRESERVE = "HIGH_FLOW_PRESERVE", // GAP 8: Suppress during productive flow
+  SAFETY_GUARD = "SAFETY_GUARD",
+  MISSING_INPUTS = "MISSING_INPUTS",
+  DEGRADED_CAPABILITY = "DEGRADED_CAPABILITY",
 }
 
 /**
@@ -27,7 +27,7 @@ export enum SuppressReason {
  * All flags should be set before calling computeSuppressReasons.
  */
 export type SuppressionContext = {
-  phase: 'DURING' | 'POST';
+  phase: "DURING" | "POST";
   explicitAsk: boolean;
   lowFlow: boolean;
   isInHighFlow: boolean; // GAP 8: HIGH_FLOW state detection
@@ -43,18 +43,20 @@ export type SuppressionContext = {
 
 /**
  * Compute suppression reasons based on context.
- * 
+ *
  * Order of checks (hard blocks first):
  * 1. Safety / Missing / Policy
  * 2. Phase / UX
  * 3. Flow / Behavior
  * 4. Capacity / Cost
  * 5. Degradation
- * 
+ *
  * @param ctx - Suppression context
  * @returns Array of unique suppression reasons in priority order
  */
-export function computeSuppressReasons(ctx: SuppressionContext): SuppressReason[] {
+export function computeSuppressReasons(
+  ctx: SuppressionContext,
+): SuppressReason[] {
   const reasons: SuppressReason[] = [];
 
   // 1. Hard blocks (safety, missing inputs, policy)
@@ -63,13 +65,14 @@ export function computeSuppressReasons(ctx: SuppressionContext): SuppressReason[
   if (!ctx.policyTransferEnabled) reasons.push(SuppressReason.POLICY_DISABLED);
 
   // 2. Phase / UX (DURING phase without explicit ask)
-  if (ctx.phase === 'DURING' && !ctx.explicitAsk) {
+  if (ctx.phase === "DURING" && !ctx.explicitAsk) {
     reasons.push(SuppressReason.PHASE_DURING_INVISIBLE);
   }
 
   // 3. Flow / Behavior
   if (ctx.lowFlow) reasons.push(SuppressReason.LOW_FLOW_SILENCE);
-  if (ctx.isInHighFlow && !ctx.explicitAsk) reasons.push(SuppressReason.HIGH_FLOW_PRESERVE); // GAP 8
+  if (ctx.isInHighFlow && !ctx.explicitAsk)
+    reasons.push(SuppressReason.HIGH_FLOW_PRESERVE); // GAP 8
   if (ctx.cooldownActive) reasons.push(SuppressReason.COOLDOWN_ACTIVE);
 
   // 4. Capacity / Cost
@@ -90,7 +93,7 @@ export function computeSuppressReasons(ctx: SuppressionContext): SuppressReason[
 
 /**
  * Determine if an action was suppressed.
- * 
+ *
  * @param candidateAction - Proposed action from heuristics
  * @param finalAction - Final action after enforcement
  * @param reasons - Suppression reasons

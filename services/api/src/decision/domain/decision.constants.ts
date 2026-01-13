@@ -1,6 +1,6 @@
 /**
  * Decision Service Constants
- * 
+ *
  * Centralized constants for decision-making, flow detection, and scaffolding.
  * These values can be overridden via DecisionPolicyV1 for institution/family-specific tuning.
  */
@@ -15,7 +15,7 @@ export const FLOW_THRESHOLDS = {
    * Score >= 0.7 indicates productive flow
    */
   HIGH_FLOW: 0.7,
-  
+
   /**
    * Threshold for detecting LOW_FLOW state (0.0-1.0)
    * Score < 0.3 indicates struggling/erratic behavior
@@ -33,25 +33,25 @@ export const READING_VELOCITY_THRESHOLDS = {
    * Faster reading expected
    */
   NARRATIVE: 200,
-  
+
   /**
    * DIDACTIC content (textbooks, educational material)
    * Moderate reading speed
    */
   DIDACTIC: 150,
-  
+
   /**
    * TECHNICAL content (code, formulas, complex diagrams)
    * Slower reading expected
    */
   TECHNICAL: 100,
-  
+
   /**
    * NEWS content (articles, blog posts)
    * Fastest reading expected
    */
   NEWS: 250,
-  
+
   /**
    * Default threshold when mode is unknown
    */
@@ -67,17 +67,17 @@ export const FLOW_SCORE_WEIGHTS = {
    * Weight for reading velocity component (30%)
    */
   VELOCITY: 0.3,
-  
+
   /**
    * Weight for absence of doubts component (30%)
    */
   DOUBTS: 0.3,
-  
+
   /**
    * Weight for low rehighlight rate component (20%)
    */
   REHIGHLIGHT: 0.2,
-  
+
   /**
    * Weight for session duration component (20%)
    */
@@ -93,7 +93,7 @@ export const SESSION_DURATION_THRESHOLDS = {
    * Minimum session duration to consider for flow detection
    */
   MIN_FOR_FLOW: 15,
-  
+
   /**
    * Ideal session duration for sustained flow
    */
@@ -109,7 +109,7 @@ export const REHIGHLIGHT_THRESHOLDS = {
    * Low rehighlight rate (<10% is good)
    */
   LOW: 0.1,
-  
+
   /**
    * High rehighlight rate (>30% indicates confusion)
    */
@@ -125,12 +125,12 @@ export const LOOKBACK_WINDOWS = {
    * Window for flow state detection (10 minutes)
    */
   FLOW_DETECTION: 10 * 60 * 1000,
-  
+
   /**
    * Window for doubt spike detection (90 seconds)
    */
   DOUBT_SPIKE: 90 * 1000,
-  
+
   /**
    * Window for checkpoint quality analysis (5 minutes)
    */
@@ -146,12 +146,12 @@ export const CACHE_TTL = {
    * Decision result cache (10 seconds)
    */
   DECISION: 10 * 1000,
-  
+
   /**
    * Flow state cache (2 minutes)
    */
   FLOW_STATE: 2 * 60 * 1000,
-  
+
   /**
    * Scaffolding state cache (5 minutes)
    */
@@ -168,19 +168,19 @@ export const MASTERY_THRESHOLDS = {
    * Mastery >= 0.8
    */
   FADE: 0.8,
-  
+
   /**
    * Threshold for L1 (minimal scaffolding)
    * Mastery >= 0.6
    */
   LOW: 0.6,
-  
+
   /**
    * Threshold for L2 (moderate scaffolding)
    * Mastery >= 0.4
    */
   MEDIUM: 0.4,
-  
+
   /**
    * Below this threshold: L3 (maximum scaffolding)
    * Mastery < 0.4
@@ -202,7 +202,10 @@ export const SCAFFOLDING_CONFIG = {
 // TYPE EXPORTS FOR TYPE SAFETY
 // ============================================================================
 
-export type FlowThreshold = typeof FLOW_THRESHOLDS[keyof typeof FLOW_THRESHOLDS];
-export type ReadingVelocityThreshold = typeof READING_VELOCITY_THRESHOLDS[keyof typeof READING_VELOCITY_THRESHOLDS];
-export type CacheTTL = typeof CACHE_TTL[keyof typeof CACHE_TTL];
-export type MasteryThreshold = typeof MASTERY_THRESHOLDS[keyof typeof MASTERY_THRESHOLDS];
+export type FlowThreshold =
+  (typeof FLOW_THRESHOLDS)[keyof typeof FLOW_THRESHOLDS];
+export type ReadingVelocityThreshold =
+  (typeof READING_VELOCITY_THRESHOLDS)[keyof typeof READING_VELOCITY_THRESHOLDS];
+export type CacheTTL = (typeof CACHE_TTL)[keyof typeof CACHE_TTL];
+export type MasteryThreshold =
+  (typeof MASTERY_THRESHOLDS)[keyof typeof MASTERY_THRESHOLDS];

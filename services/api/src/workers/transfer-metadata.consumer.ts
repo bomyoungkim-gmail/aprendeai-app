@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { TransferMetadataService } from '../transfer/transfer-metadata.service';
-import { TelemetryService } from '../telemetry/telemetry.service';
-import { DecisionService } from '../decision/application/decision.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { TransferMetadataService } from "../transfer/transfer-metadata.service";
+import { TelemetryService } from "../telemetry/telemetry.service";
+import { DecisionService } from "../decision/application/decision.service";
 
 interface TransferMetadataBuildJob {
   contentId: string;
@@ -39,21 +39,21 @@ export class TransferMetadataConsumer {
     // PATCH 04v2: Evaluate extraction policy
     // Default to POST phase for background jobs
     const policyEvaluation = userId
-      ? await this.decisionService.evaluateExtractionPolicy(userId, 'POST', {
+      ? await this.decisionService.evaluateExtractionPolicy(userId, "POST", {
           contentId,
           sessionId: `transfer-build-${contentId}`,
         })
-      : { allowed: false, caps: { maxTokens: 0, modelTier: 'none' } };
+      : { allowed: false, caps: { maxTokens: 0, modelTier: "none" } };
 
     this.logger.debug(
-      `LLM fallback ${policyEvaluation.allowed ? 'ALLOWED' : 'DENIED'} for user ${userId}${policyEvaluation.reason ? ` (reason: ${policyEvaluation.reason})` : ''}`,
+      `LLM fallback ${policyEvaluation.allowed ? "ALLOWED" : "DENIED"} for user ${userId}${policyEvaluation.reason ? ` (reason: ${policyEvaluation.reason})` : ""}`,
     );
 
     try {
       // Fetch content chunks
       const chunks = await this.prisma.content_chunks.findMany({
         where: { content_id: contentId },
-        orderBy: { chunk_index: 'asc' },
+        orderBy: { chunk_index: "asc" },
       });
 
       // Process in small batches
@@ -75,7 +75,7 @@ export class TransferMetadataConsumer {
               fallbackConfig: {
                 allowLLM: policyEvaluation.allowed,
                 caps: policyEvaluation.caps,
-                phase: 'POST',
+                phase: "POST",
               },
             });
 
@@ -98,8 +98,8 @@ export class TransferMetadataConsumer {
       await this.telemetryService.track(
         {
           sessionId: `transfer-build-${contentId}`,
-          eventType: 'transfer_metadata_built',
-          eventVersion: '1.0.0',
+          eventType: "transfer_metadata_built",
+          eventVersion: "1.0.0",
           contentId,
           data: {
             contentId,
@@ -109,7 +109,7 @@ export class TransferMetadataConsumer {
             scopeType,
           },
         },
-        'system', // userId
+        "system", // userId
       );
 
       this.logger.log(

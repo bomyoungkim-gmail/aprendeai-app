@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { AssessmentGenerationService } from './assessment-generation.service';
-import { PrismaService } from '../../prisma/prisma.service';
-import { NotFoundException } from '@nestjs/common';
+import { Test, TestingModule } from "@nestjs/testing";
+import { AssessmentGenerationService } from "./assessment-generation.service";
+import { PrismaService } from "../../prisma/prisma.service";
+import { NotFoundException } from "@nestjs/common";
 
-describe('AssessmentGenerationService', () => {
+describe("AssessmentGenerationService", () => {
   let service: AssessmentGenerationService;
   let prisma: PrismaService;
 
@@ -31,7 +31,9 @@ describe('AssessmentGenerationService', () => {
       ],
     }).compile();
 
-    service = module.get<AssessmentGenerationService>(AssessmentGenerationService);
+    service = module.get<AssessmentGenerationService>(
+      AssessmentGenerationService,
+    );
     prisma = module.get<PrismaService>(PrismaService);
   });
 
@@ -39,23 +41,23 @@ describe('AssessmentGenerationService', () => {
     jest.clearAllMocks();
   });
 
-  describe('generateFromAssets', () => {
-    it('should generate assessment from quiz_post_json successfully', async () => {
-      const contentVersionId = 'cv_123';
+  describe("generateFromAssets", () => {
+    it("should generate assessment from quiz_post_json successfully", async () => {
+      const contentVersionId = "cv_123";
       const mockContentVersion = {
         id: contentVersionId,
-        content_id: 'content_456',
+        content_id: "content_456",
         contents: {
           learning_assets: [
             {
               quiz_post_json: {
                 questions: [
                   {
-                    type: 'MULTIPLE_CHOICE',
-                    question: 'What is the answer?',
-                    options: ['A', 'B', 'C', 'D'],
-                    correctAnswer: 'B',
-                    skills: ['comprehension'],
+                    type: "MULTIPLE_CHOICE",
+                    question: "What is the answer?",
+                    options: ["A", "B", "C", "D"],
+                    correctAnswer: "B",
+                    skills: ["comprehension"],
                   },
                 ],
               },
@@ -65,16 +67,18 @@ describe('AssessmentGenerationService', () => {
         },
       };
       const mockAssessment = {
-        id: 'assessment_789',
-        content_id: 'content_456',
+        id: "assessment_789",
+        content_id: "content_456",
         content_version_id: contentVersionId,
       };
 
-      mockPrisma.content_versions.findUnique.mockResolvedValue(mockContentVersion);
+      mockPrisma.content_versions.findUnique.mockResolvedValue(
+        mockContentVersion,
+      );
       mockPrisma.assessments.findFirst.mockResolvedValue(null);
       mockPrisma.assessments.create.mockResolvedValue(mockAssessment);
       mockPrisma.assessment_questions.create.mockResolvedValue({
-        id: 'q_1',
+        id: "q_1",
         assessment_id: mockAssessment.id,
       });
 
@@ -85,20 +89,20 @@ describe('AssessmentGenerationService', () => {
       expect(mockPrisma.assessment_questions.create).toHaveBeenCalledTimes(1);
     });
 
-    it('should return existing assessment if already exists', async () => {
-      const contentVersionId = 'cv_123';
+    it("should return existing assessment if already exists", async () => {
+      const contentVersionId = "cv_123";
       const mockContentVersion = {
         id: contentVersionId,
-        content_id: 'content_456',
+        content_id: "content_456",
         contents: {
           learning_assets: [
             {
               quiz_post_json: {
                 questions: [
                   {
-                    type: 'MULTIPLE_CHOICE',
-                    question: 'Test question',
-                    correctAnswer: 'A',
+                    type: "MULTIPLE_CHOICE",
+                    question: "Test question",
+                    correctAnswer: "A",
                   },
                 ],
               },
@@ -107,12 +111,14 @@ describe('AssessmentGenerationService', () => {
         },
       };
       const existingAssessment = {
-        id: 'existing_assessment_789',
-        content_id: 'content_456',
+        id: "existing_assessment_789",
+        content_id: "content_456",
         content_version_id: contentVersionId,
       };
 
-      mockPrisma.content_versions.findUnique.mockResolvedValue(mockContentVersion);
+      mockPrisma.content_versions.findUnique.mockResolvedValue(
+        mockContentVersion,
+      );
       mockPrisma.assessments.findFirst.mockResolvedValue(existingAssessment);
 
       const result = await service.generateFromAssets(contentVersionId);
@@ -121,11 +127,11 @@ describe('AssessmentGenerationService', () => {
       expect(mockPrisma.assessments.create).not.toHaveBeenCalled();
     });
 
-    it('should fall back to checkpoints_json if quiz_post_json is null', async () => {
-      const contentVersionId = 'cv_123';
+    it("should fall back to checkpoints_json if quiz_post_json is null", async () => {
+      const contentVersionId = "cv_123";
       const mockContentVersion = {
         id: contentVersionId,
-        content_id: 'content_456',
+        content_id: "content_456",
         contents: {
           learning_assets: [
             {
@@ -133,8 +139,8 @@ describe('AssessmentGenerationService', () => {
               checkpoints_json: {
                 checkpoints: [
                   {
-                    question: 'Checkpoint question',
-                    answer: 'Answer',
+                    question: "Checkpoint question",
+                    answer: "Answer",
                   },
                 ],
               },
@@ -143,16 +149,18 @@ describe('AssessmentGenerationService', () => {
         },
       };
       const mockAssessment = {
-        id: 'assessment_789',
-        content_id: 'content_456',
+        id: "assessment_789",
+        content_id: "content_456",
         content_version_id: contentVersionId,
       };
 
-      mockPrisma.content_versions.findUnique.mockResolvedValue(mockContentVersion);
+      mockPrisma.content_versions.findUnique.mockResolvedValue(
+        mockContentVersion,
+      );
       mockPrisma.assessments.findFirst.mockResolvedValue(null);
       mockPrisma.assessments.create.mockResolvedValue(mockAssessment);
       mockPrisma.assessment_questions.create.mockResolvedValue({
-        id: 'q_1',
+        id: "q_1",
         assessment_id: mockAssessment.id,
       });
 
@@ -162,40 +170,42 @@ describe('AssessmentGenerationService', () => {
       expect(mockPrisma.assessment_questions.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            question_type: 'MULTIPLE_CHOICE', // Default for checkpoints
+            question_type: "MULTIPLE_CHOICE", // Default for checkpoints
           }),
         }),
       );
     });
 
-    it('should throw NotFoundException if content version not found', async () => {
+    it("should throw NotFoundException if content version not found", async () => {
       mockPrisma.content_versions.findUnique.mockResolvedValue(null);
 
-      await expect(service.generateFromAssets('cv_123')).rejects.toThrow(
+      await expect(service.generateFromAssets("cv_123")).rejects.toThrow(
         NotFoundException,
       );
     });
 
-    it('should throw NotFoundException if no learning assets found', async () => {
+    it("should throw NotFoundException if no learning assets found", async () => {
       const mockContentVersion = {
-        id: 'cv_123',
-        content_id: 'content_456',
+        id: "cv_123",
+        content_id: "content_456",
         contents: {
           learning_assets: [],
         },
       };
 
-      mockPrisma.content_versions.findUnique.mockResolvedValue(mockContentVersion);
+      mockPrisma.content_versions.findUnique.mockResolvedValue(
+        mockContentVersion,
+      );
 
-      await expect(service.generateFromAssets('cv_123')).rejects.toThrow(
+      await expect(service.generateFromAssets("cv_123")).rejects.toThrow(
         NotFoundException,
       );
     });
 
-    it('should throw error if no valid questions found', async () => {
+    it("should throw error if no valid questions found", async () => {
       const mockContentVersion = {
-        id: 'cv_123',
-        content_id: 'content_456',
+        id: "cv_123",
+        content_id: "content_456",
         contents: {
           learning_assets: [
             {
@@ -206,10 +216,12 @@ describe('AssessmentGenerationService', () => {
         },
       };
 
-      mockPrisma.content_versions.findUnique.mockResolvedValue(mockContentVersion);
+      mockPrisma.content_versions.findUnique.mockResolvedValue(
+        mockContentVersion,
+      );
 
-      await expect(service.generateFromAssets('cv_123')).rejects.toThrow(
-        'No valid questions found in learning assets',
+      await expect(service.generateFromAssets("cv_123")).rejects.toThrow(
+        "No valid questions found in learning assets",
       );
     });
   });

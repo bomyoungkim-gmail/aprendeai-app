@@ -1,41 +1,41 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
-import { GraphDiffService } from './graph-diff.service';
-import { GraphDiffResponseDto } from './dto/graph-diff-response.dto';
+import { Controller, Get, Param, Query } from "@nestjs/common";
+import { GraphDiffService } from "./graph-diff.service";
+import { GraphDiffResponseDto } from "./dto/graph-diff-response.dto";
 
 /**
  * Graph Diff Controller
- * 
+ *
  * Provides API endpoints to visualize knowledge graph changes.
- * 
+ *
  * TODO: AC3: Graph Diff Visualization - Frontend displays diff in user-friendly format
  * (This endpoint returns the raw diff_json, frontend needs to render it visually)
  */
-@Controller('graph/diff')
+@Controller("graph/diff")
 export class GraphDiffController {
   constructor(private readonly diffService: GraphDiffService) {}
 
   /**
    * Get graph diff for a user
-   * 
+   *
    * GET /graph/diff/:userId
    * GET /graph/diff/:userId/:contentId
-   * 
+   *
    * Query params:
    * - since: ISO timestamp or relative time (e.g., "24h", "7d", "1w")
    */
-  @Get(':userId')
+  @Get(":userId")
   async getDiffByUser(
-    @Param('userId') userId: string,
-    @Query('since') since?: string,
+    @Param("userId") userId: string,
+    @Query("since") since?: string,
   ): Promise<GraphDiffResponseDto> {
     return this.handleGetDiff(userId, null, since);
   }
 
-  @Get(':userId/:contentId')
+  @Get(":userId/:contentId")
   async getDiffByContent(
-    @Param('userId') userId: string,
-    @Param('contentId') contentId: string,
-    @Query('since') since?: string,
+    @Param("userId") userId: string,
+    @Param("contentId") contentId: string,
+    @Query("since") since?: string,
   ): Promise<GraphDiffResponseDto> {
     return this.handleGetDiff(userId, contentId, since);
   }
@@ -47,7 +47,7 @@ export class GraphDiffController {
   ): Promise<GraphDiffResponseDto> {
     // Parse since parameter
     let sinceDate: Date;
-    
+
     if (!since) {
       // Default to last 24 hours
       sinceDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -58,14 +58,12 @@ export class GraphDiffController {
       // ISO timestamp
       sinceDate = new Date(since);
       if (isNaN(sinceDate.getTime())) {
-        throw new Error('Invalid date format. Use ISO timestamp or relative format (e.g., "24h")');
+        throw new Error(
+          'Invalid date format. Use ISO timestamp or relative format (e.g., "24h")',
+        );
       }
     }
 
-    return this.diffService.calculateDiff(
-      userId,
-      contentId,
-      sinceDate,
-    );
+    return this.diffService.calculateDiff(userId, contentId, sinceDate);
   }
 }

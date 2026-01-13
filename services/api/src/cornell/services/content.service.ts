@@ -731,4 +731,3 @@ export class ContentService {
     return version;
   }
 }
-

@@ -91,7 +91,7 @@ export class CornellHighlightsService {
       userId,
       action: CornellEvent.ANNOTATION_CREATED,
       timestamp: Date.now(),
-      data: { 
+      data: {
         type: dto.type,
         hasAnchor: !!dto.anchor_json,
         pageNumber: dto.page_number,

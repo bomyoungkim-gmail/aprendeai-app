@@ -1,11 +1,11 @@
-import { ContentMode, ContentType } from '@prisma/client';
+import { ContentMode, ContentType } from "@prisma/client";
 
 /**
  * Result of content mode resolution
  */
 export interface ModeResolution {
   mode: ContentMode;
-  source: 'PRODUCER' | 'USER' | 'HEURISTIC';
+  source: "PRODUCER" | "USER" | "HEURISTIC";
   setBy: string; // userId or 'SYSTEM'
   isHeuristic: boolean;
 }
@@ -24,12 +24,12 @@ export interface ContentForMode {
 
 /**
  * Helper for resolving Content Mode per Script 02
- * 
+ *
  * Priority (P1-P3):
  * 1. Explicit DB value (content.mode)
  * 2. UI metadata (uiMode parameter)
  * 3. Heuristic inference from ContentType + metadata
- * 
+ *
  * Pure domain logic with no framework dependencies.
  */
 export class ContentModeHelper {
@@ -45,8 +45,8 @@ export class ContentModeHelper {
     if (content.mode) {
       return {
         mode: content.mode,
-        source: (content.modeSource as any) || 'PRODUCER',
-        setBy: content.modeSetBy || 'SYSTEM',
+        source: (content.modeSource as any) || "PRODUCER",
+        setBy: content.modeSetBy || "SYSTEM",
         isHeuristic: false,
       };
     }
@@ -55,8 +55,8 @@ export class ContentModeHelper {
     if (uiMode && this.isValidMode(uiMode)) {
       return {
         mode: uiMode as ContentMode,
-        source: 'USER',
-        setBy: userId || 'SYSTEM',
+        source: "USER",
+        setBy: userId || "SYSTEM",
         isHeuristic: false,
       };
     }
@@ -65,15 +65,15 @@ export class ContentModeHelper {
     const inferredMode = this.inferFromType(content);
     return {
       mode: inferredMode,
-      source: 'HEURISTIC',
-      setBy: 'SYSTEM',
+      source: "HEURISTIC",
+      setBy: "SYSTEM",
       isHeuristic: true,
     };
   }
 
   /**
    * Infer mode from ContentType with advanced heuristics
-   * 
+   *
    * Per Script 02:
    * - NEWS → NEWS
    * - ARXIV → SCIENTIFIC
@@ -84,44 +84,44 @@ export class ContentModeHelper {
    */
   static inferFromType(content: ContentForMode): ContentMode {
     switch (content.type) {
-      case 'NEWS':
-        return 'NEWS';
+      case "NEWS":
+        return "NEWS";
 
-      case 'ARXIV':
-        return 'SCIENTIFIC';
+      case "ARXIV":
+        return "SCIENTIFIC";
 
-      case 'SCHOOL_MATERIAL':
-        return 'DIDACTIC';
+      case "SCHOOL_MATERIAL":
+        return "DIDACTIC";
 
-      case 'ARTICLE':
-      case 'WEB_CLIP':
+      case "ARTICLE":
+      case "WEB_CLIP":
         // Check for narrative patterns
         if (this.isNarrativeContent(content)) {
-          return 'NARRATIVE';
+          return "NARRATIVE";
         }
-        return 'TECHNICAL';
+        return "TECHNICAL";
 
-      case 'TEXT':
+      case "TEXT":
         // Check for narrative patterns
         if (this.isNarrativeContent(content)) {
-          return 'NARRATIVE';
+          return "NARRATIVE";
         }
-        return 'TECHNICAL';
+        return "TECHNICAL";
 
-      case 'VIDEO':
-      case 'AUDIO':
+      case "VIDEO":
+      case "AUDIO":
         // Try to inherit from transcript/description metadata
         const inheritedMode = this.inheritModeFromMedia(content);
-        return inheritedMode || 'TECHNICAL';
+        return inheritedMode || "TECHNICAL";
 
       default:
-        return 'TECHNICAL';
+        return "TECHNICAL";
     }
   }
 
   /**
    * Detect if content is narrative (fiction, story, etc.)
-   * 
+   *
    * Heuristics:
    * - Check metadata.genre for 'fiction', 'novel', 'story'
    * - Check for dialogue patterns in text (quotation marks)
@@ -132,9 +132,15 @@ export class ContentModeHelper {
     const genre = content.metadata?.genre?.toLowerCase();
     if (
       genre &&
-      ['fiction', 'novel', 'story', 'narrative', 'romance', 'ficção', 'conto'].some((g) =>
-        genre.includes(g),
-      )
+      [
+        "fiction",
+        "novel",
+        "story",
+        "narrative",
+        "romance",
+        "ficção",
+        "conto",
+      ].some((g) => genre.includes(g))
     ) {
       return true;
     }
@@ -151,7 +157,12 @@ export class ContentModeHelper {
       }
 
       // Narrative keywords
-      const narrativeKeywords = ['capítulo', 'personagem', 'protagonista', 'enredo'];
+      const narrativeKeywords = [
+        "capítulo",
+        "personagem",
+        "protagonista",
+        "enredo",
+      ];
       if (narrativeKeywords.some((kw) => text.includes(kw))) {
         return true;
       }
@@ -163,31 +174,35 @@ export class ContentModeHelper {
   /**
    * Inherit mode from VIDEO/AUDIO transcript or description
    */
-  private static inheritModeFromMedia(content: ContentForMode): ContentMode | null {
+  private static inheritModeFromMedia(
+    content: ContentForMode,
+  ): ContentMode | null {
     // Check if metadata has a mode hint
-    const metadataMode = content.metadata?.contentMode || content.metadata?.mode;
+    const metadataMode =
+      content.metadata?.contentMode || content.metadata?.mode;
     if (metadataMode && this.isValidMode(metadataMode)) {
       return metadataMode as ContentMode;
     }
 
     // Check transcript/description for patterns
-    const description = content.metadata?.description || content.metadata?.transcript;
+    const description =
+      content.metadata?.description || content.metadata?.transcript;
     if (description) {
       const descLower = description.toLowerCase();
 
       // Didactic patterns
       if (/aula|didático|educacional|tutorial|curso/i.test(descLower)) {
-        return 'DIDACTIC';
+        return "DIDACTIC";
       }
 
       // News patterns
       if (/notícia|reportagem|jornalismo|entrevista/i.test(descLower)) {
-        return 'NEWS';
+        return "NEWS";
       }
 
       // Scientific patterns
       if (/pesquisa|estudo|científico|experimento/i.test(descLower)) {
-        return 'SCIENTIFIC';
+        return "SCIENTIFIC";
       }
     }
 
@@ -198,8 +213,13 @@ export class ContentModeHelper {
    * Validate if string is a valid ContentMode
    */
   private static isValidMode(mode: string): boolean {
-    return ['NARRATIVE', 'DIDACTIC', 'TECHNICAL', 'NEWS', 'SCIENTIFIC', 'LANGUAGE'].includes(
-      mode,
-    );
+    return [
+      "NARRATIVE",
+      "DIDACTIC",
+      "TECHNICAL",
+      "NEWS",
+      "SCIENTIFIC",
+      "LANGUAGE",
+    ].includes(mode);
   }
 }

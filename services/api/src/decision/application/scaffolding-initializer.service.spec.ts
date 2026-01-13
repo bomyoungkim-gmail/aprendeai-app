@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ContentMode } from '@prisma/client';
-import { ScaffoldingInitializerService } from './scaffolding-initializer.service';
-import { LearnerProfileForScaffolding } from '../domain/scaffolding.types';
+import { Test, TestingModule } from "@nestjs/testing";
+import { ContentMode } from "@prisma/client";
+import { ScaffoldingInitializerService } from "./scaffolding-initializer.service";
+import { LearnerProfileForScaffolding } from "../domain/scaffolding.types";
 
-describe('ScaffoldingInitializerService', () => {
+describe("ScaffoldingInitializerService", () => {
   let service: ScaffoldingInitializerService;
 
   beforeEach(async () => {
@@ -12,17 +12,17 @@ describe('ScaffoldingInitializerService', () => {
     }).compile();
 
     service = module.get<ScaffoldingInitializerService>(
-      ScaffoldingInitializerService
+      ScaffoldingInitializerService,
     );
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('getInitialLevel', () => {
-    describe('DIDACTIC mode', () => {
-      it('should return L3 for new users', () => {
+  describe("getInitialLevel", () => {
+    describe("DIDACTIC mode", () => {
+      it("should return L3 for new users", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: true,
           avgMastery: 0.5,
@@ -37,7 +37,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(3);
       });
 
-      it('should return L3 for low mastery users (avgMastery < 0.4)', () => {
+      it("should return L3 for low mastery users (avgMastery < 0.4)", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0.3,
@@ -52,7 +52,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(3);
       });
 
-      it('should return L2 for experienced users (avgMastery >= 0.4)', () => {
+      it("should return L2 for experienced users (avgMastery >= 0.4)", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0.6,
@@ -67,7 +67,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(2);
       });
 
-      it('should return L2 for edge case avgMastery = 0.4', () => {
+      it("should return L2 for edge case avgMastery = 0.4", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0.4,
@@ -83,8 +83,8 @@ describe('ScaffoldingInitializerService', () => {
       });
     });
 
-    describe('NARRATIVE mode', () => {
-      it('should return L0 for high mastery users (avgMastery > 0.7)', () => {
+    describe("NARRATIVE mode", () => {
+      it("should return L0 for high mastery users (avgMastery > 0.7)", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0.8,
@@ -99,7 +99,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(0);
       });
 
-      it('should return L1 for average users (avgMastery <= 0.7)', () => {
+      it("should return L1 for average users (avgMastery <= 0.7)", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0.5,
@@ -114,7 +114,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(1);
       });
 
-      it('should return L1 for edge case avgMastery = 0.7', () => {
+      it("should return L1 for edge case avgMastery = 0.7", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0.7,
@@ -129,7 +129,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(1);
       });
 
-      it('should return L1 for new users', () => {
+      it("should return L1 for new users", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: true,
           avgMastery: 0.0,
@@ -145,8 +145,8 @@ describe('ScaffoldingInitializerService', () => {
       });
     });
 
-    describe('TECHNICAL mode', () => {
-      it('should return L1 for high mastery users (avgMastery > 0.6)', () => {
+    describe("TECHNICAL mode", () => {
+      it("should return L1 for high mastery users (avgMastery > 0.6)", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0.7,
@@ -161,7 +161,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(1);
       });
 
-      it('should return L2 for average users (avgMastery <= 0.6)', () => {
+      it("should return L2 for average users (avgMastery <= 0.6)", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0.5,
@@ -176,7 +176,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(2);
       });
 
-      it('should return L2 for edge case avgMastery = 0.6', () => {
+      it("should return L2 for edge case avgMastery = 0.6", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0.6,
@@ -192,8 +192,8 @@ describe('ScaffoldingInitializerService', () => {
       });
     });
 
-    describe('SCIENTIFIC mode', () => {
-      it('should return L1 for high mastery users (avgMastery > 0.6)', () => {
+    describe("SCIENTIFIC mode", () => {
+      it("should return L1 for high mastery users (avgMastery > 0.6)", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0.8,
@@ -208,7 +208,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(1);
       });
 
-      it('should return L2 for average users (avgMastery <= 0.6)', () => {
+      it("should return L2 for average users (avgMastery <= 0.6)", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0.4,
@@ -224,8 +224,8 @@ describe('ScaffoldingInitializerService', () => {
       });
     });
 
-    describe('NEWS mode', () => {
-      it('should return L1 for good recent performance (recentPerformance > 0.7)', () => {
+    describe("NEWS mode", () => {
+      it("should return L1 for good recent performance (recentPerformance > 0.7)", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0.5,
@@ -240,7 +240,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(1);
       });
 
-      it('should return L2 for poor recent performance (recentPerformance <= 0.7)', () => {
+      it("should return L2 for poor recent performance (recentPerformance <= 0.7)", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0.5,
@@ -255,7 +255,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(2);
       });
 
-      it('should return L2 for edge case recentPerformance = 0.7', () => {
+      it("should return L2 for edge case recentPerformance = 0.7", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0.5,
@@ -271,8 +271,8 @@ describe('ScaffoldingInitializerService', () => {
       });
     });
 
-    describe('GAP 6: Policy Override', () => {
-      it('should respect valid policy override (L0)', () => {
+    describe("GAP 6: Policy Override", () => {
+      it("should respect valid policy override (L0)", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: true,
           avgMastery: 0.2,
@@ -288,7 +288,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(0);
       });
 
-      it('should respect valid policy override (L1)', () => {
+      it("should respect valid policy override (L1)", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: true,
           avgMastery: 0.2,
@@ -304,7 +304,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(1);
       });
 
-      it('should respect valid policy override (L2)', () => {
+      it("should respect valid policy override (L2)", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: true,
           avgMastery: 0.2,
@@ -320,7 +320,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(2);
       });
 
-      it('should respect valid policy override (L3)', () => {
+      it("should respect valid policy override (L3)", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0.9,
@@ -336,7 +336,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(3);
       });
 
-      it('should ignore invalid policy override (negative)', () => {
+      it("should ignore invalid policy override (negative)", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: true,
           avgMastery: 0.2,
@@ -352,7 +352,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(3); // Should use normal logic (new user → L3)
       });
 
-      it('should ignore invalid policy override (> 3)', () => {
+      it("should ignore invalid policy override (> 3)", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: true,
           avgMastery: 0.2,
@@ -368,7 +368,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(3); // Should use normal logic
       });
 
-      it('should ignore invalid policy override (float)', () => {
+      it("should ignore invalid policy override (float)", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: true,
           avgMastery: 0.2,
@@ -384,7 +384,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(3); // Should use normal logic
       });
 
-      it('should work when policyOverride is undefined', () => {
+      it("should work when policyOverride is undefined", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0.6,
@@ -401,8 +401,8 @@ describe('ScaffoldingInitializerService', () => {
       });
     });
 
-    describe('Edge Cases', () => {
-      it('should handle avgMastery = 0', () => {
+    describe("Edge Cases", () => {
+      it("should handle avgMastery = 0", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0,
@@ -417,7 +417,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(3); // Low mastery → L3
       });
 
-      it('should handle avgMastery = 1', () => {
+      it("should handle avgMastery = 1", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 1,
@@ -432,7 +432,7 @@ describe('ScaffoldingInitializerService', () => {
         expect(level).toBe(0); // Perfect mastery → L0
       });
 
-      it('should return L2 for unknown ContentMode', () => {
+      it("should return L2 for unknown ContentMode", () => {
         const profile: LearnerProfileForScaffolding = {
           isNewUser: false,
           avgMastery: 0.5,
@@ -440,7 +440,7 @@ describe('ScaffoldingInitializerService', () => {
         };
 
         const level = service.getInitialLevel({
-          mode: 'UNKNOWN_MODE' as ContentMode,
+          mode: "UNKNOWN_MODE" as ContentMode,
           learnerProfile: profile,
         });
 

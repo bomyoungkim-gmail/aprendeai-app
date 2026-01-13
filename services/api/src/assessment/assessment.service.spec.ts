@@ -1,10 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { AssessmentService } from './assessment.service';
-import { CreateAssessmentUseCase } from './application/use-cases/create-assessment.use-case';
-import { GetAssessmentUseCase } from './application/use-cases/get-assessment.use-case';
-import { SubmitAssessmentUseCase } from './application/use-cases/submit-assessment.use-case';
+import { Test, TestingModule } from "@nestjs/testing";
+import { AssessmentService } from "./assessment.service";
+import { CreateAssessmentUseCase } from "./application/use-cases/create-assessment.use-case";
+import { GetAssessmentUseCase } from "./application/use-cases/get-assessment.use-case";
+import { SubmitAssessmentUseCase } from "./application/use-cases/submit-assessment.use-case";
 
-describe('AssessmentService', () => {
+describe("AssessmentService", () => {
   let service: AssessmentService;
   let getUseCase: GetAssessmentUseCase;
 
@@ -33,39 +33,39 @@ describe('AssessmentService', () => {
     jest.clearAllMocks();
   });
 
-  describe('getPendingCheckpoints', () => {
-    const userId = 'user-1';
-    const contentId = 'content-1';
+  describe("getPendingCheckpoints", () => {
+    const userId = "user-1";
+    const contentId = "content-1";
 
-    it('should return assessments that have NO attempts at all', async () => {
+    it("should return assessments that have NO attempts at all", async () => {
       mockGetUseCase.getByContentId.mockResolvedValue([
-        { id: 'assess-1', content_id: contentId },
+        { id: "assess-1", content_id: contentId },
       ]);
       mockGetUseCase.getUserAssessments.mockResolvedValue([]); // No attempts
 
       const result = await service.getPendingCheckpoints(userId, contentId);
       expect(result).toHaveLength(1);
-      expect(result[0].id).toBe('assess-1');
+      expect(result[0].id).toBe("assess-1");
     });
 
-    it('should return assessments that have only unfinished attempts', async () => {
+    it("should return assessments that have only unfinished attempts", async () => {
       mockGetUseCase.getByContentId.mockResolvedValue([
-        { id: 'assess-1', content_id: contentId },
+        { id: "assess-1", content_id: contentId },
       ]);
       mockGetUseCase.getUserAssessments.mockResolvedValue([
-        { assessment_id: 'assess-1', finished_at: null }, // Unfinished
+        { assessment_id: "assess-1", finished_at: null }, // Unfinished
       ]);
 
       const result = await service.getPendingCheckpoints(userId, contentId);
       expect(result).toHaveLength(1);
     });
 
-    it('should NOT return assessments that have a finished attempt', async () => {
+    it("should NOT return assessments that have a finished attempt", async () => {
       mockGetUseCase.getByContentId.mockResolvedValue([
-        { id: 'assess-1', content_id: contentId },
+        { id: "assess-1", content_id: contentId },
       ]);
       mockGetUseCase.getUserAssessments.mockResolvedValue([
-        { assessment_id: 'assess-1', finished_at: new Date() }, // Finished
+        { assessment_id: "assess-1", finished_at: new Date() }, // Finished
       ]);
 
       const result = await service.getPendingCheckpoints(userId, contentId);

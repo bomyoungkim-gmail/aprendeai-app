@@ -1,5 +1,5 @@
-import { PkmNote } from '../entities/pkm-note.entity';
-import { PkmNoteStatus } from '@prisma/client';
+import { PkmNote } from "../entities/pkm-note.entity";
+import { PkmNoteStatus } from "@prisma/client";
 
 export interface IPkmNoteRepository {
   /**
@@ -10,7 +10,11 @@ export interface IPkmNoteRepository {
   /**
    * Find PKM notes by user ID with optional pagination
    */
-  findByUserId(userId: string, limit?: number, offset?: number): Promise<PkmNote[]>;
+  findByUserId(
+    userId: string,
+    limit?: number,
+    offset?: number,
+  ): Promise<PkmNote[]>;
 
   /**
    * Find PKM notes by content ID
@@ -63,4 +67,4 @@ export interface IPkmNoteRepository {
   countByUserId(userId: string, status?: PkmNoteStatus): Promise<number>;
 }
 
-export const IPkmNoteRepository = Symbol('IPkmNoteRepository');
+export const IPkmNoteRepository = Symbol("IPkmNoteRepository");

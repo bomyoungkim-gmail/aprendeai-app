@@ -1,10 +1,11 @@
-import { IsBoolean, IsEnum, IsOptional, IsString, IsArray } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
+import { IsBoolean, IsOptional, IsString, IsArray } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class BuildDeterministicSourceDto {
-  @ApiProperty({ enum: ['GLOBAL', 'INSTITUTION', 'STUDY_GROUP', 'FAMILY', 'USER'] })
-  scopeType: 'GLOBAL' | 'INSTITUTION' | 'STUDY_GROUP' | 'FAMILY' | 'USER';
+  @ApiProperty({
+    enum: ["GLOBAL", "INSTITUTION", "STUDY_GROUP", "FAMILY", "USER"],
+  })
+  scopeType: "GLOBAL" | "INSTITUTION" | "STUDY_GROUP" | "FAMILY" | "USER";
 
   @ApiPropertyOptional()
   @IsString()
@@ -17,10 +18,10 @@ export class BuildDeterministicSourceDto {
   @IsOptional()
   contentIds?: string[];
 
-  @ApiPropertyOptional({ enum: ['INCREMENTAL', 'FULL'] })
+  @ApiPropertyOptional({ enum: ["INCREMENTAL", "FULL"] })
   @IsString()
   @IsOptional()
-  mode?: 'INCREMENTAL' | 'FULL';
+  mode?: "INCREMENTAL" | "FULL";
 
   @ApiPropertyOptional()
   @IsBoolean()

@@ -1,18 +1,18 @@
 /**
  * Cornell Trigger Service
- * 
+ *
  * Maps Cornell events (pillars) to business rules and actions.
  * Implements deterministic logic for Vocabulary, Doubt, Evidence, Main Idea, and Synthesis.
- * 
+ *
  * Clean Architecture: Application layer service.
  */
 
-import { Injectable, Logger } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
-import { PrismaService } from '../../prisma/prisma.service';
-import { DecisionService } from './decision.service';
-import { TelemetryService } from '../../telemetry/telemetry.service';
-import { TelemetryEventType } from '../../telemetry/domain/telemetry.constants';
+import { Injectable, Logger } from "@nestjs/common";
+import { OnEvent } from "@nestjs/event-emitter";
+import { PrismaService } from "../../prisma/prisma.service";
+import { DecisionService } from "./decision.service";
+import { TelemetryService } from "../../telemetry/telemetry.service";
+import { TelemetryEventType } from "../../telemetry/domain/telemetry.constants";
 
 interface CornellEventPayload {
   contentId: string;
@@ -34,9 +34,9 @@ export class CornellTriggerService {
   /**
    * VOCABULARY: Check glossary and mark needs_glossary if missing
    */
-  @OnEvent('cornell_highlight_created')
+  @OnEvent("cornell_highlight_created")
   async handleVocabularyHighlight(payload: CornellEventPayload) {
-    if (payload.data?.pillarTag !== 'VOCABULARY') return;
+    if (payload.data?.pillarTag !== "VOCABULARY") return;
 
     const { contentId, userId, data } = payload;
     const highlightText = data?.text || data?.comment;
@@ -44,11 +44,16 @@ export class CornellTriggerService {
     if (!highlightText) return;
 
     // Check if term exists in glossary
-    const glossaryEntry = await this.findGlossaryEntry(contentId, highlightText);
+    const glossaryEntry = await this.findGlossaryEntry(
+      contentId,
+      highlightText,
+    );
 
     if (!glossaryEntry) {
-      this.logger.debug(`Vocabulary term "${highlightText}" not found in glossary. Marking needs_glossary.`);
-      
+      this.logger.debug(
+        `Vocabulary term "${highlightText}" not found in glossary. Marking needs_glossary.`,
+      );
+
       // Mark metadata for pipeline
       await this.markNeedsGlossary(contentId, highlightText);
     }
@@ -57,54 +62,63 @@ export class CornellTriggerService {
   /**
    * DOUBT: Trigger DecisionService with DOUBT_SPIKE
    */
-  @OnEvent('cornell_highlight_created')
+  @OnEvent("cornell_highlight_created")
   async handleDoubtHighlight(payload: CornellEventPayload) {
-    if (payload.data?.pillarTag !== 'DOUBT') return;
+    if (payload.data?.pillarTag !== "DOUBT") return;
 
     const { contentId, userId, sessionId } = payload;
 
-    this.logger.debug(`DOUBT highlight detected for user ${userId}. Triggering DecisionService.`);
+    this.logger.debug(
+      `DOUBT highlight detected for user ${userId}. Triggering DecisionService.`,
+    );
 
     try {
       const decision = await this.decisionService.makeDecision({
         userId,
-        sessionId: sessionId || 'unknown',
+        sessionId: sessionId || "unknown",
         contentId,
-        uiPolicyVersion: '1.0.0',
+        uiPolicyVersion: "1.0.0",
         signals: {
-          explicitUserAction: 'USER_EXPLICIT_ASK',
+          explicitUserAction: "USER_EXPLICIT_ASK",
           doubtsInWindow: 1, // Single doubt mark
           checkpointFailures: 0,
-          flowState: 'FLOW',
-          summaryQuality: 'OK',
+          flowState: "FLOW",
+          summaryQuality: "OK",
         },
       });
 
-      this.logger.debug(`Decision for DOUBT: ${decision.action} (${decision.reason})`);
+      this.logger.debug(
+        `Decision for DOUBT: ${decision.action} (${decision.reason})`,
+      );
     } catch (error) {
-      this.logger.error('Failed to trigger DecisionService for DOUBT', error.stack);
+      this.logger.error(
+        "Failed to trigger DecisionService for DOUBT",
+        error.stack,
+      );
     }
   }
 
   /**
    * MAIN_IDEA / EVIDENCE: Update section_transfer_metadata
    */
-  @OnEvent('cornell_highlight_created')
+  @OnEvent("cornell_highlight_created")
   async handleEvidenceOrMainIdea(payload: CornellEventPayload) {
     const pillarTag = payload.data?.pillarTag;
-    if (pillarTag !== 'MAIN_IDEA' && pillarTag !== 'EVIDENCE') return;
+    if (pillarTag !== "MAIN_IDEA" && pillarTag !== "EVIDENCE") return;
 
     const { contentId, userId, data } = payload;
     const pageNumber = data?.pageNumber || 0;
-    const highlightText = data?.text || data?.comment || '';
+    const highlightText = data?.text || data?.comment || "";
 
-    this.logger.debug(`${pillarTag} highlight detected. Updating transfer metadata.`);
+    this.logger.debug(
+      `${pillarTag} highlight detected. Updating transfer metadata.`,
+    );
 
     try {
       // Find existing metadata for this content/chunk
       const chunkId = `${contentId}_page_${pageNumber}`;
       const existing = await this.prisma.section_transfer_metadata.findFirst({
-        where: { content_id: contentId, chunk_id: chunkId }
+        where: { content_id: contentId, chunk_id: chunkId },
       });
 
       if (existing) {
@@ -115,12 +129,14 @@ export class CornellTriggerService {
         await this.prisma.section_transfer_metadata.update({
           where: { id: existing.id },
           data: {
-            concept_json: pillarTag === 'MAIN_IDEA' 
-              ? { ...currentConcepts, [highlightText]: true }
-              : currentConcepts,
-            tools_json: pillarTag === 'EVIDENCE'
-              ? { ...currentTools, [highlightText]: true }
-              : currentTools,
+            concept_json:
+              pillarTag === "MAIN_IDEA"
+                ? { ...currentConcepts, [highlightText]: true }
+                : currentConcepts,
+            tools_json:
+              pillarTag === "EVIDENCE"
+                ? { ...currentTools, [highlightText]: true }
+                : currentTools,
             updated_at: new Date(),
           },
         });
@@ -131,32 +147,36 @@ export class CornellTriggerService {
             content_id: contentId,
             chunk_id: chunkId,
             page_number: pageNumber,
-            concept_json: pillarTag === 'MAIN_IDEA' ? { [highlightText]: true } : {},
-            tools_json: pillarTag === 'EVIDENCE' ? { [highlightText]: true } : {},
+            concept_json:
+              pillarTag === "MAIN_IDEA" ? { [highlightText]: true } : {},
+            tools_json:
+              pillarTag === "EVIDENCE" ? { [highlightText]: true } : {},
           },
         });
       }
 
       this.logger.debug(`Transfer metadata updated for chunk ${chunkId}`);
     } catch (error) {
-      this.logger.error('Failed to update transfer metadata', error.stack);
+      this.logger.error("Failed to update transfer metadata", error.stack);
     }
   }
 
   /**
    * SYNTHESIS: Trigger POST phase missions (Bridging + PKM)
    */
-  @OnEvent('cornell_summary_submitted')
+  @OnEvent("cornell_summary_submitted")
   async handleSynthesis(payload: CornellEventPayload) {
     const { contentId, userId, sessionId, data } = payload;
     const summaryLength = data?.summaryLen || 0;
 
     if (summaryLength < 50) {
-      this.logger.debug('Summary too short. Skipping POST phase trigger.');
+      this.logger.debug("Summary too short. Skipping POST phase trigger.");
       return;
     }
 
-    this.logger.debug(`SYNTHESIS detected (${summaryLength} chars). Triggering POST phase.`);
+    this.logger.debug(
+      `SYNTHESIS detected (${summaryLength} chars). Triggering POST phase.`,
+    );
 
     try {
       // Assign Bridging Mission (deterministic)
@@ -165,9 +185,9 @@ export class CornellTriggerService {
       // Assign PKM Mission (deterministic)
       await this.assignPKMMission(userId, contentId, sessionId);
 
-      this.logger.debug('POST phase missions assigned successfully.');
+      this.logger.debug("POST phase missions assigned successfully.");
     } catch (error) {
-      this.logger.error('Failed to assign POST phase missions', error.stack);
+      this.logger.error("Failed to assign POST phase missions", error.stack);
     }
   }
 
@@ -203,34 +223,41 @@ export class CornellTriggerService {
 
   private async markNeedsGlossary(contentId: string, term: string) {
     // Update content metadata to flag missing glossary
-    const content = await this.prisma.contents.findUnique({ 
-      where: { id: contentId }, 
-      select: { metadata: true } 
+    const content = await this.prisma.contents.findUnique({
+      where: { id: contentId },
+      select: { metadata: true },
     });
 
     await this.prisma.contents.update({
       where: { id: contentId },
       data: {
         metadata: {
-          ...(content?.metadata as any || {}),
+          ...((content?.metadata as any) || {}),
           needs_glossary: true,
-          missing_terms: [...((content?.metadata as any)?.missing_terms || []), term],
+          missing_terms: [
+            ...((content?.metadata as any)?.missing_terms || []),
+            term,
+          ],
         },
       },
     });
   }
 
-  private async assignBridgingMission(userId: string, contentId: string, sessionId?: string) {
+  private async assignBridgingMission(
+    userId: string,
+    contentId: string,
+    sessionId?: string,
+  ) {
     // Find Bridging mission template using 'type' enum
     const mission = await this.prisma.transfer_missions.findFirst({
-      where: { 
-        type: 'BRIDGING',
-        scope_type: 'GLOBAL',
+      where: {
+        type: "BRIDGING",
+        scope_type: "GLOBAL",
       },
     });
 
     if (!mission) {
-      this.logger.warn('Bridging mission template not found.');
+      this.logger.warn("Bridging mission template not found.");
       return;
     }
 
@@ -240,34 +267,41 @@ export class CornellTriggerService {
         user_id: userId,
         mission_id: mission.id,
         content_id: contentId,
-        status: 'PENDING',
+        status: "PENDING",
       },
     });
 
     // Emit telemetry
-    await this.telemetryService.track({
-      eventType: TelemetryEventType.MISSION_ASSIGNED,
-      eventVersion: '1.0.0',
-      contentId,
-      sessionId: sessionId || 'unknown',
-      data: {
-        missionId: mission.id,
-        type: 'BRIDGING',
+    await this.telemetryService.track(
+      {
+        eventType: TelemetryEventType.MISSION_ASSIGNED,
+        eventVersion: "1.0.0",
+        contentId,
+        sessionId: sessionId || "unknown",
+        data: {
+          missionId: mission.id,
+          type: "BRIDGING",
+        },
       },
-    }, userId);
+      userId,
+    );
   }
 
-  private async assignPKMMission(userId: string, contentId: string, sessionId?: string) {
+  private async assignPKMMission(
+    userId: string,
+    contentId: string,
+    sessionId?: string,
+  ) {
     // Find PKM mission template using 'type' enum
     const mission = await this.prisma.transfer_missions.findFirst({
-      where: { 
-        type: 'PKM',
-        scope_type: 'GLOBAL',
+      where: {
+        type: "PKM",
+        scope_type: "GLOBAL",
       },
     });
 
     if (!mission) {
-      this.logger.warn('PKM mission template not found.');
+      this.logger.warn("PKM mission template not found.");
       return;
     }
 
@@ -277,20 +311,23 @@ export class CornellTriggerService {
         user_id: userId,
         mission_id: mission.id,
         content_id: contentId,
-        status: 'PENDING',
+        status: "PENDING",
       },
     });
 
     // Emit telemetry
-    await this.telemetryService.track({
-      eventType: TelemetryEventType.MISSION_ASSIGNED,
-      eventVersion: '1.0.0',
-      contentId,
-      sessionId: sessionId || 'unknown',
-      data: {
-        missionId: mission.id,
-        type: 'PKM',
+    await this.telemetryService.track(
+      {
+        eventType: TelemetryEventType.MISSION_ASSIGNED,
+        eventVersion: "1.0.0",
+        contentId,
+        sessionId: sessionId || "unknown",
+        data: {
+          missionId: mission.id,
+          type: "PKM",
+        },
       },
-    }, userId);
+      userId,
+    );
   }
 }

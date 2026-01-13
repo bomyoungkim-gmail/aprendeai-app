@@ -1,24 +1,23 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { ContentMode } from '@prisma/client';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { ContentMode } from "@prisma/client";
 import {
   ScaffoldingSignal,
-  ScaffoldingSignalType,
   ScaffoldingState,
-} from '../domain/scaffolding.types';
+} from "../domain/scaffolding.types";
 
 /**
  * Detecta sinais de performance do aluno e recomenda ajustes de scaffolding.
- * 
+ *
  * SCRIPT 03 - Fase 2: Signal-Based Adjustment
- * 
+ *
  * Sinais detectados:
  * - Doubt spike (3+ DOUBTs em 5 min)
  * - Checkpoint quality (média de completion_quality)
  * - Quiz accuracy (últimos 3 quizzes)
  * - Deep reading index (via TelemetryAggregator)
  * - Rehighlight rate (GAP 3)
- * 
+ *
  * @see scaffolding_fading_plan.md - Fase 2.1
  */
 @Injectable()
@@ -29,9 +28,9 @@ export class ScaffoldingSignalDetectorService {
 
   /**
    * Detecta sinal de ajuste de scaffolding baseado em eventos recentes.
-   * 
+   *
    * GAP 5: Passa currentState para verificar consecutiveSuccesses.
-   * 
+   *
    * @param userId - User ID
    * @param contentId - Content ID
    * @param mode - Content mode
@@ -56,10 +55,10 @@ export class ScaffoldingSignalDetectorService {
 
     this.logger.debug(
       `Signals detected for user ${userId}: doubtSpike=${doubtSpike}, ` +
-      `checkpointQuality=${checkpointQuality.toFixed(2)}, ` +
-      `quizAccuracy=${quizAccuracy.toFixed(2)}, ` +
-      `deepReadingIndex=${deepReadingIndex.toFixed(2)}, ` +
-      `rehighlightRate=${rehighlightRate.toFixed(2)}`
+        `checkpointQuality=${checkpointQuality.toFixed(2)}, ` +
+        `quizAccuracy=${quizAccuracy.toFixed(2)}, ` +
+        `deepReadingIndex=${deepReadingIndex.toFixed(2)}, ` +
+        `rehighlightRate=${rehighlightRate.toFixed(2)}`,
     );
 
     // Avaliar sinais e retornar recomendação
@@ -78,7 +77,7 @@ export class ScaffoldingSignalDetectorService {
 
   /**
    * Busca eventos recentes (últimos 10 minutos).
-   * 
+   *
    * @private
    */
   private async getRecentEvents(
@@ -96,27 +95,28 @@ export class ScaffoldingSignalDetectorService {
           },
           created_at: { gte: tenMinutesAgo },
         },
-        orderBy: { created_at: 'desc' },
+        orderBy: { created_at: "desc" },
         take: 100,
       });
     } catch (error) {
-      this.logger.warn('Failed to fetch recent events:', error);
+      this.logger.warn("Failed to fetch recent events:", error);
       return [];
     }
   }
 
   /**
    * Detecta spike de dúvidas (3+ DOUBTs em 5 min).
-   * 
+   *
    * @private
    */
+  // TODO: Refactor flow threshold (0.7) to use FLOW_THRESHOLDS.HIGH_FLOW from decision.constants.ts
+  // Currently hardcoded, low priority for refactoring
   private detectDoubtSpike(events: any[]): boolean {
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    
+
     const recentDoubts = events.filter(
       (e) =>
-        e.event_type === 'DOUBT' &&
-        new Date(e.created_at) >= fiveMinutesAgo,
+        e.event_type === "DOUBT" && new Date(e.created_at) >= fiveMinutesAgo,
     );
 
     return recentDoubts.length >= 3;
@@ -124,13 +124,15 @@ export class ScaffoldingSignalDetectorService {
 
   /**
    * Calcula qualidade média de checkpoints (completion_quality).
-   * 
+   *
    * @private
    * @returns Quality score (0.0-1.0), defaults to 1.0 if no data
    */
   private calculateCheckpointQuality(events: any[]): number {
     const checkpoints = events.filter(
-      (e) => e.event_type === 'CHECKPOINT_ANSWER' && (e.payload_json as any)?.completion_quality,
+      (e) =>
+        e.event_type === "CHECKPOINT_ANSWER" &&
+        (e.payload_json as any)?.completion_quality,
     );
 
     if (checkpoints.length === 0) return 1.0; // Sem dados = assume bom
@@ -145,7 +147,7 @@ export class ScaffoldingSignalDetectorService {
 
   /**
    * Busca acurácia dos últimos 3 quizzes.
-   * 
+   *
    * @private
    * @returns Accuracy (0.0-1.0), defaults to 1.0 if no data
    */
@@ -154,9 +156,9 @@ export class ScaffoldingSignalDetectorService {
       const recentQuizzes = await this.prisma.session_events.findMany({
         where: {
           reading_sessions: { user_id: userId },
-          event_type: 'QUIZ_COMPLETE' as any,
+          event_type: "QUIZ_COMPLETE" as any,
         },
-        orderBy: { created_at: 'desc' },
+        orderBy: { created_at: "desc" },
         take: 3,
       });
 
@@ -173,16 +175,16 @@ export class ScaffoldingSignalDetectorService {
 
       return totalCorrect / totalQuestions;
     } catch (error) {
-      this.logger.warn('Failed to fetch quiz accuracy:', error);
+      this.logger.warn("Failed to fetch quiz accuracy:", error);
       return 1.0;
     }
   }
 
   /**
    * Calcula deep reading index (tempo de leitura contínua).
-   * 
+   *
    * TODO: Integrar com TelemetryAggregator quando disponível.
-   * 
+   *
    * @private
    * @returns Deep reading index (0.0-1.0), currently returns 0.5 (placeholder)
    */
@@ -197,7 +199,7 @@ export class ScaffoldingSignalDetectorService {
 
   /**
    * GAP 3: Calcula taxa de rehighlights (% de highlights que são re-highlights).
-   * 
+   *
    * @private
    * @returns Rehighlight rate (0.0-1.0)
    */
@@ -212,7 +214,7 @@ export class ScaffoldingSignalDetectorService {
             user_id: userId,
             content_id: contentId,
           },
-          event_type: 'HIGHLIGHT' as any,
+          event_type: "HIGHLIGHT" as any,
         },
         select: {
           payload_json: true,
@@ -227,17 +229,17 @@ export class ScaffoldingSignalDetectorService {
 
       return rehighlights.length / highlights.length;
     } catch (error) {
-      this.logger.warn('Failed to fetch rehighlight rate:', error);
+      this.logger.warn("Failed to fetch rehighlight rate:", error);
       return 0;
     }
   }
 
   /**
    * Avalia sinais e retorna recomendação de ajuste.
-   * 
+   *
    * GAP 5: Verifica consecutiveSuccesses para fading.
    * GAP 8: Detecta flow state para NARRATIVE mode.
-   * 
+   *
    * @private
    */
   private evaluateSignals(
@@ -259,15 +261,15 @@ export class ScaffoldingSignalDetectorService {
       data.rehighlightRate > 0.3 // GAP 3: >30% de rehighlights
     ) {
       const reason = data.doubtSpike
-        ? 'doubt_spike'
+        ? "doubt_spike"
         : data.rehighlightRate > 0.3
-        ? 'high_rehighlight_rate'
-        : 'low_performance';
+          ? "high_rehighlight_rate"
+          : "low_performance";
 
       this.logger.log(`Signal: INCREASE (${reason})`);
 
       return {
-        type: 'INCREASE',
+        type: "INCREASE",
         reason,
         confidence: 0.8,
         evidence: data,
@@ -288,7 +290,7 @@ export class ScaffoldingSignalDetectorService {
         lowRehighlight: data.rehighlightRate < 0.2,
       };
 
-      const flowScore = 
+      const flowScore =
         (flowIndicators.sustainedReading ? 0.4 : 0) +
         (flowIndicators.noDoubtSpike ? 0.3 : 0) +
         (flowIndicators.lowRehighlight ? 0.3 : 0);
@@ -297,12 +299,12 @@ export class ScaffoldingSignalDetectorService {
       // This is NARRATIVE-specific: we prioritize not interrupting flow
       if (flowScore >= 0.7 && currentState.currentLevel > 0) {
         this.logger.log(
-          `Signal: DECREASE (narrative_flow_state, score=${flowScore.toFixed(2)})`
+          `Signal: DECREASE (narrative_flow_state, score=${flowScore.toFixed(2)})`,
         );
 
         return {
-          type: 'DECREASE',
-          reason: 'narrative_flow_state',
+          type: "DECREASE",
+          reason: "narrative_flow_state",
           confidence: flowScore,
           evidence: {
             ...data,
@@ -321,16 +323,17 @@ export class ScaffoldingSignalDetectorService {
       data.deepReadingIndex > 0.7
     ) {
       const requiredSessions = 3;
-      const consecutiveSuccesses = currentState.fadingMetrics.consecutiveSuccesses;
+      const consecutiveSuccesses =
+        currentState.fadingMetrics.consecutiveSuccesses;
 
       if (consecutiveSuccesses >= requiredSessions) {
         this.logger.log(
-          `Signal: DECREASE (consistent_mastery, ${consecutiveSuccesses} consecutive sessions)`
+          `Signal: DECREASE (consistent_mastery, ${consecutiveSuccesses} consecutive sessions)`,
         );
 
         return {
-          type: 'DECREASE',
-          reason: 'consistent_mastery',
+          type: "DECREASE",
+          reason: "consistent_mastery",
           confidence: 0.9,
           evidence: {
             ...data,
@@ -340,12 +343,12 @@ export class ScaffoldingSignalDetectorService {
       } else {
         // Performance boa mas ainda não atingiu 3+ sessões
         this.logger.debug(
-          `Signal: MAINTAIN (building_consistency, ${consecutiveSuccesses}/${requiredSessions} sessions)`
+          `Signal: MAINTAIN (building_consistency, ${consecutiveSuccesses}/${requiredSessions} sessions)`,
         );
 
         return {
-          type: 'MAINTAIN',
-          reason: 'building_consistency',
+          type: "MAINTAIN",
+          reason: "building_consistency",
           confidence: 0.6,
           evidence: {
             ...data,
@@ -356,11 +359,11 @@ export class ScaffoldingSignalDetectorService {
     }
 
     // Default: MAINTAIN
-    this.logger.debug('Signal: MAINTAIN (stable_performance)');
+    this.logger.debug("Signal: MAINTAIN (stable_performance)");
 
     return {
-      type: 'MAINTAIN',
-      reason: 'stable_performance',
+      type: "MAINTAIN",
+      reason: "stable_performance",
       confidence: 0.5,
       evidence: data,
     };

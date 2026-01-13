@@ -1,11 +1,11 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEnum } from "class-validator";
 
 export enum GraphScopeTypeEnum {
-  USER = 'USER',
-  FAMILY = 'FAMILY',
-  INSTITUTION = 'INSTITUTION',
-  STUDY_GROUP = 'STUDY_GROUP',
-  GLOBAL = 'GLOBAL',
+  USER = "USER",
+  FAMILY = "FAMILY",
+  INSTITUTION = "INSTITUTION",
+  STUDY_GROUP = "STUDY_GROUP",
+  GLOBAL = "GLOBAL",
 }
 
 export class BuildBaselineDto {

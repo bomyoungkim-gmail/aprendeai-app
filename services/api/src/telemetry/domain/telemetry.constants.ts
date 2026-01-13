@@ -1,6 +1,6 @@
 /**
  * Telemetry Event Types and Payload Definitions
- * 
+ *
  * Standardizes all telemetry events for learning optimization.
  * Categories: Flow, Interface Load, Cornell, Learning Outcomes, Interventions
  */
@@ -11,37 +11,38 @@
 
 export const TelemetryEventType = {
   // A) Flow & Deep Reading
-  SESSION_STARTED: 'session_started',
-  SECTION_VIEWED: 'section_viewed',
-  SCROLL_PATTERN: 'scroll_pattern',
-  CONTEXT_SWITCH: 'context_switch',
-  FLOW_STATE_DETECTED: 'flow_state_detected', // SCRIPT 03 - GAP 8: Flow state metrics
+  SESSION_STARTED: "session_started",
+  SECTION_VIEWED: "section_viewed",
+  SCROLL_PATTERN: "scroll_pattern",
+  CONTEXT_SWITCH: "context_switch",
+  FLOW_STATE_DETECTED: "flow_state_detected", // SCRIPT 03 - GAP 8: Flow state metrics
 
   // B) Interface Load
-  TOOLBOX_OPENED: 'toolbox_opened',
-  MENU_OPENED: 'menu_opened',
-  ACTION_SHORTCUT_USED: 'action_shortcut_used',
-  UNDO_REDO_USED: 'undo_redo_used',
+  TOOLBOX_OPENED: "toolbox_opened",
+  MENU_OPENED: "menu_opened",
+  ACTION_SHORTCUT_USED: "action_shortcut_used",
+  UNDO_REDO_USED: "undo_redo_used",
 
   // C) Cornell Core (Reference - from SCRIPT 06)
-  CORNELL_HIGHLIGHT_CREATED: 'cornell_highlight_created',
-  CORNELL_SUMMARY_SUBMITTED: 'cornell_summary_submitted',
-  CORNELL_CUE_ADDED: 'cornell_cue_added',
-  CORNELL_NOTE_ADDED: 'cornell_note_added',
-  CORNELL_CHECKPOINT_ANSWERED: 'cornell_checkpoint_answered',
+  CORNELL_HIGHLIGHT_CREATED: "cornell_highlight_created",
+  CORNELL_SUMMARY_SUBMITTED: "cornell_summary_submitted",
+  CORNELL_CUE_ADDED: "cornell_cue_added",
+  CORNELL_NOTE_ADDED: "cornell_note_added",
+  CORNELL_CHECKPOINT_ANSWERED: "cornell_checkpoint_answered",
 
   // D) Learning Outcomes
-  MICRO_CHECK_ANSWERED: 'micro_check_answered',
-  SRS_REVIEW_DONE: 'srs_review_done',
-  ASSESSMENT_COMPLETED: 'assessment_completed', // SCRIPT 08: Assessment submission
+  MICRO_CHECK_ANSWERED: "micro_check_answered",
+  SRS_REVIEW_DONE: "srs_review_done",
+  ASSESSMENT_COMPLETED: "assessment_completed", // SCRIPT 08: Assessment submission
 
   // E) Interventions
-  DECISION_APPLIED: 'decision_applied',
-  MISSION_ASSIGNED: 'mission_assigned',
-  MISSION_COMPLETED: 'mission_completed',
+  DECISION_APPLIED: "decision_applied",
+  MISSION_ASSIGNED: "mission_assigned",
+  MISSION_COMPLETED: "mission_completed",
 } as const;
 
-export type TelemetryEventTypeValue = typeof TelemetryEventType[keyof typeof TelemetryEventType];
+export type TelemetryEventTypeValue =
+  (typeof TelemetryEventType)[keyof typeof TelemetryEventType];
 
 // ============================================================================
 // PAYLOAD INTERFACES
@@ -71,7 +72,7 @@ export interface ScrollPatternPayload {
 }
 
 export interface ContextSwitchPayload {
-  to: 'notes' | 'glossary' | 'menu' | 'other_app';
+  to: "notes" | "glossary" | "menu" | "other_app";
   count: number;
 }
 
@@ -99,7 +100,7 @@ export interface ActionShortcutUsedPayload {
 }
 
 export interface UndoRedoUsedPayload {
-  action: 'undo' | 'redo';
+  action: "undo" | "redo";
   count: number;
 }
 

@@ -45,12 +45,13 @@ export class StripeService {
   async updateSubscription(
     subscriptionId: string,
     newPriceId: string,
-    prorationBehavior: 'always_invoice' | 'none' = 'always_invoice',
+    prorationBehavior: "always_invoice" | "none" = "always_invoice",
   ) {
     return this.stripe.subscriptions.update(subscriptionId, {
       items: [
         {
-          id: (await this.stripe.subscriptions.retrieve(subscriptionId)).items.data[0].id,
+          id: (await this.stripe.subscriptions.retrieve(subscriptionId)).items
+            .data[0].id,
           price: newPriceId,
         },
       ],

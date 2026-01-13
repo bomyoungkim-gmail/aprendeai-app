@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { GraphComparatorService } from './graph-comparator.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { GraphComparatorService } from "./graph-comparator.service";
+import { PrismaService } from "../../prisma/prisma.service";
 
-describe('GraphComparatorService', () => {
+describe("GraphComparatorService", () => {
   let service: GraphComparatorService;
   let prisma: PrismaService;
 
@@ -36,25 +36,29 @@ describe('GraphComparatorService', () => {
     jest.clearAllMocks();
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('compareGraphs', () => {
-    it('should compare baseline and learner graphs', async () => {
+  describe("compareGraphs", () => {
+    it("should compare baseline and learner graphs", async () => {
       const mockBaselineGraph = {
-        id: 'baseline-1',
-        type: 'BASELINE',
+        id: "baseline-1",
+        type: "BASELINE",
         topic_nodes: [
-          { id: 'node-1', slug: 'photosynthesis', canonical_label: 'Photosynthesis' },
-          { id: 'node-2', slug: 'respiration', canonical_label: 'Respiration' },
+          {
+            id: "node-1",
+            slug: "photosynthesis",
+            canonical_label: "Photosynthesis",
+          },
+          { id: "node-2", slug: "respiration", canonical_label: "Respiration" },
         ],
         topic_edges: [
           {
-            id: 'edge-1',
-            from_node_id: 'node-1',
-            to_node_id: 'node-2',
-            edge_type: 'SUPPORTS',
+            id: "edge-1",
+            from_node_id: "node-1",
+            to_node_id: "node-2",
+            edge_type: "SUPPORTS",
             confidence: 0.9,
             topic_edge_evidence: [],
           },
@@ -62,20 +66,24 @@ describe('GraphComparatorService', () => {
       };
 
       const mockLearnerGraph = {
-        id: 'learner-1',
-        type: 'LEARNER',
+        id: "learner-1",
+        type: "LEARNER",
         topic_nodes: [
-          { id: 'node-3', slug: 'photosynthesis', canonical_label: 'Photosynthesis' },
+          {
+            id: "node-3",
+            slug: "photosynthesis",
+            canonical_label: "Photosynthesis",
+          },
         ],
         topic_edges: [
           {
-            id: 'edge-2',
-            from_node_id: 'node-3',
-            to_node_id: 'node-3',
-            edge_type: 'LINKS_TO',
+            id: "edge-2",
+            from_node_id: "node-3",
+            to_node_id: "node-3",
+            edge_type: "LINKS_TO",
             confidence: 0.7,
-            source: 'USER',
-            topic_edge_evidence: [{ id: 'ev-1' }, { id: 'ev-2' }],
+            source: "USER",
+            topic_edge_evidence: [{ id: "ev-1" }, { id: "ev-2" }],
           },
         ],
       };
@@ -84,42 +92,42 @@ describe('GraphComparatorService', () => {
         .mockResolvedValueOnce(mockBaselineGraph)
         .mockResolvedValueOnce(mockLearnerGraph);
       mockPrisma.graph_diffs.findFirst.mockResolvedValue(null);
-      mockPrisma.graph_diffs.create.mockResolvedValue({ id: 'diff-1' });
+      mockPrisma.graph_diffs.create.mockResolvedValue({ id: "diff-1" });
 
-      const result = await service.compareGraphs('user-1', 'content-1');
+      const result = await service.compareGraphs("user-1", "content-1");
 
-      expect(result.diffId).toBe('diff-1');
+      expect(result.diffId).toBe("diff-1");
       expect(result.diff_json.nodes.matched).toBe(1);
       expect(result.diff_json.nodes.missingInLearner).toBe(1); // Respiration missing
       expect(result.summary_json.topGaps).toBeDefined();
     });
 
-    it('should classify learner-only edges as discoveries', async () => {
+    it("should classify learner-only edges as discoveries", async () => {
       const mockBaselineGraph = {
-        id: 'baseline-1',
-        type: 'BASELINE',
+        id: "baseline-1",
+        type: "BASELINE",
         topic_nodes: [
-          { id: 'node-1', slug: 'topic-a', canonical_label: 'Topic A' },
+          { id: "node-1", slug: "topic-a", canonical_label: "Topic A" },
         ],
         topic_edges: [],
       };
 
       const mockLearnerGraph = {
-        id: 'learner-1',
-        type: 'LEARNER',
+        id: "learner-1",
+        type: "LEARNER",
         topic_nodes: [
-          { id: 'node-2', slug: 'topic-a', canonical_label: 'Topic A' },
-          { id: 'node-3', slug: 'topic-b', canonical_label: 'Topic B' },
+          { id: "node-2", slug: "topic-a", canonical_label: "Topic A" },
+          { id: "node-3", slug: "topic-b", canonical_label: "Topic B" },
         ],
         topic_edges: [
           {
-            id: 'edge-1',
-            from_node_id: 'node-2',
-            to_node_id: 'node-3',
-            edge_type: 'EXPLAINS',
+            id: "edge-1",
+            from_node_id: "node-2",
+            to_node_id: "node-3",
+            edge_type: "EXPLAINS",
             confidence: 0.8,
-            source: 'USER',
-            topic_edge_evidence: [{ id: 'ev-1' }, { id: 'ev-2' }],
+            source: "USER",
+            topic_edge_evidence: [{ id: "ev-1" }, { id: "ev-2" }],
           },
         ],
       };
@@ -128,12 +136,14 @@ describe('GraphComparatorService', () => {
         .mockResolvedValueOnce(mockBaselineGraph)
         .mockResolvedValueOnce(mockLearnerGraph);
       mockPrisma.graph_diffs.findFirst.mockResolvedValue(null);
-      mockPrisma.graph_diffs.create.mockResolvedValue({ id: 'diff-1' });
+      mockPrisma.graph_diffs.create.mockResolvedValue({ id: "diff-1" });
 
-      const result = await service.compareGraphs('user-1', 'content-1');
+      const result = await service.compareGraphs("user-1", "content-1");
 
       expect(result.diff_json.classified.discoveries.length).toBeGreaterThan(0);
-      expect(result.diff_json.classified.discoveries[0].classification).toBe('DISCOVERY_PLAUSIBLE');
+      expect(result.diff_json.classified.discoveries[0].classification).toBe(
+        "DISCOVERY_PLAUSIBLE",
+      );
     });
   });
 });

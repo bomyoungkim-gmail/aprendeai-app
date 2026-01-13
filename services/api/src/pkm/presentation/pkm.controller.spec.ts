@@ -1,12 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { PkmController } from '../presentation/pkm.controller';
-import { PkmGenerationService } from '../application/pkm-generation.service';
-import { DecisionService } from '../../decision/application/decision.service';
-import { IPkmNoteRepository } from '../domain/repositories/pkm-note.repository.interface';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { PkmController } from "../presentation/pkm.controller";
+import { PkmGenerationService } from "../application/pkm-generation.service";
+import { DecisionService } from "../../decision/application/decision.service";
+import { IPkmNoteRepository } from "../domain/repositories/pkm-note.repository.interface";
+import { ForbiddenException } from "@nestjs/common";
 
-describe('PkmController', () => {
+describe("PkmController", () => {
   let controller: PkmController;
   let pkmService: PkmGenerationService;
   let decisionPrisma: any;
@@ -30,7 +29,7 @@ describe('PkmController', () => {
     },
   };
 
-  const mockReq = { user: { userId: 'user-1' } };
+  const mockReq = { user: { userId: "user-1" } };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -57,46 +56,46 @@ describe('PkmController', () => {
     decisionPrisma = mockDecisionPrisma;
   });
 
-  describe('generate', () => {
-    it('should call service if phase is POST', async () => {
+  describe("generate", () => {
+    it("should call service if phase is POST", async () => {
       mockDecisionPrisma.reading_sessions.findUnique.mockResolvedValue({
-        phase: 'POST',
+        phase: "POST",
       });
       mockPkmService.generateFromSession.mockResolvedValue({});
 
-      await controller.generate({ sessionId: 's-1' }, mockReq);
+      await controller.generate({ sessionId: "s-1" }, mockReq);
 
       expect(mockPkmService.generateFromSession).toHaveBeenCalledWith(
-        'user-1',
-        's-1',
+        "user-1",
+        "s-1",
       );
     });
 
-    it('should throw ForbiddenException if phase is DURING', async () => {
+    it("should throw ForbiddenException if phase is DURING", async () => {
       mockDecisionPrisma.reading_sessions.findUnique.mockResolvedValue({
-        phase: 'DURING',
+        phase: "DURING",
       });
 
       await expect(
-        controller.generate({ sessionId: 's-1' }, mockReq),
+        controller.generate({ sessionId: "s-1" }, mockReq),
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('should throw ForbiddenException if session not found', async () => {
+    it("should throw ForbiddenException if session not found", async () => {
       mockDecisionPrisma.reading_sessions.findUnique.mockResolvedValue(null);
 
       await expect(
-        controller.generate({ sessionId: 's-1' }, mockReq),
+        controller.generate({ sessionId: "s-1" }, mockReq),
       ).rejects.toThrow(ForbiddenException);
     });
   });
 
-  describe('save', () => {
-    it('should call service confirmSave', async () => {
-      await controller.save('note-1', mockReq);
+  describe("save", () => {
+    it("should call service confirmSave", async () => {
+      await controller.save("note-1", mockReq);
       expect(mockPkmService.confirmSave).toHaveBeenCalledWith(
-        'note-1',
-        'user-1',
+        "note-1",
+        "user-1",
       );
     });
   });

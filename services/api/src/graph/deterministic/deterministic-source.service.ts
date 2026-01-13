@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
 
 interface NodeCandidate {
   slug: string;
@@ -77,7 +77,7 @@ export class DeterministicSourceService {
     });
 
     for (const graph of sortedGraphs) {
-      const isCurated = graph.type === 'CURATED';
+      const isCurated = graph.type === "CURATED";
 
       // Collect nodes
       for (const node of graph.topic_nodes) {
@@ -85,9 +85,15 @@ export class DeterministicSourceService {
           nodeMap.set(node.slug, {
             slug: node.slug,
             canonical_label: node.canonical_label,
-            aliases: Array.isArray(node.aliases_json) ? (node.aliases_json as string[]) : [],
-            domain_tags: Array.isArray(node.domain_tags_json) ? (node.domain_tags_json as string[]) : [],
-            tier2: Array.isArray(node.tier2_json) ? (node.tier2_json as string[]) : [],
+            aliases: Array.isArray(node.aliases_json)
+              ? (node.aliases_json as string[])
+              : [],
+            domain_tags: Array.isArray(node.domain_tags_json)
+              ? (node.domain_tags_json as string[])
+              : [],
+            tier2: Array.isArray(node.tier2_json)
+              ? (node.tier2_json as string[])
+              : [],
             source_graph_type: graph.type,
             evidence_strength: 0,
             recurrence: 1,
@@ -113,8 +119,8 @@ export class DeterministicSourceService {
 
         if (!edgeMap.has(edgeKey)) {
           edgeMap.set(edgeKey, {
-            from_slug: edge.from_node?.slug || '',
-            to_slug: edge.to_node?.slug || '',
+            from_slug: edge.from_node?.slug || "",
+            to_slug: edge.to_node?.slug || "",
             edge_type: edge.edge_type,
             source_graph_type: graph.type,
             evidence_count: evidenceCount,
@@ -158,7 +164,8 @@ export class DeterministicSourceService {
     score: number;
     shouldPromote: boolean;
   } {
-    const { evidence_strength, recurrence, vote_score, curated_source } = candidate;
+    const { evidence_strength, recurrence, vote_score, curated_source } =
+      candidate;
 
     let score = 0;
 
@@ -229,7 +236,9 @@ export class DeterministicSourceService {
     for (const candidate of candidates) {
       const validation = this.computeNodeValidation(candidate);
 
-      const existingRegistry = await (this.prisma as any).topic_registry.findUnique({
+      const existingRegistry = await (
+        this.prisma as any
+      ).topic_registry.findUnique({
         where: {
           scope_type_scope_id_slug: {
             scope_type: scopeType as any,
@@ -239,7 +248,7 @@ export class DeterministicSourceService {
         },
       });
 
-      const newStatus = validation.shouldPromote ? 'ACTIVE' : 'CANDIDATE';
+      const newStatus = validation.shouldPromote ? "ACTIVE" : "CANDIDATE";
 
       if (existingRegistry) {
         await (this.prisma as any).topic_registry.update({
@@ -260,7 +269,7 @@ export class DeterministicSourceService {
           },
         });
 
-        if (newStatus === 'ACTIVE' && existingRegistry.status !== 'ACTIVE') {
+        if (newStatus === "ACTIVE" && existingRegistry.status !== "ACTIVE") {
           promoted++;
         } else {
           updated++;
@@ -285,7 +294,7 @@ export class DeterministicSourceService {
           },
         });
 
-        if (newStatus === 'ACTIVE') {
+        if (newStatus === "ACTIVE") {
           promoted++;
         }
       }
@@ -297,12 +306,12 @@ export class DeterministicSourceService {
           await (this.prisma as any).topic_aliases.upsert({
             where: {
               registry_id_normalized: {
-                registry_id: existingRegistry?.id || '',
+                registry_id: existingRegistry?.id || "",
                 normalized,
               },
             },
             create: {
-              registry_id: existingRegistry?.id || '',
+              registry_id: existingRegistry?.id || "",
               alias,
               normalized,
               weight: 0.5,
@@ -317,7 +326,9 @@ export class DeterministicSourceService {
       }
     }
 
-    this.logger.log(`Registry upsert: ${promoted} promoted, ${updated} updated`);
+    this.logger.log(
+      `Registry upsert: ${promoted} promoted, ${updated} updated`,
+    );
     return { promoted, updated };
   }
 
@@ -347,7 +358,7 @@ export class DeterministicSourceService {
         },
       });
 
-      const newStatus = validation.shouldPromote ? 'ACTIVE' : 'CANDIDATE';
+      const newStatus = validation.shouldPromote ? "ACTIVE" : "CANDIDATE";
       const newWeight = validation.shouldPromote
         ? Math.min(0.3 + validation.score * 0.6, 0.9)
         : 0.3;
@@ -370,7 +381,7 @@ export class DeterministicSourceService {
           data: updateData,
         });
 
-        if (newStatus === 'ACTIVE' && existingPrior.status !== 'ACTIVE') {
+        if (newStatus === "ACTIVE" && existingPrior.status !== "ACTIVE") {
           promoted++;
         } else {
           updated++;
@@ -385,13 +396,15 @@ export class DeterministicSourceService {
             edge_type: candidate.edge_type as any,
             evidence_count: candidate.evidence_count,
             vote_score: candidate.vote_score,
-            rationale_json: candidate.curated_source ? candidate.rationale_json : {},
+            rationale_json: candidate.curated_source
+              ? candidate.rationale_json
+              : {},
             status: newStatus as any,
             prior_weight: newWeight,
           },
         });
 
-        if (newStatus === 'ACTIVE') {
+        if (newStatus === "ACTIVE") {
           promoted++;
         }
       }
@@ -408,7 +421,7 @@ export class DeterministicSourceService {
     scopeType: string;
     scopeId?: string;
     contentIds?: string[];
-    mode?: 'INCREMENTAL' | 'FULL';
+    mode?: "INCREMENTAL" | "FULL";
     dryRun?: boolean;
     createdBy?: string;
   }): Promise<any> {
@@ -416,20 +429,22 @@ export class DeterministicSourceService {
     const { scopeType, scopeId, contentIds, mode, dryRun, createdBy } = params;
 
     this.logger.log(
-      `Starting DSB build: ${scopeType}/${scopeId || 'null'} (${mode || 'FULL'}, dryRun: ${dryRun})`,
+      `Starting DSB build: ${scopeType}/${scopeId || "null"} (${mode || "FULL"}, dryRun: ${dryRun})`,
     );
 
     // Create build run record
-    const buildRun = await (this.prisma as any).deterministic_build_runs.create({
-      data: {
-        scope_type: scopeType as any,
-        scope_id: scopeId || null,
-        content_id: contentIds?.[0] || null,
-        mode: mode || 'FULL',
-        dry_run: dryRun || false,
-        created_by: createdBy || null,
+    const buildRun = await (this.prisma as any).deterministic_build_runs.create(
+      {
+        data: {
+          scope_type: scopeType as any,
+          scope_id: scopeId || null,
+          content_id: contentIds?.[0] || null,
+          mode: mode || "FULL",
+          dry_run: dryRun || false,
+          created_by: createdBy || null,
+        },
       },
-    });
+    );
 
     try {
       // Step 1: Collect candidates
@@ -446,10 +461,18 @@ export class DeterministicSourceService {
 
       if (!dryRun) {
         // Step 2: Upsert registry
-        registryResult = await this.upsertRegistry(nodes, scopeType, scopeId || null);
+        registryResult = await this.upsertRegistry(
+          nodes,
+          scopeType,
+          scopeId || null,
+        );
 
         // Step 3: Upsert priors
-        priorsResult = await this.upsertPriors(edges, scopeType, scopeId || null);
+        priorsResult = await this.upsertPriors(
+          edges,
+          scopeType,
+          scopeId || null,
+        );
       }
 
       const summary = {

@@ -5,7 +5,7 @@ export class CornellConfigDto {
     color: string;
     tag: string;
   }[];
-  
+
   tabs: {
     id: string;
     label: string;

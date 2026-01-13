@@ -57,15 +57,15 @@ export class SrsService {
         user_id: userId,
         word: {
           equals: word,
-          mode: 'insensitive',
+          mode: "insensitive",
         },
       },
     });
 
     if (existing) {
       // Update existing: calculate next review based on current stage
-      const calc = this.calculateNextDue(existing.srs_stage as SrsStage, 'OK');
-      
+      const calc = this.calculateNextDue(existing.srs_stage as SrsStage, "OK");
+
       return this.prisma.user_vocabularies.update({
         where: { id: existing.id },
         data: {
@@ -88,7 +88,7 @@ export class SrsService {
         },
         word,
         language: Language.EN, // Default language, should be derived from content
-        srs_stage: 'NEW',
+        srs_stage: "NEW",
         due_at: addDays(new Date(), 1), // Review tomorrow
         mastery_score: 0,
         lapses_count: 0,
@@ -224,8 +224,8 @@ export class SrsService {
         },
       },
       orderBy: [
-        { due_at: 'asc' }, // Most overdue first
-        { lapses_count: 'desc' }, // Then by difficulty
+        { due_at: "asc" }, // Most overdue first
+        { lapses_count: "desc" }, // Then by difficulty
       ],
       take: limit,
     });

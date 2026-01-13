@@ -199,38 +199,19 @@ script 4 totalmente implementado? conciliar para ver se algo de fora e atualize 
 
 
 
-Você tem razão: na ordem que eu listei, eu **não incluí** os scripts **[SCRIPT 01]**, **[SCRIPT 04]** e **[SCRIPT 05]** (do bloco “chat-only + sintaxe”). A melhor forma é **colocar esses três antes** (ou junto) da tool, porque eles definem o contrato de negócio e o encaixe no fluxo do Educator.
+1. **[SCRIPT 01] BACKEND (NestJS) — Adicionar novos GameTypes ao GenerateQuestionsDto + validação**
 
-Aqui vai a **ordem consolidada**, com **todos** os títulos (incluindo 1, 4 e 5), na sequência que minimiza risco e retrabalho:
+2. **[SCRIPT 02] CONTRATO DE ROUNDS (Frontend Compat) — Definir formato de saída para os 3 novos jogos**
 
-(ok) 1. **[SCRIPT 01] RB-CHAT-ONLY — Regra de Negócio “IA só via Chat Educator” (sem conflito)**
+3. **[SCRIPT 03] AI (Python) — Implementar geração em AIQuestionGeneratorService para os 3 gameTypes**
 
-(ok) 2. **[MICROPATCH ÚNICO] Normalizar `events_to_write`: `"type" -> "eventType"` + garantir `payloadJson/domain` (NestJS)**
+4. **[SCRIPT 04] AI (Python) — Avaliação/Scoring para os novos rounds (reutilizando "exact" e "criteria")**
 
-(ok) 3. **[SCRIPT] Consolidar `decision_policy_json` (Família/Instituição) com Schema Único Validado (Zod no NestJS + Pydantic no Python)**
+5. **[SCRIPT 05] FRONTEND (mínimo) — Renderizar options quando question.options existir**
 
-(ok) 4. **[SCRIPT 06] POLICY-GUARDRAILS — Não violar “sem extração de texto” e evitar respostas indevidas**
+6. **[SCRIPT 06] EDUCATOR (Chat) — “Pacote Sintaxe” para iniciar esses jogos via chat (incorporar no Game Phase)**
 
-(ok) 5. **[SCRIPT 02] RB-CONTENT-MODE — Modo de Leitura por Tipo de Material (Didático/Técnico/Narrativo/News/etc.)**
 
-() 6. **[SCRIPT 03] RB-SCAFFOLDING-FADING — Andaimes e Desvanecimento por Mode + Sinais de Maestria**
-
-7. **[SCRIPT] SENTENCE_ANALYSIS (TransferGraph) — Implementação alinhada ao TransferState real + events_to_write (eventType/payloadJson)**
-
-8. **[SCRIPT 05] AGENT-INTEGRATION — Integração no Educator (DURING Phase) com sub-rotas de Sintaxe**
-
-9. **[SCRIPT 04] FEATURE-SYNTAX — Ferramenta “Oração/Sentença” (Syntax Analyzer) acoplada ao Educator**
-   *(Observação: aqui “FEATURE-SYNTAX” é o pacote conceitual; na prática, ele se concretiza via a tool `SENTENCE_ANALYSIS` + integração. Se vocês preferirem, este item vira “validação + fallback heurístico + prompt refinado”, mas a ordem continua a mesma.)*
-
-10. **[SCRIPT 07] TELEMETRIA & KPIs — Medir ganho real do “entendimento de oração/sentença” + fading**
-
-11. **[SCRIPT 07] FRONTEND — UX de “Sintaxe” SEM SAIR DO CHAT (Quick Replies + cards opcionais + seleção ✨ IA)**
-
-Se você quiser deixar ainda mais “executável”, dá para agrupar em 3 fases:
-
-* **Fase A (Governança/Compat):** 1 → 2 → 3 → 4
-* **Fase B (Comportamento Pedagógico):** 5 → 6
-* **Fase C (Entrega da Feature):** 7 → 8 → 9 → 10 → 11
 
 
 

@@ -1,10 +1,10 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { ExtractMetadataUseCase } from './application/use-cases/extract-metadata.use-case';
+import { Injectable, Inject } from "@nestjs/common";
+import { ExtractMetadataUseCase } from "./application/use-cases/extract-metadata.use-case";
 import {
   ITransferMetadataRepository,
   TransferMetadataEntity,
-} from './domain/transfer-metadata.repository.interface';
-import { ExtractMetadataResult } from './application/types/transfer-metadata.types';
+} from "./domain/transfer-metadata.repository.interface";
+import { ExtractMetadataResult } from "./application/types/transfer-metadata.types";
 
 @Injectable()
 export class TransferMetadataService {
@@ -36,7 +36,7 @@ export class TransferMetadataService {
     fallbackConfig?: {
       allowLLM: boolean;
       caps?: { maxTokens: number; modelTier: string };
-      phase?: 'DURING' | 'POST';
+      phase?: "DURING" | "POST";
     };
   }): Promise<ExtractMetadataResult> {
     return await this.extractMetadataUseCase.execute(params);

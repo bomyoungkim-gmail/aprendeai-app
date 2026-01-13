@@ -1,14 +1,14 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { AiServiceClient } from '../../ai-service/ai-service.client';
-import { QuestionType } from '@prisma/client';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { AiServiceClient } from "../../ai-service/ai-service.client";
+import { QuestionType } from "@prisma/client";
 
 /**
  * Assessment Evaluation Service
- * 
+ *
  * Evaluates student answers and calculates scores.
  * Uses LLM for semantic evaluation of open-ended questions.
- * 
+ *
  * Following best practices:
  * - Application layer (orchestration)
  * - Clear DTOs for input/output
@@ -33,7 +33,7 @@ export class AssessmentEvaluationService {
 
   /**
    * Evaluate a student's answer to a question
-   * 
+   *
    * @param attemptId - The assessment attempt ID
    * @param questionId - The question ID
    * @param studentAnswer - The student's answer
@@ -65,16 +65,22 @@ export class AssessmentEvaluationService {
     let result: EvaluationResult;
 
     switch (question.question_type) {
-      case 'MULTIPLE_CHOICE':
-      case 'TRUE_FALSE':
-        result = this.evaluateExactMatch(studentAnswer, question.correct_answer as string);
+      case "MULTIPLE_CHOICE":
+      case "TRUE_FALSE":
+        result = this.evaluateExactMatch(
+          studentAnswer,
+          question.correct_answer as string,
+        );
         break;
 
-      case 'SHORT_ANSWER':
+      case "SHORT_ANSWER":
         // SHORT_ANSWER can be either fill-blank style or open-ended
         // Use heuristic: if correct answer is short (< 50 chars), treat as fill-blank
         if ((question.correct_answer as string).length < 50) {
-          result = this.evaluateFillBlank(studentAnswer, question.correct_answer as string);
+          result = this.evaluateFillBlank(
+            studentAnswer,
+            question.correct_answer as string,
+          );
         } else {
           result = await this.evaluateOpenEnded(
             studentAnswer,
@@ -92,14 +98,19 @@ export class AssessmentEvaluationService {
     // 3. Persist evaluation result
     await this.persistEvaluation(attemptId, questionId, studentAnswer, result);
 
-    this.logger.log(`Question ${questionId} evaluated: score=${result.score.toFixed(2)}`);
+    this.logger.log(
+      `Question ${questionId} evaluated: score=${result.score.toFixed(2)}`,
+    );
     return result;
   }
 
   /**
    * Evaluate exact match (Multiple Choice, True/False)
    */
-  private evaluateExactMatch(studentAnswer: string, correctAnswer: string): EvaluationResult {
+  private evaluateExactMatch(
+    studentAnswer: string,
+    correctAnswer: string,
+  ): EvaluationResult {
     const normalized = (str: string) => str.trim().toLowerCase();
     const isCorrect = normalized(studentAnswer) === normalized(correctAnswer);
 
@@ -107,7 +118,7 @@ export class AssessmentEvaluationService {
       score: isCorrect ? 1.0 : 0.0,
       isCorrect,
       feedback: isCorrect
-        ? 'Correct!'
+        ? "Correct!"
         : `Incorrect. The correct answer is: ${correctAnswer}`,
       evaluatedAt: new Date(),
     };
@@ -116,7 +127,10 @@ export class AssessmentEvaluationService {
   /**
    * Evaluate fill-in-the-blank (partial matching)
    */
-  private evaluateFillBlank(studentAnswer: string, correctAnswer: string): EvaluationResult {
+  private evaluateFillBlank(
+    studentAnswer: string,
+    correctAnswer: string,
+  ): EvaluationResult {
     const normalized = (str: string) => str.trim().toLowerCase();
     const studentNorm = normalized(studentAnswer);
     const correctNorm = normalized(correctAnswer);
@@ -126,13 +140,16 @@ export class AssessmentEvaluationService {
       return {
         score: 1.0,
         isCorrect: true,
-        feedback: 'Correct!',
+        feedback: "Correct!",
         evaluatedAt: new Date(),
       };
     }
 
     // Partial match (contains correct answer)
-    if (studentNorm.includes(correctNorm) || correctNorm.includes(studentNorm)) {
+    if (
+      studentNorm.includes(correctNorm) ||
+      correctNorm.includes(studentNorm)
+    ) {
       return {
         score: 0.7,
         isCorrect: false,
@@ -167,7 +184,7 @@ export class AssessmentEvaluationService {
 
     try {
       const llmResponse = await this.aiService.evaluateAnswer(prompt);
-      
+
       // Parse LLM response (expecting JSON with score and feedback)
       const evaluation = this.parseLLMEvaluation(llmResponse);
 
@@ -179,7 +196,7 @@ export class AssessmentEvaluationService {
       };
     } catch (error) {
       this.logger.error(`LLM evaluation failed: ${error.message}`);
-      
+
       // Fallback: simple keyword matching
       return this.fallbackEvaluation(studentAnswer, correctAnswer);
     }
@@ -204,9 +221,10 @@ Evaluate the following student answer to a ${questionType} question.
 **Student Answer**: ${studentAnswer}
 
 **Evaluation Criteria**:
-${questionType === 'SHORT_ANSWER' 
-  ? '- Depth of understanding\n- Clarity of explanation\n- Use of relevant examples\n- Logical structure'
-  : '- Accuracy of key concepts\n- Completeness of answer'
+${
+  questionType === "SHORT_ANSWER"
+    ? "- Depth of understanding\n- Clarity of explanation\n- Use of relevant examples\n- Logical structure"
+    : "- Accuracy of key concepts\n- Completeness of answer"
 }
 
 **Output Format** (JSON):
@@ -222,22 +240,26 @@ ${questionType === 'SHORT_ANSWER'
   /**
    * Parse LLM evaluation response
    */
-  private parseLLMEvaluation(llmResponse: any): { score: number; feedback: string } {
+  private parseLLMEvaluation(llmResponse: any): {
+    score: number;
+    feedback: string;
+  } {
     try {
       // Assuming llmResponse.structuredOutput contains the JSON
-      const parsed = typeof llmResponse === 'string' 
-        ? JSON.parse(llmResponse) 
-        : llmResponse.structuredOutput || llmResponse;
+      const parsed =
+        typeof llmResponse === "string"
+          ? JSON.parse(llmResponse)
+          : llmResponse.structuredOutput || llmResponse;
 
       return {
         score: Math.max(0, Math.min(1, parsed.score || 0)),
-        feedback: parsed.feedback || 'No feedback provided',
+        feedback: parsed.feedback || "No feedback provided",
       };
     } catch (error) {
       this.logger.warn(`Failed to parse LLM evaluation: ${error.message}`);
       return {
         score: 0.5,
-        feedback: 'Evaluation completed but feedback unavailable',
+        feedback: "Evaluation completed but feedback unavailable",
       };
     }
   }
@@ -245,19 +267,25 @@ ${questionType === 'SHORT_ANSWER'
   /**
    * Fallback evaluation (simple keyword matching)
    */
-  private fallbackEvaluation(studentAnswer: string, correctAnswer: string): EvaluationResult {
+  private fallbackEvaluation(
+    studentAnswer: string,
+    correctAnswer: string,
+  ): EvaluationResult {
     const studentWords = new Set(studentAnswer.toLowerCase().split(/\s+/));
     const correctWords = correctAnswer.toLowerCase().split(/\s+/);
-    
-    const matchCount = correctWords.filter(word => studentWords.has(word)).length;
+
+    const matchCount = correctWords.filter((word) =>
+      studentWords.has(word),
+    ).length;
     const score = matchCount / correctWords.length;
 
     return {
       score: Math.max(0, Math.min(1, score)),
       isCorrect: score >= 0.7,
-      feedback: score >= 0.7 
-        ? 'Your answer demonstrates understanding of key concepts.'
-        : 'Your answer is missing some key concepts. Please review the material.',
+      feedback:
+        score >= 0.7
+          ? "Your answer demonstrates understanding of key concepts."
+          : "Your answer is missing some key concepts. Please review the material.",
       evaluatedAt: new Date(),
     };
   }
@@ -294,7 +322,7 @@ ${questionType === 'SHORT_ANSWER'
 
   /**
    * Calculate overall assessment score
-   * 
+   *
    * @param attemptId - The assessment attempt ID
    * @returns Overall score (0-1)
    */

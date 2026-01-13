@@ -1,44 +1,44 @@
 /**
  * Legacy Policy Migration
- * 
+ *
  * Maps old decision_policy_json keys to DecisionPolicyV1 format.
  * This is a one-time migration script to normalize existing policies.
  */
 
-import { DecisionPolicyV1 } from './decision-policy.schema';
+import { DecisionPolicyV1 } from "./decision-policy.schema";
 
 /**
  * Mapping of legacy keys to new schema paths
  */
 const LEGACY_KEY_MAP: Record<string, string> = {
   // Features
-  transferEnabled: 'features.transferGraphEnabled',
-  sentenceAnalysisEnabled: 'features.sentenceAnalysisEnabled',
-  pkmEnabled: 'features.pkmEnabled',
-  gamesEnabled: 'features.gamesEnabled',
-  
+  transferEnabled: "features.transferGraphEnabled",
+  sentenceAnalysisEnabled: "features.sentenceAnalysisEnabled",
+  pkmEnabled: "features.pkmEnabled",
+  gamesEnabled: "features.gamesEnabled",
+
   // Extraction
-  allow_text_extraction: 'extraction.allowTextExtraction',
-  allowTextExtraction: 'extraction.allowTextExtraction',
-  allow_ocr: 'extraction.allowOcr',
-  selectionRequired: 'extraction.selectionRequiredForPdfImage',
-  
+  allow_text_extraction: "extraction.allowTextExtraction",
+  allowTextExtraction: "extraction.allowTextExtraction",
+  allow_ocr: "extraction.allowOcr",
+  selectionRequired: "extraction.selectionRequiredForPdfImage",
+
   // Scaffolding
-  fadingEnabled: 'scaffolding.fadingEnabled',
-  T_mastery_hi: 'scaffolding.thresholds.masteryHigh',
-  T_mastery_low: 'scaffolding.thresholds.masteryLow',
-  T_consistency_hi: 'scaffolding.thresholds.consistencyHigh',
-  cooldown_min_turns: 'scaffolding.thresholds.cooldownMinTurns',
-  
+  fadingEnabled: "scaffolding.fadingEnabled",
+  T_mastery_hi: "scaffolding.thresholds.masteryHigh",
+  T_mastery_low: "scaffolding.thresholds.masteryLow",
+  T_consistency_hi: "scaffolding.thresholds.consistencyHigh",
+  cooldown_min_turns: "scaffolding.thresholds.cooldownMinTurns",
+
   // Budgeting
-  budget_strategy: 'budgeting.strategy',
-  allowSmartTier: 'budgeting.allowSmartTier',
-  
+  budget_strategy: "budgeting.strategy",
+  allowSmartTier: "budgeting.allowSmartTier",
+
   // Limits
-  max_selected_text_chars: 'limits.maxSelectedTextChars',
-  max_chat_message_chars: 'limits.maxChatMessageChars',
-  max_quick_replies: 'limits.maxQuickReplies',
-  max_events_per_turn: 'limits.maxEventsToWritePerTurn',
+  max_selected_text_chars: "limits.maxSelectedTextChars",
+  max_chat_message_chars: "limits.maxChatMessageChars",
+  max_quick_replies: "limits.maxQuickReplies",
+  max_events_per_turn: "limits.maxEventsToWritePerTurn",
 };
 
 /**
@@ -48,9 +48,9 @@ const LEGACY_KEY_MAP: Record<string, string> = {
  * @param value - Value to set
  */
 function setNestedValue(obj: any, path: string, value: any): void {
-  const keys = path.split('.');
+  const keys = path.split(".");
   let current = obj;
-  
+
   for (let i = 0; i < keys.length - 1; i++) {
     const key = keys[i];
     if (!current[key]) {
@@ -58,7 +58,7 @@ function setNestedValue(obj: any, path: string, value: any): void {
     }
     current = current[key];
   }
-  
+
   current[keys[keys.length - 1]] = value;
 }
 
@@ -68,18 +68,18 @@ function setNestedValue(obj: any, path: string, value: any): void {
  * @returns Partial DecisionPolicyV1 with migrated values
  */
 export function migrateLegacyPolicy(legacy: any): Partial<DecisionPolicyV1> {
-  if (!legacy || typeof legacy !== 'object') {
+  if (!legacy || typeof legacy !== "object") {
     return {};
   }
-  
+
   const migrated: any = { version: 1 };
-  
+
   for (const [oldKey, newPath] of Object.entries(LEGACY_KEY_MAP)) {
     if (oldKey in legacy) {
       setNestedValue(migrated, newPath, legacy[oldKey]);
     }
   }
-  
+
   return migrated;
 }
 
@@ -89,9 +89,9 @@ export function migrateLegacyPolicy(legacy: any): Partial<DecisionPolicyV1> {
  * @returns True if any legacy keys are found
  */
 export function hasLegacyKeys(policy: any): boolean {
-  if (!policy || typeof policy !== 'object') {
+  if (!policy || typeof policy !== "object") {
     return false;
   }
-  
-  return Object.keys(LEGACY_KEY_MAP).some(key => key in policy);
+
+  return Object.keys(LEGACY_KEY_MAP).some((key) => key in policy);
 }

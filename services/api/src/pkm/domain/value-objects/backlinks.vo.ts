@@ -4,10 +4,10 @@ export class Backlinks {
     public readonly farDomain: string,
   ) {
     if (!nearDomain || nearDomain.trim().length === 0) {
-      throw new Error('Near domain cannot be empty');
+      throw new Error("Near domain cannot be empty");
     }
     if (!farDomain || farDomain.trim().length === 0) {
-      throw new Error('Far domain cannot be empty');
+      throw new Error("Far domain cannot be empty");
     }
   }
 
@@ -22,10 +22,7 @@ export class Backlinks {
     };
   }
 
-  static fromJSON(json: {
-    nearDomain: string;
-    farDomain: string;
-  }): Backlinks {
+  static fromJSON(json: { nearDomain: string; farDomain: string }): Backlinks {
     return new Backlinks(json.nearDomain, json.farDomain);
   }
 }

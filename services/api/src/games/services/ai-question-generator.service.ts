@@ -19,6 +19,14 @@ export class AIQuestionGeneratorService {
   async generate(params: GenerateQuestionsDto) {
     const language = params.language || "pt-BR";
 
+    // SCRIPT 01: Apply default values for syntax-related games
+    if (!params.subject || params.subject.trim() === "") {
+      params.subject = "Português";
+    }
+    if (!params.topic || params.topic.trim() === "") {
+      params.topic = "Sintaxe: oração e sentença";
+    }
+
     try {
       switch (params.gameType) {
         case "CONCEPT_LINKING":
@@ -27,6 +35,21 @@ export class AIQuestionGeneratorService {
           return await this.generateSRSQuestions(params, language);
         case "FREE_RECALL_SCORE":
           return await this.generateFreeRecallQuestions(params, language);
+
+        // SCRIPT 01: New syntax analysis game types (placeholder implementation)
+        case "SENTENCE_SKELETON":
+          throw new Error(
+            "SENTENCE_SKELETON game type not yet implemented. This will require integration with syntax analysis service.",
+          );
+        case "CONNECTOR_CLASSIFIER":
+          throw new Error(
+            "CONNECTOR_CLASSIFIER game type not yet implemented. This will require integration with syntax analysis service.",
+          );
+        case "CLAUSE_REWRITE_SIMPLE":
+          throw new Error(
+            "CLAUSE_REWRITE_SIMPLE game type not yet implemented. This will require integration with syntax analysis service.",
+          );
+
         default:
           throw new Error(`Unsupported game type: ${params.gameType}`);
       }

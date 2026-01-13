@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { GraphEventDto, GraphEventType } from './dto/graph-event.dto';
-import { EventEmitter2 } from '@nestjs/event-emitter'; // GRAPH SCRIPT 19.9
-import { GraphCacheService } from '../cache/graph-cache.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { GraphEventDto, GraphEventType } from "./dto/graph-event.dto";
+import { EventEmitter2 } from "@nestjs/event-emitter"; // GRAPH SCRIPT 19.9
+import { GraphCacheService } from "../cache/graph-cache.service";
 
 @Injectable()
 export class GraphLearnerService {
@@ -46,7 +46,7 @@ export class GraphLearnerService {
     await this.cacheService.invalidateVisualization(dto.userId, dto.contentId);
 
     // GRAPH SCRIPT 19.9: Emit event for on-demand comparison
-    this.eventEmitter.emit('graph.learner.updated', {
+    this.eventEmitter.emit("graph.learner.updated", {
       userId: dto.userId,
       contentId: dto.contentId,
     });
@@ -58,8 +58,8 @@ export class GraphLearnerService {
   private async ensureLearnerGraph(userId: string, contentId: string) {
     let graph = await (this.prisma as any).topic_graphs.findFirst({
       where: {
-        type: 'LEARNER',
-        scope_type: 'USER',
+        type: "LEARNER",
+        scope_type: "USER",
         scope_id: userId,
         content_id: contentId,
       },
@@ -68,8 +68,8 @@ export class GraphLearnerService {
     if (!graph) {
       graph = await (this.prisma as any).topic_graphs.create({
         data: {
-          type: 'LEARNER',
-          scope_type: 'USER',
+          type: "LEARNER",
+          scope_type: "USER",
           scope_id: userId,
           content_id: contentId,
           title: `Learner Graph - User ${userId}`,
@@ -89,19 +89,25 @@ export class GraphLearnerService {
    * - DOUBT: Create gap edge (PREREQUISITE/EXPLAINS)
    */
   private async processHighlight(graphId: string, dto: GraphEventDto) {
-    const { highlightKind, highlightId, selectedText, anchorJson, pageNumber, timestampMs } =
-      dto.eventData;
+    const {
+      highlightKind,
+      highlightId,
+      selectedText,
+      anchorJson,
+      pageNumber,
+      timestampMs,
+    } = dto.eventData;
 
-    if (highlightKind === 'MAIN_IDEA') {
+    if (highlightKind === "MAIN_IDEA") {
       // Create or strengthen a topic node
-      const node = await this.findOrUpsertNode(graphId, selectedText, 'USER');
+      const node = await this.findOrUpsertNode(graphId, selectedText, "USER");
       this.logger.log(`MAIN_IDEA: Created/updated node ${node.id}`);
-    } else if (highlightKind === 'EVIDENCE') {
+    } else if (highlightKind === "EVIDENCE") {
       // Try to find a recent edge to add evidence to, or create a SUPPORTS edge
       const recentEdge = await this.findRecentEdge(graphId);
       if (recentEdge) {
         await this.createEvidence(recentEdge.id, {
-          evidenceType: 'HIGHLIGHT',
+          evidenceType: "HIGHLIGHT",
           highlightId,
           anchorJson,
           pageNumber,
@@ -111,27 +117,33 @@ export class GraphLearnerService {
         this.logger.log(`EVIDENCE: Added evidence to edge ${recentEdge.id}`);
       } else {
         // Create a low-confidence SUPPORTS edge
-        const fromNode = await this.findOrUpsertNode(graphId, selectedText, 'USER');
+        const fromNode = await this.findOrUpsertNode(
+          graphId,
+          selectedText,
+          "USER",
+        );
         // For simplicity, create a self-referential edge or skip if no context
-        this.logger.log(`EVIDENCE: No recent edge found, created node ${fromNode.id}`);
+        this.logger.log(
+          `EVIDENCE: No recent edge found, created node ${fromNode.id}`,
+        );
       }
-    } else if (highlightKind === 'DOUBT') {
+    } else if (highlightKind === "DOUBT") {
       // Create a gap edge (PREREQUISITE or EXPLAINS) with low confidence
-      const node = await this.findOrUpsertNode(graphId, selectedText, 'USER');
+      const node = await this.findOrUpsertNode(graphId, selectedText, "USER");
       // Create a self-referential PREREQUISITE edge to mark the gap
       const edge = await (this.prisma as any).topic_edges.create({
         data: {
           graph_id: graphId,
           from_node_id: node.id,
           to_node_id: node.id,
-          edge_type: 'PREREQUISITE',
+          edge_type: "PREREQUISITE",
           confidence: 0.3,
-          source: 'USER',
+          source: "USER",
           rationale_json: { gap: true, sectionRef: dto.sectionRef },
         },
       });
       await this.createEvidence(edge.id, {
-        evidenceType: 'HIGHLIGHT',
+        evidenceType: "HIGHLIGHT",
         highlightId,
         anchorJson,
         pageNumber,
@@ -154,7 +166,7 @@ export class GraphLearnerService {
     this.logger.log(`CORNELL_SYNTHESIS: Extracted ${topics.length} topics`);
 
     const nodes = await Promise.all(
-      topics.map((topic) => this.findOrUpsertNode(graphId, topic, 'USER')),
+      topics.map((topic) => this.findOrUpsertNode(graphId, topic, "USER")),
     );
 
     // Create edges between topics in the same section
@@ -164,14 +176,14 @@ export class GraphLearnerService {
           graph_id: graphId,
           from_node_id: nodes[i].id,
           to_node_id: nodes[i + 1].id,
-          edge_type: 'LINKS_TO',
+          edge_type: "LINKS_TO",
           confidence: 0.6,
-          source: 'USER',
+          source: "USER",
           rationale_json: { sectionRef },
         },
       });
       await this.createEvidence(edge.id, {
-        evidenceType: 'CORNELL_SUMMARY',
+        evidenceType: "CORNELL_SUMMARY",
         cornellNoteId,
         excerpt: summaryText?.substring(0, 200),
       });
@@ -187,111 +199,147 @@ export class GraphLearnerService {
     const { missionType, missionData, transferAttemptId } = dto.eventData;
 
     switch (missionType) {
-      case 'HUGGING':
-        await this.processMissionHugging(graphId, missionData, transferAttemptId);
+      case "HUGGING":
+        await this.processMissionHugging(
+          graphId,
+          missionData,
+          transferAttemptId,
+        );
         break;
-      case 'BRIDGING':
-        await this.processMissionBridging(graphId, missionData, transferAttemptId);
+      case "BRIDGING":
+        await this.processMissionBridging(
+          graphId,
+          missionData,
+          transferAttemptId,
+        );
         break;
-      case 'ANALOGY':
-        await this.processMissionAnalogy(graphId, missionData, transferAttemptId);
+      case "ANALOGY":
+        await this.processMissionAnalogy(
+          graphId,
+          missionData,
+          transferAttemptId,
+        );
         break;
-      case 'ICEBERG':
-      case 'CONNECTION_CIRCLE':
-        await this.processMissionCausal(graphId, missionData, transferAttemptId);
+      case "ICEBERG":
+      case "CONNECTION_CIRCLE":
+        await this.processMissionCausal(
+          graphId,
+          missionData,
+          transferAttemptId,
+        );
         break;
       default:
         this.logger.warn(`Unknown mission type: ${missionType}`);
     }
   }
 
-  private async processMissionHugging(graphId: string, data: any, transferAttemptId: string) {
+  private async processMissionHugging(
+    graphId: string,
+    data: any,
+    transferAttemptId: string,
+  ) {
     const { topic, domain } = data;
-    const topicNode = await this.findOrUpsertNode(graphId, topic, 'USER');
-    const domainNode = await this.findOrUpsertNode(graphId, domain, 'USER');
+    const topicNode = await this.findOrUpsertNode(graphId, topic, "USER");
+    const domainNode = await this.findOrUpsertNode(graphId, domain, "USER");
 
     const edge = await (this.prisma as any).topic_edges.create({
       data: {
         graph_id: graphId,
         from_node_id: topicNode.id,
         to_node_id: domainNode.id,
-        edge_type: 'APPLIES_IN',
+        edge_type: "APPLIES_IN",
         confidence: 0.7,
-        source: 'USER',
-        rationale_json: { missionType: 'HUGGING' },
+        source: "USER",
+        rationale_json: { missionType: "HUGGING" },
       },
     });
     await this.createEvidence(edge.id, {
-      evidenceType: 'TIMESTAMP',
+      evidenceType: "TIMESTAMP",
       excerpt: `Transfer attempt: ${transferAttemptId}`,
     });
     this.logger.log(`HUGGING: Created APPLIES_IN edge ${edge.id}`);
   }
 
-  private async processMissionBridging(graphId: string, data: any, transferAttemptId: string) {
+  private async processMissionBridging(
+    graphId: string,
+    data: any,
+    transferAttemptId: string,
+  ) {
     const { topic, principle } = data;
-    const topicNode = await this.findOrUpsertNode(graphId, topic, 'USER');
-    const principleNode = await this.findOrUpsertNode(graphId, principle, 'USER');
+    const topicNode = await this.findOrUpsertNode(graphId, topic, "USER");
+    const principleNode = await this.findOrUpsertNode(
+      graphId,
+      principle,
+      "USER",
+    );
 
     const edge = await (this.prisma as any).topic_edges.create({
       data: {
         graph_id: graphId,
         from_node_id: topicNode.id,
         to_node_id: principleNode.id,
-        edge_type: 'EXPLAINS',
+        edge_type: "EXPLAINS",
         confidence: 0.7,
-        source: 'USER',
-        rationale_json: { missionType: 'BRIDGING' },
+        source: "USER",
+        rationale_json: { missionType: "BRIDGING" },
       },
     });
     await this.createEvidence(edge.id, {
-      evidenceType: 'TIMESTAMP',
+      evidenceType: "TIMESTAMP",
       excerpt: `Transfer attempt: ${transferAttemptId}`,
     });
     this.logger.log(`BRIDGING: Created EXPLAINS edge ${edge.id}`);
   }
 
-  private async processMissionAnalogy(graphId: string, data: any, transferAttemptId: string) {
+  private async processMissionAnalogy(
+    graphId: string,
+    data: any,
+    transferAttemptId: string,
+  ) {
     const { topicA, topicB, mapping } = data;
-    const nodeA = await this.findOrUpsertNode(graphId, topicA, 'USER');
-    const nodeB = await this.findOrUpsertNode(graphId, topicB, 'USER');
+    const nodeA = await this.findOrUpsertNode(graphId, topicA, "USER");
+    const nodeB = await this.findOrUpsertNode(graphId, topicB, "USER");
 
     const edge = await (this.prisma as any).topic_edges.create({
       data: {
         graph_id: graphId,
         from_node_id: nodeA.id,
         to_node_id: nodeB.id,
-        edge_type: 'ANALOGY',
+        edge_type: "ANALOGY",
         confidence: 0.7,
-        source: 'USER',
-        rationale_json: { missionType: 'ANALOGY', mapping },
+        source: "USER",
+        rationale_json: { missionType: "ANALOGY", mapping },
       },
     });
     await this.createEvidence(edge.id, {
-      evidenceType: 'TIMESTAMP',
+      evidenceType: "TIMESTAMP",
       excerpt: `Transfer attempt: ${transferAttemptId}`,
     });
     this.logger.log(`ANALOGY: Created ANALOGY edge ${edge.id}`);
   }
 
-  private async processMissionCausal(graphId: string, data: any, transferAttemptId: string) {
+  private async processMissionCausal(
+    graphId: string,
+    data: any,
+    transferAttemptId: string,
+  ) {
     const { cause, effect, sign } = data; // sign: '+' or '-'
-    const causeNode = await this.findOrUpsertNode(graphId, cause, 'USER');
-    const effectNode = await this.findOrUpsertNode(graphId, effect, 'USER');
+    const causeNode = await this.findOrUpsertNode(graphId, cause, "USER");
+    const effectNode = await this.findOrUpsertNode(graphId, effect, "USER");
 
     const edge = await (this.prisma as any).topic_edges.create({
       data: {
         graph_id: graphId,
         from_node_id: causeNode.id,
         to_node_id: effectNode.id,
-        edge_type: 'CAUSES',
+        edge_type: "CAUSES",
         confidence: 0.7,
-        source: 'USER',
-        rationale_json: { sign, missionType: 'CAUSAL' },
+        source: "USER",
+        rationale_json: { sign, missionType: "CAUSAL" },
       },
     });
     await this.createEvidence(edge.id, {
-      evidenceType: 'TIMESTAMP',
+      evidenceType: "TIMESTAMP",
       excerpt: `Transfer attempt: ${transferAttemptId}`,
     });
     this.logger.log(`CAUSAL: Created CAUSES edge ${edge.id} (sign: ${sign})`);
@@ -300,7 +348,11 @@ export class GraphLearnerService {
   /**
    * Find or create a topic node (deterministic matching)
    */
-  private async findOrUpsertNode(graphId: string, label: string, source: 'USER' | 'DETERMINISTIC') {
+  private async findOrUpsertNode(
+    graphId: string,
+    label: string,
+    source: "USER" | "DETERMINISTIC",
+  ) {
     const slug = this.slugify(label);
 
     let node = await (this.prisma as any).topic_nodes.findFirst({
@@ -316,12 +368,14 @@ export class GraphLearnerService {
           graph_id: graphId,
           canonical_label: label,
           slug,
-          confidence: source === 'USER' ? 0.5 : 0.7,
+          confidence: source === "USER" ? 0.5 : 0.7,
           source,
           last_reinforced_at: new Date(), // GRAPH SCRIPT 19.10: Initialize for decay
         },
       });
-      this.logger.debug(`Created new node: ${node.canonical_label} (${node.id})`);
+      this.logger.debug(
+        `Created new node: ${node.canonical_label} (${node.id})`,
+      );
     }
 
     return node;
@@ -353,7 +407,7 @@ export class GraphLearnerService {
   private async findRecentEdge(graphId: string) {
     return (this.prisma as any).topic_edges.findFirst({
       where: { graph_id: graphId },
-      orderBy: { created_at: 'desc' },
+      orderBy: { created_at: "desc" },
     });
   }
 
@@ -378,17 +432,25 @@ export class GraphLearnerService {
     return text
       .toLowerCase()
       .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
   }
 
   /**
    * Emit telemetry event
    */
-  private async emitTelemetry(userId: string, contentId: string, graphId: string) {
-    const nodeCount = await (this.prisma as any).topic_nodes.count({ where: { graph_id: graphId } });
-    const edgeCount = await (this.prisma as any).topic_edges.count({ where: { graph_id: graphId } });
+  private async emitTelemetry(
+    userId: string,
+    contentId: string,
+    graphId: string,
+  ) {
+    const nodeCount = await (this.prisma as any).topic_nodes.count({
+      where: { graph_id: graphId },
+    });
+    const edgeCount = await (this.prisma as any).topic_edges.count({
+      where: { graph_id: graphId },
+    });
     const evidenceCount = await (this.prisma as any).topic_edge_evidence.count({
       where: { topic_edges: { graph_id: graphId } },
     });
@@ -405,7 +467,9 @@ export class GraphLearnerService {
    * Merges baseline and learner graphs with status coloring
    */
   async getVisualizationGraph(userId: string, contentId: string) {
-    this.logger.log(`Getting visualization graph for user ${userId}, content ${contentId}`);
+    this.logger.log(
+      `Getting visualization graph for user ${userId}, content ${contentId}`,
+    );
 
     // Try cache first
     const cached = await this.cacheService.getVisualization(userId, contentId);
@@ -416,7 +480,7 @@ export class GraphLearnerService {
     // 1. Fetch Baseline Graph
     const baselineGraph = await (this.prisma as any).topic_graphs.findFirst({
       where: {
-        type: 'BASELINE',
+        type: "BASELINE",
         content_id: contentId,
       },
       include: {
@@ -451,8 +515,8 @@ export class GraphLearnerService {
     // 2. Fetch Learner Graph
     const learnerGraph = await (this.prisma as any).topic_graphs.findFirst({
       where: {
-        type: 'LEARNER',
-        scope_type: 'USER',
+        type: "LEARNER",
+        scope_type: "USER",
         scope_id: userId,
         content_id: contentId,
       },
@@ -480,7 +544,7 @@ export class GraphLearnerService {
       // Identify doubt nodes (nodes with self-loop PREREQUISITE edges)
       for (const edge of learnerGraph.topic_edges) {
         if (
-          edge.edge_type === 'PREREQUISITE' &&
+          edge.edge_type === "PREREQUISITE" &&
           edge.from_node_id === edge.to_node_id
         ) {
           learnerDoubtNodes.add(edge.from_node_id);
@@ -498,20 +562,20 @@ export class GraphLearnerService {
 
     // Query annotation counts for all nodes
     const allNodeIds = [
-      ...baselineGraph.topic_nodes.map(n => n.id),
-      ...(learnerGraph?.topic_nodes.map(n => n.id) || []),
+      ...baselineGraph.topic_nodes.map((n) => n.id),
+      ...(learnerGraph?.topic_nodes.map((n) => n.id) || []),
     ];
-    
+
     const noteCounts = await (this.prisma as any).pkm_notes.groupBy({
-      by: ['topic_node_id'],
-      where: { 
+      by: ["topic_node_id"],
+      where: {
         topic_node_id: { in: allNodeIds },
       },
       _count: true,
     });
-    
+
     const noteCountMap = new Map(
-      noteCounts.map((nc: any) => [nc.topic_node_id, nc._count])
+      noteCounts.map((nc: any) => [nc.topic_node_id, nc._count]),
     );
 
     // 4a. Process Baseline Nodes
@@ -522,29 +586,34 @@ export class GraphLearnerService {
 
       if (!learnerNode) {
         // Not in learner graph = Unvisited
-        status = 'UNVISITED';
+        status = "UNVISITED";
         unvisitedCount++;
       } else if (learnerDoubtNodes.has(learnerNode.id)) {
         // Has doubt edge = Doubt
-        status = 'DOUBT';
+        status = "DOUBT";
         doubtCount++;
       } else if (learnerNode.confidence > 0.8) {
         // High confidence = Mastered
-        status = 'MASTERED';
+        status = "MASTERED";
         masteredCount++;
       } else {
         // Otherwise = Visited/In Progress
-        status = 'VISITED';
+        status = "VISITED";
         visitedCount++;
       }
 
       // Extract navigation context from attributes_json
-      const attributes = typeof baselineNode.attributes_json === 'object' ? baselineNode.attributes_json : {};
-      const navigationContext = attributes?.navigation ? {
-        pageNumber: attributes.navigation.pageNumber,
-        sectionId: attributes.navigation.sectionId,
-        quote: attributes.navigation.quote,
-      } : undefined;
+      const attributes =
+        typeof baselineNode.attributes_json === "object"
+          ? baselineNode.attributes_json
+          : {};
+      const navigationContext = attributes?.navigation
+        ? {
+            pageNumber: attributes.navigation.pageNumber,
+            sectionId: attributes.navigation.sectionId,
+            quote: attributes.navigation.quote,
+          }
+        : undefined;
 
       nodes.push({
         id: baselineNode.id,
@@ -554,7 +623,9 @@ export class GraphLearnerService {
         confidence: learnerNode?.confidence || 0,
         source: baselineNode.source,
         navigationContext,
-        createdAt: (learnerNode?.created_at || baselineNode.created_at).toISOString(),
+        createdAt: (
+          learnerNode?.created_at || baselineNode.created_at
+        ).toISOString(),
         annotationCount: noteCountMap.get(baselineNode.id) || 0,
       });
       processedSlugs.add(baselineNode.slug);
@@ -565,24 +636,29 @@ export class GraphLearnerService {
       for (const learnerNode of learnerGraph.topic_nodes) {
         if (!processedSlugs.has(learnerNode.slug)) {
           // This is a Discovery (node in Learner but not Baseline)
-          let status = 'VISITED';
+          let status = "VISITED";
           if (learnerDoubtNodes.has(learnerNode.id)) {
-            status = 'DOUBT';
+            status = "DOUBT";
             doubtCount++;
           } else if (learnerNode.confidence > 0.8) {
-            status = 'MASTERED';
+            status = "MASTERED";
             masteredCount++;
           } else {
             visitedCount++;
           }
 
           // Extract navigation context for discoveries
-          const attributes = typeof learnerNode.attributes_json === 'object' ? learnerNode.attributes_json : {};
-          const navigationContext = attributes?.navigation ? {
-            pageNumber: attributes.navigation.pageNumber,
-            sectionId: attributes.navigation.sectionId,
-            quote: attributes.navigation.quote,
-          } : undefined;
+          const attributes =
+            typeof learnerNode.attributes_json === "object"
+              ? learnerNode.attributes_json
+              : {};
+          const navigationContext = attributes?.navigation
+            ? {
+                pageNumber: attributes.navigation.pageNumber,
+                sectionId: attributes.navigation.sectionId,
+                quote: attributes.navigation.quote,
+              }
+            : undefined;
 
           nodes.push({
             id: learnerNode.id,
@@ -600,18 +676,20 @@ export class GraphLearnerService {
     }
 
     // 5. Map edges
-    // We need to be careful about IDs. 
-    // Baseline Edge: A (BaseID) -> B (BaseID). 
+    // We need to be careful about IDs.
+    // Baseline Edge: A (BaseID) -> B (BaseID).
     // If we have Node A (matched), we used component ID = BaseID.
     // Learner Edge: A' (LearnerID) -> B' (LearnerID).
     // We need to map A' -> A (BaseID) if they are matched.
-    
+
     // Create map of LearnerID -> VisualID
     const learnerIdToVisualId = new Map<string, string>();
     if (learnerGraph) {
       for (const lNode of learnerGraph.topic_nodes) {
         // Find corresponding baseline node by slug
-        const bNode = baselineGraph.topic_nodes.find((n: any) => n.slug === lNode.slug);
+        const bNode = baselineGraph.topic_nodes.find(
+          (n: any) => n.slug === lNode.slug,
+        );
         if (bNode) {
           learnerIdToVisualId.set(lNode.id, bNode.id); // Map to Baseline ID
         } else {
@@ -633,7 +711,9 @@ export class GraphLearnerService {
         confidence: edge.confidence,
         label: this.getEdgeLabel(edge.edge_type),
       });
-      edgeSignatures.add(`${edge.from_node_id}-${edge.to_node_id}-${edge.edge_type}`);
+      edgeSignatures.add(
+        `${edge.from_node_id}-${edge.to_node_id}-${edge.edge_type}`,
+      );
     }
 
     // 5b. Learner Edges (Gap/Discovery edges)
@@ -649,20 +729,20 @@ export class GraphLearnerService {
           // Actually, strict duplicates might not exist if types differ.
           // Check if we should add it.
           if (!edgeSignatures.has(signature)) {
-             // Exclude self-loop prerequisites (used for status mechanism only, not visual edge)
-             if (edge.edge_type === 'PREREQUISITE' && visualFrom === visualTo) {
-               continue;
-             }
+            // Exclude self-loop prerequisites (used for status mechanism only, not visual edge)
+            if (edge.edge_type === "PREREQUISITE" && visualFrom === visualTo) {
+              continue;
+            }
 
-             edges.push({
-               id: edge.id,
-               from: visualFrom,
-               to: visualTo,
-               type: edge.edge_type,
-               confidence: edge.confidence,
-               label: this.getEdgeLabel(edge.edge_type),
-             });
-             edgeSignatures.add(signature);
+            edges.push({
+              id: edge.id,
+              from: visualFrom,
+              to: visualTo,
+              type: edge.edge_type,
+              confidence: edge.confidence,
+              label: this.getEdgeLabel(edge.edge_type),
+            });
+            edgeSignatures.add(signature);
           }
         }
       }
@@ -689,16 +769,14 @@ export class GraphLearnerService {
    */
   private getEdgeLabel(edgeType: string): string {
     const labels: Record<string, string> = {
-      PREREQUISITE: 'Pré-requisito',
-      EXPLAINS: 'Explica',
-      PART_OF: 'Parte de',
-      APPLIES_IN: 'Aplica em',
-      ANALOGY: 'Analogia',
-      CAUSES: 'Causa',
-      LINKS_TO: 'Relaciona',
+      PREREQUISITE: "Pré-requisito",
+      EXPLAINS: "Explica",
+      PART_OF: "Parte de",
+      APPLIES_IN: "Aplica em",
+      ANALOGY: "Analogia",
+      CAUSES: "Causa",
+      LINKS_TO: "Relaciona",
     };
     return labels[edgeType] || edgeType;
   }
-
-
 }

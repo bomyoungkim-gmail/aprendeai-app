@@ -1,13 +1,19 @@
-import { Controller, Get, Query, UseGuards, Logger } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../auth/infrastructure/jwt-auth.guard';
-import { CurrentUser } from '../../auth/presentation/decorators/current-user.decorator';
+import { Controller, Get, Query, UseGuards, Logger } from "@nestjs/common";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from "@nestjs/swagger";
+import { JwtAuthGuard } from "../../auth/infrastructure/jwt-auth.guard";
+import { CurrentUser } from "../../auth/presentation/decorators/current-user.decorator";
 
-import { GraphRecommendationService } from './graph-recommendation.service';
-import { TelemetryService } from '../../telemetry/telemetry.service';
+import { GraphRecommendationService } from "./graph-recommendation.service";
+import { TelemetryService } from "../../telemetry/telemetry.service";
 
-@ApiTags('Graph Recommendations')
-@Controller('graph/recommendations')
+@ApiTags("Graph Recommendations")
+@Controller("graph/recommendations")
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class GraphRecommendationController {
@@ -19,12 +25,16 @@ export class GraphRecommendationController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get content recommendations for user' })
-  @ApiQuery({ name: 'contentId', required: false, description: 'Context content ID' })
-  @ApiResponse({ status: 200, description: 'Recommendations generated' })
+  @ApiOperation({ summary: "Get content recommendations for user" })
+  @ApiQuery({
+    name: "contentId",
+    required: false,
+    description: "Context content ID",
+  })
+  @ApiResponse({ status: 200, description: "Recommendations generated" })
   async getRecommendations(
     @CurrentUser() user: any,
-    @Query('contentId') contentId?: string,
+    @Query("contentId") contentId?: string,
   ) {
     this.logger.log(`Recommendations requested by user ${user.userId}`);
 
@@ -36,8 +46,8 @@ export class GraphRecommendationController {
     // Emit telemetry event
     await this.telemetry.track(
       {
-        eventType: 'graph_recommendation_shown',
-        eventVersion: '1.0.0',
+        eventType: "graph_recommendation_shown",
+        eventVersion: "1.0.0",
         contentId: contentId,
         sessionId: null,
         data: {

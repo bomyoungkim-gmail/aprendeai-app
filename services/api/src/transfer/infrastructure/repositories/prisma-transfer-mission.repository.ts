@@ -1,6 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { ITransferMissionRepository, FindMissionsParams, TransferMissionEntity } from '../../domain/transfer-mission.repository.interface';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
+import {
+  ITransferMissionRepository,
+  FindMissionsParams,
+  TransferMissionEntity,
+} from "../../domain/transfer-mission.repository.interface";
 
 @Injectable()
 export class PrismaTransferMissionRepository implements ITransferMissionRepository {
@@ -8,7 +12,7 @@ export class PrismaTransferMissionRepository implements ITransferMissionReposito
 
   async findAll(params: FindMissionsParams): Promise<TransferMissionEntity[]> {
     const { scopeType, familyId, institutionId, isActive } = params;
-    
+
     const results = await this.prisma.transfer_missions.findMany({
       where: {
         scope_type: scopeType,
@@ -28,11 +32,22 @@ export class PrismaTransferMissionRepository implements ITransferMissionReposito
     return result ? this.toEntity(result) : null;
   }
 
-  async create(mission: Omit<TransferMissionEntity, 'id' | 'createdAt' | 'updatedAt'>): Promise<TransferMissionEntity> {
-    const { 
-      type, title, description, promptTemplate, rubricJson, 
-      difficulty, tagsJson, scopeType, familyId, institutionId, 
-      createdBy, isActive 
+  async create(
+    mission: Omit<TransferMissionEntity, "id" | "createdAt" | "updatedAt">,
+  ): Promise<TransferMissionEntity> {
+    const {
+      type,
+      title,
+      description,
+      promptTemplate,
+      rubricJson,
+      difficulty,
+      tagsJson,
+      scopeType,
+      familyId,
+      institutionId,
+      createdBy,
+      isActive,
     } = mission;
 
     const result = await this.prisma.transfer_missions.create({
@@ -55,7 +70,10 @@ export class PrismaTransferMissionRepository implements ITransferMissionReposito
     return this.toEntity(result);
   }
 
-  async update(id: string, data: Partial<TransferMissionEntity>): Promise<TransferMissionEntity> {
+  async update(
+    id: string,
+    data: Partial<TransferMissionEntity>,
+  ): Promise<TransferMissionEntity> {
     const result = await this.prisma.transfer_missions.update({
       where: { id },
       data: {

@@ -1,9 +1,15 @@
-import { IsString, IsNotEmpty, IsOptional, IsObject, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsObject,
+  IsEnum,
+} from "class-validator";
 
 export enum GraphEventType {
-  HIGHLIGHT = 'HIGHLIGHT',
-  CORNELL_SYNTHESIS = 'CORNELL_SYNTHESIS',
-  MISSION_COMPLETED = 'MISSION_COMPLETED',
+  HIGHLIGHT = "HIGHLIGHT",
+  CORNELL_SYNTHESIS = "CORNELL_SYNTHESIS",
+  MISSION_COMPLETED = "MISSION_COMPLETED",
 }
 
 export class GraphEventDto {

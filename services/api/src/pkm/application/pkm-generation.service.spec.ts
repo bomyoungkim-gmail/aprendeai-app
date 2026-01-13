@@ -1,12 +1,12 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { PkmGenerationService } from './pkm-generation.service';
-import { PrismaService } from '../../prisma/prisma.service';
-import { DecisionService } from '../../decision/application/decision.service';
-import { IPkmNoteRepository } from '../domain/repositories/pkm-note.repository.interface';
-import { PkmNoteStatus } from '@prisma/client';
-import { NotFoundException } from '@nestjs/common';
+import { Test, TestingModule } from "@nestjs/testing";
+import { PkmGenerationService } from "./pkm-generation.service";
+import { PrismaService } from "../../prisma/prisma.service";
+import { DecisionService } from "../../decision/application/decision.service";
+import { IPkmNoteRepository } from "../domain/repositories/pkm-note.repository.interface";
+import { PkmNoteStatus } from "@prisma/client";
+import { NotFoundException } from "@nestjs/common";
 
-describe('PkmGenerationService', () => {
+describe("PkmGenerationService", () => {
   let service: PkmGenerationService;
   let prisma: PrismaService;
   let decision: DecisionService;
@@ -57,12 +57,12 @@ describe('PkmGenerationService', () => {
     jest.clearAllMocks();
   });
 
-  describe('generateFromSession', () => {
-    const userId = 'user-1';
-    const sessionId = 'session-1';
-    const contentId = 'content-1';
+  describe("generateFromSession", () => {
+    const userId = "user-1";
+    const sessionId = "session-1";
+    const contentId = "content-1";
 
-    it('should generate PKM note successfully from metadata', async () => {
+    it("should generate PKM note successfully from metadata", async () => {
       // Mock session data
       const mockSession = {
         id: sessionId,
@@ -72,24 +72,24 @@ describe('PkmGenerationService', () => {
         contents: {
           cornell_notes: [
             {
-              id: 'cornell-1',
-              summary_text: 'Summary First Line\nSummary definition paragraph.',
+              id: "cornell-1",
+              summary_text: "Summary First Line\nSummary definition paragraph.",
             },
           ],
           section_transfer_metadata: [
             {
-              id: 'meta-1',
+              id: "meta-1",
               concept_json: JSON.stringify({
-                name: 'Photosynthesis',
-                definition: 'Process by which plants use sunlight.',
-                structure: 'A leads to B',
+                name: "Photosynthesis",
+                definition: "Process by which plants use sunlight.",
+                structure: "A leads to B",
               }),
-              analogies_json: JSON.stringify(['Like a solar panel']),
+              analogies_json: JSON.stringify(["Like a solar panel"]),
               domains_json: JSON.stringify({
-                near: 'Botany',
-                far: 'Energy Systems',
+                near: "Botany",
+                far: "Energy Systems",
               }),
-              tier2_json: JSON.stringify(['chlorophyll', 'energy']),
+              tier2_json: JSON.stringify(["chlorophyll", "energy"]),
             },
           ],
         },
@@ -108,23 +108,29 @@ describe('PkmGenerationService', () => {
       expect(mockRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           userId,
-          title: 'Photosynthesis',
-          status: 'GENERATED',
+          title: "Photosynthesis",
+          status: "GENERATED",
           backlinks: {
-            nearDomain: 'Botany',
-            farDomain: 'Energy Systems',
+            nearDomain: "Botany",
+            farDomain: "Energy Systems",
           },
         }),
       );
 
       // Verify body contains markdown sections
-      expect(mockRepo.create.mock.calls[0][0].bodyMd).toContain('# Photosynthesis');
-      expect(mockRepo.create.mock.calls[0][0].bodyMd).toContain('## Definition');
-      expect(mockRepo.create.mock.calls[0][0].bodyMd).toContain('## Analogy');
-      expect(mockRepo.create.mock.calls[0][0].bodyMd).toContain('Like a solar panel');
+      expect(mockRepo.create.mock.calls[0][0].bodyMd).toContain(
+        "# Photosynthesis",
+      );
+      expect(mockRepo.create.mock.calls[0][0].bodyMd).toContain(
+        "## Definition",
+      );
+      expect(mockRepo.create.mock.calls[0][0].bodyMd).toContain("## Analogy");
+      expect(mockRepo.create.mock.calls[0][0].bodyMd).toContain(
+        "Like a solar panel",
+      );
     });
 
-    it('should fallback to cornell summary when metadata is missing', async () => {
+    it("should fallback to cornell summary when metadata is missing", async () => {
       const mockSession = {
         id: sessionId,
         user_id: userId,
@@ -132,13 +138,13 @@ describe('PkmGenerationService', () => {
         contents: {
           cornell_notes: [
             {
-              id: 'cornell-1',
-              summary_text: 'Fallback Title\nFallback Definition paragraph.',
+              id: "cornell-1",
+              summary_text: "Fallback Title\nFallback Definition paragraph.",
             },
           ],
           section_transfer_metadata: [
             {
-              id: 'meta-1',
+              id: "meta-1",
               // Empty metadata
             },
           ],
@@ -152,29 +158,29 @@ describe('PkmGenerationService', () => {
 
       expect(mockRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          title: 'Fallback Title',
+          title: "Fallback Title",
         }),
       );
     });
 
-    it('should throw NotFoundException if session not found', async () => {
+    it("should throw NotFoundException if session not found", async () => {
       mockPrisma.reading_sessions.findUnique.mockResolvedValue(null);
-      await expect(service.generateFromSession(userId, sessionId)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.generateFromSession(userId, sessionId),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
-  describe('confirmSave', () => {
-    it('should update status to SAVED', async () => {
-      const noteId = 'note-1';
-      const userId = 'user-1';
-      const mockNote = { id: noteId, userId, status: 'GENERATED' };
+  describe("confirmSave", () => {
+    it("should update status to SAVED", async () => {
+      const noteId = "note-1";
+      const userId = "user-1";
+      const mockNote = { id: noteId, userId, status: "GENERATED" };
 
       mockRepo.findById.mockResolvedValue(mockNote);
       mockRepo.updateStatus.mockResolvedValue({
         ...mockNote,
-        status: 'SAVED',
+        status: "SAVED",
       });
 
       const result = await service.confirmSave(noteId, userId);
@@ -183,7 +189,7 @@ describe('PkmGenerationService', () => {
         noteId,
         PkmNoteStatus.SAVED,
       );
-      expect(result.status).toBe('SAVED');
+      expect(result.status).toBe("SAVED");
     });
   });
 });

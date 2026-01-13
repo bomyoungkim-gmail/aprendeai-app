@@ -1,19 +1,19 @@
-import { Controller, Get } from '@nestjs/common';
-import { GraphHealthService, GraphHealthMetrics } from './graph-health.service';
+import { Controller, Get } from "@nestjs/common";
+import { GraphHealthService, GraphHealthMetrics } from "./graph-health.service";
 
 /**
  * Graph Health Controller
- * 
+ *
  * Provides health check endpoints for monitoring Graph Automation.
  * Used by monitoring systems (Grafana, Prometheus, etc.)
  */
-@Controller('health/graph-automation')
+@Controller("health/graph-automation")
 export class GraphHealthController {
   constructor(private readonly healthService: GraphHealthService) {}
 
   /**
    * Get comprehensive health metrics
-   * 
+   *
    * GET /health/graph-automation
    */
   @Get()
@@ -23,13 +23,13 @@ export class GraphHealthController {
 
   /**
    * Simple health check (returns 200 if system is operational)
-   * 
+   *
    * GET /health/graph-automation/ping
    */
-  @Get('ping')
+  @Get("ping")
   ping(): { status: string; timestamp: string } {
     return {
-      status: 'ok',
+      status: "ok",
       timestamp: new Date().toISOString(),
     };
   }

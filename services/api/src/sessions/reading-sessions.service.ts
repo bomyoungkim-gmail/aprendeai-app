@@ -361,7 +361,7 @@ export class ReadingSessionsService {
         where: { id: dto.contentId },
         data: {
           mode: dto.uiMode as any, // Cast to ContentMode enum
-          mode_source: 'USER',
+          mode_source: "USER",
           mode_set_by: user_id,
           mode_set_at: new Date(),
         },
@@ -456,24 +456,24 @@ export class ReadingSessionsService {
         where: {
           user_id,
           content_id,
-          type: { in: ['MAIN_IDEA', 'DOUBT'] },
+          type: { in: ["MAIN_IDEA", "DOUBT"] },
         },
         select: {
           type: true,
           text: true,
           selected_text: true,
         },
-        orderBy: { created_at: 'desc' },
+        orderBy: { created_at: "desc" },
         take: 10, // Limit to recent annotations
       });
 
       sessionAnnotations = {
         mainIdeas: annotations
-          .filter((a) => a.type === 'MAIN_IDEA')
-          .map((a) => ({ text: a.text || a.selected_text || '' })),
+          .filter((a) => a.type === "MAIN_IDEA")
+          .map((a) => ({ text: a.text || a.selected_text || "" })),
         doubts: annotations
-          .filter((a) => a.type === 'DOUBT')
-          .map((a) => ({ text: a.text || a.selected_text || '' })),
+          .filter((a) => a.type === "DOUBT")
+          .map((a) => ({ text: a.text || a.selected_text || "" })),
       };
 
       this.logger.debug(
@@ -487,26 +487,27 @@ export class ReadingSessionsService {
     let resurrection = null;
     try {
       // 4a. Last session for SAME content (for "return to material A" scenario)
-      const lastSameContentSession = await this.prisma.reading_sessions.findFirst({
-        where: {
-          user_id,
-          content_id,
-          id: { not: sessionId }, // Exclude current session
-          phase: { in: ["FINISHED", "POST"] }, // Only completed or advanced sessions
-        },
-        orderBy: { finished_at: "desc" },
-        select: {
-          id: true,
-          finished_at: true,
-          phase: true,
-          session_outcomes: {
-            select: {
-              comprehension_score: true,
-              production_score: true,
+      const lastSameContentSession =
+        await this.prisma.reading_sessions.findFirst({
+          where: {
+            user_id,
+            content_id,
+            id: { not: sessionId }, // Exclude current session
+            phase: { in: ["FINISHED", "POST"] }, // Only completed or advanced sessions
+          },
+          orderBy: { finished_at: "desc" },
+          select: {
+            id: true,
+            finished_at: true,
+            phase: true,
+            session_outcomes: {
+              select: {
+                comprehension_score: true,
+                production_score: true,
+              },
             },
           },
-        },
-      });
+        });
 
       // 4b. Fetch cornell_notes and reading_progress separately (they're keyed by user_id + content_id)
       const [cornellNotes, readingProgress] = await Promise.all([
@@ -565,16 +566,20 @@ export class ReadingSessionsService {
         // Format same-content summary
         if (lastSameContentSession) {
           const parts: string[] = [];
-          
+
           if (readingProgress?.last_page) {
             parts.push(`Página ${readingProgress.last_page}`);
           } else if (readingProgress?.last_scroll_pct) {
-            parts.push(`${Math.round(readingProgress.last_scroll_pct)}% do texto`);
+            parts.push(
+              `${Math.round(readingProgress.last_scroll_pct)}% do texto`,
+            );
           }
 
           if (cornellNotes?.summary_text) {
             const summary = cornellNotes.summary_text.substring(0, 200);
-            parts.push(`Resumo: "${summary}${summary.length >= 200 ? '...' : ''}"`);
+            parts.push(
+              `Resumo: "${summary}${summary.length >= 200 ? "..." : ""}"`,
+            );
           }
 
           if (lastSameContentSession.session_outcomes) {
@@ -588,18 +593,21 @@ export class ReadingSessionsService {
         }
 
         // Format global activity
-        if (lastGlobalActivity && lastGlobalActivity.id !== lastSameContentSession?.id) {
+        if (
+          lastGlobalActivity &&
+          lastGlobalActivity.id !== lastSameContentSession?.id
+        ) {
           const timeSince = lastGlobalActivity.finished_at
             ? Math.floor(
-                (Date.now() - new Date(lastGlobalActivity.finished_at).getTime()) /
+                (Date.now() -
+                  new Date(lastGlobalActivity.finished_at).getTime()) /
                   (1000 * 60 * 60),
               )
             : null;
 
-          resurrection.last_global_activity = 
-            `Estudou "${lastGlobalActivity.contents.title}" ${
-              timeSince ? `há ${timeSince}h` : "recentemente"
-            }`;
+          resurrection.last_global_activity = `Estudou "${lastGlobalActivity.contents.title}" ${
+            timeSince ? `há ${timeSince}h` : "recentemente"
+          }`;
         }
 
         this.logger.debug(
@@ -622,14 +630,16 @@ export class ReadingSessionsService {
     // 6. Flow State Detection (SCRIPT 03 - Gap 8)
     let flowState = { isInFlow: false, confidence: 0 };
     try {
-       flowState = await this.flowStateDetector.detectFlowState(
-         user_id,
-         content_id,
-         sessionId
-       );
-       this.logger.debug(`Flow State: isInFlow=${flowState.isInFlow} (${flowState.confidence.toFixed(2)})`);
+      flowState = await this.flowStateDetector.detectFlowState(
+        user_id,
+        content_id,
+        sessionId,
+      );
+      this.logger.debug(
+        `Flow State: isInFlow=${flowState.isInFlow} (${flowState.confidence.toFixed(2)})`,
+      );
     } catch (err) {
-       this.logger.warn(`Failed to detect flow state: ${err.message}`);
+      this.logger.warn(`Failed to detect flow state: ${err.message}`);
     }
 
     return {
@@ -672,7 +682,26 @@ export class ReadingSessionsService {
       await this.persistEvents(sessionId, parsedEvents);
     }
 
-    // 4. Phase 3: Enrich context for AI (token optimization)
+    // 4. Check for SENTENCE_ANALYSIS intent (SCRIPT 11)
+    const sentenceAnalysisIntent = this.detectSentenceAnalysisIntent(
+      dto.text,
+      dto.selection?.selectedText,
+    );
+
+    if (sentenceAnalysisIntent) {
+      this.logger.log(
+        "SENTENCE_ANALYSIS intent detected, routing to specialized handler",
+      );
+      return this.executeSentenceAnalysis(
+        sessionId,
+        user_id,
+        session.session.content_id,
+        dto.text,
+        dto.selection?.selectedText,
+      );
+    }
+
+    // 5. Phase 3: Enrich context for AI (token optimization)
     const enrichedContext = await this.enrichPromptContext(
       sessionId,
       user_id,
@@ -774,6 +803,224 @@ export class ReadingSessionsService {
   }
 
   /**
+   * Detect SENTENCE_ANALYSIS intent from user message
+   * SCRIPT 11: Intent Detection
+   * SCRIPT 05: Added "reescreva", "resuma" keywords
+   */
+  private detectSentenceAnalysisIntent(
+    text: string,
+    selectedText?: string,
+  ): boolean {
+    if (!text) return false;
+
+    // Regex for sentence analysis keywords (SCRIPT 05 complete)
+    const analysisRegex =
+      /(analise|sintaxe|oração|sentence|structure|gramática|sujeito|período|cláusula|reescreva|resuma)/i;
+
+    // Command-style detection
+    if (text.match(/\/sintaxe:/i)) {
+      return true;
+    }
+
+    // Natural language detection
+    if (analysisRegex.test(text)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Extract typed text from command-style input (e.g., /sintaxe: texto)
+   * SCRIPT 11: Text Extraction
+   */
+  private extractTypedText(promptText: string): string | undefined {
+    const match = promptText.match(/\/sintaxe:\s*(.+)/i);
+    return match ? match[1].trim() : undefined;
+  }
+
+  /**
+   * Execute Sentence Analysis
+   * SCRIPT 11: Orchestration
+   *
+   * Orchestrates the full flow: validation → agent call → response formatting
+   */
+  private async executeSentenceAnalysis(
+    sessionId: string,
+    userId: string,
+    contentId: string,
+    promptText: string,
+    selectedText?: string,
+  ): Promise<AgentTurnResponseDto> {
+    this.logger.log("Executing SENTENCE_ANALYSIS");
+
+    // 1. Validate text source
+    const typedText = this.extractTypedText(promptText);
+    const text = selectedText || typedText;
+
+    if (!text || text.trim().length === 0) {
+      return {
+        threadId: "",
+        readingSessionId: sessionId,
+        // TODO: UI Feature - Implement "Sintaxe" button in text selection menu to auto-send this prompt with selection
+        nextPrompt:
+          "Para eu analisar a sentença, selecione uma frase (✨ IA) ou use /sintaxe: [texto]",
+        eventsToWrite: [],
+      };
+    }
+
+    // 2. Get user profile for scaffolding
+    const learnerProfile = await this.prisma.learner_profiles.findUnique({
+      where: { user_id: userId },
+      select: {
+        scaffolding_state_json: true,
+      },
+    });
+
+    // Default to pt-BR (language detection can be added later)
+    const languageCode = "pt-BR";
+    const scaffoldingState = learnerProfile?.scaffolding_state_json as any;
+    const scaffoldingLevel = scaffoldingState?.currentLevel || 1;
+
+    // 2.5. Fetch content mode (SCRIPT 05)
+    const content = await this.prisma.contents.findUnique({
+      where: { id: contentId },
+      select: { mode: true },
+    });
+    const mode = content?.mode || "DIDACTIC";
+
+    // 3. Prepare transfer metadata with mode (SCRIPT 05)
+    const transferMetadata = {
+      selected_text: selectedText,
+      typed_text: typedText,
+      language_code: languageCode,
+      mode: mode, // SCRIPT 05
+    };
+
+    // 4. Get user scope for budget/rate limiting
+    const userScope = await this.getUserScope(userId);
+
+    // 5. Execute transfer task
+    try {
+      const result = await this.aiServiceClient.executeTransferTask(
+        {
+          intent: "SENTENCE_ANALYSIS",
+          userId,
+          sessionId,
+          contentId,
+          transferMetadata,
+          userProfile: {
+            language_code: languageCode,
+            scaffolding_level: scaffoldingLevel,
+          },
+        },
+        {
+          scopeId: userScope.scopeId,
+          scopeType: userScope.scopeType,
+        },
+      );
+
+      // 6. Track usage
+      if (result.tokensUsed) {
+        const [user, familyMember] = await Promise.all([
+          this.prisma.users.findUnique({
+            where: { id: userId },
+            select: { last_institution_id: true } as any,
+          }),
+          this.prisma.family_members.findFirst({
+            where: { user_id: userId },
+            select: { family_id: true },
+          }),
+        ]);
+
+        this.providerUsageService.trackUsage({
+          provider: "educator_agent",
+          operation: "transfer_sentence_analysis",
+          tokens: result.tokensUsed,
+          userId,
+          familyId: familyMember?.family_id,
+          institutionId: (user as any)?.last_institution_id,
+          feature: "sentence_analysis",
+          metadata: {
+            sessionId,
+            contentId,
+            textLength: text.length,
+            scaffoldingLevel,
+          },
+        });
+      }
+
+      // 7. Return formatted response with quick_replies (SCRIPT 05)
+      return {
+        threadId: "",
+        readingSessionId: sessionId,
+        nextPrompt: result.responseText,
+        eventsToWrite: [],
+        quickReplies: result.structuredOutput?.quick_replies || [], // SCRIPT 05
+        usage: result.tokensUsed
+          ? {
+              total_tokens: result.tokensUsed,
+              prompt_tokens: Math.floor(result.tokensUsed * 0.6),
+              completion_tokens: Math.floor(result.tokensUsed * 0.4),
+            }
+          : undefined,
+      };
+    } catch (error) {
+      this.logger.error("Sentence analysis failed", error);
+
+      // Graceful degradation
+      return {
+        threadId: "",
+        readingSessionId: sessionId,
+        nextPrompt:
+          "Desculpe, não consegui analisar a sentença no momento. Tente novamente.",
+        eventsToWrite: [],
+      };
+    }
+  }
+
+  /**
+   * Helper: Get user scope (family or institution)
+   * SCRIPT 11: Scope Resolution
+   */
+  private async getUserScope(userId: string): Promise<{
+    scopeId: string;
+    scopeType: "family" | "institution";
+  }> {
+    // Try institution first
+    const institutionMember = await this.prisma.institution_members.findFirst({
+      where: { user_id: userId },
+      select: { institution_id: true },
+    });
+
+    if (institutionMember) {
+      return {
+        scopeId: institutionMember.institution_id,
+        scopeType: "institution",
+      };
+    }
+
+    // Fallback to family
+    const familyMember = await this.prisma.family_members.findFirst({
+      where: { user_id: userId },
+      select: { family_id: true },
+    });
+
+    if (familyMember) {
+      return {
+        scopeId: familyMember.family_id,
+        scopeType: "family",
+      };
+    }
+
+    // Fallback: use user ID as scope
+    return {
+      scopeId: userId,
+      scopeType: "family",
+    };
+  }
+
+  /**
    * POST /sessions/:id/finish
    * Marks session as finished
    */
@@ -813,12 +1060,12 @@ export class ReadingSessionsService {
       const annotationsCount = await this.prisma.session_events.count({
         where: {
           reading_session_id: sessionId,
-          event_type: 'MARK_UNKNOWN_WORD',
+          event_type: "MARK_UNKNOWN_WORD",
         },
       });
 
-      const todayDate = new Date(new Date().toISOString().split('T')[0]);
-      
+      const todayDate = new Date(new Date().toISOString().split("T")[0]);
+
       const existingActivity = await this.prisma.daily_activities.findFirst({
         where: {
           user_id: user_id,
@@ -878,7 +1125,7 @@ export class ReadingSessionsService {
       const [totalSessions, totalMinutes, totalAnnotations, currentStreak] =
         await Promise.all([
           this.prisma.reading_sessions.count({
-            where: { user_id: userId, phase: 'FINISHED' },
+            where: { user_id: userId, phase: "FINISHED" },
           }),
           this.prisma.daily_activities.aggregate({
             where: { user_id: userId },
@@ -887,7 +1134,7 @@ export class ReadingSessionsService {
           this.prisma.session_events.count({
             where: {
               reading_sessions: { user_id: userId },
-              event_type: 'MARK_UNKNOWN_WORD',
+              event_type: "MARK_UNKNOWN_WORD",
             },
           }),
           this.prisma.streaks
@@ -903,27 +1150,27 @@ export class ReadingSessionsService {
       const badgesToAward: string[] = [];
 
       // First session
-      if (totalSessions === 1) badgesToAward.push('badge-first-session');
+      if (totalSessions === 1) badgesToAward.push("badge-first-session");
 
       // Session milestones
-      if (totalSessions === 10) badgesToAward.push('badge-sessions-10');
-      if (totalSessions === 50) badgesToAward.push('badge-sessions-50');
-      if (totalSessions === 100) badgesToAward.push('badge-sessions-100');
+      if (totalSessions === 10) badgesToAward.push("badge-sessions-10");
+      if (totalSessions === 50) badgesToAward.push("badge-sessions-50");
+      if (totalSessions === 100) badgesToAward.push("badge-sessions-100");
 
       // Time milestones
-      if (totalHours === 10) badgesToAward.push('badge-hours-10');
-      if (totalHours === 50) badgesToAward.push('badge-hours-50');
-      if (totalHours === 100) badgesToAward.push('badge-hours-100');
+      if (totalHours === 10) badgesToAward.push("badge-hours-10");
+      if (totalHours === 50) badgesToAward.push("badge-hours-50");
+      if (totalHours === 100) badgesToAward.push("badge-hours-100");
 
       // Annotation milestones
-      if (totalAnnotations === 25) badgesToAward.push('badge-notes-25');
-      if (totalAnnotations === 100) badgesToAward.push('badge-notes-100');
-      if (totalAnnotations === 500) badgesToAward.push('badge-notes-500');
+      if (totalAnnotations === 25) badgesToAward.push("badge-notes-25");
+      if (totalAnnotations === 100) badgesToAward.push("badge-notes-100");
+      if (totalAnnotations === 500) badgesToAward.push("badge-notes-500");
 
       // Streak milestones
-      if (currentStreak === 3) badgesToAward.push('badge-streak-3');
-      if (currentStreak === 7) badgesToAward.push('badge-streak-7');
-      if (currentStreak === 30) badgesToAward.push('badge-streak-30');
+      if (currentStreak === 3) badgesToAward.push("badge-streak-3");
+      if (currentStreak === 7) badgesToAward.push("badge-streak-7");
+      if (currentStreak === 30) badgesToAward.push("badge-streak-30");
 
       // Award badges (skip if already awarded)
       for (const badgeId of badgesToAward) {
@@ -1230,7 +1477,7 @@ export class ReadingSessionsService {
       where: {
         reading_session_id: sessionId,
         created_at: { gte: since },
-        event_type: 'MARK_UNKNOWN_WORD', // Primary doubt signal
+        event_type: "MARK_UNKNOWN_WORD", // Primary doubt signal
       },
     });
 
@@ -1241,7 +1488,7 @@ export class ReadingSessionsService {
         created_at: { gte: since },
       },
       select: { created_at: true },
-      orderBy: { created_at: 'asc' },
+      orderBy: { created_at: "asc" },
     });
 
     const timeSpent =

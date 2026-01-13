@@ -1,7 +1,13 @@
-import { IsString, IsOptional, IsArray, IsEnum, IsBoolean } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  IsEnum,
+  IsBoolean,
+} from "class-validator";
 
 export class BuildDeterministicSourceDto {
-  @IsEnum(['GLOBAL', 'INSTITUTION', 'STUDY_GROUP', 'FAMILY', 'USER'])
+  @IsEnum(["GLOBAL", "INSTITUTION", "STUDY_GROUP", "FAMILY", "USER"])
   scopeType: string;
 
   @IsString()
@@ -13,9 +19,9 @@ export class BuildDeterministicSourceDto {
   @IsOptional()
   contentIds?: string[];
 
-  @IsEnum(['INCREMENTAL', 'FULL'])
+  @IsEnum(["INCREMENTAL", "FULL"])
   @IsOptional()
-  mode?: 'INCREMENTAL' | 'FULL';
+  mode?: "INCREMENTAL" | "FULL";
 
   @IsBoolean()
   @IsOptional()
@@ -23,7 +29,7 @@ export class BuildDeterministicSourceDto {
 }
 
 export class GetStatusDto {
-  @IsEnum(['GLOBAL', 'INSTITUTION', 'STUDY_GROUP', 'FAMILY', 'USER'])
+  @IsEnum(["GLOBAL", "INSTITUTION", "STUDY_GROUP", "FAMILY", "USER"])
   scopeType: string;
 
   @IsString()

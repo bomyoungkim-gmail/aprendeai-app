@@ -1,14 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
 
 export interface DcsComponents {
-  docSupport: number;        // 0..1
-  coverage: number;          // 0..1
-  matchQuality: number;      // 0..1
-  evidenceStrength: number;  // 0..1
-  stability: number;         // 0..1
-  curation: number;          // 0..1
+  docSupport: number; // 0..1
+  coverage: number; // 0..1
+  matchQuality: number; // 0..1
+  evidenceStrength: number; // 0..1
+  stability: number; // 0..1
+  curation: number; // 0..1
 }
 
 export interface SectionRef {
@@ -27,7 +26,7 @@ export interface DcsResult {
 
 /**
  * DCS Calculator Service
- * 
+ *
  * Computes Determinism Confidence Score (DCS) based on 6 observable signals:
  * - docSupport: Document structure quality
  * - coverage: Topic registry match ratio
@@ -35,7 +34,7 @@ export interface DcsResult {
  * - evidenceStrength: Proportion of strong edges
  * - stability: Edge recurrence across sessions
  * - curation: Teacher/Moderator validation
- * 
+ *
  * Formula: DCS = 0.15*doc + 0.20*cov + 0.20*match + 0.20*evid + 0.15*stab + 0.10*cur
  */
 @Injectable()
@@ -53,18 +52,25 @@ export class DcsCalculatorService {
     scopeId: string | null,
     sectionRef?: SectionRef,
   ): Promise<DcsResult> {
-    this.logger.log(`Calculating DCS for content: ${contentId}, section: ${JSON.stringify(sectionRef)}`);
+    this.logger.log(
+      `Calculating DCS for content: ${contentId}, section: ${JSON.stringify(sectionRef)}`,
+    );
 
-    const components = await this.computeComponents(contentId, scopeType, scopeId, sectionRef);
+    const components = await this.computeComponents(
+      contentId,
+      scopeType,
+      scopeId,
+      sectionRef,
+    );
 
     // Formula: 15% doc + 20% cov + 20% match + 20% evid + 15% stab + 10% cur
     const dcs = Math.min(
       0.15 * components.docSupport +
-      0.20 * components.coverage +
-      0.20 * components.matchQuality +
-      0.20 * components.evidenceStrength +
-      0.15 * components.stability +
-      0.10 * components.curation,
+        0.2 * components.coverage +
+        0.2 * components.matchQuality +
+        0.2 * components.evidenceStrength +
+        0.15 * components.stability +
+        0.1 * components.curation,
       1.0,
     );
 
@@ -118,7 +124,9 @@ export class DcsCalculatorService {
       await (this.prisma as any).determinism_scores.create({ data });
     }
 
-    this.logger.log(`Persisted DCS: ${result.dcs.toFixed(3)} (w_det=${result.w_det.toFixed(3)}, w_llm=${result.w_llm.toFixed(3)})`);
+    this.logger.log(
+      `Persisted DCS: ${result.dcs.toFixed(3)} (w_det=${result.w_det.toFixed(3)}, w_llm=${result.w_llm.toFixed(3)})`,
+    );
   }
 
   /**
@@ -131,7 +139,14 @@ export class DcsCalculatorService {
     sectionRef?: SectionRef,
   ): Promise<DcsComponents> {
     // Parallel computation of all components
-    const [docSupport, coverage, matchQuality, evidenceStrength, stability, curation] = await Promise.all([
+    const [
+      docSupport,
+      coverage,
+      matchQuality,
+      evidenceStrength,
+      stability,
+      curation,
+    ] = await Promise.all([
       this.computeDocSupport(contentId),
       this.computeCoverage(contentId, scopeType, scopeId, sectionRef),
       this.computeMatchQuality(contentId, scopeType, scopeId, sectionRef),
@@ -159,7 +174,8 @@ export class DcsCalculatorService {
     if (!content) return 0.2;
 
     const metadata = content.metadata as any;
-    const hasToc = metadata?.toc && Array.isArray(metadata.toc) && metadata.toc.length > 0;
+    const hasToc =
+      metadata?.toc && Array.isArray(metadata.toc) && metadata.toc.length > 0;
     const hasText = metadata?.hasText === true;
 
     if (hasToc && hasText) return 1.0;
@@ -185,7 +201,7 @@ export class DcsCalculatorService {
 
     // Count units with at least K matched topics from registry
     const K = 2; // Minimum topics per unit
-    
+
     // This is a simplified implementation
     // In production, you'd query topic_nodes and match against topic_registry
     const matchedUnits = await this.prisma.content_chunks.count({
@@ -209,7 +225,7 @@ export class DcsCalculatorService {
   ): Promise<number> {
     // Simplified: Check for ambiguous matches in topic_registry
     // Ambiguous = term matches multiple registry nodes with similar weight
-    
+
     // Placeholder implementation
     return 0.8; // Default to good quality
   }
@@ -227,7 +243,7 @@ export class DcsCalculatorService {
         content_id: contentId,
         scope_type: scopeType,
         scope_id: scopeId,
-        type: { in: ['LEARNER', 'CURATED'] },
+        type: { in: ["LEARNER", "CURATED"] },
       },
       include: {
         topic_edges: {
@@ -283,7 +299,9 @@ export class DcsCalculatorService {
     }
 
     const totalEdges = edgeOccurrences.size;
-    const stableEdges = Array.from(edgeOccurrences.values()).filter((count) => count >= 2).length;
+    const stableEdges = Array.from(edgeOccurrences.values()).filter(
+      (count) => count >= 2,
+    ).length;
 
     return totalEdges > 0 ? stableEdges / totalEdges : 0.0;
   }
@@ -302,7 +320,7 @@ export class DcsCalculatorService {
         content_id: contentId,
         scope_type: scopeType,
         scope_id: scopeId,
-        type: 'CURATED',
+        type: "CURATED",
       },
     });
 

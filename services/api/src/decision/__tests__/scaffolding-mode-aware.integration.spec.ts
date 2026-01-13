@@ -1,16 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { DecisionModule } from '../decision.module';
-import { ScaffoldingInitializerService } from '../application/scaffolding-initializer.service';
-import { ScaffoldingSignalDetectorService } from '../application/scaffolding-signal-detector.service';
-import { ScaffoldingService } from '../application/scaffolding.service';
-import { DecisionService } from '../application/decision.service';
-import { ContentMode, Language } from '@prisma/client';
+import { Test, TestingModule } from "@nestjs/testing";
+import { INestApplication } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { DecisionModule } from "../decision.module";
+import { ScaffoldingInitializerService } from "../application/scaffolding-initializer.service";
+import { ScaffoldingSignalDetectorService } from "../application/scaffolding-signal-detector.service";
+import { ScaffoldingService } from "../application/scaffolding.service";
+import { DecisionService } from "../application/decision.service";
+import { ContentMode, Language } from "@prisma/client";
 
 /**
  * SCRIPT 03 - Integration Tests
- * 
+ *
  * Tests the complete scaffolding flow:
  * - Mode-aware initialization (Fase 1)
  * - Signal detection and adjustment (Fase 2)
@@ -18,7 +18,7 @@ import { ContentMode, Language } from '@prisma/client';
  * - Consecutive sessions (GAP 5)
  * - Policy override (GAP 6)
  */
-describe('Scaffolding Mode-Aware Integration', () => {
+describe("Scaffolding Mode-Aware Integration", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let scaffoldingInitializer: ScaffoldingInitializerService;
@@ -26,9 +26,9 @@ describe('Scaffolding Mode-Aware Integration', () => {
   let scaffoldingService: ScaffoldingService;
   let decisionService: DecisionService;
 
-  const testUserId = 'test-user-scaffolding-integration';
-  const testContentId = 'test-content-scaffolding';
-  const testSessionId = 'test-session-scaffolding';
+  const testUserId = "test-user-scaffolding-integration";
+  const testContentId = "test-content-scaffolding";
+  const testSessionId = "test-session-scaffolding";
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -40,12 +40,14 @@ describe('Scaffolding Mode-Aware Integration', () => {
 
     prisma = moduleFixture.get<PrismaService>(PrismaService);
     scaffoldingInitializer = moduleFixture.get<ScaffoldingInitializerService>(
-      ScaffoldingInitializerService
+      ScaffoldingInitializerService,
     );
-    scaffoldingSignalDetector = moduleFixture.get<ScaffoldingSignalDetectorService>(
-      ScaffoldingSignalDetectorService
-    );
-    scaffoldingService = moduleFixture.get<ScaffoldingService>(ScaffoldingService);
+    scaffoldingSignalDetector =
+      moduleFixture.get<ScaffoldingSignalDetectorService>(
+        ScaffoldingSignalDetectorService,
+      );
+    scaffoldingService =
+      moduleFixture.get<ScaffoldingService>(ScaffoldingService);
     decisionService = moduleFixture.get<DecisionService>(DecisionService);
   });
 
@@ -67,8 +69,8 @@ describe('Scaffolding Mode-Aware Integration', () => {
     await app.close();
   });
 
-  describe('Fase 1: Mode-Aware Initialization', () => {
-    it('should initialize DIDACTIC mode with L2 for new user', async () => {
+  describe("Fase 1: Mode-Aware Initialization", () => {
+    it("should initialize DIDACTIC mode with L2 for new user", async () => {
       const level = await scaffoldingInitializer.getInitialLevel({
         mode: ContentMode.DIDACTIC,
         learnerProfile: {
@@ -82,7 +84,7 @@ describe('Scaffolding Mode-Aware Integration', () => {
       expect(level).toBe(2);
     });
 
-    it('should initialize NARRATIVE mode with L0 for experienced user', async () => {
+    it("should initialize NARRATIVE mode with L0 for experienced user", async () => {
       const level = await scaffoldingInitializer.getInitialLevel({
         mode: ContentMode.NARRATIVE,
         learnerProfile: {
@@ -96,7 +98,7 @@ describe('Scaffolding Mode-Aware Integration', () => {
       expect(level).toBe(0);
     });
 
-    it('should respect policy override (GAP 6)', async () => {
+    it("should respect policy override (GAP 6)", async () => {
       const level = await scaffoldingInitializer.getInitialLevel({
         mode: ContentMode.DIDACTIC,
         learnerProfile: {
@@ -111,7 +113,7 @@ describe('Scaffolding Mode-Aware Integration', () => {
     });
   });
 
-  describe('Fase 2: Signal Detection', () => {
+  describe("Fase 2: Signal Detection", () => {
     beforeEach(async () => {
       // Create user first
       await prisma.users.upsert({
@@ -119,7 +121,7 @@ describe('Scaffolding Mode-Aware Integration', () => {
         create: {
           id: testUserId,
           email: `${testUserId}@test.com`,
-          name: 'Test User',
+          name: "Test User",
         },
         update: {},
       });
@@ -156,11 +158,11 @@ describe('Scaffolding Mode-Aware Integration', () => {
         where: { id: testContentId },
         create: {
           id: testContentId,
-          type: 'TEXT',
-          title: 'Test Content',
+          type: "TEXT",
+          title: "Test Content",
           mode: ContentMode.DIDACTIC,
           original_language: Language.PT_BR,
-          raw_text: 'Test content for scaffolding integration tests.',
+          raw_text: "Test content for scaffolding integration tests.",
         },
         update: {},
       });
@@ -176,26 +178,26 @@ describe('Scaffolding Mode-Aware Integration', () => {
       });
     });
 
-    it('should detect INCREASE signal on doubt spike', async () => {
+    it("should detect INCREASE signal on doubt spike", async () => {
       // Create 3 DOUBT events in last 5 minutes
       const now = new Date();
       await prisma.session_events.createMany({
         data: [
           {
             reading_session_id: testSessionId,
-            event_type: 'DOUBT' as any,
+            event_type: "DOUBT" as any,
             payload_json: {},
             created_at: new Date(now.getTime() - 2 * 60 * 1000),
           },
           {
             reading_session_id: testSessionId,
-            event_type: 'DOUBT' as any,
+            event_type: "DOUBT" as any,
             payload_json: {},
             created_at: new Date(now.getTime() - 3 * 60 * 1000),
           },
           {
             reading_session_id: testSessionId,
-            event_type: 'DOUBT' as any,
+            event_type: "DOUBT" as any,
             payload_json: {},
             created_at: new Date(now.getTime() - 4 * 60 * 1000),
           },
@@ -211,15 +213,15 @@ describe('Scaffolding Mode-Aware Integration', () => {
         testUserId,
         testContentId,
         ContentMode.DIDACTIC,
-        profile.scaffolding_state_json as any
+        profile.scaffolding_state_json as any,
       );
 
-      expect(signal.type).toBe('INCREASE');
-      expect(signal.reason).toBe('doubt_spike');
+      expect(signal.type).toBe("INCREASE");
+      expect(signal.reason).toBe("doubt_spike");
       expect(signal.evidence.doubtSpike).toBe(true);
     });
 
-    it('should detect DECREASE signal with 3+ consecutive sessions (GAP 5)', async () => {
+    it("should detect DECREASE signal with 3+ consecutive sessions (GAP 5)", async () => {
       // Update profile with 3 consecutive successes
       await prisma.learner_profiles.update({
         where: { user_id: testUserId },
@@ -240,13 +242,13 @@ describe('Scaffolding Mode-Aware Integration', () => {
         data: [
           {
             reading_session_id: testSessionId,
-            event_type: 'CHECKPOINT_ANSWER' as any,
+            event_type: "CHECKPOINT_ANSWER" as any,
             payload_json: { completion_quality: 0.9 },
             created_at: new Date(),
           },
           {
             reading_session_id: testSessionId,
-            event_type: 'QUIZ_COMPLETE' as any,
+            event_type: "QUIZ_COMPLETE" as any,
             payload_json: { correct_count: 9, total_count: 10 },
             created_at: new Date(),
           },
@@ -262,15 +264,15 @@ describe('Scaffolding Mode-Aware Integration', () => {
         testUserId,
         testContentId,
         ContentMode.DIDACTIC,
-        profile.scaffolding_state_json as any
+        profile.scaffolding_state_json as any,
       );
 
-      expect(signal.type).toBe('DECREASE');
-      expect(signal.reason).toBe('consistent_mastery');
+      expect(signal.type).toBe("DECREASE");
+      expect(signal.reason).toBe("consistent_mastery");
       expect(signal.evidence.consecutiveSessions).toBe(3);
     });
 
-    it('should respect cooldown period (GAP 4)', async () => {
+    it("should respect cooldown period (GAP 4)", async () => {
       // Set last change to 2 minutes ago (within 5-minute cooldown)
       await prisma.learner_profiles.update({
         where: { user_id: testUserId },
@@ -292,19 +294,19 @@ describe('Scaffolding Mode-Aware Integration', () => {
         data: [
           {
             reading_session_id: testSessionId,
-            event_type: 'DOUBT' as any,
+            event_type: "DOUBT" as any,
             payload_json: {},
             created_at: new Date(now.getTime() - 1 * 60 * 1000),
           },
           {
             reading_session_id: testSessionId,
-            event_type: 'DOUBT' as any,
+            event_type: "DOUBT" as any,
             payload_json: {},
             created_at: new Date(now.getTime() - 2 * 60 * 1000),
           },
           {
             reading_session_id: testSessionId,
-            event_type: 'DOUBT' as any,
+            event_type: "DOUBT" as any,
             payload_json: {},
             created_at: new Date(now.getTime() - 3 * 60 * 1000),
           },
@@ -316,20 +318,25 @@ describe('Scaffolding Mode-Aware Integration', () => {
         select: { scaffolding_state_json: true },
       });
 
-      const levelBefore = (profileBefore.scaffolding_state_json as any).currentLevel;
+      const levelBefore = (profileBefore.scaffolding_state_json as any)
+        .currentLevel;
 
       // Signal should be detected but not applied due to cooldown
       const signal = await scaffoldingSignalDetector.detectSignal(
         testUserId,
         testContentId,
         ContentMode.DIDACTIC,
-        profileBefore.scaffolding_state_json as any
+        profileBefore.scaffolding_state_json as any,
       );
 
-      expect(signal.type).toBe('INCREASE');
+      expect(signal.type).toBe("INCREASE");
 
       // Verify cooldown prevents update
-      const timeSinceLastChange = Date.now() - new Date((profileBefore.scaffolding_state_json as any).lastLevelChangeAt).getTime();
+      const timeSinceLastChange =
+        Date.now() -
+        new Date(
+          (profileBefore.scaffolding_state_json as any).lastLevelChangeAt,
+        ).getTime();
       const COOLDOWN_MS = 5 * 60 * 1000;
       expect(timeSinceLastChange).toBeLessThan(COOLDOWN_MS);
 
@@ -339,12 +346,14 @@ describe('Scaffolding Mode-Aware Integration', () => {
         select: { scaffolding_state_json: true },
       });
 
-      expect((profileAfter.scaffolding_state_json as any).currentLevel).toBe(levelBefore);
+      expect((profileAfter.scaffolding_state_json as any).currentLevel).toBe(
+        levelBefore,
+      );
     });
   });
 
-  describe('ScaffoldingService.updateLevel', () => {
-    it('should update level and reset consecutiveSuccesses on INCREASE', async () => {
+  describe("ScaffoldingService.updateLevel", () => {
+    it("should update level and reset consecutiveSuccesses on INCREASE", async () => {
       await prisma.learner_profiles.update({
         where: { user_id: testUserId },
         data: {
@@ -362,9 +371,9 @@ describe('Scaffolding Mode-Aware Integration', () => {
       await scaffoldingService.updateLevel(
         testUserId,
         3,
-        'doubt_spike',
+        "doubt_spike",
         ContentMode.DIDACTIC,
-        'INCREASE'
+        "INCREASE",
       );
 
       const profile = await prisma.learner_profiles.findUnique({
@@ -377,7 +386,7 @@ describe('Scaffolding Mode-Aware Integration', () => {
       expect(state.fadingMetrics.consecutiveSuccesses).toBe(0); // Reset on INCREASE
     });
 
-    it('should update level and reset consecutiveSuccesses on DECREASE', async () => {
+    it("should update level and reset consecutiveSuccesses on DECREASE", async () => {
       await prisma.learner_profiles.update({
         where: { user_id: testUserId },
         data: {
@@ -395,9 +404,9 @@ describe('Scaffolding Mode-Aware Integration', () => {
       await scaffoldingService.updateLevel(
         testUserId,
         1,
-        'consistent_mastery',
+        "consistent_mastery",
         ContentMode.DIDACTIC,
-        'DECREASE'
+        "DECREASE",
       );
 
       const profile = await prisma.learner_profiles.findUnique({

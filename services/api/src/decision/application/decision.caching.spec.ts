@@ -1,15 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { DecisionService } from './decision.service';
-import { PrismaService } from '../../prisma/prisma.service';
-import { IDecisionLogRepository } from '../domain/decision-log.repository.interface';
-import { ScaffoldingService } from './scaffolding.service';
-import { TelemetryService } from '../../telemetry/telemetry.service';
-import { DecisionInput } from '../domain/decision.types';
-import { AiServiceClient } from '../../ai-service/ai-service.client';
-import { DcsCalculatorService } from '../weighting/dcs-calculator.service';
-import { DcsIntegrationHelper } from '../weighting/dcs-integration.helper';
+import { Test, TestingModule } from "@nestjs/testing";
+import { DecisionService } from "./decision.service";
+import { PrismaService } from "../../prisma/prisma.service";
+import { IDecisionLogRepository } from "../domain/decision-log.repository.interface";
+import { ScaffoldingService } from "./scaffolding.service";
+import { TelemetryService } from "../../telemetry/telemetry.service";
+import { DecisionInput } from "../domain/decision.types";
+import { AiServiceClient } from "../../ai-service/ai-service.client";
+import { DcsCalculatorService } from "../weighting/dcs-calculator.service";
+import { DcsIntegrationHelper } from "../weighting/dcs-integration.helper";
 
-describe('DecisionService - SCRIPT 10', () => {
+describe("DecisionService - SCRIPT 10", () => {
   let service: DecisionService;
   let prismaService: any;
   let scaffoldingService: jest.Mocked<ScaffoldingService>;
@@ -29,7 +29,9 @@ describe('DecisionService - SCRIPT 10', () => {
 
     const mockScaffolding = {
       calculateFadingLevel: jest.fn().mockResolvedValue(2),
-      getThresholdMultipliers: jest.fn().mockReturnValue({ doubtSensitivity: 1.0 }),
+      getThresholdMultipliers: jest
+        .fn()
+        .mockReturnValue({ doubtSensitivity: 1.0 }),
       getMaxInterventions: jest.fn().mockReturnValue(3),
     };
 
@@ -44,7 +46,9 @@ describe('DecisionService - SCRIPT 10', () => {
     const mockDcsCalculator = {};
 
     const mockDcsHelper = {
-      fetchDcs: jest.fn().mockResolvedValue({ dcs: 0.0, w_det: 0.0, w_llm: 1.0 }),
+      fetchDcs: jest
+        .fn()
+        .mockResolvedValue({ dcs: 0.0, w_det: 0.0, w_llm: 1.0 }),
       shouldSuppressInvisible: jest.fn().mockReturnValue(false),
       isActionAllowed: jest.fn().mockReturnValue(true),
       logWeightEvent: jest.fn(),
@@ -69,8 +73,8 @@ describe('DecisionService - SCRIPT 10', () => {
     scaffoldingService = module.get(ScaffoldingService);
   });
 
-  describe('Decision Cache', () => {
-    it('should cache decision results', async () => {
+  describe("Decision Cache", () => {
+    it("should cache decision results", async () => {
       // Setup
       prismaService.family_policies.findFirst.mockResolvedValue({
         llm_budget_daily_tokens: 5000,
@@ -87,16 +91,16 @@ describe('DecisionService - SCRIPT 10', () => {
       prismaService.decision_logs.count.mockResolvedValue(1);
 
       const input: DecisionInput = {
-        userId: 'user-123',
-        sessionId: 'session-456',
-        contentId: 'content-789',
+        userId: "user-123",
+        sessionId: "session-456",
+        contentId: "content-789",
         signals: {
           doubtsInWindow: 1,
           checkpointFailures: 0,
-          flowState: 'FLOW',
-          summaryQuality: 'OK',
+          flowState: "FLOW",
+          summaryQuality: "OK",
         },
-        uiPolicyVersion: '1.0.0',
+        uiPolicyVersion: "1.0.0",
       };
 
       // First call
@@ -110,7 +114,7 @@ describe('DecisionService - SCRIPT 10', () => {
       expect(prismaService.family_policies.findFirst).toHaveBeenCalledTimes(1);
     });
 
-    it('should not cache different inputs', async () => {
+    it("should not cache different inputs", async () => {
       prismaService.family_policies.findFirst.mockResolvedValue({
         llm_budget_daily_tokens: 5000,
         scaffolding_level_default: 2,
@@ -126,19 +130,29 @@ describe('DecisionService - SCRIPT 10', () => {
       prismaService.decision_logs.count.mockResolvedValue(1);
 
       const input1: DecisionInput = {
-        userId: 'user-123',
-        sessionId: 'session-456',
-        contentId: 'content-789',
-        signals: { doubtsInWindow: 1, checkpointFailures: 0, flowState: 'FLOW', summaryQuality: 'OK' },
-        uiPolicyVersion: '1.0.0',
+        userId: "user-123",
+        sessionId: "session-456",
+        contentId: "content-789",
+        signals: {
+          doubtsInWindow: 1,
+          checkpointFailures: 0,
+          flowState: "FLOW",
+          summaryQuality: "OK",
+        },
+        uiPolicyVersion: "1.0.0",
       };
 
       const input2: DecisionInput = {
-        userId: 'user-123',
-        sessionId: 'session-456',
-        contentId: 'content-789',
-        signals: { doubtsInWindow: 3, checkpointFailures: 1, flowState: 'FLOW', summaryQuality: 'OK' }, // Different signal
-        uiPolicyVersion: '1.0.0',
+        userId: "user-123",
+        sessionId: "session-456",
+        contentId: "content-789",
+        signals: {
+          doubtsInWindow: 3,
+          checkpointFailures: 1,
+          flowState: "FLOW",
+          summaryQuality: "OK",
+        }, // Different signal
+        uiPolicyVersion: "1.0.0",
       };
 
       await service.makeDecision(input1);
@@ -149,8 +163,8 @@ describe('DecisionService - SCRIPT 10', () => {
     });
   });
 
-  describe('Max Interventions', () => {
-    it('should suppress intervention when max exceeded', async () => {
+  describe("Max Interventions", () => {
+    it("should suppress intervention when max exceeded", async () => {
       prismaService.family_policies.findFirst.mockResolvedValue({
         llm_budget_daily_tokens: 5000,
         scaffolding_level_default: 2,
@@ -168,25 +182,25 @@ describe('DecisionService - SCRIPT 10', () => {
       scaffoldingService.getMaxInterventions.mockReturnValue(3);
 
       const input: DecisionInput = {
-        userId: 'user-123',
-        sessionId: 'session-456',
-        contentId: 'content-789',
+        userId: "user-123",
+        sessionId: "session-456",
+        contentId: "content-789",
         signals: {
           doubtsInWindow: 3, // High doubt
           checkpointFailures: 1,
-          flowState: 'FLOW',
-          summaryQuality: 'OK',
+          flowState: "FLOW",
+          summaryQuality: "OK",
         },
-        uiPolicyVersion: '1.0.0',
+        uiPolicyVersion: "1.0.0",
       };
 
       const result = await service.makeDecision(input);
 
       // Should be suppressed due to max interventions
-      expect(result.action).toBe('NO_OP');
+      expect(result.action).toBe("NO_OP");
     });
 
-    it('should allow intervention when under max', async () => {
+    it("should allow intervention when under max", async () => {
       prismaService.family_policies.findFirst.mockResolvedValue({
         llm_budget_daily_tokens: 5000,
         scaffolding_level_default: 2,
@@ -204,22 +218,22 @@ describe('DecisionService - SCRIPT 10', () => {
       scaffoldingService.getMaxInterventions.mockReturnValue(3);
 
       const input: DecisionInput = {
-        userId: 'user-123',
-        sessionId: 'session-456',
-        contentId: 'content-789',
+        userId: "user-123",
+        sessionId: "session-456",
+        contentId: "content-789",
         signals: {
           doubtsInWindow: 3, // High doubt
           checkpointFailures: 1,
-          flowState: 'FLOW',
-          summaryQuality: 'OK',
+          flowState: "FLOW",
+          summaryQuality: "OK",
         },
-        uiPolicyVersion: '1.0.0',
+        uiPolicyVersion: "1.0.0",
       };
 
       const result = await service.makeDecision(input);
 
       // Should allow intervention
-      expect(result.action).not.toBe('NO_OP');
+      expect(result.action).not.toBe("NO_OP");
     });
   });
 });

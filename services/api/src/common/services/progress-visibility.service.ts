@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
 
 /**
  * Progress Visibility Service
@@ -36,7 +36,7 @@ export class ProgressVisibilityService {
     }
 
     // 2. System Admin: full access
-    if (viewerRoles.includes('ADMIN')) {
+    if (viewerRoles.includes("ADMIN")) {
       return true;
     }
 
@@ -47,8 +47,15 @@ export class ProgressVisibilityService {
     }
 
     // 4. Institution Hierarchy: Check if viewer is an educator with access
-    const EDUCATOR_ROLES = ['TEACHER', 'INSTITUTION_EDUCATION_ADMIN', 'EDUCATOR'];
-    if (viewerInstitutionId && viewerRoles.some((role) => EDUCATOR_ROLES.includes(role))) {
+    const EDUCATOR_ROLES = [
+      "TEACHER",
+      "INSTITUTION_EDUCATION_ADMIN",
+      "EDUCATOR",
+    ];
+    if (
+      viewerInstitutionId &&
+      viewerRoles.some((role) => EDUCATOR_ROLES.includes(role))
+    ) {
       const hasStudentAccess = await this.hasStudentInInstitution(
         viewerInstitutionId,
         targetUserId,
@@ -81,7 +88,7 @@ export class ProgressVisibilityService {
                 some: {
                   user_id: viewerId,
                   role: {
-                    in: ['OWNER', 'GUARDIAN'],
+                    in: ["OWNER", "GUARDIAN"],
                   },
                 },
               },
@@ -106,7 +113,7 @@ export class ProgressVisibilityService {
       where: {
         institution_id: institutionId,
         user_id: studentUserId,
-        status: 'ACTIVE',
+        status: "ACTIVE",
       },
     });
 
@@ -118,7 +125,7 @@ export class ProgressVisibilityService {
           classrooms: {
             institution_id: institutionId,
           },
-          status: 'ACTIVE',
+          status: "ACTIVE",
         },
       });
 

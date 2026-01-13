@@ -65,17 +65,22 @@ export class SubmitReviewUseCase {
       });
 
     // Emit telemetry for SRS review
-    await this.telemetryService.track({
-      eventType: TelemetryEventType.SRS_REVIEW_DONE,
-      eventVersion: '1.0.0',
-      contentId: vocab.contentId || 'unknown',
-      sessionId: input.sessionId || 'unknown',
-      data: {
-        itemId: vocab.id,
-        correct: input.result === 'OK' || input.result === 'EASY',
-        intervalDays: Math.floor((calc.dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+    await this.telemetryService.track(
+      {
+        eventType: TelemetryEventType.SRS_REVIEW_DONE,
+        eventVersion: "1.0.0",
+        contentId: vocab.contentId || "unknown",
+        sessionId: input.sessionId || "unknown",
+        data: {
+          itemId: vocab.id,
+          correct: input.result === "OK" || input.result === "EASY",
+          intervalDays: Math.floor(
+            (calc.dueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+          ),
+        },
       },
-    }, userId);
+      userId,
+    );
 
     return updatedVocab;
   }

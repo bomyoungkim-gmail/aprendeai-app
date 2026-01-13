@@ -5,6 +5,8 @@ import {
   MaxLength,
   ValidateNested,
   IsOptional,
+  IsObject,
+  IsNumber,
 } from "class-validator";
 import { Type } from "class-transformer";
 import {
@@ -43,6 +45,24 @@ export class PromptMetadataDto {
   span?: { start: number; end: number };
 }
 
+export class SelectionContextDto {
+  @IsString()
+  @IsOptional()
+  selectedText?: string;
+
+  @IsNumber()
+  @IsOptional()
+  startOffset?: number;
+
+  @IsNumber()
+  @IsOptional()
+  endOffset?: number;
+
+  @IsNumber()
+  @IsOptional()
+  page?: number;
+}
+
 export class PromptMessageDto {
   @IsString()
   @IsNotEmpty()
@@ -67,4 +87,10 @@ export class PromptMessageDto {
   @ValidateNested()
   @Type(() => PromptMetadataDto)
   metadata: PromptMetadataDto;
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => SelectionContextDto)
+  selection?: SelectionContextDto;
 }

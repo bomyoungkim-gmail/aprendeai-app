@@ -6,33 +6,33 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { TransferMetadataService } from './transfer-metadata.service';
+} from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { TransferMetadataService } from "./transfer-metadata.service";
 import {
   BuildTransferMetadataDto,
   GetTransferMetadataDto,
-} from './application/dto/transfer-metadata.dto';
-import { QueueService } from '../queue/queue.service';
+} from "./application/dto/transfer-metadata.dto";
+import { QueueService } from "../queue/queue.service";
 
-@ApiTags('transfer')
-@Controller('transfer/metadata')
+@ApiTags("transfer")
+@Controller("transfer/metadata")
 export class TransferMetadataController {
   constructor(
     private readonly transferMetadataService: TransferMetadataService,
     private readonly queueService: QueueService,
   ) {}
 
-  @Post('build')
+  @Post("build")
   @HttpCode(HttpStatus.ACCEPTED)
-  @ApiOperation({ summary: 'Enqueue transfer metadata build job' })
+  @ApiOperation({ summary: "Enqueue transfer metadata build job" })
   @ApiResponse({
     status: 202,
-    description: 'Job enqueued successfully',
+    description: "Job enqueued successfully",
   })
   async buildMetadata(@Body() dto: BuildTransferMetadataDto) {
     // Enqueue background job
-    await this.queueService.add('TRANSFER_METADATA_BUILD', {
+    await this.queueService.add("TRANSFER_METADATA_BUILD", {
       contentId: dto.contentId,
       scopeType: dto.scopeType,
       familyId: dto.familyId,
@@ -40,16 +40,16 @@ export class TransferMetadataController {
     });
 
     return {
-      message: 'Transfer metadata build job enqueued',
+      message: "Transfer metadata build job enqueued",
       contentId: dto.contentId,
     };
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get transfer metadata for a chunk' })
+  @ApiOperation({ summary: "Get transfer metadata for a chunk" })
   @ApiResponse({
     status: 200,
-    description: 'Metadata retrieved successfully',
+    description: "Metadata retrieved successfully",
   })
   async getMetadata(@Query() dto: GetTransferMetadataDto) {
     const metadata = await this.transferMetadataService.getMetadata({

@@ -13,21 +13,21 @@ import {
   HttpStatus,
   NotFoundException,
   ForbiddenException,
-} from '@nestjs/common';
-import { JwtAuthGuard } from '../../auth/infrastructure/jwt-auth.guard';
-import { PkmGenerationService } from '../application/pkm-generation.service';
-import { IPkmNoteRepository } from '../domain/repositories/pkm-note.repository.interface';
-import { GeneratePkmDto } from '../application/dto/generate-pkm.dto';
-import { UpdatePkmNoteDto } from '../application/dto/update-pkm-note.dto';
-import { PkmNoteDto } from '../application/dto/pkm-note.dto';
-import { CreatePkmNoteDto } from '../application/dto/create-pkm-note.dto';
-import { DecisionService } from '../../decision/application/decision.service';
-import { Inject } from '@nestjs/common';
-import { PkmNote } from '../domain/entities/pkm-note.entity';
-import { PkmNoteStatus } from '@prisma/client';
-import { v4 as uuidv4 } from 'uuid';
+} from "@nestjs/common";
+import { JwtAuthGuard } from "../../auth/infrastructure/jwt-auth.guard";
+import { PkmGenerationService } from "../application/pkm-generation.service";
+import { IPkmNoteRepository } from "../domain/repositories/pkm-note.repository.interface";
+import { GeneratePkmDto } from "../application/dto/generate-pkm.dto";
+import { UpdatePkmNoteDto } from "../application/dto/update-pkm-note.dto";
+import { PkmNoteDto } from "../application/dto/pkm-note.dto";
+import { CreatePkmNoteDto } from "../application/dto/create-pkm-note.dto";
+import { DecisionService } from "../../decision/application/decision.service";
+import { Inject } from "@nestjs/common";
+import { PkmNote } from "../domain/entities/pkm-note.entity";
+import { PkmNoteStatus } from "@prisma/client";
+import { v4 as uuidv4 } from "uuid";
 
-@Controller('pkm')
+@Controller("pkm")
 @UseGuards(JwtAuthGuard)
 export class PkmController {
   constructor(
@@ -41,7 +41,7 @@ export class PkmController {
    * POST /pkm/notes
    * Create a new PKM note manually
    */
-  @Post('notes')
+  @Post("notes")
   @HttpCode(HttpStatus.CREATED)
   async create(
     @Body() dto: CreatePkmNoteDto,
@@ -60,7 +60,7 @@ export class PkmController {
       dto.bodyMd,
       dto.tags || [],
       // Cast to expected types - in real app, use validation pipes
-      (dto.backlinks as any) || { nearDomain: '', farDomain: '' }, 
+      (dto.backlinks as any) || { nearDomain: "", farDomain: "" },
       (dto.sourceMetadata as any) || { sectionIds: [], conceptsUsed: [] },
       PkmNoteStatus.SAVED,
       new Date(),
@@ -76,7 +76,7 @@ export class PkmController {
    * Generate PKM note from reading session (SCRIPT 09)
    * Phase check: Only allowed in POST phase
    */
-  @Post('generate')
+  @Post("generate")
   @HttpCode(HttpStatus.CREATED)
   async generate(
     @Body() dto: GeneratePkmDto,
@@ -88,7 +88,7 @@ export class PkmController {
     const isAllowed = await this.isPKMGenerationAllowed(dto.sessionId);
     if (!isAllowed) {
       throw new ForbiddenException(
-        'PKM generation is only allowed in POST phase',
+        "PKM generation is only allowed in POST phase",
       );
     }
 
@@ -99,9 +99,9 @@ export class PkmController {
    * PATCH /pkm/notes/:id/save
    * Confirm save: Update status from GENERATED to SAVED
    */
-  @Patch('notes/:id/save')
+  @Patch("notes/:id/save")
   async save(
-    @Param('id') id: string,
+    @Param("id") id: string,
     @Request() req: any,
   ): Promise<PkmNoteDto> {
     const userId = req.user.userId;
@@ -113,11 +113,11 @@ export class PkmController {
    * List PKM notes for current user with pagination
    * Optional: Filter by topicNodeId for collaborative graph annotations
    */
-  @Get('notes')
+  @Get("notes")
   async list(
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
-    @Query('topicNodeId') topicNodeId?: string,
+    @Query("limit") limit?: string,
+    @Query("offset") offset?: string,
+    @Query("topicNodeId") topicNodeId?: string,
     @Request() req?: any,
   ): Promise<PkmNoteDto[]> {
     const userId = req.user.userId;
@@ -148,9 +148,9 @@ export class PkmController {
    * GET /pkm/notes/:id
    * Get single PKM note by ID
    */
-  @Get('notes/:id')
+  @Get("notes/:id")
   async getById(
-    @Param('id') id: string,
+    @Param("id") id: string,
     @Request() req: any,
   ): Promise<PkmNoteDto> {
     const userId = req.user.userId;
@@ -173,9 +173,9 @@ export class PkmController {
    * PATCH /pkm/notes/:id
    * Update PKM note (body, metadata, tags)
    */
-  @Patch('notes/:id')
+  @Patch("notes/:id")
   async update(
-    @Param('id') id: string,
+    @Param("id") id: string,
     @Body() dto: UpdatePkmNoteDto,
     @Request() req: any,
   ): Promise<PkmNoteDto> {
@@ -211,9 +211,9 @@ export class PkmController {
    * DELETE /pkm/notes/:id
    * Soft delete PKM note (set status to ARCHIVED)
    */
-  @Delete('notes/:id')
+  @Delete("notes/:id")
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id') id: string, @Request() req: any): Promise<void> {
+  async delete(@Param("id") id: string, @Request() req: any): Promise<void> {
     const userId = req.user.userId;
     const note = await this.pkmNoteRepository.findById(id);
 
@@ -238,7 +238,9 @@ export class PkmController {
    */
   private async isPKMGenerationAllowed(sessionId: string): Promise<boolean> {
     try {
-      const session = await this.decisionService['prisma'].reading_sessions.findUnique({
+      const session = await this.decisionService[
+        "prisma"
+      ].reading_sessions.findUnique({
         where: { id: sessionId },
         select: { phase: true },
       });
@@ -248,7 +250,7 @@ export class PkmController {
       }
 
       // Only allow in POST phase
-      return session.phase === 'POST';
+      return session.phase === "POST";
     } catch (error) {
       return false;
     }

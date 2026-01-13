@@ -1,5 +1,5 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
 
 interface NodeMatch {
   matched: Array<{ baselineNode: any; learnerNode: any }>;
@@ -20,7 +20,7 @@ interface ClassifiedDiff {
   undecided: any[];
 }
 
-import { GraphCacheService } from '../cache/graph-cache.service';
+import { GraphCacheService } from "../cache/graph-cache.service";
 
 @Injectable()
 export class GraphComparatorService {
@@ -38,12 +38,14 @@ export class GraphComparatorService {
     userId: string,
     contentId: string,
   ): Promise<{ diffId: string; diff_json: any; summary_json: any }> {
-    this.logger.log(`Comparing graphs for user: ${userId}, content: ${contentId}`);
+    this.logger.log(
+      `Comparing graphs for user: ${userId}, content: ${contentId}`,
+    );
 
     // Find Baseline graph (GLOBAL or INSTITUTION scope)
     const baselineGraph = await (this.prisma as any).topic_graphs.findFirst({
       where: {
-        type: 'BASELINE',
+        type: "BASELINE",
         content_id: contentId,
       },
       include: {
@@ -57,14 +59,16 @@ export class GraphComparatorService {
     });
 
     if (!baselineGraph) {
-      throw new NotFoundException(`Baseline graph not found for content: ${contentId}`);
+      throw new NotFoundException(
+        `Baseline graph not found for content: ${contentId}`,
+      );
     }
 
     // Find Learner graph
     const learnerGraph = await (this.prisma as any).topic_graphs.findFirst({
       where: {
-        type: 'LEARNER',
-        scope_type: 'USER',
+        type: "LEARNER",
+        scope_type: "USER",
         scope_id: userId,
         content_id: contentId,
       },
@@ -79,11 +83,16 @@ export class GraphComparatorService {
     });
 
     if (!learnerGraph) {
-      throw new NotFoundException(`Learner graph not found for user: ${userId}, content: ${contentId}`);
+      throw new NotFoundException(
+        `Learner graph not found for user: ${userId}, content: ${contentId}`,
+      );
     }
 
     // Match nodes
-    const nodeMatch = this.matchNodes(baselineGraph.topic_nodes, learnerGraph.topic_nodes);
+    const nodeMatch = this.matchNodes(
+      baselineGraph.topic_nodes,
+      learnerGraph.topic_nodes,
+    );
 
     // Match edges
     const edgeMatch = this.matchEdges(
@@ -93,7 +102,11 @@ export class GraphComparatorService {
     );
 
     // Classify differences
-    const classified = await this.classifyDifferences(edgeMatch, nodeMatch, contentId);
+    const classified = await this.classifyDifferences(
+      edgeMatch,
+      nodeMatch,
+      contentId,
+    );
 
     // Build diff_json
     const diff_json = {
@@ -219,10 +232,14 @@ export class GraphComparatorService {
         learnerEdgeMap.delete(key);
       } else {
         // Check for weak match (LINKS_TO ~= SUPPORTS)
-        const weakKey = key.replace(':SUPPORTS', ':LINKS_TO');
+        const weakKey = key.replace(":SUPPORTS", ":LINKS_TO");
         const weakMatch = learnerEdgeMap.get(weakKey);
         if (weakMatch) {
-          matched.push({ baselineEdge, learnerEdge: weakMatch, weakMatch: true });
+          matched.push({
+            baselineEdge,
+            learnerEdge: weakMatch,
+            weakMatch: true,
+          });
           learnerEdgeMap.delete(weakKey);
         } else {
           baselineOnly.push(baselineEdge);
@@ -236,35 +253,43 @@ export class GraphComparatorService {
     return { matched, baselineOnly, learnerOnly };
   }
 
-
-
   /**
    * Resolve undecided edges using cache or (simulated) Agent
    */
-  private async resolveUndecided(contentId: string, edge: any): Promise<string> {
-      const signature = `undecided:${edge.source_slug}->${edge.target_slug}:${edge.edge_type}`;
-      
-      // 1. Check Cache
-      const cached = await this.graphCache.getUndecidedResolution(contentId, signature);
-      if (cached) {
-          // If cached as VALID, return classification
-          return cached.classification; // e.g. 'DISCOVERY_CONFIRMED'
-      }
+  private async resolveUndecided(
+    contentId: string,
+    edge: any,
+  ): Promise<string> {
+    const signature = `undecided:${edge.source_slug}->${edge.target_slug}:${edge.edge_type}`;
 
-      // 2. Simulate Agent Call (omitted, default to UNDECIDED)
-      // In real script 07, we would call the agent here if budget allows.
-      // For hardening, we just show the caching hook.
-      
-      // 3. Set Cache (e.g. if we resolved it)
-      // await this.graphCache.setUndecidedResolution(contentId, signature, { classification: 'UNDECIDED', reason: '...' });
+    // 1. Check Cache
+    const cached = await this.graphCache.getUndecidedResolution(
+      contentId,
+      signature,
+    );
+    if (cached) {
+      // If cached as VALID, return classification
+      return cached.classification; // e.g. 'DISCOVERY_CONFIRMED'
+    }
 
-      return 'UNDECIDED';
+    // 2. Simulate Agent Call (omitted, default to UNDECIDED)
+    // In real script 07, we would call the agent here if budget allows.
+    // For hardening, we just show the caching hook.
+
+    // 3. Set Cache (e.g. if we resolved it)
+    // await this.graphCache.setUndecidedResolution(contentId, signature, { classification: 'UNDECIDED', reason: '...' });
+
+    return "UNDECIDED";
   }
 
   /**
    * Classify differences (DISCOVERY, ERROR, GAP)
    */
-  private async classifyDifferences(edgeMatch: EdgeMatch, nodeMatch: NodeMatch, contentId: string): Promise<ClassifiedDiff> {
+  private async classifyDifferences(
+    edgeMatch: EdgeMatch,
+    nodeMatch: NodeMatch,
+    contentId: string,
+  ): Promise<ClassifiedDiff> {
     const discoveries: any[] = [];
     const errors: any[] = [];
     const gaps: any[] = [];
@@ -274,36 +299,44 @@ export class GraphComparatorService {
     for (const edge of edgeMatch.learnerOnly) {
       const evidenceCount = edge.topic_edge_evidence?.length || 0;
       const hasStrongEvidence = evidenceCount >= 2;
-      const isUserSource = edge.source === 'USER';
+      const isUserSource = edge.source === "USER";
 
       if (hasStrongEvidence && isUserSource && edge.confidence >= 0.6) {
         discoveries.push({
           edge,
-          classification: 'DISCOVERY_PLAUSIBLE',
+          classification: "DISCOVERY_PLAUSIBLE",
           reason: `Strong evidence (${evidenceCount} items) and user-generated`,
         });
       } else if (evidenceCount < 2 || edge.confidence < 0.5) {
         errors.push({
           edge,
-          classification: 'ERROR_LIKELY',
-          reason: 'Weak evidence or low confidence',
+          classification: "ERROR_LIKELY",
+          reason: "Weak evidence or low confidence",
         });
       } else {
         // Undecided - Try to resolve via cache/agent
         const resolution = await this.resolveUndecided(contentId, edge);
-        
-        if (resolution !== 'UNDECIDED') {
-             if (resolution === 'DISCOVERY_CONFIRMED') {
-                 discoveries.push({ edge, classification: resolution, reason: 'Agent confirmed' });
-             } else {
-                 errors.push({ edge, classification: resolution, reason: 'Agent rejected' });
-             }
-        } else {
-            undecided.push({
-            edge,
-            classification: 'UNDECIDED',
-            reason: 'Requires review',
+
+        if (resolution !== "UNDECIDED") {
+          if (resolution === "DISCOVERY_CONFIRMED") {
+            discoveries.push({
+              edge,
+              classification: resolution,
+              reason: "Agent confirmed",
             });
+          } else {
+            errors.push({
+              edge,
+              classification: resolution,
+              reason: "Agent rejected",
+            });
+          }
+        } else {
+          undecided.push({
+            edge,
+            classification: "UNDECIDED",
+            reason: "Requires review",
+          });
         }
       }
     }
@@ -311,24 +344,28 @@ export class GraphComparatorService {
     // Classify baseline-only edges (gaps)
     for (const edge of edgeMatch.baselineOnly) {
       // Check if edge involves central topics (high degree)
-      const fromNode = nodeMatch.matched.find((m) => m.baselineNode.id === edge.from_node_id);
-      const toNode = nodeMatch.matched.find((m) => m.baselineNode.id === edge.to_node_id);
+      const fromNode = nodeMatch.matched.find(
+        (m) => m.baselineNode.id === edge.from_node_id,
+      );
+      const toNode = nodeMatch.matched.find(
+        (m) => m.baselineNode.id === edge.to_node_id,
+      );
 
       const isCritical = edge.confidence >= 0.8; // High confidence baseline edge
 
       if (isCritical) {
         gaps.push({
           edge,
-          classification: 'GAP_CRITICAL',
-          reason: 'Missing critical baseline knowledge',
+          classification: "GAP_CRITICAL",
+          reason: "Missing critical baseline knowledge",
           fromNode: fromNode?.baselineNode,
           toNode: toNode?.baselineNode,
         });
       } else {
         gaps.push({
           edge,
-          classification: 'GAP_MINOR',
-          reason: 'Missing baseline knowledge',
+          classification: "GAP_MINOR",
+          reason: "Missing baseline knowledge",
         });
       }
     }

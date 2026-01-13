@@ -43,8 +43,8 @@ export class ContentModeService {
         where: { id: contentId },
         data: {
           mode: inferredMode,
-          mode_source: 'HEURISTIC',
-          mode_set_by: 'SYSTEM',
+          mode_source: "HEURISTIC",
+          mode_set_by: "SYSTEM",
           mode_set_at: new Date(),
         },
       });
@@ -119,24 +119,28 @@ export class ContentModeService {
    * Infer mode from content metadata using ContentType-based rules (Script 02)
    * Priority: ContentType mapping > Narrative detection > Title-based heuristics
    */
-  private inferMode(content: { title: string; type: string; raw_text?: string }): ContentMode {
+  private inferMode(content: {
+    title: string;
+    type: string;
+    raw_text?: string;
+  }): ContentMode {
     const title = content.title.toLowerCase();
     const type = content.type;
 
     // P3.1: Direct ContentType mappings (Script 02)
-    if (type === 'NEWS') {
+    if (type === "NEWS") {
       return ContentMode.NEWS;
     }
-    if (type === 'ARXIV') {
+    if (type === "ARXIV") {
       return ContentMode.SCIENTIFIC;
     }
-    if (type === 'SCHOOL_MATERIAL') {
+    if (type === "SCHOOL_MATERIAL") {
       return ContentMode.DIDACTIC;
     }
 
     // P3.2: Narrative detection heuristic for ARTICLE/TEXT/WEB_CLIP
-    if (['ARTICLE', 'TEXT', 'WEB_CLIP'].includes(type)) {
-      if (this.detectNarrative(content.raw_text || '')) {
+    if (["ARTICLE", "TEXT", "WEB_CLIP"].includes(type)) {
+      if (this.detectNarrative(content.raw_text || "")) {
         return ContentMode.NARRATIVE;
       }
       // Default for these types if not narrative
@@ -145,7 +149,7 @@ export class ContentModeService {
 
     // P3.3: VIDEO/AUDIO - inherit from transcript/description (future enhancement)
     // For now, default to TECHNICAL
-    if (['VIDEO', 'AUDIO'].includes(type)) {
+    if (["VIDEO", "AUDIO"].includes(type)) {
       return ContentMode.TECHNICAL;
     }
 

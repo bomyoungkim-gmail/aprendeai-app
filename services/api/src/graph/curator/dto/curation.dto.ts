@@ -1,10 +1,20 @@
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsEnum, IsOptional, IsInt, Min, Max } from 'class-validator';
-import { Type } from 'class-transformer';
+import {
+  IsString,
+  IsNotEmpty,
+  IsArray,
+  ValidateNested,
+  IsEnum,
+  IsOptional,
+  IsInt,
+  Min,
+  Max,
+} from "class-validator";
+import { Type } from "class-transformer";
 
 enum CurationAction {
-  PROMOTE = 'PROMOTE',
-  REJECT = 'REJECT',
-  NEEDS_REVIEW = 'NEEDS_REVIEW',
+  PROMOTE = "PROMOTE",
+  REJECT = "REJECT",
+  NEEDS_REVIEW = "NEEDS_REVIEW",
 }
 
 class CurationItemDto {

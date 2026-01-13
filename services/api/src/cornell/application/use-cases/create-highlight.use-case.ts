@@ -27,7 +27,11 @@ export class CreateHighlightUseCase {
       id: crypto.randomUUID(),
       contentId,
       userId,
-      kind: dto.kind || (dto.target_type === 'PDF' || dto.target_type === 'IMAGE' ? 'AREA' : 'TEXT'),
+      kind:
+        dto.kind ||
+        (dto.target_type === "PDF" || dto.target_type === "IMAGE"
+          ? "AREA"
+          : "TEXT"),
       targetType: dto.target_type,
       type: dto.type, // Add the pedagogical type
       pageNumber: dto.page_number,

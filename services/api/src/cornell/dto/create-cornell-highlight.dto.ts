@@ -23,11 +23,7 @@ import {
   ContextType,
   ContentType,
 } from "../../common/constants/enums";
-import {
-  CornellType,
-  getColorForType,
-  getTagsForType,
-} from "../constants/cornell-type-map";
+import { CornellType, getColorForType } from "../constants/cornell-type-map";
 
 /**
  * Geometry for area-based highlights (PDF, Image)
@@ -55,7 +51,8 @@ export class CreateCornellHighlightDto {
 
   @ApiPropertyOptional({
     enum: ["TEXT", "AREA"],
-    description: "Highlight kind (optional, auto-inferred from target_type if not provided)",
+    description:
+      "Highlight kind (optional, auto-inferred from target_type if not provided)",
     example: "TEXT",
   })
   @IsOptional()
@@ -107,7 +104,8 @@ export class CreateCornellHighlightDto {
   })
   @ValidateIf(
     (o) =>
-      o.target_type === ContentType.VIDEO || o.target_type === ContentType.AUDIO,
+      o.target_type === ContentType.VIDEO ||
+      o.target_type === ContentType.AUDIO,
   )
   @IsInt()
   @Min(0)
@@ -120,7 +118,8 @@ export class CreateCornellHighlightDto {
   })
   @ValidateIf(
     (o) =>
-      o.target_type === ContentType.VIDEO || o.target_type === ContentType.AUDIO,
+      o.target_type === ContentType.VIDEO ||
+      o.target_type === ContentType.AUDIO,
   )
   @IsOptional()
   @IsInt()

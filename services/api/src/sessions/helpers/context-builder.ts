@@ -1,12 +1,12 @@
-import { PrismaService } from '../../prisma/prisma.service';
-import { GamificationService } from '../../gamification/gamification.service';
-import { PromptContext } from '../../prompts/types/prompt-context';
-import { parseDecisionPolicy } from '../../policies/decision-policy.parse';
-import { mergeDecisionPolicies } from '../../policies/decision-policy.merge';
-import { DecisionPolicyV1 } from '../../policies/decision-policy.schema';
-import { ContentModeHelper } from '../../contents/helpers/content-mode.helper';
-import { ScaffoldingInitializerService } from '../../decision/application/scaffolding-initializer.service'; // SCRIPT 03
-import { ScaffoldingBehaviorAdapterService } from '../../decision/application/scaffolding-behavior-adapter.service'; // SCRIPT 03 - Fase 3
+import { PrismaService } from "../../prisma/prisma.service";
+import { GamificationService } from "../../gamification/gamification.service";
+import { PromptContext } from "../../prompts/types/prompt-context";
+import { parseDecisionPolicy } from "../../policies/decision-policy.parse";
+import { mergeDecisionPolicies } from "../../policies/decision-policy.merge";
+import { DecisionPolicyV1 } from "../../policies/decision-policy.schema";
+import { ContentModeHelper } from "../../contents/helpers/content-mode.helper";
+import { ScaffoldingInitializerService } from "../../decision/application/scaffolding-initializer.service"; // SCRIPT 03
+import { ScaffoldingBehaviorAdapterService } from "../../decision/application/scaffolding-behavior-adapter.service"; // SCRIPT 03 - Fase 3
 
 /**
  * Dependencies required for building session context
@@ -21,7 +21,7 @@ export interface ContextBuilderDeps {
 /**
  * Build comprehensive prompt context from session data
  * Pure helper function following best practices (no DI overhead)
- * 
+ *
  * @param sessionId - Reading session ID
  * @param userId - User ID
  * @param contentId - Content ID
@@ -29,7 +29,13 @@ export interface ContextBuilderDeps {
  * @returns PromptContext with all available variables populated
  */
 // Simple in-memory cache
-const contextCache = new Map<string, { data: PromptContext & { decision_policy: DecisionPolicyV1 }; expiresAt: number }>();
+const contextCache = new Map<
+  string,
+  {
+    data: PromptContext & { decision_policy: DecisionPolicyV1 };
+    expiresAt: number;
+  }
+>();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 export async function buildSessionContext(
@@ -41,14 +47,19 @@ export async function buildSessionContext(
 ): Promise<PromptContext & { decision_policy: DecisionPolicyV1 }> {
   const cacheKey = `${sessionId}:${userId}`;
   const now = Date.now();
-  
+
   // Check cache
   const cached = contextCache.get(cacheKey);
   if (cached && cached.expiresAt > now) {
     return cached.data;
   }
 
-  const { prisma, gamificationService, scaffoldingInitializer, scaffoldingBehaviorAdapter } = deps; // SCRIPT 03
+  const {
+    prisma,
+    gamificationService,
+    scaffoldingInitializer,
+    scaffoldingBehaviorAdapter,
+  } = deps; // SCRIPT 03
 
   try {
     // Fetch all data in parallel for performance
@@ -84,17 +95,21 @@ export async function buildSessionContext(
         },
       }),
       gamificationService.getDashboard(userId).catch(() => null), // Fallback on error
-      prisma.vocab_items.count({
-        where: { user_id: userId },
-      }).catch(() => 0),
-      prisma.vocab_items.findFirst({
-        where: {
-          user_id: userId,
-          due_at: { gt: new Date() }, // Only future reviews
-        },
-        orderBy: { due_at: 'asc' },
-        select: { due_at: true },
-      }).catch(() => null),
+      prisma.vocab_items
+        .count({
+          where: { user_id: userId },
+        })
+        .catch(() => 0),
+      prisma.vocab_items
+        .findFirst({
+          where: {
+            user_id: userId,
+            due_at: { gt: new Date() }, // Only future reviews
+          },
+          orderBy: { due_at: "asc" },
+          select: { due_at: true },
+        })
+        .catch(() => null),
       // Fetch institution policy (if user has last_institution_id)
       prisma.users
         .findUnique({
@@ -136,14 +151,14 @@ export async function buildSessionContext(
     const daysUntilReview = calculateDaysUntil(nextReview?.due_at);
 
     // Merge decision policies (GLOBAL < INSTITUTION < FAMILY)
-    const globalDefaults = parseDecisionPolicy({}, 'GLOBAL');
+    const globalDefaults = parseDecisionPolicy({}, "GLOBAL");
     const instPolicy = parseDecisionPolicy(
       institutionPolicy?.decision_policy_json,
-      'INSTITUTION',
+      "INSTITUTION",
     );
     const famPolicy = parseDecisionPolicy(
       familyPolicy?.decision_policy_json,
-      'FAMILY',
+      "FAMILY",
     );
     const decision_policy = mergeDecisionPolicies(
       globalDefaults,
@@ -179,30 +194,37 @@ export async function buildSessionContext(
             mode_set_at: new Date(),
           },
         })
-        .catch((err) => console.error('Failed to persist content mode:', err));
+        .catch((err) => console.error("Failed to persist content mode:", err));
     }
 
     // ========================================================================
     // SCRIPT 03: Mode-Aware Scaffolding Initialization
     // ========================================================================
-    
+
     // Calculate learner profile metrics for scaffolding
     const masteryStateJson = learnerProfile?.mastery_state_json;
     const scaffoldingStateJson = learnerProfile?.scaffolding_state_json;
-    const isNewUser = !learnerProfile || !learnerProfile.created_at || 
-                      (new Date().getTime() - new Date(learnerProfile.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000; // < 7 days
-    
+    const isNewUser =
+      !learnerProfile ||
+      !learnerProfile.created_at ||
+      new Date().getTime() - new Date(learnerProfile.created_at).getTime() <
+        7 * 24 * 60 * 60 * 1000; // < 7 days
+
     const avgMastery = calculateAvgMastery(masteryStateJson);
     const recentPerformance = getRecentPerformance(masteryStateJson);
-    
+
     // Extract policy override (GAP 6)
     // Use mode-specific default level from policy if available
-    const policyOverride = decision_policy?.scaffolding?.defaultLevelByMode?.[modeResolution.mode];
-    
+    const policyOverride =
+      decision_policy?.scaffolding?.defaultLevelByMode?.[modeResolution.mode];
+
     // Initialize scaffolding level if not already set
     let currentScaffoldingLevel = scaffoldingStateJson?.currentLevel;
-    
-    if (currentScaffoldingLevel === undefined || currentScaffoldingLevel === null) {
+
+    if (
+      currentScaffoldingLevel === undefined ||
+      currentScaffoldingLevel === null
+    ) {
       // First time or no scaffolding state - initialize based on mode
       currentScaffoldingLevel = scaffoldingInitializer.getInitialLevel({
         mode: modeResolution.mode,
@@ -213,7 +235,7 @@ export async function buildSessionContext(
         },
         policyOverride,
       });
-      
+
       // Persist initial scaffolding state (fire-and-forget)
       if (learnerProfile) {
         prisma.learner_profiles
@@ -230,27 +252,31 @@ export async function buildSessionContext(
               },
             },
           })
-          .catch((err) => console.error('Failed to persist initial scaffolding state:', err));
+          .catch((err) =>
+            console.error("Failed to persist initial scaffolding state:", err),
+          );
       }
     }
 
     // ========================================================================
     // SCRIPT 03 - Fase 3: Mode-Specific Behavior Adaptation
     // ========================================================================
-    
+
     // Determine session phase (DURING or POST)
-    const sessionPhase: 'DURING' | 'POST' = session?.finished_at ? 'POST' : 'DURING';
-    
+    const sessionPhase: "DURING" | "POST" = session?.finished_at
+      ? "POST"
+      : "DURING";
+
     // Get behavior modifiers based on mode, level, and phase (GAP 1)
     const behaviorModifiers = scaffoldingBehaviorAdapter.getBehaviorModifiers(
       modeResolution.mode,
       currentScaffoldingLevel as any,
       sessionPhase,
     );
-    
+
     // Format system prompt with scaffolding behavior (GAP 2, GAP 7)
     // This will be used by the Educator to modify AI responses
-    const baseSystemPrompt = ''; // Base prompt will be provided by Educator
+    const baseSystemPrompt = ""; // Base prompt will be provided by Educator
     const enhancedSystemPrompt = scaffoldingBehaviorAdapter.formatSystemPrompt(
       baseSystemPrompt,
       behaviorModifiers,
@@ -260,30 +286,30 @@ export async function buildSessionContext(
     // Build context with safe fallbacks
     const context: PromptContext = {
       // User
-      LEARNER: user?.name || 'você',
-      
+      LEARNER: user?.name || "você",
+
       // Gamification
       XP: dashboard?.totalXp ?? 0,
       XP_TODAY: dashboard?.dailyActivity?.xp ?? 0,
       STREAK: dashboard?.currentStreak ?? 0,
-      
+
       // Session
       MIN: sessionMinutes,
       WORDS_MARKED: wordsMarked,
-      
+
       // Content
-      TITLE: content?.title || 'este conteúdo',
+      TITLE: content?.title || "este conteúdo",
       content_mode: modeResolution.mode,
-      
+
       // SRS
       VOCAB_COUNT: vocabCount,
       DAYS: daysUntilReview,
-      
+
       // SCRIPT 03 - Fase 3: Scaffolding Behavior (for Educator integration)
       scaffolding_level: currentScaffoldingLevel,
       scaffolding_behavior: behaviorModifiers as any, // Complex object for Educator
       system_prompt_override: enhancedSystemPrompt,
-      
+
       // Not implemented in MVP (will be undefined)
       LEVEL: undefined,
       COMP: undefined,
@@ -299,17 +325,17 @@ export async function buildSessionContext(
     return { ...context, decision_policy } as any;
   } catch (error) {
     // Fallback to minimal context on catastrophic failure
-    console.error('Failed to build session context:', error);
+    console.error("Failed to build session context:", error);
     return {
-      LEARNER: 'você',
+      LEARNER: "você",
       XP: 0,
       XP_TODAY: 0,
       STREAK: 0,
       MIN: 0,
       WORDS_MARKED: 0,
       VOCAB_COUNT: 0,
-      TITLE: 'este conteúdo',
-      decision_policy: parseDecisionPolicy({}, 'GLOBAL'),
+      TITLE: "este conteúdo",
+      decision_policy: parseDecisionPolicy({}, "GLOBAL"),
     } as any;
   }
 }
@@ -321,10 +347,12 @@ export async function buildSessionContext(
  */
 function calculateSessionDuration(session: any): number {
   if (!session?.started_at) return 0;
-  
-  const endTime = session.finished_at ? new Date(session.finished_at) : new Date();
+
+  const endTime = session.finished_at
+    ? new Date(session.finished_at)
+    : new Date();
   const startTime = new Date(session.started_at);
-  
+
   const durationMs = endTime.getTime() - startTime.getTime();
   return Math.floor(durationMs / (1000 * 60));
 }
@@ -335,17 +363,20 @@ function calculateSessionDuration(session: any): number {
  * @param prisma - Prisma service instance
  * @returns Count of marked words
  */
-async function countMarkedWords(sessionId: string, prisma: PrismaService): Promise<number> {
+async function countMarkedWords(
+  sessionId: string,
+  prisma: PrismaService,
+): Promise<number> {
   try {
     const count = await prisma.session_events.count({
       where: {
         reading_session_id: sessionId,
-        event_type: 'MARK_UNKNOWN_WORD',
+        event_type: "MARK_UNKNOWN_WORD",
       },
     });
     return count;
   } catch (error) {
-    console.warn('Failed to count marked words:', error);
+    console.warn("Failed to count marked words:", error);
     return 0;
   }
 }
@@ -357,11 +388,11 @@ async function countMarkedWords(sessionId: string, prisma: PrismaService): Promi
  */
 function calculateDaysUntil(targetDate?: Date): number | undefined {
   if (!targetDate) return undefined;
-  
+
   const now = new Date();
   const diffMs = targetDate.getTime() - now.getTime();
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-  
+
   return Math.max(0, diffDays);
 }
 
@@ -371,26 +402,29 @@ function calculateDaysUntil(targetDate?: Date): number | undefined {
 
 /**
  * Calculate average mastery across all domains
- * 
+ *
  * @param masteryStateJson - Mastery state from learner_profiles.mastery_state_json
  * @returns Average mastery (0.0-1.0), or 0 if no data
  */
 function calculateAvgMastery(masteryStateJson: any): number {
   if (!masteryStateJson?.domains) return 0;
-  
+
   const domains = Object.values(masteryStateJson.domains) as any[];
   if (domains.length === 0) return 0;
-  
-  const totalMastery = domains.reduce((sum, domain) => sum + (domain.mastery || 0), 0);
+
+  const totalMastery = domains.reduce(
+    (sum, domain) => sum + (domain.mastery || 0),
+    0,
+  );
   return totalMastery / domains.length;
 }
 
 /**
  * Calculate recent performance metric
- * 
+ *
  * For now, uses avgMastery as a proxy.
  * TODO: In future, could analyze recent session outcomes or quiz scores.
- * 
+ *
  * @param masteryStateJson - Mastery state from learner_profiles
  * @returns Recent performance (0.0-1.0)
  */
@@ -399,4 +433,3 @@ function getRecentPerformance(masteryStateJson: any): number {
   // Future enhancement: analyze session_outcomes from last N sessions
   return calculateAvgMastery(masteryStateJson);
 }
-

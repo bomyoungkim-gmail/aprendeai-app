@@ -132,7 +132,7 @@ _(Leitura, Anotação, Telemetria, Learning)_
 ## 7) LANGGRAPH (AGENT)
 
 - [x] **7.1** Router e Tasks definidos (`taskType`).
-- [x] **7.2** Nós: Router, Retriever, Generator, Evaluator.
+- [x] **7.2** Nós: Router, Retriever, Generator, Evaluator, Sentence Analysis (Tool). _(Implementado no SCRIPT 11)_
 - [x] **7.3** GraphState minimalista (Persistido via Redis/Memory Saver e DB).
 - [x] **7.4** Prompts e Schemas definidos.
 - [x] **7.5** Budget e Fallback (Circuit Breaker básico).

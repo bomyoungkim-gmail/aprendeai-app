@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { GraphDecayService } from './graph-decay.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { GraphDecayService } from "./graph-decay.service";
+import { PrismaService } from "../../prisma/prisma.service";
 
-describe('GraphDecayService', () => {
+describe("GraphDecayService", () => {
   let service: GraphDecayService;
   let prisma: PrismaService;
 
@@ -27,16 +27,16 @@ describe('GraphDecayService', () => {
     prisma = module.get<PrismaService>(PrismaService);
   });
 
-  describe('calculateDecay', () => {
-    it('should return original confidence if lastReinforcedAt is null', () => {
+  describe("calculateDecay", () => {
+    it("should return original confidence if lastReinforcedAt is null", () => {
       const result = service.calculateDecay(0.8, null);
       expect(result).toBe(0.8);
     });
 
-    it('should apply exponential decay formula correctly', () => {
+    it("should apply exponential decay formula correctly", () => {
       const currentConfidence = 0.8;
       const halfLifeDays = 14;
-      
+
       // 14 days ago (exactly 1 half-life)
       const lastReinforced = new Date();
       lastReinforced.setDate(lastReinforced.getDate() - halfLifeDays);
@@ -47,10 +47,10 @@ describe('GraphDecayService', () => {
       expect(result).toBeCloseTo(0.4, 2);
     });
 
-    it('should apply minimum confidence floor', () => {
+    it("should apply minimum confidence floor", () => {
       const currentConfidence = 0.3;
       const minConfidence = 0.2;
-      
+
       // 100 days ago (very old)
       const lastReinforced = new Date();
       lastReinforced.setDate(lastReinforced.getDate() - 100);
@@ -61,13 +61,13 @@ describe('GraphDecayService', () => {
       expect(result).toBeGreaterThanOrEqual(minConfidence);
     });
 
-    it('should decay to approximately 0.25 after 2 half-lives', () => {
+    it("should decay to approximately 0.25 after 2 half-lives", () => {
       const currentConfidence = 1.0;
       const halfLifeDays = 14;
-      
+
       // 28 days ago (2 half-lives)
       const lastReinforced = new Date();
-      lastReinforced.setDate(lastReinforced.getDate() - (halfLifeDays * 2));
+      lastReinforced.setDate(lastReinforced.getDate() - halfLifeDays * 2);
 
       const result = service.calculateDecay(currentConfidence, lastReinforced);
 
@@ -75,9 +75,9 @@ describe('GraphDecayService', () => {
       expect(result).toBeCloseTo(0.25, 2);
     });
 
-    it('should barely decay if reinforced recently', () => {
+    it("should barely decay if reinforced recently", () => {
       const currentConfidence = 0.8;
-      
+
       // 1 day ago
       const lastReinforced = new Date();
       lastReinforced.setDate(lastReinforced.getDate() - 1);
@@ -90,9 +90,9 @@ describe('GraphDecayService', () => {
     });
   });
 
-  describe('reinforceNode', () => {
-    it('should update node confidence and last_reinforced_at', async () => {
-      const nodeId = 'test-node-id';
+  describe("reinforceNode", () => {
+    it("should update node confidence and last_reinforced_at", async () => {
+      const nodeId = "test-node-id";
       const currentConfidence = 0.5;
       const boostAmount = 0.1;
 
@@ -113,8 +113,8 @@ describe('GraphDecayService', () => {
       });
     });
 
-    it('should cap confidence at 1.0', async () => {
-      const nodeId = 'test-node-id';
+    it("should cap confidence at 1.0", async () => {
+      const nodeId = "test-node-id";
       const currentConfidence = 0.95;
       const boostAmount = 0.1;
 
@@ -135,8 +135,8 @@ describe('GraphDecayService', () => {
       });
     });
 
-    it('should handle missing node gracefully', async () => {
-      const nodeId = 'non-existent-node';
+    it("should handle missing node gracefully", async () => {
+      const nodeId = "non-existent-node";
 
       (prisma.topic_nodes.findUnique as jest.Mock).mockResolvedValue(null);
 
@@ -145,8 +145,8 @@ describe('GraphDecayService', () => {
     });
   });
 
-  describe('applyBulkDecay', () => {
-    it('should execute raw SQL query and return affected rows', async () => {
+  describe("applyBulkDecay", () => {
+    it("should execute raw SQL query and return affected rows", async () => {
       const affectedRows = 150;
       (prisma.$executeRaw as jest.Mock).mockResolvedValue(affectedRows);
 
@@ -156,34 +156,34 @@ describe('GraphDecayService', () => {
       expect(prisma.$executeRaw).toHaveBeenCalled();
     });
 
-    it('should handle SQL errors gracefully', async () => {
-      const error = new Error('Database connection failed');
+    it("should handle SQL errors gracefully", async () => {
+      const error = new Error("Database connection failed");
       (prisma.$executeRaw as jest.Mock).mockRejectedValue(error);
 
       await expect(service.applyBulkDecay()).rejects.toThrow(error);
     });
   });
 
-  describe('configuration validation', () => {
-    it('should throw error if HALF_LIFE_DAYS is invalid', () => {
+  describe("configuration validation", () => {
+    it("should throw error if HALF_LIFE_DAYS is invalid", () => {
       // Set invalid env var
-      process.env.GRAPH_DECAY_HALF_LIFE = '0';
+      process.env.GRAPH_DECAY_HALF_LIFE = "0";
 
       expect(() => {
         new GraphDecayService(prisma);
-      }).toThrow('GRAPH_DECAY_HALF_LIFE must be greater than 0');
+      }).toThrow("GRAPH_DECAY_HALF_LIFE must be greater than 0");
 
       // Cleanup
       delete process.env.GRAPH_DECAY_HALF_LIFE;
     });
 
-    it('should throw error if MIN_CONFIDENCE is out of range', () => {
+    it("should throw error if MIN_CONFIDENCE is out of range", () => {
       // Set invalid env var
-      process.env.GRAPH_MIN_CONFIDENCE = '1.5';
+      process.env.GRAPH_MIN_CONFIDENCE = "1.5";
 
       expect(() => {
         new GraphDecayService(prisma);
-      }).toThrow('GRAPH_MIN_CONFIDENCE must be between 0 and 1');
+      }).toThrow("GRAPH_MIN_CONFIDENCE must be between 0 and 1");
 
       // Cleanup
       delete process.env.GRAPH_MIN_CONFIDENCE;

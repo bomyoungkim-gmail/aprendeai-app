@@ -1,11 +1,11 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * DecisionPolicyV1 Schema
- * 
+ *
  * Canonical schema for decision_policy_json used by institution_policies and family_policies.
  * Defines feature gates, extraction policies, scaffolding thresholds, budgeting, and limits.
- * 
+ *
  * Hierarchy: GLOBAL (hardcoded defaults) < INSTITUTION < FAMILY
  */
 
@@ -97,8 +97,8 @@ export const DecisionPolicyV1Schema = z.object({
   budgeting: z
     .object({
       strategy: z
-        .enum(['DETERMINISTIC_FIRST', 'FAST_FIRST'])
-        .default('DETERMINISTIC_FIRST'),
+        .enum(["DETERMINISTIC_FIRST", "FAST_FIRST"])
+        .default("DETERMINISTIC_FIRST"),
       allowSmartTier: z.boolean().default(false),
       monthlyTokenBudgetByScope: z
         .object({
@@ -113,7 +113,7 @@ export const DecisionPolicyV1Schema = z.object({
         }),
     })
     .default({
-      strategy: 'DETERMINISTIC_FIRST',
+      strategy: "DETERMINISTIC_FIRST",
       allowSmartTier: false,
       monthlyTokenBudgetByScope: {
         INSTITUTION: null,

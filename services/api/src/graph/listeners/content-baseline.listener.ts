@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
-import { GraphBaselineService } from '../baseline/graph-baseline.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { OnEvent } from "@nestjs/event-emitter";
+import { GraphBaselineService } from "../baseline/graph-baseline.service";
+import { PrismaService } from "../../prisma/prisma.service";
 
 /**
  * GRAPH SCRIPT 19.8: Content Baseline Listener
- * 
+ *
  * Automatically triggers baseline graph generation when content extraction completes.
  * Implements idempotency to avoid duplicate baseline builds.
  */
@@ -21,7 +21,7 @@ export class ContentBaselineListener {
   /**
    * Trigger baseline build when content extraction completes
    */
-  @OnEvent('extraction.completed')
+  @OnEvent("extraction.completed")
   async handleExtractionCompleted(payload: { contentId: string }) {
     this.logger.log(`Extraction completed for content: ${payload.contentId}`);
 
@@ -57,12 +57,14 @@ export class ContentBaselineListener {
       }
 
       // 3. Build baseline graph
-      this.logger.log(`Auto-building baseline for content: ${payload.contentId}`);
-      
+      this.logger.log(
+        `Auto-building baseline for content: ${payload.contentId}`,
+      );
+
       await this.graphBaselineService.buildBaseline({
         contentId: payload.contentId,
-        scopeType: 'GLOBAL' as any, // GraphScopeType enum
-        scopeId: 'system',
+        scopeType: "GLOBAL" as any, // GraphScopeType enum
+        scopeId: "system",
       });
 
       this.logger.log(`Baseline auto-build complete for ${payload.contentId}`);
@@ -81,7 +83,7 @@ export class ContentBaselineListener {
   private async findBaseline(contentId: string) {
     return (this.prisma as any).topic_graphs.findFirst({
       where: {
-        type: 'BASELINE',
+        type: "BASELINE",
         content_id: contentId,
       },
     });

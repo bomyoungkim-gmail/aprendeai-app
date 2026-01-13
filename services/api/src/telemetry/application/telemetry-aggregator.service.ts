@@ -1,12 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { TelemetryEventType } from '../domain/telemetry.constants';
-import { ContentMode } from '@prisma/client';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { TelemetryEventType } from "../domain/telemetry.constants";
+import { ContentMode } from "@prisma/client";
+import { Cron, CronExpression } from "@nestjs/schedule";
 
 /**
  * Telemetry Aggregator Service
- * 
+ *
  * Processes raw telemetry_events into high-level KPIs for learning optimization.
  * Implements formulas for Deep Reading Index, UI Load Index, Completion Quality, and Transfer Index.
  */
@@ -43,8 +43,8 @@ export class TelemetryAggregatorService {
    */
   @Cron(CronExpression.EVERY_10_MINUTES)
   async handleCronAggregation() {
-    this.logger.log('Starting scheduled telemetry aggregation...');
-    
+    this.logger.log("Starting scheduled telemetry aggregation...");
+
     // Simple robust query: Find sessions finished in the last 24h that haven't been aggregated yet
     // We assume once aggregated, it doesn't need re-aggregation for now.
     const targetSessions = await this.prisma.reading_sessions.findMany({
@@ -55,7 +55,7 @@ export class TelemetryAggregatorService {
         },
         aggregated_at: null, // Not yet aggregated
       },
-      orderBy: { finished_at: 'desc' },
+      orderBy: { finished_at: "desc" },
       take: 20,
     });
 
@@ -79,7 +79,7 @@ export class TelemetryAggregatorService {
     // Fetch all events for this session
     const events = await this.prisma.telemetry_events.findMany({
       where: { session_id: sessionId },
-      orderBy: { created_at: 'asc' },
+      orderBy: { created_at: "asc" },
     });
 
     if (events.length === 0) {
@@ -101,11 +101,21 @@ export class TelemetryAggregatorService {
     const sessionDurationMinutes = sessionDurationMs / (1000 * 60);
 
     // Get thresholds (with policy overrides if available)
-    const thresholds = userId ? await this.getThresholds(userId, mode) : this.getDefaultThresholds(mode);
+    const thresholds = userId
+      ? await this.getThresholds(userId, mode)
+      : this.getDefaultThresholds(mode);
 
     // Calculate individual indices
-    const deepReadingIndex = this.calculateDeepReadingIndex(events, mode, thresholds);
-    const uiLoadIndex = this.calculateUILoadIndex(events, sessionDurationMinutes, thresholds);
+    const deepReadingIndex = this.calculateDeepReadingIndex(
+      events,
+      mode,
+      thresholds,
+    );
+    const uiLoadIndex = this.calculateUILoadIndex(
+      events,
+      sessionDurationMinutes,
+      thresholds,
+    );
     const completionQuality = this.calculateCompletionQuality(events);
 
     const analytics: SessionAnalytics = {
@@ -147,7 +157,7 @@ export class TelemetryAggregatorService {
 
     const totalAssigned = missions.length;
     // Map status 'COMPLETED' to completion concept
-    const completed = missions.filter((m) => m.status === 'COMPLETED');
+    const completed = missions.filter((m) => m.status === "COMPLETED");
     const totalCompleted = completed.length;
 
     // Calculate average score (using 'score' column directly)
@@ -158,7 +168,8 @@ export class TelemetryAggregatorService {
     const avgScore = totalCompleted > 0 ? scoresSum / totalCompleted : 0;
 
     // Transfer index: weighted by completion rate and quality
-    const completionRate = totalAssigned > 0 ? totalCompleted / totalAssigned : 0;
+    const completionRate =
+      totalAssigned > 0 ? totalCompleted / totalAssigned : 0;
     const transferIndex = completionRate * (avgScore / 100) * 100;
 
     return {
@@ -171,7 +182,7 @@ export class TelemetryAggregatorService {
 
   /**
    * Get aggregation thresholds with policy overrides
-   * 
+   *
    * Merges default thresholds with institutional overrides from decision_policy_json
    */
   private async getThresholds(userId: string, mode?: ContentMode | null) {
@@ -182,12 +193,13 @@ export class TelemetryAggregatorService {
       // 2. Fetch policy overrides
       const policy = await this.prisma.family_policies.findFirst({
         where: {
-          learner_user_id: userId
+          learner_user_id: userId,
         },
-        select: { decision_policy_json: true }
+        select: { decision_policy_json: true },
       });
 
-      const overrides = (policy?.decision_policy_json as any)?.telemetry_thresholds?.[mode || 'DIDACTIC'];
+      const overrides = (policy?.decision_policy_json as any)
+        ?.telemetry_thresholds?.[mode || "DIDACTIC"];
 
       // 3. Deep merge
       if (overrides) {
@@ -209,7 +221,7 @@ export class TelemetryAggregatorService {
    * Get default thresholds based on content mode
    */
   private getDefaultThresholds(mode?: ContentMode | null) {
-    const isTechnical = mode === 'TECHNICAL' || mode === 'SCIENTIFIC';
+    const isTechnical = mode === "TECHNICAL" || mode === "SCIENTIFIC";
 
     return {
       deep_reading: {
@@ -229,7 +241,7 @@ export class TelemetryAggregatorService {
 
   /**
    * Calculate Deep Reading Index
-   * 
+   *
    * Formula: Composite of dwell stability (low variance), backtrack rate (low), and context switch rate (low)
    * Higher score = better deep reading
    */
@@ -263,11 +275,17 @@ export class TelemetryAggregatorService {
       (sum, e) => sum + ((e.data as any).backtrackCount || 0),
       0,
     );
-    const backtrackRate = sectionViewed.length > 0 ? totalBacktracks / sectionViewed.length : 0;
-    
+    const backtrackRate =
+      sectionViewed.length > 0 ? totalBacktracks / sectionViewed.length : 0;
+
     // Use policy-overridable threshold
-    const backtrackTolerance = thresholds?.deep_reading?.backtrack_tolerance || (mode === 'TECHNICAL' || mode === 'SCIENTIFIC' ? 2.0 : 1.0);
-    const backtrackScore = Math.max(0, 100 - (backtrackRate / backtrackTolerance) * 50);
+    const backtrackTolerance =
+      thresholds?.deep_reading?.backtrack_tolerance ||
+      (mode === "TECHNICAL" || mode === "SCIENTIFIC" ? 2.0 : 1.0);
+    const backtrackScore = Math.max(
+      0,
+      100 - (backtrackRate / backtrackTolerance) * 50,
+    );
 
     // 3. Context switch rate (lower = better)
     const totalSwitches = contextSwitch.reduce(
@@ -275,22 +293,29 @@ export class TelemetryAggregatorService {
       0,
     );
     const switchRate = events.length > 0 ? totalSwitches / events.length : 0;
-    const switchTolerance = thresholds?.deep_reading?.switch_tolerance || (mode === 'TECHNICAL' ? 0.3 : 0.15);
+    const switchTolerance =
+      thresholds?.deep_reading?.switch_tolerance ||
+      (mode === "TECHNICAL" ? 0.3 : 0.15);
     const switchScore = Math.max(0, 100 - (switchRate / switchTolerance) * 100);
 
     // Composite score (weighted average)
-    const deepReadingIndex = (dwellStability * 0.4 + backtrackScore * 0.3 + switchScore * 0.3);
+    const deepReadingIndex =
+      dwellStability * 0.4 + backtrackScore * 0.3 + switchScore * 0.3;
 
     return Math.round(deepReadingIndex);
   }
 
   /**
    * Calculate UI Load Index
-   * 
+   *
    * Formula: (menu_opened + toolbox_opened + undo_redo_used) / session_duration_minutes
    * Lower score = better (less UI friction)
    */
-  private calculateUILoadIndex(events: any[], sessionDurationMinutes: number, thresholds?: any): number {
+  private calculateUILoadIndex(
+    events: any[],
+    sessionDurationMinutes: number,
+    thresholds?: any,
+  ): number {
     const menuOpened = events.filter(
       (e) => e.event_type === TelemetryEventType.MENU_OPENED,
     ).length;
@@ -303,7 +328,10 @@ export class TelemetryAggregatorService {
 
     // Use policy-overridable threshold for toolbox opens
     const maxToolboxOpens = thresholds?.ui_load?.max_toolbox_opens || 5;
-    const toolboxScore = Math.max(0, 100 - (toolboxOpened / maxToolboxOpens) * 100);
+    const toolboxScore = Math.max(
+      0,
+      100 - (toolboxOpened / maxToolboxOpens) * 100,
+    );
 
     const totalUIActions = menuOpened + toolboxOpened + undoRedo;
     const uiLoadIndex =
@@ -316,7 +344,7 @@ export class TelemetryAggregatorService {
 
   /**
    * Calculate Completion Quality
-   * 
+   *
    * Formula: (sections_with_correct_micro_check / total_sections_viewed) * 100
    */
   private calculateCompletionQuality(events: any[]): number {
@@ -326,7 +354,9 @@ export class TelemetryAggregatorService {
 
     if (microChecks.length === 0) return 0;
 
-    const correctChecks = microChecks.filter((e) => (e.data as any).correct === true).length;
+    const correctChecks = microChecks.filter(
+      (e) => (e.data as any).correct === true,
+    ).length;
     const completionQuality = (correctChecks / microChecks.length) * 100;
 
     return Math.round(completionQuality);

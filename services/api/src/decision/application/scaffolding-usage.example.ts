@@ -1,12 +1,12 @@
 /**
  * Example: How to use ScaffoldingService.updateMastery
- * 
- * This shows how other services (e.g., AssessmentService, GamesService) 
+ *
+ * This shows how other services (e.g., AssessmentService, GamesService)
  * should call updateMastery to persist learner progress.
  */
 
-import { Injectable } from '@nestjs/common';
-import { ScaffoldingService } from './scaffolding.service';
+import { Injectable } from "@nestjs/common";
+import { ScaffoldingService } from "./scaffolding.service";
 
 @Injectable()
 export class ExampleUsageService {
@@ -17,7 +17,7 @@ export class ExampleUsageService {
    */
   async onQuizCompleted(userId: string, domain: string, isCorrect: boolean) {
     await this.scaffoldingService.updateMastery(userId, {
-      type: isCorrect ? 'quiz_correct' : 'quiz_incorrect',
+      type: isCorrect ? "quiz_correct" : "quiz_incorrect",
       domain,
       timestamp: new Date(),
     });
@@ -28,7 +28,7 @@ export class ExampleUsageService {
    */
   async onCheckpointCompleted(userId: string, domain: string, passed: boolean) {
     await this.scaffoldingService.updateMastery(userId, {
-      type: passed ? 'checkpoint_passed' : 'checkpoint_failed',
+      type: passed ? "checkpoint_passed" : "checkpoint_failed",
       domain,
       timestamp: new Date(),
     });
@@ -39,7 +39,7 @@ export class ExampleUsageService {
    */
   async onMissionCompleted(userId: string, domain: string) {
     await this.scaffoldingService.updateMastery(userId, {
-      type: 'mission_completed',
+      type: "mission_completed",
       domain,
       timestamp: new Date(),
     });
@@ -50,7 +50,7 @@ export class ExampleUsageService {
    */
   async onHelpRequested(userId: string, domain: string) {
     await this.scaffoldingService.updateMastery(userId, {
-      type: 'asked_for_help',
+      type: "asked_for_help",
       domain,
       timestamp: new Date(),
     });

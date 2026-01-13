@@ -42,19 +42,19 @@ export class PkmStructureBuilder {
 
   build(): PkmStructure {
     if (!this.structure.title) {
-      throw new Error('Title is required');
+      throw new Error("Title is required");
     }
     if (!this.structure.definition) {
-      throw new Error('Definition is required');
+      throw new Error("Definition is required");
     }
     if (!this.structure.structure) {
-      throw new Error('Structure is required');
+      throw new Error("Structure is required");
     }
     if (!this.structure.nearDomain) {
-      throw new Error('Near domain is required');
+      throw new Error("Near domain is required");
     }
     if (!this.structure.farDomain) {
-      throw new Error('Far domain is required');
+      throw new Error("Far domain is required");
     }
 
     return this.structure as PkmStructure;
@@ -65,15 +65,15 @@ export class PkmStructureBuilder {
     let md = `# ${struct.title}\n\n`;
     md += `## Definition\n${struct.definition}\n\n`;
     md += `## Deep Structure (Bridging)\n${struct.structure}\n\n`;
-    
+
     if (struct.analogy) {
       md += `## Analogy\n${struct.analogy}\n\n`;
     }
-    
+
     md += `## Connections\n`;
     md += `- **Near Domain**: ${struct.nearDomain}\n`;
     md += `- **Far Domain**: ${struct.farDomain}\n`;
-    
+
     return md;
   }
 }

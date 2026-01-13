@@ -58,17 +58,16 @@ export class ProcessUserApprovalUseCase {
           role: approval.requestedRole,
           status: "ACTIVE",
         },
-
       });
 
       // Create User Identity (Password)
       await tx.user_identities.create({
         data: {
-            user_id: user.id,
-            provider: "password",
-            provider_id: user.email,
-            email: user.email,
-            password_hash: approval.tempPasswordHash,
+          user_id: user.id,
+          provider: "password",
+          provider_id: user.email,
+          email: user.email,
+          password_hash: approval.tempPasswordHash,
         },
       });
 

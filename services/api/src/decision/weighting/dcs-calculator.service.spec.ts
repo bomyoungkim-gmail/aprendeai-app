@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { DcsCalculatorService } from './dcs-calculator.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { DcsCalculatorService } from "./dcs-calculator.service";
+import { PrismaService } from "../../prisma/prisma.service";
 
-describe('DcsCalculatorService', () => {
+describe("DcsCalculatorService", () => {
   let service: DcsCalculatorService;
   let prisma: PrismaService;
 
@@ -43,21 +43,21 @@ describe('DcsCalculatorService', () => {
     jest.clearAllMocks();
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('calculateDcs', () => {
-    it('should calculate DCS with correct formula weights', async () => {
+  describe("calculateDcs", () => {
+    it("should calculate DCS with correct formula weights", async () => {
       // Mock all component methods to return known values
       mockPrisma.contents.findUnique.mockResolvedValue({
-        metadata: { hasText: true, toc: ['Ch1'] },
+        metadata: { hasText: true, toc: ["Ch1"] },
       });
       mockPrisma.content_chunks.count.mockResolvedValue(0);
       mockPrisma.topic_graphs.findMany.mockResolvedValue([]);
       mockPrisma.topic_edge_votes.count.mockResolvedValue(0);
 
-      const result = await service.calculateDcs('content-1', 'USER', 'user-1');
+      const result = await service.calculateDcs("content-1", "USER", "user-1");
 
       // With doc=1.0, others=0: DCS = 0.15*1.0 = 0.15
       expect(result.dcs).toBeCloseTo(0.15, 2);
@@ -65,7 +65,7 @@ describe('DcsCalculatorService', () => {
       expect(result.w_llm).toBeCloseTo(0.85, 2);
     });
 
-    it('should ensure w_det + w_llm = 1', async () => {
+    it("should ensure w_det + w_llm = 1", async () => {
       mockPrisma.contents.findUnique.mockResolvedValue({
         metadata: { hasText: true },
       });
@@ -73,39 +73,39 @@ describe('DcsCalculatorService', () => {
       mockPrisma.topic_graphs.findMany.mockResolvedValue([]);
       mockPrisma.topic_edge_votes.count.mockResolvedValue(0);
 
-      const result = await service.calculateDcs('content-1', 'USER', 'user-1');
+      const result = await service.calculateDcs("content-1", "USER", "user-1");
 
       const sum = result.w_det + result.w_llm;
       expect(sum).toBeCloseTo(1.0, 6);
     });
 
-    it('should cap DCS at 1.0', async () => {
+    it("should cap DCS at 1.0", async () => {
       // Even if components sum > 1, DCS should be capped
       mockPrisma.contents.findUnique.mockResolvedValue({
-        metadata: { hasText: true, toc: ['Ch1'] },
+        metadata: { hasText: true, toc: ["Ch1"] },
       });
       mockPrisma.content_chunks.count.mockResolvedValue(10);
       mockPrisma.topic_graphs.findMany.mockResolvedValue([
         {
-          type: 'CURATED',
+          type: "CURATED",
           topic_edges: [
             {
-              topic_edge_evidence: [{ id: '1' }, { id: '2' }, { id: '3' }],
+              topic_edge_evidence: [{ id: "1" }, { id: "2" }, { id: "3" }],
             },
           ],
         },
       ]);
       mockPrisma.topic_edge_votes.count.mockResolvedValue(10);
 
-      const result = await service.calculateDcs('content-1', 'USER', 'user-1');
+      const result = await service.calculateDcs("content-1", "USER", "user-1");
 
       expect(result.dcs).toBeLessThanOrEqual(1.0);
       expect(result.w_det).toBeLessThanOrEqual(1.0);
     });
   });
 
-  describe('persistScore', () => {
-    it('should upsert DCS score to database', async () => {
+  describe("persistScore", () => {
+    it("should upsert DCS score to database", async () => {
       const result = {
         dcs: 0.75,
         w_det: 0.75,
@@ -120,12 +120,12 @@ describe('DcsCalculatorService', () => {
         },
       };
 
-      await service.persistScore('content-1', 'USER', 'user-1', result);
+      await service.persistScore("content-1", "USER", "user-1", result);
 
       expect(mockPrisma.determinism_scores.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           create: expect.objectContaining({
-            content_id: 'content-1',
+            content_id: "content-1",
             dcs: 0.75,
             w_det: 0.75,
             w_llm: 0.25,

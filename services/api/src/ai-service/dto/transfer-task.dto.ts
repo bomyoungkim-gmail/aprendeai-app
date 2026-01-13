@@ -4,25 +4,25 @@
  */
 
 export type TransferIntent =
-  | 'HUGGING'
-  | 'BRIDGING'
-  | 'ANALOGY'
-  | 'TIER2'
-  | 'MORPHOLOGY'
-  | 'ICEBERG'
-  | 'CONNECTION_CIRCLE'
-  | 'PKM'
-  | 'MISSION_FEEDBACK'
-  | 'METACOGNITION'
-  | 'SENTENCE_ANALYSIS' // Tool: Analise de Sentenca
-  | 'HIGH_ROAD'; // AGENT SCRIPT B
+  | "HUGGING"
+  | "BRIDGING"
+  | "ANALOGY"
+  | "TIER2"
+  | "MORPHOLOGY"
+  | "ICEBERG"
+  | "CONNECTION_CIRCLE"
+  | "PKM"
+  | "MISSION_FEEDBACK"
+  | "METACOGNITION"
+  | "SENTENCE_ANALYSIS" // Tool: Analise de Sentenca
+  | "HIGH_ROAD"; // AGENT SCRIPT B
 
 export interface TransferTaskDto {
   intent: TransferIntent;
   userId: string;
   sessionId: string;
   contentId: string;
-  
+
   // Context data
   transferMetadata?: {
     concept?: string;
@@ -30,7 +30,7 @@ export interface TransferTaskDto {
     domains_json?: any[];
     [key: string]: any;
   };
-  
+
   missionData?: {
     mission_type?: string;
     rubric?: any;
@@ -38,15 +38,15 @@ export interface TransferTaskDto {
     user_attempt?: string;
     [key: string]: any;
   };
-  
+
   userProfile?: {
     schooling_level?: string;
     language_proficiency?: string;
-    mastery_state_json?: any;  // AGENT SCRIPT C: Mastery scores for scaffolding
-    scaffolding_state_json?: any;  // AGENT SCRIPT C: Current scaffolding preferences
+    mastery_state_json?: any; // AGENT SCRIPT C: Mastery scores for scaffolding
+    scaffolding_state_json?: any; // AGENT SCRIPT C: Current scaffolding preferences
     [key: string]: any;
   };
-  
+
   // AGENT SCRIPT D: Light RAG - Pass context chunks to avoid vector search
   contextChunks?: Array<{
     id: string;

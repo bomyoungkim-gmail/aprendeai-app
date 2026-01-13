@@ -1,6 +1,6 @@
 /**
  * Transfer Metadata Extraction - AI Service Types
- * 
+ *
  * Types for LLM fallback when deterministic extraction yields empty results.
  */
 
@@ -26,7 +26,7 @@ export interface TransferMetadataPrompt {
     }>; // Up to 2 Cornell notes with MAIN_IDEA/EVIDENCE tags
   };
   output: {
-    need: Array<'analogies' | 'domains'>;
+    need: Array<"analogies" | "domains">;
     maxItems: {
       analogies: number;
       domains: number;

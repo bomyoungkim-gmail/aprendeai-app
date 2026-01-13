@@ -1,16 +1,16 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { DecisionService } from '../../decision/application/decision.service';
-import { TelemetryService } from '../../telemetry/telemetry.service';
-import { TelemetryEventType } from '../../telemetry/domain/telemetry.constants';
-import { EventEmitter2 } from '@nestjs/event-emitter'; // GRAPH SCRIPT 19.10
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { DecisionService } from "../../decision/application/decision.service";
+import { TelemetryService } from "../../telemetry/telemetry.service";
+import { TelemetryEventType } from "../../telemetry/domain/telemetry.constants";
+import { EventEmitter2 } from "@nestjs/event-emitter"; // GRAPH SCRIPT 19.10
 
 /**
  * Productive Failure Service
- * 
+ *
  * Implements the "Productive Failure" pedagogical pattern where students
  * attempt to solve a problem BEFORE receiving formal instruction or feedback.
- * 
+ *
  * Flow:
  * 1. Assign PF mission (generic template from transfer_missions)
  * 2. Student submits attempt (response_text in transfer_attempts)
@@ -29,25 +29,27 @@ export class ProductiveFailureService {
 
   /**
    * Assign a generic Productive Failure mission to a user for a specific content
-   * 
+   *
    * @param userId - The user ID
    * @param contentId - The content ID
    * @returns The created transfer_attempt ID
    */
   async assignGenericPF(userId: string, contentId: string): Promise<string> {
-    this.logger.debug(`Assigning PF mission for user ${userId}, content ${contentId}`);
+    this.logger.debug(
+      `Assigning PF mission for user ${userId}, content ${contentId}`,
+    );
 
     // 1. Find or create generic PF mission template
     const pfMission = await this.prisma.transfer_missions.findFirst({
       where: {
-        type: 'PRODUCTIVE_FAILURE',
-        scope_type: 'GLOBAL',
+        type: "PRODUCTIVE_FAILURE",
+        scope_type: "GLOBAL",
       },
     });
 
     if (!pfMission) {
       throw new NotFoundException(
-        'Generic PRODUCTIVE_FAILURE mission template not found. Please run seed script.',
+        "Generic PRODUCTIVE_FAILURE mission template not found. Please run seed script.",
       );
     }
 
@@ -58,7 +60,7 @@ export class ProductiveFailureService {
         user_id: userId,
         content_id: contentId,
         mission_id: pfMission.id,
-        status: 'PENDING',
+        status: "PENDING",
         score: null,
         response_text: null,
         feedback_json: null,
@@ -73,11 +75,14 @@ export class ProductiveFailureService {
 
   /**
    * Submit a Productive Failure response
-   * 
+   *
    * @param attemptId - The transfer_attempt ID
    * @param responseText - The student's attempt text
    */
-  async submitPFResponse(attemptId: string, responseText: string): Promise<void> {
+  async submitPFResponse(
+    attemptId: string,
+    responseText: string,
+  ): Promise<void> {
     this.logger.debug(`Submitting PF response for attempt ${attemptId}`);
 
     const attempt = await this.prisma.transfer_attempts.findUnique({
@@ -88,7 +93,7 @@ export class ProductiveFailureService {
       throw new NotFoundException(`Transfer attempt ${attemptId} not found`);
     }
 
-    if (attempt.status !== 'PENDING') {
+    if (attempt.status !== "PENDING") {
       throw new Error(`Attempt ${attemptId} is not in PENDING status`);
     }
 
@@ -105,16 +110,16 @@ export class ProductiveFailureService {
 
   /**
    * Generate feedback for a Productive Failure attempt
-   * 
+   *
    * Uses a two-tier approach:
    * - Tier 1 (Deterministic): Checks section_transfer_metadata for keywords/cues
    * - Tier 2 (LLM): If policy allows and deterministic is insufficient
-   * 
+   *
    * @param attemptId - The transfer_attempt ID
    * @returns The generated feedback object
    */
   async generateFeedback(attemptId: string): Promise<{
-    feedbackType: 'deterministic' | 'llm';
+    feedbackType: "deterministic" | "llm";
     feedback: string;
     hints?: string[];
   }> {
@@ -153,7 +158,7 @@ export class ProductiveFailureService {
         where: { id: attemptId },
         data: {
           feedback_json: {
-            type: 'deterministic',
+            type: "deterministic",
             feedback: deterministicFeedback.feedback,
             hints: deterministicFeedback.hints,
           },
@@ -161,9 +166,11 @@ export class ProductiveFailureService {
         },
       });
 
-      this.logger.log(`Deterministic feedback generated for attempt ${attemptId}`);
+      this.logger.log(
+        `Deterministic feedback generated for attempt ${attemptId}`,
+      );
       return {
-        feedbackType: 'deterministic',
+        feedbackType: "deterministic",
         feedback: deterministicFeedback.feedback,
         hints: deterministicFeedback.hints,
       };
@@ -172,7 +179,7 @@ export class ProductiveFailureService {
     // Tier 2: Check if LLM is allowed
     const policyEval = await this.decisionService.evaluateExtractionPolicy(
       attempt.user_id,
-      'POST',
+      "POST",
       {
         contentId: attempt.content_id,
         sessionId: `pf-${attemptId}`,
@@ -181,12 +188,12 @@ export class ProductiveFailureService {
 
     if (!policyEval.allowed) {
       // Fall back to generic deterministic feedback
-      const genericFeedback = 'Please review the main concepts and try again.';
+      const genericFeedback = "Please review the main concepts and try again.";
       await this.prisma.transfer_attempts.update({
         where: { id: attemptId },
         data: {
           feedback_json: {
-            type: 'deterministic',
+            type: "deterministic",
             feedback: genericFeedback,
             hints: [],
           },
@@ -194,9 +201,11 @@ export class ProductiveFailureService {
         },
       });
 
-      this.logger.log(`Generic feedback generated for attempt ${attemptId} (LLM denied)`);
+      this.logger.log(
+        `Generic feedback generated for attempt ${attemptId} (LLM denied)`,
+      );
       return {
-        feedbackType: 'deterministic',
+        feedbackType: "deterministic",
         feedback: genericFeedback,
         hints: [],
       };
@@ -212,7 +221,7 @@ export class ProductiveFailureService {
       where: { id: attemptId },
       data: {
         feedback_json: {
-          type: 'llm',
+          type: "llm",
           feedback: llmFeedback,
         },
         updated_at: new Date(),
@@ -221,7 +230,7 @@ export class ProductiveFailureService {
 
     this.logger.log(`LLM feedback generated for attempt ${attemptId}`);
     return {
-      feedbackType: 'llm',
+      feedbackType: "llm",
       feedback: llmFeedback,
     };
   }
@@ -250,7 +259,7 @@ export class ProductiveFailureService {
     );
 
     if (missingConcepts.length > 0) {
-      hints.push(`Try focusing on: ${missingConcepts.slice(0, 2).join(', ')}`);
+      hints.push(`Try focusing on: ${missingConcepts.slice(0, 2).join(", ")}`);
     }
 
     // Extract cues from metadata
@@ -262,13 +271,15 @@ export class ProductiveFailureService {
       .filter(Boolean);
 
     if (cues.length > 0 && hints.length === 0) {
-      hints.push(`Consider these guiding questions: ${cues.slice(0, 2).join('; ')}`);
+      hints.push(
+        `Consider these guiding questions: ${cues.slice(0, 2).join("; ")}`,
+      );
     }
 
     const feedback =
       hints.length > 0
-        ? 'Your attempt shows effort, but you might be missing some key points.'
-        : 'Good start! Your response covers the main ideas.';
+        ? "Your attempt shows effort, but you might be missing some key points."
+        : "Good start! Your response covers the main ideas.";
 
     return { feedback, hints };
   }
@@ -283,16 +294,18 @@ export class ProductiveFailureService {
   ): Promise<string> {
     // Placeholder: In real implementation, this would call AiServiceClient
     // with a prompt like: "Evaluate this student's attempt and provide constructive feedback"
-    this.logger.warn('LLM feedback generation not yet implemented - using placeholder');
-    return 'Your attempt demonstrates understanding. Consider elaborating on the main concepts with specific examples.';
+    this.logger.warn(
+      "LLM feedback generation not yet implemented - using placeholder",
+    );
+    return "Your attempt demonstrates understanding. Consider elaborating on the main concepts with specific examples.";
   }
 
   /**
    * Complete a Productive Failure mission
-   * 
+   *
    * Marks the attempt as COMPLETED and emits MISSION_COMPLETED telemetry event.
    * This should be called after the student has reviewed feedback and completed the learning cycle.
-   * 
+   *
    * @param attemptId - The transfer_attempt ID
    * @param score - Final score (0-100)
    */
@@ -309,7 +322,7 @@ export class ProductiveFailureService {
       throw new NotFoundException(`Transfer attempt ${attemptId} not found`);
     }
 
-    if (attempt.status === 'COMPLETED') {
+    if (attempt.status === "COMPLETED") {
       this.logger.warn(`Attempt ${attemptId} already completed`);
       return;
     }
@@ -318,26 +331,29 @@ export class ProductiveFailureService {
     await this.prisma.transfer_attempts.update({
       where: { id: attemptId },
       data: {
-        status: 'COMPLETED',
+        status: "COMPLETED",
         score: score,
         updated_at: new Date(),
       },
     });
 
     // 3. Emit MISSION_COMPLETED telemetry event
-    await this.telemetryService.track({
-      eventType: TelemetryEventType.MISSION_COMPLETED,
-      eventVersion: '1.0.0',
-      sessionId: `pf-mission-${attemptId}`, // Generate session ID for tracking
-      contentId: attempt.content_id || 'unknown',
-      data: {
-        missionId: attempt.mission_id,
-        score: score,
+    await this.telemetryService.track(
+      {
+        eventType: TelemetryEventType.MISSION_COMPLETED,
+        eventVersion: "1.0.0",
+        sessionId: `pf-mission-${attemptId}`, // Generate session ID for tracking
+        contentId: attempt.content_id || "unknown",
+        data: {
+          missionId: attempt.mission_id,
+          score: score,
+        },
       },
-    }, attempt.user_id);
+      attempt.user_id,
+    );
 
     // GRAPH SCRIPT 19.10: Emit event for graph reinforcement
-    this.eventEmitter.emit('mission.completed', {
+    this.eventEmitter.emit("mission.completed", {
       userId: attempt.user_id,
       contentId: attempt.content_id,
       missionData: {
@@ -347,7 +363,9 @@ export class ProductiveFailureService {
       },
     });
 
-    this.logger.log(`Mission completed: ${attempt.mission_id}, score: ${score}`);
+    this.logger.log(
+      `Mission completed: ${attempt.mission_id}, score: ${score}`,
+    );
   }
 
   /**

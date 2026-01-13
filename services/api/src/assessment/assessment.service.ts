@@ -9,7 +9,7 @@ export class AssessmentService {
   constructor(
     private readonly createUseCase: CreateAssessmentUseCase,
     private readonly getUseCase: GetAssessmentUseCase,
-    private readonly submitUseCase: SubmitAssessmentUseCase
+    private readonly submitUseCase: SubmitAssessmentUseCase,
   ) {}
 
   async create(createAssessmentDto: CreateAssessmentDto) {
@@ -27,7 +27,7 @@ export class AssessmentService {
   async submitAssessment(
     userId: string,
     assessmentId: string,
-    dto: SubmitAssessmentDto
+    dto: SubmitAssessmentDto,
   ) {
     return this.submitUseCase.execute(userId, assessmentId, dto);
   }
@@ -48,7 +48,7 @@ export class AssessmentService {
       const hasCompletedAttempt = attempts.some(
         (attempt: any) =>
           attempt.assessment_id === assessment.id &&
-          attempt.finished_at !== null
+          attempt.finished_at !== null,
       );
       return !hasCompletedAttempt;
     });

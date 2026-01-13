@@ -1,14 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
-import { PrismaService } from '../../prisma/prisma.service';
-import { GraphDecayService } from '../decay/graph-decay.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { OnEvent } from "@nestjs/event-emitter";
+import { PrismaService } from "../../prisma/prisma.service";
+import { GraphDecayService } from "../decay/graph-decay.service";
 
 /**
  * GRAPH SCRIPT 19.10: Graph Reinforcement Listener
- * 
+ *
  * Listens to user interaction events (highlights, missions, reviews)
  * and reinforces related nodes in the learner graph.
- * 
+ *
  * This prevents decay of actively used knowledge.
  */
 @Injectable()
@@ -23,7 +23,7 @@ export class GraphReinforcementListener {
   /**
    * Reinforce nodes when user creates a highlight
    */
-  @OnEvent('highlight.created')
+  @OnEvent("highlight.created")
   async handleHighlightCreated(payload: {
     highlightId: string;
     userId: string;
@@ -40,7 +40,7 @@ export class GraphReinforcementListener {
           topic_graphs: {
             scope_id: payload.userId,
             content_id: payload.contentId,
-            type: 'LEARNER',
+            type: "LEARNER",
           },
         },
         select: { id: true },
@@ -68,7 +68,7 @@ export class GraphReinforcementListener {
   /**
    * Reinforce nodes when user completes a mission
    */
-  @OnEvent('mission.completed')
+  @OnEvent("mission.completed")
   async handleMissionCompleted(payload: {
     userId: string;
     contentId: string;
@@ -87,7 +87,7 @@ export class GraphReinforcementListener {
             topic_graphs: {
               scope_id: payload.userId,
               content_id: payload.contentId,
-              type: 'LEARNER',
+              type: "LEARNER",
             },
           },
           select: { id: true },
@@ -120,9 +120,9 @@ export class GraphReinforcementListener {
     return text
       .toLowerCase()
       .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
   }
 
   /**
@@ -140,6 +140,6 @@ export class GraphReinforcementListener {
     if (data.cause) topics.push(data.cause);
     if (data.effect) topics.push(data.effect);
 
-    return topics.filter((t) => typeof t === 'string' && t.length > 0);
+    return topics.filter((t) => typeof t === "string" && t.length > 0);
   }
 }

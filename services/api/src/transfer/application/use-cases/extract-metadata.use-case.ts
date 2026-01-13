@@ -1,14 +1,14 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { RedisService } from '../../../common/redis/redis.service';
+import { Injectable, Inject, Logger } from "@nestjs/common";
+import { PrismaService } from "../../../prisma/prisma.service";
+import { RedisService } from "../../../common/redis/redis.service";
 import {
   ITransferMetadataRepository,
   TransferMetadataEntity,
-} from '../../domain/transfer-metadata.repository.interface';
-import { ExtractMetadataResult } from '../types/transfer-metadata.types';
-import { AiServiceClient } from '../../../ai-service/ai-service.client';
-import { TelemetryService } from '../../../telemetry/telemetry.service';
-import { v4 as uuidv4 } from 'uuid';
+} from "../../domain/transfer-metadata.repository.interface";
+import { ExtractMetadataResult } from "../types/transfer-metadata.types";
+import { AiServiceClient } from "../../../ai-service/ai-service.client";
+import { TelemetryService } from "../../../telemetry/telemetry.service";
+import { v4 as uuidv4 } from "uuid";
 
 interface ExtractionResult {
   conceptJson: any;
@@ -44,7 +44,7 @@ export class ExtractMetadataUseCase {
     fallbackConfig?: {
       allowLLM: boolean;
       caps?: { maxTokens: number; modelTier: string };
-      phase?: 'DURING' | 'POST';
+      phase?: "DURING" | "POST";
     };
   }): Promise<ExtractMetadataResult> {
     // Generate cache key
@@ -62,7 +62,7 @@ export class ExtractMetadataUseCase {
         },
         usedLLMCount: 0,
         cacheHitCount: 1,
-        channel: 'CACHED_LLM',
+        channel: "CACHED_LLM",
       };
     }
 
@@ -96,7 +96,7 @@ export class ExtractMetadataUseCase {
         },
         usedLLMCount: 0,
         cacheHitCount: 0,
-        channel: 'DETERMINISTIC',
+        channel: "DETERMINISTIC",
       };
     }
 
@@ -105,7 +105,8 @@ export class ExtractMetadataUseCase {
 
     // Check if LLM fallback is needed and allowed
     const needsLLM =
-      (extracted.analogiesJson?.length === 0 || extracted.domainsJson?.length === 0) &&
+      (extracted.analogiesJson?.length === 0 ||
+        extracted.domainsJson?.length === 0) &&
       params.fallbackConfig?.allowLLM;
 
     let usedLLMCount = 0;
@@ -115,7 +116,10 @@ export class ExtractMetadataUseCase {
       try {
         // Try LLM cache first
         const llmCacheKey = `${cacheKey}:llm`;
-        const cachedLLM = await this.redisService.get<{ analogies: any[]; domains: string[] }>(llmCacheKey);
+        const cachedLLM = await this.redisService.get<{
+          analogies: any[];
+          domains: string[];
+        }>(llmCacheKey);
 
         if (cachedLLM) {
           this.logger.debug(`LLM cache hit for ${params.contentId}`);
@@ -125,21 +129,26 @@ export class ExtractMetadataUseCase {
 
           this.telemetryService.track(
             {
-              eventType: 'transfer_llm_fallback_triggered',
-              eventVersion: '1.0.0',
+              eventType: "transfer_llm_fallback_triggered",
+              eventVersion: "1.0.0",
               contentId: params.contentId,
               sessionId: null,
               data: {
-                sectionRef: { chunkId: params.chunkId, chunkIndex: params.chunkIndex },
-                phase: params.fallbackConfig?.phase || 'POST',
+                sectionRef: {
+                  chunkId: params.chunkId,
+                  chunkIndex: params.chunkIndex,
+                },
+                phase: params.fallbackConfig?.phase || "POST",
                 cacheHit: true,
               },
             },
-            params.userId || 'system',
+            params.userId || "system",
           );
         } else {
           // Call LLM
-          this.logger.debug(`Calling LLM for metadata extraction: ${params.contentId}`);
+          this.logger.debug(
+            `Calling LLM for metadata extraction: ${params.contentId}`,
+          );
           const llmResult = await this.callLLMFallback(params, extracted);
 
           extracted.analogiesJson = llmResult.analogies;
@@ -155,18 +164,21 @@ export class ExtractMetadataUseCase {
 
           this.telemetryService.track(
             {
-              eventType: 'transfer_llm_fallback_triggered',
-              eventVersion: '1.0.0',
+              eventType: "transfer_llm_fallback_triggered",
+              eventVersion: "1.0.0",
               contentId: params.contentId,
               sessionId: null,
               data: {
-                sectionRef: { chunkId: params.chunkId, chunkIndex: params.chunkIndex },
-                phase: params.fallbackConfig?.phase || 'POST',
+                sectionRef: {
+                  chunkId: params.chunkId,
+                  chunkIndex: params.chunkIndex,
+                },
+                phase: params.fallbackConfig?.phase || "POST",
                 cacheHit: false,
                 tokensUsed: llmResult.tokensUsed,
               },
             },
-            params.userId || 'system',
+            params.userId || "system",
           );
         }
       } catch (error) {
@@ -174,21 +186,22 @@ export class ExtractMetadataUseCase {
         // Continue with deterministic results
       }
     } else if (
-      (extracted.analogiesJson?.length === 0 || extracted.domainsJson?.length === 0) &&
+      (extracted.analogiesJson?.length === 0 ||
+        extracted.domainsJson?.length === 0) &&
       !params.fallbackConfig?.allowLLM
     ) {
       // Telemetry for denied fallback
       this.telemetryService.track(
         {
-          eventType: 'transfer_llm_fallback_denied',
-          eventVersion: '1.0.0',
+          eventType: "transfer_llm_fallback_denied",
+          eventVersion: "1.0.0",
           contentId: params.contentId,
           sessionId: null,
           data: {
-            reason: params.fallbackConfig ? 'policy/budget' : 'no_config',
+            reason: params.fallbackConfig ? "policy/budget" : "no_config",
           },
         },
-        params.userId || 'system',
+        params.userId || "system",
       );
     }
 
@@ -203,7 +216,7 @@ export class ExtractMetadataUseCase {
       chunkIndex: params.chunkIndex,
       pageNumber: params.pageNumber,
       anchorJson: null,
-      version: '1.0.0',
+      version: "1.0.0",
       conceptJson: extracted.conceptJson,
       tier2Json: extracted.tier2Json,
       analogiesJson: extracted.analogiesJson || [],
@@ -228,7 +241,8 @@ export class ExtractMetadataUseCase {
       },
       usedLLMCount,
       cacheHitCount: llmCacheHit ? 1 : 0,
-      channel: usedLLMCount > 0 ? 'LLM' : llmCacheHit ? 'CACHED_LLM' : 'DETERMINISTIC',
+      channel:
+        usedLLMCount > 0 ? "LLM" : llmCacheHit ? "CACHED_LLM" : "DETERMINISTIC",
     };
   }
 
@@ -245,11 +259,11 @@ export class ExtractMetadataUseCase {
       params.chunkId ||
       `idx_${params.chunkIndex}` ||
       `page_${params.pageNumber}` ||
-      'default';
+      "default";
 
-    const level = params.educationLevel || 'default';
-    const lang = params.language || 'pt';
-    const version = '1.0.0';
+    const level = params.educationLevel || "default";
+    const lang = params.language || "pt";
+    const version = "1.0.0";
 
     return `transfer:metadata:${params.contentId}:${chunkIdentifier}:${level}:${lang}:${params.scopeType}:${version}`;
   }
@@ -300,7 +314,9 @@ export class ExtractMetadataUseCase {
     if (contentVersion?.vocabulary_glossary) {
       const glossary = contentVersion.vocabulary_glossary as any;
       if (Array.isArray(glossary)) {
-        return glossary.map((item) => item.term || item.word || item).slice(0, 20);
+        return glossary
+          .map((item) => item.term || item.word || item)
+          .slice(0, 20);
       }
     }
 
@@ -313,7 +329,9 @@ export class ExtractMetadataUseCase {
     if (learningAsset?.glossary_json) {
       const glossary = learningAsset.glossary_json as any;
       if (Array.isArray(glossary)) {
-        return glossary.map((item) => item.term || item.word || item).slice(0, 20);
+        return glossary
+          .map((item) => item.term || item.word || item)
+          .slice(0, 20);
       }
     }
 
@@ -346,20 +364,18 @@ export class ExtractMetadataUseCase {
       );
     }
 
-    return { principle: '', keywords: [] };
+    return { principle: "", keywords: [] };
   }
 
   private extractConceptFromText(text: string): any {
     const sentences = text.split(/[.!?]+/).filter((s) => s.trim().length > 0);
 
     // Use first sentence as principle (topic sentence heuristic)
-    const principle = sentences[0]?.trim() || '';
+    const principle = sentences[0]?.trim() || "";
 
     // Extract capitalized terms as keywords
     const keywords = Array.from(
-      new Set(
-        text.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g) || [],
-      ),
+      new Set(text.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g) || []),
     ).slice(0, 5);
 
     return { principle, keywords };
@@ -374,8 +390,8 @@ export class ExtractMetadataUseCase {
       where: {
         content_id: contentId,
         page_number: pageNumber,
-        kind: 'TEXT',
-        status: 'ACTIVE',
+        kind: "TEXT",
+        status: "ACTIVE",
       },
       select: {
         comment_text: true,
@@ -387,7 +403,7 @@ export class ExtractMetadataUseCase {
     const mainIdeas = highlights
       .filter((h) => {
         const tags = (h.tags_json as string[]) || [];
-        return tags.includes('MAIN_IDEA');
+        return tags.includes("MAIN_IDEA");
       })
       .map((h) => h.comment_text)
       .filter(Boolean);
@@ -400,10 +416,10 @@ export class ExtractMetadataUseCase {
     });
 
     const cues = cornellNotes[0]?.cues_json || [];
-    const summary = cornellNotes[0]?.summary_text || '';
+    const summary = cornellNotes[0]?.summary_text || "";
 
     return {
-      principle: mainIdeas[0] || summary || '',
+      principle: mainIdeas[0] || summary || "",
       keywords: Array.isArray(cues) ? cues.slice(0, 5) : [],
     };
   }
@@ -481,7 +497,7 @@ export class ExtractMetadataUseCase {
 
   /**
    * Call LLM for metadata extraction fallback
-   * 
+   *
    * PATCH 04v2: Real LLM integration
    */
   private async callLLMFallback(
@@ -499,7 +515,10 @@ export class ExtractMetadataUseCase {
     extracted: ExtractionResult,
   ): Promise<{ analogies: any[]; domains: string[]; tokensUsed?: number }> {
     // Get up to 2 evidence items from Cornell notes
-    const evidence = await this.getEvidenceForLLM(params.contentId, params.chunkId);
+    const evidence = await this.getEvidenceForLLM(
+      params.contentId,
+      params.chunkId,
+    );
 
     const prompt = {
       contentId: params.contentId,
@@ -508,10 +527,10 @@ export class ExtractMetadataUseCase {
         page: params.pageNumber,
         chunkIndex: params.chunkIndex,
       },
-      mode: 'transfer_metadata',
+      mode: "transfer_metadata",
       learner: {
-        level: params.educationLevel || 'SUPERIOR',
-        language: params.language || 'PT_BR',
+        level: params.educationLevel || "SUPERIOR",
+        language: params.language || "PT_BR",
       },
       seed: {
         concept: extracted.conceptJson,
@@ -519,7 +538,7 @@ export class ExtractMetadataUseCase {
         evidence,
       },
       output: {
-        need: ['analogies', 'domains'] as Array<'analogies' | 'domains'>,
+        need: ["analogies", "domains"] as Array<"analogies" | "domains">,
         maxItems: {
           analogies: 2,
           domains: 3,
@@ -527,7 +546,7 @@ export class ExtractMetadataUseCase {
       },
       caps: params.fallbackConfig?.caps || {
         maxTokens: 1000,
-        modelTier: 'flash',
+        modelTier: "flash",
       },
     };
 
@@ -563,13 +582,12 @@ export class ExtractMetadataUseCase {
     // Filter for MAIN_IDEA or EVIDENCE tags
     const filtered = highlights.filter((h) => {
       const tags = (h.tags_json as string[]) || [];
-      return tags.includes('MAIN_IDEA') || tags.includes('EVIDENCE');
+      return tags.includes("MAIN_IDEA") || tags.includes("EVIDENCE");
     });
 
     return filtered.slice(0, 2).map((h) => ({
       anchor_json: h.anchor_json,
-      note_excerpt: h.comment_text || '',
+      note_excerpt: h.comment_text || "",
     }));
   }
 }
-

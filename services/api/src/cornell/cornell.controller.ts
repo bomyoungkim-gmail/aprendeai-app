@@ -13,8 +13,6 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
-  HttpException,
-  HttpStatus,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { AuthGuard } from "@nestjs/passport";
@@ -33,7 +31,7 @@ import { UploadContentDto } from "./dto/upload-content.dto";
 import { CreateContentVersionDto } from "./dto/create-content-version.dto";
 import { NotificationsGateway } from "../notifications/notifications.gateway";
 import { CreateContentUseCase } from "./application/use-cases/create-content.use-case";
-import { QUEUES, DEFAULTS, UPLOAD_LIMITS } from "../config/constants";
+import { UPLOAD_LIMITS } from "../config/constants";
 import { ApiKeyGuard } from "../auth/infrastructure/api-key.guard";
 import { Public } from "../auth/presentation/decorators/public.decorator";
 
@@ -149,7 +147,6 @@ export class CornellController {
   // Wait, replace_file_content replaces a chunk. I should target specific methods.
 
   // Skipping searchContent, proxyFile, getContent, etc. to minimize diff.
-
 
   @Get(":id/highlights")
   async getHighlights(@Param("id") id: string, @Request() req) {

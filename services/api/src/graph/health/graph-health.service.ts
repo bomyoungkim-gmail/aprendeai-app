@@ -1,12 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
 
 export interface JobStatus {
   name: string;
   lastRun: Date | null;
   lastSuccess: Date | null;
   lastFailure: Date | null;
-  status: 'healthy' | 'warning' | 'error';
+  status: "healthy" | "warning" | "error";
   message: string;
 }
 
@@ -20,21 +20,24 @@ export interface GraphHealthMetrics {
 
 /**
  * Graph Health Service
- * 
+ *
  * Tracks the health and status of Graph Automation jobs.
  * Provides metrics for monitoring and alerting.
  */
 @Injectable()
 export class GraphHealthService {
   private readonly logger = new Logger(GraphHealthService.name);
-  
+
   // In-memory tracking of job executions
-  private jobExecutions = new Map<string, {
-    lastRun: Date;
-    lastSuccess: Date | null;
-    lastFailure: Date | null;
-    lastError: string | null;
-  }>();
+  private jobExecutions = new Map<
+    string,
+    {
+      lastRun: Date;
+      lastSuccess: Date | null;
+      lastFailure: Date | null;
+      lastError: string | null;
+    }
+  >();
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -48,7 +51,7 @@ export class GraphHealthService {
       lastFailure: null,
       lastError: null,
     };
-    
+
     existing.lastRun = new Date();
     this.jobExecutions.set(jobName, existing);
   }
@@ -80,32 +83,35 @@ export class GraphHealthService {
    */
   getJobStatus(jobName: string): JobStatus {
     const execution = this.jobExecutions.get(jobName);
-    
+
     if (!execution) {
       return {
         name: jobName,
         lastRun: null,
         lastSuccess: null,
         lastFailure: null,
-        status: 'warning',
-        message: 'Job has never run',
+        status: "warning",
+        message: "Job has never run",
       };
     }
 
     const now = new Date();
-    const hoursSinceLastRun = execution.lastRun 
+    const hoursSinceLastRun = execution.lastRun
       ? (now.getTime() - execution.lastRun.getTime()) / (1000 * 60 * 60)
       : Infinity;
 
     // If last run was a failure
-    if (execution.lastFailure && (!execution.lastSuccess || execution.lastFailure > execution.lastSuccess)) {
+    if (
+      execution.lastFailure &&
+      (!execution.lastSuccess || execution.lastFailure > execution.lastSuccess)
+    ) {
       return {
         name: jobName,
         lastRun: execution.lastRun,
         lastSuccess: execution.lastSuccess,
         lastFailure: execution.lastFailure,
-        status: 'error',
-        message: `Last execution failed: ${execution.lastError || 'Unknown error'}`,
+        status: "error",
+        message: `Last execution failed: ${execution.lastError || "Unknown error"}`,
       };
     }
 
@@ -116,7 +122,7 @@ export class GraphHealthService {
         lastRun: execution.lastRun,
         lastSuccess: execution.lastSuccess,
         lastFailure: execution.lastFailure,
-        status: 'warning',
+        status: "warning",
         message: `Job hasn't run in ${Math.floor(hoursSinceLastRun)} hours`,
       };
     }
@@ -126,8 +132,8 @@ export class GraphHealthService {
       lastRun: execution.lastRun,
       lastSuccess: execution.lastSuccess,
       lastFailure: execution.lastFailure,
-      status: 'healthy',
-      message: 'Job running normally',
+      status: "healthy",
+      message: "Job running normally",
     };
   }
 
@@ -137,7 +143,7 @@ export class GraphHealthService {
   async getHealthMetrics(): Promise<GraphHealthMetrics> {
     // Get total learner graphs
     const totalLearnerGraphs = await this.prisma.topic_graphs.count({
-      where: { type: 'LEARNER' },
+      where: { type: "LEARNER" },
     });
 
     // Calculate average confidence
@@ -151,7 +157,9 @@ export class GraphHealthService {
     const averageConfidence = avgResult[0]?.avg || 0;
 
     // Get graphs needing comparison
-    const graphsNeedingComparison = await this.prisma.$queryRaw<Array<{ count: bigint }>>`
+    const graphsNeedingComparison = await this.prisma.$queryRaw<
+      Array<{ count: bigint }>
+    >`
       SELECT COUNT(*) as count
       FROM topic_graphs
       WHERE type = 'LEARNER'
@@ -167,8 +175,8 @@ export class GraphHealthService {
       totalLearnerGraphs,
       averageConfidence: Number(averageConfidence.toFixed(3)),
       graphsNeedingComparison: needingComparison,
-      lastComparisonJob: this.getJobStatus('graph-comparison'),
-      lastDecayJob: this.getJobStatus('graph-decay'),
+      lastComparisonJob: this.getJobStatus("graph-comparison"),
+      lastDecayJob: this.getJobStatus("graph-decay"),
     };
   }
 }

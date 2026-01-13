@@ -30,12 +30,12 @@ export class FamilyService {
    */
   private async validateMemberLimit(familyId: string): Promise<void> {
     const activeMembers = await this.prisma.family_members.count({
-      where: { family_id: familyId, status: 'ACTIVE' },
+      where: { family_id: familyId, status: "ACTIVE" },
     });
 
     if (activeMembers >= 6) {
       throw new BadRequestException(
-        'Family member limit reached (maximum 6 active members)',
+        "Family member limit reached (maximum 6 active members)",
       );
     }
   }

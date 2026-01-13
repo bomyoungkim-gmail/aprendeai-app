@@ -1,5 +1,12 @@
-import { IsString, IsNotEmpty, IsOptional, IsObject, IsArray, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsObject,
+  IsArray,
+  ValidateNested,
+} from "class-validator";
+import { Type } from "class-transformer";
 
 export class CheckpointAnswerItemDto {
   @IsString()
@@ -39,7 +46,7 @@ export class InterventionActionDto {
 
   @IsString()
   @IsNotEmpty()
-  action: 'ACCEPTED' | 'DISMISSED' | 'SNOOZED';
+  action: "ACCEPTED" | "DISMISSED" | "SNOOZED";
 
   @IsOptional()
   @IsObject()

@@ -1,13 +1,12 @@
-import { Injectable, Inject, NotFoundException, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { DecisionService } from '../../decision/application/decision.service';
-import { IPkmNoteRepository } from '../domain/repositories/pkm-note.repository.interface';
-import { PkmNote } from '../domain/entities/pkm-note.entity';
-import { PkmStructureBuilder } from '../domain/value-objects/pkm-structure.vo';
-import { Backlinks } from '../domain/value-objects/backlinks.vo';
-import { PkmNoteDto } from './dto/pkm-note.dto';
-import { PkmNoteStatus } from '@prisma/client';
-import * as crypto from 'crypto';
+import { Injectable, Inject, NotFoundException, Logger } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { DecisionService } from "../../decision/application/decision.service";
+import { IPkmNoteRepository } from "../domain/repositories/pkm-note.repository.interface";
+import { PkmNote } from "../domain/entities/pkm-note.entity";
+import { PkmStructureBuilder } from "../domain/value-objects/pkm-structure.vo";
+import { PkmNoteDto } from "./dto/pkm-note.dto";
+import { PkmNoteStatus } from "@prisma/client";
+import * as crypto from "crypto";
 
 @Injectable()
 export class PkmGenerationService {
@@ -192,12 +191,11 @@ export class PkmGenerationService {
    */
   async checkLLMPolicyForAnalogy(userId: string): Promise<boolean> {
     try {
-      const policyResult =
-        await this.decisionService.evaluateExtractionPolicy(
-          userId,
-          'POST',
-          { estimatedTokens: 200 } as any, // Cast as any because context doesn't officially support estimatedTokens in type yet but implementation might allow payload
-        );
+      const policyResult = await this.decisionService.evaluateExtractionPolicy(
+        userId,
+        "POST",
+        { estimatedTokens: 200 } as any, // Cast as any because context doesn't officially support estimatedTokens in type yet but implementation might allow payload
+      );
 
       return policyResult.allowed;
     } catch (error) {
@@ -214,7 +212,7 @@ export class PkmGenerationService {
     // Priority 1: First concept from metadata
     if (metadata.length > 0 && metadata[0].concept_json) {
       const conceptJson =
-        typeof metadata[0].concept_json === 'string'
+        typeof metadata[0].concept_json === "string"
           ? JSON.parse(metadata[0].concept_json)
           : metadata[0].concept_json;
 
@@ -228,21 +226,21 @@ export class PkmGenerationService {
 
     // Priority 2: Cornell summary first line
     if (cornellNote.summary_text) {
-      const firstLine = cornellNote.summary_text.split('\n')[0].trim();
+      const firstLine = cornellNote.summary_text.split("\n")[0].trim();
       if (firstLine.length > 0) {
         return firstLine.substring(0, 100); // Limit to 100 chars
       }
     }
 
     // Fallback
-    return 'Untitled PKM Note';
+    return "Untitled PKM Note";
   }
 
   private extractDefinition(cornellNote: any, metadata: any[]): string {
     // Priority 1: concept_json.definition
     if (metadata.length > 0 && metadata[0].concept_json) {
       const conceptJson =
-        typeof metadata[0].concept_json === 'string'
+        typeof metadata[0].concept_json === "string"
           ? JSON.parse(metadata[0].concept_json)
           : metadata[0].concept_json;
 
@@ -253,16 +251,14 @@ export class PkmGenerationService {
 
     // Priority 2: Cornell summary first paragraph
     if (cornellNote.summary_text) {
-      const firstParagraph = cornellNote.summary_text
-        .split('\n\n')[0]
-        .trim();
+      const firstParagraph = cornellNote.summary_text.split("\n\n")[0].trim();
       if (firstParagraph.length > 0) {
         return firstParagraph.substring(0, 300); // Limit to 300 chars
       }
     }
 
     // Fallback
-    return 'No definition available.';
+    return "No definition available.";
   }
 
   private extractStructure(metadata: any[]): string {
@@ -270,7 +266,7 @@ export class PkmGenerationService {
     for (const meta of metadata) {
       if (meta.concept_json) {
         const conceptJson =
-          typeof meta.concept_json === 'string'
+          typeof meta.concept_json === "string"
             ? JSON.parse(meta.concept_json)
             : meta.concept_json;
 
@@ -281,7 +277,7 @@ export class PkmGenerationService {
 
       if (meta.domains_json) {
         const domainsJson =
-          typeof meta.domains_json === 'string'
+          typeof meta.domains_json === "string"
             ? JSON.parse(meta.domains_json)
             : meta.domains_json;
 
@@ -291,7 +287,7 @@ export class PkmGenerationService {
       }
     }
 
-    return 'No structural information available.';
+    return "No structural information available.";
   }
 
   private extractAnalogy(metadata: any[]): string | undefined {
@@ -299,7 +295,7 @@ export class PkmGenerationService {
     for (const meta of metadata) {
       if (meta.analogies_json) {
         const analogiesJson =
-          typeof meta.analogies_json === 'string'
+          typeof meta.analogies_json === "string"
             ? JSON.parse(meta.analogies_json)
             : meta.analogies_json;
 
@@ -320,13 +316,13 @@ export class PkmGenerationService {
     nearDomain: string;
     farDomain: string;
   } {
-    let nearDomain = 'General Knowledge';
-    let farDomain = 'Cross-Disciplinary';
+    let nearDomain = "General Knowledge";
+    let farDomain = "Cross-Disciplinary";
 
     for (const meta of metadata) {
       if (meta.domains_json) {
         const domainsJson =
-          typeof meta.domains_json === 'string'
+          typeof meta.domains_json === "string"
             ? JSON.parse(meta.domains_json)
             : meta.domains_json;
 
@@ -355,7 +351,7 @@ export class PkmGenerationService {
     for (const meta of metadata) {
       if (meta.tier2_json) {
         const tier2Json =
-          typeof meta.tier2_json === 'string'
+          typeof meta.tier2_json === "string"
             ? JSON.parse(meta.tier2_json)
             : meta.tier2_json;
 
@@ -374,7 +370,7 @@ export class PkmGenerationService {
     for (const meta of metadata) {
       if (meta.concept_json) {
         const conceptJson =
-          typeof meta.concept_json === 'string'
+          typeof meta.concept_json === "string"
             ? JSON.parse(meta.concept_json)
             : meta.concept_json;
 

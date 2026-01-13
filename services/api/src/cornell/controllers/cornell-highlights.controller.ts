@@ -98,7 +98,10 @@ export class CornellHighlightsController {
     summary: "Get content highlights (Internal)",
     description: "Get highlights for content by explicit userId (System use)",
   })
-  @ApiResponse({ status: 200, description: "Highlights retrieved successfully" })
+  @ApiResponse({
+    status: 200,
+    description: "Highlights retrieved successfully",
+  })
   async getHighlightsInternal(
     @Param("contentId") contentId: string,
     @Query("userId") userId: string,

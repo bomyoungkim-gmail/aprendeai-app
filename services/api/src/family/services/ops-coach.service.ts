@@ -2,7 +2,6 @@ import { Injectable, Logger } from "@nestjs/common";
 import { PromptLibraryService } from "../../prompts/prompt-library.service";
 import { GamificationService } from "../../gamification/gamification.service";
 import { SrsService } from "../../srs/srs.service";
-import { PromptContext } from "../../prompts/types/prompt-context";
 import { PrismaService } from "../../prisma/prisma.service";
 import { ScaffoldingInitializerService } from "../../decision/application/scaffolding-initializer.service"; // SCRIPT 03
 import { ScaffoldingBehaviorAdapterService } from "../../decision/application/scaffolding-behavior-adapter.service"; // SCRIPT 03 - Fase 3
@@ -25,9 +24,9 @@ export class OpsCoachService {
    * @param phase - Optional session phase (BOOT, PRE, DURING, POST, FINISHED)
    * @returns Appropriate prompt for the given phase
    */
-  getDailyBootLearner(phase?: 'BOOT' | 'PRE' | 'DURING' | 'POST' | 'FINISHED') {
+  getDailyBootLearner(phase?: "BOOT" | "PRE" | "DURING" | "POST" | "FINISHED") {
     // Default to BOOT phase if not specified (backward compatibility)
-    if (!phase || phase === 'BOOT') {
+    if (!phase || phase === "BOOT") {
       return this.promptLibrary.getPrompt("OPS_DAILY_BOOT_LEARNER");
     }
 
@@ -56,7 +55,7 @@ export class OpsCoachService {
    * @returns Prompt with interpolated variables
    */
   async getDailyBootLearnerWithContext(
-    phase: 'BOOT' | 'PRE' | 'DURING' | 'POST' | 'FINISHED',
+    phase: "BOOT" | "PRE" | "DURING" | "POST" | "FINISHED",
     userId: string,
     sessionId: string,
     contentId?: string,
@@ -70,14 +69,13 @@ export class OpsCoachService {
 
     try {
       // Use buildSessionContext helper
-      const { buildSessionContext } = await import(
-        '../../sessions/helpers/context-builder'
-      );
+      const { buildSessionContext } =
+        await import("../../sessions/helpers/context-builder");
 
       const context = await buildSessionContext(
         sessionId,
         userId,
-        contentId || '',
+        contentId || "",
         {
           prisma: this.prisma,
           gamificationService: this.gamificationService,
@@ -89,7 +87,7 @@ export class OpsCoachService {
       return this.promptLibrary.interpolateVariables(basePrompt, context);
     } catch (error) {
       // Fallback to base prompt if context building fails
-      this.logger.error('Failed to build prompt context:', error);
+      this.logger.error("Failed to build prompt context:", error);
       return basePrompt;
     }
   }
@@ -107,9 +105,9 @@ export class OpsCoachService {
 
     // TODO: Query vocab items for this content and get earliest due date
     // For now, use simple heuristic based on SRS intervals
-    const defaultStage = 'D3'; // Assume D3 stage for new content
+    const defaultStage = "D3"; // Assume D3 stage for new content
     const interval = this.srsService.getStageInterval(defaultStage as any);
-    
+
     return interval;
   }
 
@@ -180,7 +178,7 @@ export class OpsCoachService {
     queueItem?: { title: string; estMin: number },
   ) {
     if (!hasDailyBoot) {
-      return this.getDailyBootLearner('BOOT');
+      return this.getDailyBootLearner("BOOT");
     }
 
     if (isCoReadingDay) {

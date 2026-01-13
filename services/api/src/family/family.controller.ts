@@ -181,16 +181,18 @@ export class FamilyController {
     @Body() body: { phase: string },
     @Req() req,
   ) {
-    const phase = body.phase as 'BOOT' | 'PRE' | 'DURING' | 'POST' | 'FINISHED';
-    
+    const phase = body.phase as "BOOT" | "PRE" | "DURING" | "POST" | "FINISHED";
+
     // Validate phase
-    const validPhases = ['BOOT', 'PRE', 'DURING', 'POST', 'FINISHED'];
+    const validPhases = ["BOOT", "PRE", "DURING", "POST", "FINISHED"];
     if (!validPhases.includes(phase)) {
-      throw new Error(`Invalid phase: ${phase}. Must be one of: ${validPhases.join(', ')}`);
+      throw new Error(
+        `Invalid phase: ${phase}. Must be one of: ${validPhases.join(", ")}`,
+      );
     }
-    
+
     // For FINISHED phase, use context-aware version with gamification
-    if (phase === 'FINISHED') {
+    if (phase === "FINISHED") {
       return this.opsCoachService.getDailyBootLearnerWithContext(
         phase,
         req.user.id,
@@ -198,7 +200,7 @@ export class FamilyController {
         sessionId, // Use sessionId as contentId proxy
       );
     }
-    
+
     // Return phase-specific prompt (non-FINISHED phases)
     return this.opsCoachService.getDailyBootLearner(phase);
   }

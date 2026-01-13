@@ -110,12 +110,12 @@ export class SubscriptionService {
 
   /**
    * Validate that plan type matches scope type (Security Fix - Issue #2)
-   * 
+   *
    * Valid combinations:
    * - USER scope: FREE, INDIVIDUAL_PREMIUM plans
    * - FAMILY scope: FAMILY plans
    * - INSTITUTION scope: INSTITUTION plans
-   * 
+   *
    * @throws BadRequestException if combination is invalid
    */
   private async validatePlanScopeMatch(
@@ -134,24 +134,26 @@ export class SubscriptionService {
     const planType = this.inferPlanType(plan.code);
 
     const validCombinations: Record<ScopeType, PlanType[]> = {
-      USER: ['FREE', 'INDIVIDUAL_PREMIUM'],
-      FAMILY: ['FAMILY'],
-      INSTITUTION: ['INSTITUTION'],
-      GLOBAL: ['FREE'], // Global scope only accepts FREE
+      USER: ["FREE", "INDIVIDUAL_PREMIUM"],
+      FAMILY: ["FAMILY"],
+      INSTITUTION: ["INSTITUTION"],
+      GLOBAL: ["FREE"], // Global scope only accepts FREE
     };
 
     const allowedTypes = validCombinations[scopeType];
     if (!allowedTypes || !allowedTypes.includes(planType)) {
       throw new BadRequestException({
-        code: 'INVALID_PLAN_SCOPE_COMBINATION',
-        message: `Plan type ${planType} cannot be assigned to ${scopeType} scope. Allowed types: ${allowedTypes.join(', ')}`,
+        code: "INVALID_PLAN_SCOPE_COMBINATION",
+        message: `Plan type ${planType} cannot be assigned to ${scopeType} scope. Allowed types: ${allowedTypes.join(", ")}`,
         scopeType,
         planType,
         planCode,
       });
     }
 
-    this.logger.log(`✅ Plan-Scope validation passed: ${planCode} (${planType}) for ${scopeType}`);
+    this.logger.log(
+      `✅ Plan-Scope validation passed: ${planCode} (${planType}) for ${scopeType}`,
+    );
   }
 
   /**
@@ -159,17 +161,17 @@ export class SubscriptionService {
    */
   private inferPlanType(planCode: string): PlanType {
     const codeUpper = planCode.toUpperCase();
-    
-    if (codeUpper.includes('INSTITUTION') || codeUpper.includes('ENTERPRISE')) {
+
+    if (codeUpper.includes("INSTITUTION") || codeUpper.includes("ENTERPRISE")) {
       return PlanType.INSTITUTION;
     }
-    if (codeUpper.includes('FAMILY')) {
+    if (codeUpper.includes("FAMILY")) {
       return PlanType.FAMILY;
     }
-    if (codeUpper.includes('PREMIUM') || codeUpper.includes('INDIVIDUAL')) {
+    if (codeUpper.includes("PREMIUM") || codeUpper.includes("INDIVIDUAL")) {
       return PlanType.INDIVIDUAL_PREMIUM;
     }
-    
+
     return PlanType.FREE; // Default
   }
 
@@ -187,10 +189,11 @@ export class SubscriptionService {
     reason: string,
   ) {
     // Block Institution plans from self-service changes
-    if (scopeType === 'INSTITUTION') {
+    if (scopeType === "INSTITUTION") {
       return {
-        status: 'blocked',
-        message: 'Institution plan changes require manual approval. Please contact sales.',
+        status: "blocked",
+        message:
+          "Institution plan changes require manual approval. Please contact sales.",
         subscription: null,
         before: null,
         after: null,
@@ -220,7 +223,7 @@ export class SubscriptionService {
         scopeType,
         scopeId,
         targetPlan.id,
-        'ACTIVE',
+        "ACTIVE",
         new Date(),
         null, // null for internal subscriptions (Stripe ID will be set after Stripe call if needed)
         undefined,
@@ -229,7 +232,7 @@ export class SubscriptionService {
       );
       const created = await this.subscriptionRepository.create(newSub);
       return {
-        status: 'created',
+        status: "created",
         subscription: created,
         before: null,
         after: targetPlan,
@@ -239,13 +242,13 @@ export class SubscriptionService {
     // Get current plan
     const currentPlan = await this.plansRepository.findById(currentSub.planId);
     if (!currentPlan) {
-      throw new NotFoundException('Current plan not found');
+      throw new NotFoundException("Current plan not found");
     }
 
     // Same plan? No-op
     if (currentPlan.code === planCode) {
       return {
-        status: 'no_change',
+        status: "no_change",
         subscription: currentSub,
         before: currentPlan,
         after: currentPlan,
@@ -253,14 +256,15 @@ export class SubscriptionService {
     }
 
     // Determine if upgrade or downgrade (by price)
-    const isUpgrade = (targetPlan.monthlyPrice || 0) > (currentPlan.monthlyPrice || 0);
+    const isUpgrade =
+      (targetPlan.monthlyPrice || 0) > (currentPlan.monthlyPrice || 0);
 
     // Update Stripe subscription
     if (currentSub.stripeSubscriptionId) {
       await this.stripeService.updateSubscription(
         currentSub.stripeSubscriptionId,
-        targetPlan.stripePriceId || '',
-        isUpgrade ? 'always_invoice' : 'none', // Upgrade: charge now, Downgrade: no proration
+        targetPlan.stripePriceId || "",
+        isUpgrade ? "always_invoice" : "none", // Upgrade: charge now, Downgrade: no proration
       );
     }
 
@@ -273,12 +277,12 @@ export class SubscriptionService {
         changedBy: adminUserId,
         changedAt: new Date().toISOString(),
         reason,
-        changeType: isUpgrade ? 'upgrade' : 'downgrade',
+        changeType: isUpgrade ? "upgrade" : "downgrade",
       },
     });
 
     return {
-      status: isUpgrade ? 'upgraded' : 'downgraded',
+      status: isUpgrade ? "upgraded" : "downgraded",
       subscription: updated,
       before: currentPlan,
       after: targetPlan,

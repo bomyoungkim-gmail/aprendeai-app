@@ -1,31 +1,29 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
 import {
   MasteryState,
   ScaffoldingState,
   ScaffoldingLevel,
   ScaffoldingConfig,
   MasterySignal,
-} from '../domain/scaffolding.types';
+} from "../domain/scaffolding.types";
+import {
+  MASTERY_THRESHOLDS,
+  SCAFFOLDING_CONFIG,
+} from "../domain/decision.constants";
 
 /**
  * ScaffoldingService
- * 
+ *
  * Implements the Scaffolding & Fading engine.
  * Manages learner mastery state and determines appropriate scaffolding level (L0-L3).
- * 
+ *
  * Etapa 2 — Regras de Scaffolding (níveis 0–3)
  * Etapa 3 — Motor de Fading
  */
 @Injectable()
 export class ScaffoldingService {
   private readonly logger = new Logger(ScaffoldingService.name);
-
-  // Thresholds for fading
-  private readonly MASTERY_THRESHOLD_FADE = 0.8; // L0
-  private readonly MASTERY_THRESHOLD_LOW = 0.6; // L1
-  private readonly MASTERY_THRESHOLD_MEDIUM = 0.4; // L2
-  private readonly CONSISTENCY_SESSIONS_REQUIRED = 3; // X sessions for fading
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -37,8 +35,8 @@ export class ScaffoldingService {
     const configs: Record<ScaffoldingLevel, ScaffoldingConfig> = {
       3: {
         level: 3,
-        name: 'High',
-        behavior: 'Guided',
+        name: "High",
+        behavior: "Guided",
         rules: {
           doubtSpikeMultiplier: 1.0, // Sensitive
           checkpointFreqMultiplier: 1.0, // Frequent
@@ -50,12 +48,12 @@ export class ScaffoldingService {
       },
       2: {
         level: 2,
-        name: 'Medium',
-        behavior: 'Hints',
+        name: "Medium",
+        behavior: "Hints",
         rules: {
           doubtSpikeMultiplier: 1.5,
           checkpointFreqMultiplier: 0.8,
-          autoHints: 'limited', // 1 Tier2 at a time
+          autoHints: "limited", // 1 Tier2 at a time
           socraticMode: false,
           showTriggers: false,
           minAgentCalls: false,
@@ -63,8 +61,8 @@ export class ScaffoldingService {
       },
       1: {
         level: 1,
-        name: 'Low',
-        behavior: 'On-Demand',
+        name: "Low",
+        behavior: "On-Demand",
         rules: {
           doubtSpikeMultiplier: 2.0, // Tolerant
           checkpointFreqMultiplier: 0.5, // Less frequent
@@ -76,8 +74,8 @@ export class ScaffoldingService {
       },
       0: {
         level: 0,
-        name: 'Fade',
-        behavior: 'Invisible',
+        name: "Fade",
+        behavior: "Invisible",
         rules: {
           doubtSpikeMultiplier: 99.0, // Virtually off
           checkpointFreqMultiplier: 0.2, // Post-read only
@@ -128,12 +126,13 @@ export class ScaffoldingService {
       return 3; // Default to high scaffolding
     }
 
-    const masteryState = (profile.mastery_state_json as any) as MasteryState;
-    const scaffoldingState = (profile.scaffolding_state_json as any) as ScaffoldingState;
+    const masteryState = profile.mastery_state_json as any as MasteryState;
+    const scaffoldingState =
+      profile.scaffolding_state_json as any as ScaffoldingState;
 
     // If override is set, respect it
-    if (scaffoldingState?.overrideMode === 'FORCE_HIGH') return 3;
-    if (scaffoldingState?.overrideMode === 'FORCE_LOW') return 1;
+    if (scaffoldingState?.overrideMode === "FORCE_HIGH") return 3;
+    if (scaffoldingState?.overrideMode === "FORCE_LOW") return 1;
 
     // Determine mastery score for context
     let masteryScore = 0;
@@ -148,7 +147,8 @@ export class ScaffoldingService {
       const domainValues = Object.values(masteryState.domains);
       if (domainValues.length > 0) {
         masteryScore =
-          domainValues.reduce((sum, d) => sum + d.mastery, 0) / domainValues.length;
+          domainValues.reduce((sum, d) => sum + d.mastery, 0) /
+          domainValues.length;
         consistencyCount = Math.min(
           ...domainValues.map((d) => d.consistencyCount || 0),
         );
@@ -157,17 +157,17 @@ export class ScaffoldingService {
 
     // Apply fading rules
     if (
-      masteryScore >= this.MASTERY_THRESHOLD_FADE &&
-      consistencyCount >= this.CONSISTENCY_SESSIONS_REQUIRED
+      masteryScore >= MASTERY_THRESHOLDS.FADE &&
+      consistencyCount >= SCAFFOLDING_CONFIG.CONSISTENCY_SESSIONS_REQUIRED
     ) {
       return 0; // Fade
     }
 
-    if (masteryScore >= this.MASTERY_THRESHOLD_LOW) {
+    if (masteryScore >= MASTERY_THRESHOLDS.LOW) {
       return 1; // Low
     }
 
-    if (masteryScore >= this.MASTERY_THRESHOLD_MEDIUM) {
+    if (masteryScore >= MASTERY_THRESHOLDS.MEDIUM) {
       return 2; // Medium
     }
 
@@ -203,25 +203,31 @@ export class ScaffoldingService {
     });
 
     if (!profile) {
-      this.logger.warn(`No profile found for user ${userId}, skipping mastery update`);
+      this.logger.warn(
+        `No profile found for user ${userId}, skipping mastery update`,
+      );
       return;
     }
 
-    const masteryState = (profile.mastery_state_json as any) as MasteryState || {
-      domains: {},
-      tier2: {},
-      morphology: {},
-    };
+    const masteryState =
+      (profile.mastery_state_json as any as MasteryState) || {
+        domains: {},
+        tier2: {},
+        morphology: {},
+      };
 
-    const scaffoldingState = (profile.scaffolding_state_json as any) as ScaffoldingState;
-    
+    const scaffoldingState =
+      profile.scaffolding_state_json as any as ScaffoldingState;
+
     // Ensure nested structures are initialized
     const updatedScaffoldingState: ScaffoldingState = {
       currentLevel: scaffoldingState?.currentLevel ?? 3,
       lastLevelChangeAt: scaffoldingState?.lastLevelChangeAt ?? new Date(),
       fadingMetrics: {
-        consecutiveSuccesses: scaffoldingState?.fadingMetrics?.consecutiveSuccesses ?? 0,
-        interventionDismissalRate: scaffoldingState?.fadingMetrics?.interventionDismissalRate ?? 0,
+        consecutiveSuccesses:
+          scaffoldingState?.fadingMetrics?.consecutiveSuccesses ?? 0,
+        interventionDismissalRate:
+          scaffoldingState?.fadingMetrics?.interventionDismissalRate ?? 0,
       },
       overrideMode: scaffoldingState?.overrideMode,
     };
@@ -240,11 +246,17 @@ export class ScaffoldingService {
       const domain = masteryState.domains[signal.domain];
 
       // Adjust mastery based on signal
-      if (signal.type === 'quiz_correct' || signal.type === 'checkpoint_passed') {
+      if (
+        signal.type === "quiz_correct" ||
+        signal.type === "checkpoint_passed"
+      ) {
         domain.mastery = Math.min(1.0, domain.mastery + 0.05);
         domain.consistencyCount += 1;
         updatedScaffoldingState.fadingMetrics.consecutiveSuccesses += 1;
-      } else if (signal.type === 'quiz_incorrect' || signal.type === 'checkpoint_failed') {
+      } else if (
+        signal.type === "quiz_incorrect" ||
+        signal.type === "checkpoint_failed"
+      ) {
         domain.mastery = Math.max(0.0, domain.mastery - 0.03);
         domain.consistencyCount = 0; // Reset consistency
         updatedScaffoldingState.fadingMetrics.consecutiveSuccesses = 0;
@@ -259,7 +271,7 @@ export class ScaffoldingService {
         masteryState.tier2[signal.tier2Term] = 0.5;
       }
 
-      if (signal.type === 'quiz_correct') {
+      if (signal.type === "quiz_correct") {
         masteryState.tier2[signal.tier2Term] = Math.min(
           1.0,
           masteryState.tier2[signal.tier2Term] + 0.1,
@@ -283,7 +295,7 @@ export class ScaffoldingService {
   /**
    * Update mastery from assessment results
    * SCRIPT 08 - Step 3: Mastery & Telemetry
-   * 
+   *
    * @param userId - The user ID
    * @param assessmentAttemptId - The assessment attempt ID
    */
@@ -291,7 +303,9 @@ export class ScaffoldingService {
     userId: string,
     assessmentAttemptId: string,
   ): Promise<void> {
-    this.logger.debug(`Updating mastery from assessment ${assessmentAttemptId} for user ${userId}`);
+    this.logger.debug(
+      `Updating mastery from assessment ${assessmentAttemptId} for user ${userId}`,
+    );
 
     // 1. Fetch assessment attempt with score
     const attempt = await this.prisma.assessment_attempts.findUnique({
@@ -308,7 +322,9 @@ export class ScaffoldingService {
     });
 
     if (!attempt || !attempt.score_percent) {
-      this.logger.warn(`Assessment attempt ${assessmentAttemptId} not found or has no score`);
+      this.logger.warn(
+        `Assessment attempt ${assessmentAttemptId} not found or has no score`,
+      );
       return;
     }
 
@@ -325,23 +341,25 @@ export class ScaffoldingService {
       return;
     }
 
-    const masteryState = (profile.mastery_state_json as any) as MasteryState || {
-      domains: {},
-      tier2: {},
-      errorPatterns: [],
-    };
+    const masteryState =
+      (profile.mastery_state_json as any as MasteryState) || {
+        domains: {},
+        tier2: {},
+        errorPatterns: [],
+      };
 
-    const scaffoldingState = (profile.scaffolding_state_json as any) as ScaffoldingState || {
-      currentLevel: 3,
-      lastLevelChangeAt: new Date(),
-      fadingMetrics: {
-        consecutiveSuccesses: 0,
-        interventionDismissalRate: 0,
-      },
-    };
+    const scaffoldingState =
+      (profile.scaffolding_state_json as any as ScaffoldingState) || {
+        currentLevel: 3,
+        lastLevelChangeAt: new Date(),
+        fadingMetrics: {
+          consecutiveSuccesses: 0,
+          interventionDismissalRate: 0,
+        },
+      };
 
     // 3. Determine domain from content mode
-    const domain = contentMode || 'GENERAL';
+    const domain = contentMode || "GENERAL";
 
     // Initialize domain if not exists
     if (!masteryState.domains[domain]) {
@@ -361,7 +379,9 @@ export class ScaffoldingService {
       domainState.mastery = Math.min(1.0, domainState.mastery + 0.1);
       domainState.consistencyCount += 1;
       scaffoldingState.fadingMetrics.consecutiveSuccesses += 1;
-      this.logger.log(`User ${userId} scored ${scorePercent}% - mastery increased to ${domainState.mastery}`);
+      this.logger.log(
+        `User ${userId} scored ${scorePercent}% - mastery increased to ${domainState.mastery}`,
+      );
     } else if (scorePercent < 50) {
       // Low score: log error patterns
       domainState.mastery = Math.max(0.0, domainState.mastery - 0.05);
@@ -369,20 +389,18 @@ export class ScaffoldingService {
       scaffoldingState.fadingMetrics.consecutiveSuccesses = 0;
 
       // Extract error patterns from incorrect answers
-      const incorrectAnswers = attempt.assessment_answers.filter(
-        (answer) => {
-          const question = attempt.assessments.assessment_questions.find(
-            (q) => q.id === answer.question_id,
-          );
-          if (!question) return false;
-          
-          // Compare answer with correct_answer (handle JSON comparison)
-          const userAnswer = answer.user_answer;
-          const correctAnswer = question.correct_answer;
-          
-          return JSON.stringify(userAnswer) !== JSON.stringify(correctAnswer);
-        },
-      );
+      const incorrectAnswers = attempt.assessment_answers.filter((answer) => {
+        const question = attempt.assessments.assessment_questions.find(
+          (q) => q.id === answer.question_id,
+        );
+        if (!question) return false;
+
+        // Compare answer with correct_answer (handle JSON comparison)
+        const userAnswer = answer.user_answer;
+        const correctAnswer = question.correct_answer;
+
+        return JSON.stringify(userAnswer) !== JSON.stringify(correctAnswer);
+      });
 
       // Log error patterns
       if (!masteryState.errorPatterns) {
@@ -416,7 +434,9 @@ export class ScaffoldingService {
     } else {
       // Medium score: minor adjustment
       domainState.mastery = Math.max(0.0, domainState.mastery - 0.02);
-      this.logger.log(`User ${userId} scored ${scorePercent}% - mastery slightly decreased to ${domainState.mastery}`);
+      this.logger.log(
+        `User ${userId} scored ${scorePercent}% - mastery slightly decreased to ${domainState.mastery}`,
+      );
     }
 
     domainState.lastEvidenceAt = new Date().toISOString();
@@ -431,13 +451,15 @@ export class ScaffoldingService {
       },
     });
 
-    this.logger.log(`Mastery updated for user ${userId} from assessment ${assessmentAttemptId}`);
+    this.logger.log(
+      `Mastery updated for user ${userId} from assessment ${assessmentAttemptId}`,
+    );
   }
 
   /**
    * Update mastery from checkpoint answer
    * Used for granular micro-learning interactions
-   * 
+   *
    * @param userId - The user ID
    * @param skill - The skill being tested
    * @param isCorrect - Whether the answer was correct
@@ -447,10 +469,12 @@ export class ScaffoldingService {
     skill: string,
     isCorrect: boolean,
   ): Promise<void> {
-    this.logger.debug(`Updating mastery from checkpoint for user ${userId}, skill: ${skill}, correct: ${isCorrect}`);
+    this.logger.debug(
+      `Updating mastery from checkpoint for user ${userId}, skill: ${skill}, correct: ${isCorrect}`,
+    );
 
     await this.updateMastery(userId, {
-      type: isCorrect ? 'checkpoint_passed' : 'checkpoint_failed',
+      type: isCorrect ? "checkpoint_passed" : "checkpoint_failed",
       domain: skill,
       timestamp: new Date(),
     });
@@ -458,9 +482,10 @@ export class ScaffoldingService {
 
   /**
    * SCRIPT 03 - Fase 2: Update scaffolding level
-   * 
+   * SCRIPT 07 - Telemetry: Emit SCAFFOLDING_LEVEL_SET and FADE_TRIGGERED events
+   *
    * GAP 5: Tracks consecutiveSuccesses for fading logic
-   * 
+   *
    * @param userId - User ID
    * @param newLevel - New scaffolding level (0-3)
    * @param reason - Reason for the change
@@ -472,18 +497,22 @@ export class ScaffoldingService {
     newLevel: ScaffoldingLevel,
     reason: string,
     mode: any,
-    signalType?: 'INCREASE' | 'DECREASE' | 'MAINTAIN',
+    signalType?: "INCREASE" | "DECREASE" | "MAINTAIN",
   ): Promise<void> {
     const profile = await this.prisma.learner_profiles.findUnique({
       where: { user_id: userId },
       select: { scaffolding_state_json: true },
     });
 
-    const currentState: ScaffoldingState = (profile?.scaffolding_state_json as any) || {
-      currentLevel: 2,
-      lastLevelChangeAt: new Date(),
-      fadingMetrics: { consecutiveSuccesses: 0, interventionDismissalRate: 0 },
-    };
+    const currentState: ScaffoldingState =
+      (profile?.scaffolding_state_json as any) || {
+        currentLevel: 2,
+        lastLevelChangeAt: new Date(),
+        fadingMetrics: {
+          consecutiveSuccesses: 0,
+          interventionDismissalRate: 0,
+        },
+      };
 
     const updatedState: ScaffoldingState = {
       ...currentState,
@@ -492,21 +521,25 @@ export class ScaffoldingService {
     };
 
     // GAP 5: Update consecutiveSuccesses based on signal type
-    if (signalType === 'DECREASE') {
+    if (signalType === "DECREASE") {
       // Successful fading - reset counter
       updatedState.fadingMetrics.consecutiveSuccesses = 0;
-      this.logger.log(`Fading successful: L${currentState.currentLevel} → L${newLevel}`);
-    } else if (reason === 'consistent_mastery') {
+      this.logger.log(
+        `Fading successful: L${currentState.currentLevel} → L${newLevel}`,
+      );
+    } else if (reason === "consistent_mastery") {
       // Building toward fading - increment counter
       updatedState.fadingMetrics.consecutiveSuccesses =
         currentState.fadingMetrics.consecutiveSuccesses + 1;
       this.logger.debug(
         `Building consistency: ${updatedState.fadingMetrics.consecutiveSuccesses} sessions`,
       );
-    } else if (signalType === 'INCREASE') {
+    } else if (signalType === "INCREASE") {
       // Performance dropped - reset counter
       updatedState.fadingMetrics.consecutiveSuccesses = 0;
-      this.logger.log(`Scaffolding increased: L${currentState.currentLevel} → L${newLevel}`);
+      this.logger.log(
+        `Scaffolding increased: L${currentState.currentLevel} → L${newLevel}`,
+      );
     }
 
     // Persist updated state
@@ -516,6 +549,62 @@ export class ScaffoldingService {
         scaffolding_state_json: updatedState as any,
       },
     });
+
+    // SCRIPT 07: Emit SCAFFOLDING_LEVEL_SET telemetry event
+    try {
+      await this.prisma.telemetry_events.create({
+        data: {
+          user_id: userId,
+          session_id: "", // TODO: Get session_id from context
+          event_type: "SCAFFOLDING_LEVEL_SET",
+          data: {
+            fromLevel: currentState.currentLevel,
+            toLevel: newLevel,
+            reason,
+            mode,
+            signalType: signalType || "MAINTAIN",
+          },
+          created_at: new Date(),
+        },
+      });
+      this.logger.debug(
+        `Emitted SCAFFOLDING_LEVEL_SET event for user ${userId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to emit SCAFFOLDING_LEVEL_SET event: ${error.message}`,
+      );
+      // Don't throw - telemetry failure shouldn't block scaffolding update
+    }
+
+    // SCRIPT 07: Emit FADE_TRIGGERED event when fading occurs
+    if (signalType === "DECREASE") {
+      try {
+        await this.prisma.telemetry_events.create({
+          data: {
+            user_id: userId,
+            session_id: "", // TODO: Get session_id from context
+            event_type: "FADE_TRIGGERED",
+            data: {
+              fromLevel: currentState.currentLevel,
+              toLevel: newLevel,
+              mode,
+              consecutiveSuccesses:
+                currentState.fadingMetrics.consecutiveSuccesses,
+            },
+            created_at: new Date(),
+          },
+        });
+        this.logger.log(
+          `Emitted FADE_TRIGGERED event for user ${userId}: L${currentState.currentLevel} → L${newLevel}`,
+        );
+      } catch (error) {
+        this.logger.error(
+          `Failed to emit FADE_TRIGGERED event: ${error.message}`,
+        );
+        // Don't throw - telemetry failure shouldn't block scaffolding update
+      }
+    }
 
     this.logger.log(
       `Scaffolding level updated for user ${userId}: L${currentState.currentLevel} → L${newLevel} (reason: ${reason}, mode: ${mode})`,

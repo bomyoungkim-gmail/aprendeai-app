@@ -73,8 +73,8 @@ export class QuestionAnalyticsService {
       select: { tags: true, metadata: true },
     });
 
-    const topic = item?.tags?.[2] || 'Uncategorized';
-    const subject = item?.tags?.[1] || 'General';
+    const topic = item?.tags?.[2] || "Uncategorized";
+    const subject = item?.tags?.[1] || "General";
 
     // 2. Update Question Analytics (Async aggregation)
     const promises: Promise<any>[] = [

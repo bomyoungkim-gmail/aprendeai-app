@@ -57,8 +57,11 @@ export class UpdateCornellNoteUseCase {
     });
 
     // Detect changes and emit granular events
-    const summaryChanged = dto.summary_text !== undefined && dto.summary_text !== note.summary;
-    const notesChanged = dto.notes_json !== undefined && JSON.stringify(dto.notes_json) !== JSON.stringify(note.notes);
+    const summaryChanged =
+      dto.summary_text !== undefined && dto.summary_text !== note.summary;
+    const notesChanged =
+      dto.notes_json !== undefined &&
+      JSON.stringify(dto.notes_json) !== JSON.stringify(note.notes);
 
     // Update Domain Entity
     note.notes = dto.notes_json ?? note.notes;
@@ -66,7 +69,7 @@ export class UpdateCornellNoteUseCase {
 
     // Emit specific events for Cornell triggers
     if (summaryChanged && note.summary && note.summary.length > 0) {
-      this.eventEmitter.emit('cornell.summary.updated', {
+      this.eventEmitter.emit("cornell.summary.updated", {
         contentId,
         userId,
         timestamp: Date.now(),
@@ -85,23 +88,23 @@ export class UpdateCornellNoteUseCase {
       if (newLength > previousLength) {
         const addedItems = dto.notes_json.slice(previousLength);
         addedItems.forEach((item: any) => {
-          if (item.type === 'cue' || item.cue) {
-            this.eventEmitter.emit('cornell.cue.added', {
+          if (item.type === "cue" || item.cue) {
+            this.eventEmitter.emit("cornell.cue.added", {
               contentId,
               userId,
               timestamp: Date.now(),
               data: {
-                cueType: item.type || 'general',
+                cueType: item.type || "general",
                 length: item.text?.length || item.cue?.length || 0,
               },
             });
           } else {
-            this.eventEmitter.emit('cornell.note.added', {
+            this.eventEmitter.emit("cornell.note.added", {
               contentId,
               userId,
               timestamp: Date.now(),
               data: {
-                noteType: item.type || 'general',
+                noteType: item.type || "general",
                 length: item.text?.length || item.note?.length || 0,
               },
             });

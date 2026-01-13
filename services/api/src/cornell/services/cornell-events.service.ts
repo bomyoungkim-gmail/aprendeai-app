@@ -1,14 +1,14 @@
 /**
  * Cornell Events Service
- * 
+ *
  * Normalizes internal Cornell events to structured telemetry_events.
  * Follows Clean Architecture: Application layer service.
  */
 
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { TelemetryService } from '../../telemetry/telemetry.service';
-import { CornellEvent, CornellEventPayload } from '../events/cornell.events';
+import { Injectable, OnModuleInit } from "@nestjs/common";
+import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
+import { TelemetryService } from "../../telemetry/telemetry.service";
+import { CornellEvent, CornellEventPayload } from "../events/cornell.events";
 
 @Injectable()
 export class CornellEventsService implements OnModuleInit {
@@ -29,19 +29,22 @@ export class CornellEventsService implements OnModuleInit {
   async handleHighlightCreated(payload: CornellEventPayload) {
     const { contentId, highlightId, userId, data } = payload;
 
-    await this.telemetryService.track({
-      eventType: 'cornell_highlight_created',
-      eventVersion: '1.0.0',
-      sessionId: data?.sessionId || 'unknown',
-      contentId,
-      data: {
-        highlightId,
-        pillarTag: data?.type || data?.pillarTag,
-        pageNumber: data?.pageNumber,
-        hasAnchor: data?.hasAnchor ?? false,
-        targetType: data?.targetType,
+    await this.telemetryService.track(
+      {
+        eventType: "cornell_highlight_created",
+        eventVersion: "1.0.0",
+        sessionId: data?.sessionId || "unknown",
+        contentId,
+        data: {
+          highlightId,
+          pillarTag: data?.type || data?.pillarTag,
+          pageNumber: data?.pageNumber,
+          hasAnchor: data?.hasAnchor ?? false,
+          targetType: data?.targetType,
+        },
       },
-    }, userId);
+      userId,
+    );
   }
 
   /**
@@ -52,16 +55,19 @@ export class CornellEventsService implements OnModuleInit {
   async handleSummaryUpdated(payload: CornellEventPayload) {
     const { contentId, userId, data } = payload;
 
-    await this.telemetryService.track({
-      eventType: 'cornell_summary_submitted',
-      eventVersion: '1.0.0',
-      sessionId: data?.sessionId || 'unknown',
-      contentId,
-      data: {
-        summaryLen: data?.summaryLength || 0,
-        rubricSelfCheck: data?.rubricSelfCheck,
+    await this.telemetryService.track(
+      {
+        eventType: "cornell_summary_submitted",
+        eventVersion: "1.0.0",
+        sessionId: data?.sessionId || "unknown",
+        contentId,
+        data: {
+          summaryLen: data?.summaryLength || 0,
+          rubricSelfCheck: data?.rubricSelfCheck,
+        },
       },
-    }, userId);
+      userId,
+    );
   }
 
   /**
@@ -72,16 +78,19 @@ export class CornellEventsService implements OnModuleInit {
   async handleCueAdded(payload: CornellEventPayload) {
     const { contentId, userId, data } = payload;
 
-    await this.telemetryService.track({
-      eventType: 'cornell_cue_added',
-      eventVersion: '1.0.0',
-      sessionId: data?.sessionId || 'unknown',
-      contentId,
-      data: {
-        cueType: data?.cueType || 'general',
-        length: data?.length || 0,
+    await this.telemetryService.track(
+      {
+        eventType: "cornell_cue_added",
+        eventVersion: "1.0.0",
+        sessionId: data?.sessionId || "unknown",
+        contentId,
+        data: {
+          cueType: data?.cueType || "general",
+          length: data?.length || 0,
+        },
       },
-    }, userId);
+      userId,
+    );
   }
 
   /**
@@ -92,16 +101,19 @@ export class CornellEventsService implements OnModuleInit {
   async handleNoteAdded(payload: CornellEventPayload) {
     const { contentId, userId, data } = payload;
 
-    await this.telemetryService.track({
-      eventType: 'cornell_note_added',
-      eventVersion: '1.0.0',
-      sessionId: data?.sessionId || 'unknown',
-      contentId,
-      data: {
-        noteType: data?.noteType || 'general',
-        length: data?.length || 0,
+    await this.telemetryService.track(
+      {
+        eventType: "cornell_note_added",
+        eventVersion: "1.0.0",
+        sessionId: data?.sessionId || "unknown",
+        contentId,
+        data: {
+          noteType: data?.noteType || "general",
+          length: data?.length || 0,
+        },
       },
-    }, userId);
+      userId,
+    );
   }
 
   /**
@@ -112,15 +124,18 @@ export class CornellEventsService implements OnModuleInit {
   async handleCheckpointAnswered(payload: CornellEventPayload) {
     const { contentId, userId, data } = payload;
 
-    await this.telemetryService.track({
-      eventType: 'cornell_checkpoint_answered',
-      eventVersion: '1.0.0',
-      sessionId: data?.sessionId || 'unknown',
-      contentId,
-      data: {
-        correct: data?.correct ?? false,
-        checkpointId: data?.checkpointId,
+    await this.telemetryService.track(
+      {
+        eventType: "cornell_checkpoint_answered",
+        eventVersion: "1.0.0",
+        sessionId: data?.sessionId || "unknown",
+        contentId,
+        data: {
+          correct: data?.correct ?? false,
+          checkpointId: data?.checkpointId,
+        },
       },
-    }, userId);
+      userId,
+    );
   }
 }

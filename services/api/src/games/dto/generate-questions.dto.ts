@@ -1,14 +1,37 @@
-import { IsString, IsInt, IsEnum, Min, IsOptional } from "class-validator";
+import {
+  IsString,
+  IsInt,
+  IsEnum,
+  Min,
+  Max,
+  IsIn,
+  IsOptional,
+} from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { EducationLevel } from "./question-bank.dto";
 
+// SCRIPT 01: Game type constants (existing + new syntax-related types)
+export const GAME_TYPES = [
+  // Existing game types
+  "CONCEPT_LINKING",
+  "SRS_ARENA",
+  "FREE_RECALL_SCORE",
+  // New syntax analysis game types (SCRIPT 01)
+  "SENTENCE_SKELETON",
+  "CONNECTOR_CLASSIFIER",
+  "CLAUSE_REWRITE_SIMPLE",
+] as const;
+
+export type GameType = (typeof GAME_TYPES)[number];
+
 export class GenerateQuestionsDto {
   @ApiProperty({
-    example: "CONCEPT_LINKING",
+    example: "SENTENCE_SKELETON",
     description: "Type of game to generate questions for",
+    enum: GAME_TYPES,
   })
-  @IsString()
-  gameType: string;
+  @IsIn(GAME_TYPES)
+  gameType: GameType;
 
   @ApiProperty({
     example: "Fotossíntese",
@@ -51,6 +74,7 @@ export class GenerateQuestionsDto {
   @IsOptional()
   @IsInt()
   @Min(1)
+  @Max(5)
   difficulty?: number;
 }
 
@@ -59,5 +83,5 @@ export class GeneratedQuestionsResponseDto {
   generated: number;
   saved: number;
   language: string;
-  gameType: string;
+  gameType: GameType;
 }

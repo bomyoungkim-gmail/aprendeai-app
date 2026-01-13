@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
 
 export interface RecommendationItem {
   contentId: string;
@@ -24,10 +24,10 @@ export class GraphRecommendationService {
 
   /**
    * Generate content recommendations for a user.
-   * 
+   *
    * Strategy 1: Critical Gaps - Find contents covering missing topics
    * Strategy 2: Prerequisites - Find contents covering prerequisite topics
-   * 
+   *
    * @param userId - User ID
    * @param contextContentId - Optional content ID for context
    * @returns Top 5 recommendations
@@ -42,12 +42,18 @@ export class GraphRecommendationService {
     const strategies = { gapRecovery: 0, prerequisites: 0 };
 
     // Strategy 1: Gap Recovery
-    const gapRecs = await this.getGapRecoveryRecommendations(userId, contextContentId);
+    const gapRecs = await this.getGapRecoveryRecommendations(
+      userId,
+      contextContentId,
+    );
     recommendations.push(...gapRecs);
     strategies.gapRecovery = gapRecs.length;
 
     // Strategy 2: Prerequisites
-    const prereqRecs = await this.getPrerequisiteRecommendations(userId, contextContentId);
+    const prereqRecs = await this.getPrerequisiteRecommendations(
+      userId,
+      contextContentId,
+    );
     recommendations.push(...prereqRecs);
     strategies.prerequisites = prereqRecs.length;
 
@@ -80,11 +86,11 @@ export class GraphRecommendationService {
         user_id: userId,
         ...(contextContentId && { content_id: contextContentId }),
       },
-      orderBy: { created_at: 'desc' },
+      orderBy: { created_at: "desc" },
     });
 
     if (!userDiff) {
-      this.logger.debug('No diff found for user, skipping gap recovery');
+      this.logger.debug("No diff found for user, skipping gap recovery");
       return [];
     }
 
@@ -92,7 +98,7 @@ export class GraphRecommendationService {
     const missingNodes = diffData?.nodes?.missing || [];
 
     if (missingNodes.length === 0) {
-      this.logger.debug('No missing nodes in diff');
+      this.logger.debug("No missing nodes in diff");
       return [];
     }
 
@@ -110,7 +116,7 @@ export class GraphRecommendationService {
         where: {
           slug,
           topic_graphs: {
-            type: 'BASELINE',
+            type: "BASELINE",
             content_id: { not: contextContentId }, // Exclude current content
           },
         },
@@ -155,8 +161,8 @@ export class GraphRecommendationService {
     // Find user's weak topics (from learner graph or diff)
     const userGraph = await (this.prisma as any).topic_graphs.findFirst({
       where: {
-        type: 'LEARNER',
-        scope_type: 'USER',
+        type: "LEARNER",
+        scope_type: "USER",
         scope_id: userId,
         ...(contextContentId && { content_id: contextContentId }),
       },
@@ -166,7 +172,7 @@ export class GraphRecommendationService {
     });
 
     if (!userGraph) {
-      this.logger.debug('No learner graph found');
+      this.logger.debug("No learner graph found");
       return [];
     }
 
@@ -174,7 +180,7 @@ export class GraphRecommendationService {
     // Since we cannot include topic_evidences directly on nodes (it's on edges), we fetch edges first.
     // Or we use a raw query, but let's try to do it with relation traversal.
     // We need nodes where total evidence on connected edges is low.
-    
+
     // Optimized: Fetch nodes with their edges and evidence counts
     const userNodes = await (this.prisma as any).topic_nodes.findMany({
       where: {
@@ -182,19 +188,25 @@ export class GraphRecommendationService {
       },
       include: {
         edges_to: {
-            include: { topic_edge_evidence: true }
+          include: { topic_edge_evidence: true },
         },
         edges_from: {
-            include: { topic_edge_evidence: true }
-        }
+          include: { topic_edge_evidence: true },
+        },
       },
       take: 20, // Optimization: only check top X nodes? Or filter in memory.
     });
 
     const weakNodes = userNodes.filter((node) => {
-      const evidenceCount = 
-        node.edges_to.reduce((acc, edge) => acc + edge.topic_edge_evidence.length, 0) + 
-        node.edges_from.reduce((acc, edge) => acc + edge.topic_edge_evidence.length, 0);
+      const evidenceCount =
+        node.edges_to.reduce(
+          (acc, edge) => acc + edge.topic_edge_evidence.length,
+          0,
+        ) +
+        node.edges_from.reduce(
+          (acc, edge) => acc + edge.topic_edge_evidence.length,
+          0,
+        );
       return evidenceCount < 2;
     });
 
@@ -207,20 +219,22 @@ export class GraphRecommendationService {
       const prerequisites = await (this.prisma as any).edge_priors.findMany({
         where: {
           to_slug: weakNode.slug,
-          edge_type: 'PREREQUISITE',
-          scope_type: 'GLOBAL',
-          status: 'ACTIVE',
+          edge_type: "PREREQUISITE",
+          scope_type: "GLOBAL",
+          status: "ACTIVE",
         },
         take: 2,
       });
 
       for (const prereq of prerequisites) {
         // Find contents covering the prerequisite topic
-        const coveringContents = await (this.prisma as any).topic_nodes.findMany({
+        const coveringContents = await (
+          this.prisma as any
+        ).topic_nodes.findMany({
           where: {
             slug: prereq.from_slug,
             topic_graphs: {
-              type: 'BASELINE',
+              type: "BASELINE",
               content_id: { not: contextContentId },
             },
           },
@@ -259,7 +273,9 @@ export class GraphRecommendationService {
   /**
    * Deduplicate and sort recommendations by score.
    */
-  private deduplicateAndSort(recommendations: RecommendationItem[]): RecommendationItem[] {
+  private deduplicateAndSort(
+    recommendations: RecommendationItem[],
+  ): RecommendationItem[] {
     const seen = new Set<string>();
     const unique: RecommendationItem[] = [];
 

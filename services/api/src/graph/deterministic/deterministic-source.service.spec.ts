@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { DeterministicSourceService } from './deterministic-source.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { DeterministicSourceService } from "./deterministic-source.service";
+import { PrismaService } from "../../prisma/prisma.service";
 
-describe('DeterministicSourceService', () => {
+describe("DeterministicSourceService", () => {
   let service: DeterministicSourceService;
   let prisma: PrismaService;
 
@@ -42,7 +42,9 @@ describe('DeterministicSourceService', () => {
       ],
     }).compile();
 
-    service = module.get<DeterministicSourceService>(DeterministicSourceService);
+    service = module.get<DeterministicSourceService>(
+      DeterministicSourceService,
+    );
     prisma = module.get<PrismaService>(PrismaService);
   });
 
@@ -50,19 +52,19 @@ describe('DeterministicSourceService', () => {
     jest.clearAllMocks();
   });
 
-  it('should be defined', () => {
+  it("should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  describe('computeNodeValidation', () => {
-    it('should promote node with sufficient evidence and recurrence', () => {
+  describe("computeNodeValidation", () => {
+    it("should promote node with sufficient evidence and recurrence", () => {
       const candidate = {
-        slug: 'test-node',
-        canonical_label: 'Test Node',
+        slug: "test-node",
+        canonical_label: "Test Node",
         aliases: [],
         domain_tags: [],
         tier2: [],
-        source_graph_type: 'LEARNER',
+        source_graph_type: "LEARNER",
         evidence_strength: 3,
         recurrence: 2,
         vote_score: 1,
@@ -75,14 +77,14 @@ describe('DeterministicSourceService', () => {
       expect(result.score).toBeGreaterThan(0.7);
     });
 
-    it('should not promote node with insufficient evidence', () => {
+    it("should not promote node with insufficient evidence", () => {
       const candidate = {
-        slug: 'test-node',
-        canonical_label: 'Test Node',
+        slug: "test-node",
+        canonical_label: "Test Node",
         aliases: [],
         domain_tags: [],
         tier2: [],
-        source_graph_type: 'LEARNER',
+        source_graph_type: "LEARNER",
         evidence_strength: 1,
         recurrence: 2,
         vote_score: 0,
@@ -94,14 +96,14 @@ describe('DeterministicSourceService', () => {
       expect(result.shouldPromote).toBe(false);
     });
 
-    it('should promote curated node regardless of votes', () => {
+    it("should promote curated node regardless of votes", () => {
       const candidate = {
-        slug: 'test-node',
-        canonical_label: 'Test Node',
+        slug: "test-node",
+        canonical_label: "Test Node",
         aliases: [],
         domain_tags: [],
         tier2: [],
-        source_graph_type: 'CURATED',
+        source_graph_type: "CURATED",
         evidence_strength: 2,
         recurrence: 2,
         vote_score: 0,
@@ -114,13 +116,13 @@ describe('DeterministicSourceService', () => {
     });
   });
 
-  describe('computeEdgeValidation', () => {
-    it('should promote edge with sufficient evidence and stability', () => {
+  describe("computeEdgeValidation", () => {
+    it("should promote edge with sufficient evidence and stability", () => {
       const candidate = {
-        from_slug: 'node-a',
-        to_slug: 'node-b',
-        edge_type: 'EXPLAINS',
-        source_graph_type: 'LEARNER',
+        from_slug: "node-a",
+        to_slug: "node-b",
+        edge_type: "EXPLAINS",
+        source_graph_type: "LEARNER",
         evidence_count: 3,
         vote_score: 1,
         stability: 2,
@@ -134,12 +136,12 @@ describe('DeterministicSourceService', () => {
       expect(result.score).toBeGreaterThan(0.6);
     });
 
-    it('should not promote edge with low stability', () => {
+    it("should not promote edge with low stability", () => {
       const candidate = {
-        from_slug: 'node-a',
-        to_slug: 'node-b',
-        edge_type: 'EXPLAINS',
-        source_graph_type: 'LEARNER',
+        from_slug: "node-a",
+        to_slug: "node-b",
+        edge_type: "EXPLAINS",
+        source_graph_type: "LEARNER",
         evidence_count: 2,
         vote_score: 1,
         stability: 1,

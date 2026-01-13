@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsObject } from 'class-validator';
+import { IsString, IsOptional, IsObject } from "class-validator";
 
 /**
  * DTO for creating content versions (simplified text)

@@ -1,8 +1,8 @@
 export enum NodeStatus {
-  MASTERED = 'MASTERED',
-  DOUBT = 'DOUBT',
-  VISITED = 'VISITED',
-  UNVISITED = 'UNVISITED',
+  MASTERED = "MASTERED",
+  DOUBT = "DOUBT",
+  VISITED = "VISITED",
+  UNVISITED = "UNVISITED",
 }
 
 export interface GraphNodeDto {

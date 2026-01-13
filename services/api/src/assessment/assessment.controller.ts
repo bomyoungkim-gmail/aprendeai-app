@@ -1,8 +1,8 @@
-import { Controller, Post, Body, Param, Get } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AssessmentGenerationService } from './application/assessment-generation.service';
-import { FeedbackGenerationService } from './application/feedback-generation.service'; // Using existing service
-import { ContentMode } from '@prisma/client';
+import { Controller, Post, Body } from "@nestjs/common";
+import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import { AssessmentGenerationService } from "./application/assessment-generation.service";
+import { FeedbackGenerationService } from "./application/feedback-generation.service"; // Using existing service
+import { ContentMode } from "@prisma/client";
 
 export class GenerateQuizDto {
   contentId: string;
@@ -18,16 +18,16 @@ export class EvaluateAnswerDto {
   questionText?: string;
 }
 
-@ApiTags('assessments')
-@Controller('assessments')
+@ApiTags("assessments")
+@Controller("assessments")
 export class AssessmentController {
   constructor(
     private readonly generator: AssessmentGenerationService,
     private readonly feedback: FeedbackGenerationService,
   ) {}
 
-  @Post('generate')
-  @ApiOperation({ summary: 'Generate a context-aware quiz' })
+  @Post("generate")
+  @ApiOperation({ summary: "Generate a context-aware quiz" })
   async generate(@Body() dto: GenerateQuizDto) {
     return this.generator.generateQuiz(
       dto.contentId,
@@ -37,14 +37,14 @@ export class AssessmentController {
     );
   }
 
-  @Post('feedback')
-  @ApiOperation({ summary: 'Get feedback for an answer' })
+  @Post("feedback")
+  @ApiOperation({ summary: "Get feedback for an answer" })
   async getFeedback(@Body() dto: EvaluateAnswerDto) {
     // Construct simplified object for service
     return this.feedback.generateFeedback(
       { id: dto.questionId, text: dto.questionText },
       dto.userAnswer,
-      dto.correctAnswer
+      dto.correctAnswer,
     );
   }
 }

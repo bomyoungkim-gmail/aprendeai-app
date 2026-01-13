@@ -71,13 +71,14 @@ export function CornellConversationsTab({
           <AIChatPanel 
             className="absolute inset-0" 
             selection={aiContext}
-            initialInput={aiContext ? `Sobre o texto: "${aiContext}"\n` : ''}
+            initialInput={''} // SCRIPT 07: Clear input, let quick replies drive interaction
+            initialQuickReplies={aiContext ? ['Analisar oração/sentença'] : undefined} // SCRIPT 07: Suggest analysis when selection is active
           />
         ) : (
           <ThreadPanel
             query={{
               targetId: contentId,
-              targetType: 'CONTENT' as any,
+              targetType: 'CONTENT' as any, // Pre-existing: ThreadPanel type needs extension for content targets
               contextId: threadContext.id,
               contextType: threadContext.type,
             }}

@@ -1,9 +1,9 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject } from "@nestjs/common";
 import {
   ITransferMissionRepository,
   FindMissionsParams,
   TransferMissionEntity,
-} from './domain/transfer-mission.repository.interface';
+} from "./domain/transfer-mission.repository.interface";
 
 @Injectable()
 export class TransferMissionsService {
@@ -12,7 +12,9 @@ export class TransferMissionsService {
     private readonly repository: ITransferMissionRepository,
   ) {}
 
-  async listMissions(params: FindMissionsParams): Promise<TransferMissionEntity[]> {
+  async listMissions(
+    params: FindMissionsParams,
+  ): Promise<TransferMissionEntity[]> {
     return await this.repository.findAll(params);
   }
 

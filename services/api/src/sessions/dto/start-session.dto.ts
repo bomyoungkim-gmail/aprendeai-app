@@ -51,8 +51,21 @@ export class StartSessionDto {
    * Allows frontend to override inferred content mode for this session
    */
   @IsOptional()
-  @IsEnum(['TECHNICAL', 'DIDACTIC', 'NARRATIVE', 'NEWS', 'SCIENTIFIC', 'LANGUAGE'])
-  uiMode?: 'TECHNICAL' | 'DIDACTIC' | 'NARRATIVE' | 'NEWS' | 'SCIENTIFIC' | 'LANGUAGE';
+  @IsEnum([
+    "TECHNICAL",
+    "DIDACTIC",
+    "NARRATIVE",
+    "NEWS",
+    "SCIENTIFIC",
+    "LANGUAGE",
+  ])
+  uiMode?:
+    | "TECHNICAL"
+    | "DIDACTIC"
+    | "NARRATIVE"
+    | "NEWS"
+    | "SCIENTIFIC"
+    | "LANGUAGE";
 
   /**
    * Whether to persist the uiMode override to the database

@@ -1,11 +1,11 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { TransferMissionsService } from './transfer-missions.service';
+import { Controller, Get, Query } from "@nestjs/common";
+import { TransferMissionsService } from "./transfer-missions.service";
 import {
   ListMissionsQueryDto,
   TransferMissionDto,
-} from './application/dto/transfer-mission.dto';
+} from "./application/dto/transfer-mission.dto";
 
-@Controller('transfer/missions')
+@Controller("transfer/missions")
 export class TransferMissionsController {
   constructor(private readonly service: TransferMissionsService) {}
 

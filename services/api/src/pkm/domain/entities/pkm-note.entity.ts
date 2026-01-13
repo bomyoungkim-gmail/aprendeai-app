@@ -1,4 +1,4 @@
-import { PkmNoteStatus } from '@prisma/client';
+import { PkmNoteStatus } from "@prisma/client";
 
 export interface Backlinks {
   nearDomain: string;

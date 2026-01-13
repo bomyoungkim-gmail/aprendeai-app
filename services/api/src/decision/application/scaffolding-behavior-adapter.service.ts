@@ -1,36 +1,40 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ContentMode } from '@prisma/client';
-import { ScaffoldingLevel } from '../domain/scaffolding.types';
+import { Injectable, Logger } from "@nestjs/common";
+import { ContentMode } from "@prisma/client";
+import { ScaffoldingLevel } from "../domain/scaffolding.types";
 
 /**
  * SCRIPT 03 - Fase 3: Behavior Modifiers
- * 
+ *
  * GAP 1: Phase-aware behavior modifiers
  */
 export interface BehaviorModifiers {
   /** Response format (STEP_BY_STEP, DIRECT_WITH_VERIFICATION, DIRECT, MINIMAL) */
-  responseFormat: 'STEP_BY_STEP' | 'DIRECT_WITH_VERIFICATION' | 'DIRECT' | 'MINIMAL';
-  
+  responseFormat:
+    | "STEP_BY_STEP"
+    | "DIRECT_WITH_VERIFICATION"
+    | "DIRECT"
+    | "MINIMAL";
+
   /** Whether to use Socratic questioning (DIDACTIC L3 only) */
   useSocraticMode: boolean;
-  
+
   /** Whether to include examples in responses */
   includeExamples: boolean;
-  
+
   /** Whether to include verification questions */
   includeVerification: boolean;
-  
+
   /** Quick reply suggestions for user */
   quickReplies: string[];
-  
+
   /** Tone adjustment (formal, conversational, minimal) */
-  tone: 'formal' | 'conversational' | 'minimal';
-  
+  tone: "formal" | "conversational" | "minimal";
+
   /** GAP 1: Phase-specific adjustments */
   phaseAdjustments: {
     /** During reading: more concise, less interruption */
     duringReading: boolean;
-    
+
     /** Post-reading: more detailed, comprehensive */
     postReading: boolean;
   };
@@ -38,12 +42,12 @@ export interface BehaviorModifiers {
 
 /**
  * SCRIPT 03 - Fase 3: Scaffolding Behavior Adapter Service
- * 
+ *
  * Adapts AI behavior based on:
  * - Content mode (DIDACTIC, NARRATIVE, TECHNICAL, etc.)
  * - Scaffolding level (L0-L3)
  * - Session phase (DURING, POST)
- * 
+ *
  * GAP 1: Phase-aware behavior
  * GAP 2: L3 step-by-step format
  * GAP 7: L1 quick replies
@@ -54,23 +58,23 @@ export class ScaffoldingBehaviorAdapterService {
 
   /**
    * Get behavior modifiers based on mode, level, and phase
-   * 
+   *
    * GAP 1: Phase-aware behavior modifiers
    */
   getBehaviorModifiers(
     mode: ContentMode,
     level: ScaffoldingLevel,
-    phase: 'DURING' | 'POST',
+    phase: "DURING" | "POST",
   ): BehaviorModifiers {
     // Base modifiers by level
     const baseModifiers = this.getBaseModifiersByLevel(level);
-    
+
     // Apply mode-specific adjustments
     const modeAdjusted = this.applyModeAdjustments(baseModifiers, mode, level);
-    
+
     // Apply phase-specific adjustments (GAP 1)
     const phaseAdjusted = this.applyPhaseAdjustments(modeAdjusted, phase);
-    
+
     return phaseAdjusted;
   }
 
@@ -81,12 +85,12 @@ export class ScaffoldingBehaviorAdapterService {
     switch (level) {
       case 3: // High scaffolding
         return {
-          responseFormat: 'STEP_BY_STEP',
+          responseFormat: "STEP_BY_STEP",
           useSocraticMode: false, // Will be enabled for DIDACTIC
           includeExamples: true,
           includeVerification: true,
           quickReplies: [],
-          tone: 'conversational',
+          tone: "conversational",
           phaseAdjustments: {
             duringReading: false,
             postReading: false,
@@ -95,12 +99,12 @@ export class ScaffoldingBehaviorAdapterService {
 
       case 2: // Medium scaffolding
         return {
-          responseFormat: 'DIRECT_WITH_VERIFICATION',
+          responseFormat: "DIRECT_WITH_VERIFICATION",
           useSocraticMode: false,
           includeExamples: true,
           includeVerification: true,
           quickReplies: [],
-          tone: 'conversational',
+          tone: "conversational",
           phaseAdjustments: {
             duringReading: false,
             postReading: false,
@@ -109,16 +113,16 @@ export class ScaffoldingBehaviorAdapterService {
 
       case 1: // Low scaffolding
         return {
-          responseFormat: 'DIRECT',
+          responseFormat: "DIRECT",
           useSocraticMode: false,
           includeExamples: false,
           includeVerification: false,
           quickReplies: [
-            'Explicar mais',
-            'Dar exemplo',
-            'Relacionar conceitos',
+            "Explicar mais",
+            "Dar exemplo",
+            "Relacionar conceitos",
           ], // GAP 7
-          tone: 'conversational',
+          tone: "conversational",
           phaseAdjustments: {
             duringReading: false,
             postReading: false,
@@ -127,12 +131,12 @@ export class ScaffoldingBehaviorAdapterService {
 
       case 0: // Minimal/Faded
         return {
-          responseFormat: 'MINIMAL',
+          responseFormat: "MINIMAL",
           useSocraticMode: false,
           includeExamples: false,
           includeVerification: false,
           quickReplies: [],
-          tone: 'minimal',
+          tone: "minimal",
           phaseAdjustments: {
             duringReading: false,
             postReading: false,
@@ -159,41 +163,41 @@ export class ScaffoldingBehaviorAdapterService {
         // Enable Socratic mode for L3
         if (level === 3) {
           adjusted.useSocraticMode = true;
-          adjusted.tone = 'formal';
+          adjusted.tone = "formal";
         }
         break;
 
       case ContentMode.NARRATIVE:
         // More conversational, less formal
-        adjusted.tone = 'conversational';
+        adjusted.tone = "conversational";
         // Fading is easier in NARRATIVE
         if (level === 1) {
-          adjusted.responseFormat = 'MINIMAL';
+          adjusted.responseFormat = "MINIMAL";
         }
         break;
 
       case ContentMode.TECHNICAL:
       case ContentMode.SCIENTIFIC:
         // More formal, precise language
-        adjusted.tone = 'formal';
+        adjusted.tone = "formal";
         // Always include examples for complex content
         adjusted.includeExamples = true;
         break;
 
       case ContentMode.NEWS:
         // Conversational, context-focused
-        adjusted.tone = 'conversational';
+        adjusted.tone = "conversational";
         break;
 
-      case 'GAME' as ContentMode:
+      case "GAME" as ContentMode:
         // AC6: GAME mode - minimal intervention always
         // Don't interrupt game flow with scaffolding
-        adjusted.responseFormat = 'MINIMAL';
+        adjusted.responseFormat = "MINIMAL";
         adjusted.useSocraticMode = false;
         adjusted.includeExamples = false;
         adjusted.includeVerification = false;
         adjusted.quickReplies = [];
-        adjusted.tone = 'minimal';
+        adjusted.tone = "minimal";
         break;
 
       default:
@@ -206,25 +210,25 @@ export class ScaffoldingBehaviorAdapterService {
 
   /**
    * Apply phase-specific adjustments
-   * 
+   *
    * GAP 1: Phase-aware behavior
    */
   private applyPhaseAdjustments(
     modifiers: BehaviorModifiers,
-    phase: 'DURING' | 'POST',
+    phase: "DURING" | "POST",
   ): BehaviorModifiers {
     const adjusted = { ...modifiers };
 
-    if (phase === 'DURING') {
+    if (phase === "DURING") {
       // During reading: be more concise, less interruption
       adjusted.phaseAdjustments.duringReading = true;
-      
+
       // Reduce verbosity for DURING phase
-      if (adjusted.responseFormat === 'STEP_BY_STEP') {
+      if (adjusted.responseFormat === "STEP_BY_STEP") {
         // Keep step-by-step but make steps more concise
         adjusted.includeExamples = false; // Save examples for POST
       }
-      
+
       // Shorter quick replies
       if (adjusted.quickReplies.length > 0) {
         adjusted.quickReplies = adjusted.quickReplies.slice(0, 3);
@@ -232,9 +236,9 @@ export class ScaffoldingBehaviorAdapterService {
     } else {
       // Post-reading: more detailed, comprehensive
       adjusted.phaseAdjustments.postReading = true;
-      
+
       // Can be more verbose in POST phase
-      if (adjusted.responseFormat === 'DIRECT') {
+      if (adjusted.responseFormat === "DIRECT") {
         adjusted.includeVerification = true; // Add verification in POST
       }
     }
@@ -244,7 +248,7 @@ export class ScaffoldingBehaviorAdapterService {
 
   /**
    * Format system prompt with scaffolding behavior
-   * 
+   *
    * GAP 2: L3 step-by-step format with 4 detailed steps + example
    * GAP 7: L1 quick replies template
    */
@@ -256,32 +260,34 @@ export class ScaffoldingBehaviorAdapterService {
     let enhancedPrompt = basePrompt;
 
     // Add response format instructions
-    enhancedPrompt += '\n\n## Response Format\n';
+    enhancedPrompt += "\n\n## Response Format\n";
     enhancedPrompt += this.getResponseFormatInstructions(modifiers);
 
     // Add tone instructions
-    enhancedPrompt += '\n\n## Tone\n';
+    enhancedPrompt += "\n\n## Tone\n";
     enhancedPrompt += this.getToneInstructions(modifiers.tone);
 
     // Add Socratic mode instructions (DIDACTIC L3)
     if (modifiers.useSocraticMode) {
-      enhancedPrompt += '\n\n## Socratic Method\n';
+      enhancedPrompt += "\n\n## Socratic Method\n";
       enhancedPrompt += this.getSocraticInstructions();
     }
 
     // Add quick replies template (GAP 7)
     if (modifiers.quickReplies.length > 0) {
-      enhancedPrompt += '\n\n## Quick Reply Suggestions\n';
-      enhancedPrompt += `Always end your response with these quick reply options: ${modifiers.quickReplies.join(', ')}`;
+      enhancedPrompt += "\n\n## Quick Reply Suggestions\n";
+      enhancedPrompt += `Always end your response with these quick reply options: ${modifiers.quickReplies.join(", ")}`;
     }
 
     // Add phase-specific instructions (GAP 1)
     if (modifiers.phaseAdjustments.duringReading) {
-      enhancedPrompt += '\n\n## During Reading Phase\n';
-      enhancedPrompt += 'Keep responses concise and focused. Avoid lengthy explanations that interrupt reading flow.';
+      enhancedPrompt += "\n\n## During Reading Phase\n";
+      enhancedPrompt +=
+        "Keep responses concise and focused. Avoid lengthy explanations that interrupt reading flow.";
     } else if (modifiers.phaseAdjustments.postReading) {
-      enhancedPrompt += '\n\n## Post-Reading Phase\n';
-      enhancedPrompt += 'Provide comprehensive, detailed responses. This is the time for deeper exploration.';
+      enhancedPrompt += "\n\n## Post-Reading Phase\n";
+      enhancedPrompt +=
+        "Provide comprehensive, detailed responses. This is the time for deeper exploration.";
     }
 
     return enhancedPrompt;
@@ -289,12 +295,12 @@ export class ScaffoldingBehaviorAdapterService {
 
   /**
    * Get response format instructions
-   * 
+   *
    * GAP 2: L3 step-by-step format with 4 detailed steps + example
    */
   private getResponseFormatInstructions(modifiers: BehaviorModifiers): string {
     switch (modifiers.responseFormat) {
-      case 'STEP_BY_STEP':
+      case "STEP_BY_STEP":
         // GAP 2: L3 detailed step-by-step format
         return `Use a step-by-step format with 4 detailed steps:
 
@@ -303,42 +309,44 @@ export class ScaffoldingBehaviorAdapterService {
 3. **Aplicação**: Mostre como aplicar o conhecimento
 4. **Verificação**: Inclua uma pergunta de verificação
 
-${modifiers.includeExamples ? '**Exemplo Prático**: Sempre inclua um exemplo concreto após os 4 passos.' : ''}`;
+${modifiers.includeExamples ? "**Exemplo Prático**: Sempre inclua um exemplo concreto após os 4 passos." : ""}`;
 
-      case 'DIRECT_WITH_VERIFICATION':
+      case "DIRECT_WITH_VERIFICATION":
         return `Provide a direct answer followed by a verification question.
 
 Format:
 - Clear, direct response
-- ${modifiers.includeExamples ? 'Include a relevant example' : ''}
+- ${modifiers.includeExamples ? "Include a relevant example" : ""}
 - End with: "Para verificar: [verification question]"`;
 
-      case 'DIRECT':
+      case "DIRECT":
         return `Provide a clear, direct answer.
-${modifiers.includeExamples ? '- Include examples when helpful' : ''}
-${modifiers.includeVerification ? '- End with a brief verification question' : ''}`;
+${modifiers.includeExamples ? "- Include examples when helpful" : ""}
+${modifiers.includeVerification ? "- End with a brief verification question" : ""}`;
 
-      case 'MINIMAL':
-        return 'Provide concise, essential information only. No elaboration unless explicitly requested.';
+      case "MINIMAL":
+        return "Provide concise, essential information only. No elaboration unless explicitly requested.";
 
       default:
-        return 'Provide a helpful, clear response.';
+        return "Provide a helpful, clear response.";
     }
   }
 
   /**
    * Get tone instructions
    */
-  private getToneInstructions(tone: 'formal' | 'conversational' | 'minimal'): string {
+  private getToneInstructions(
+    tone: "formal" | "conversational" | "minimal",
+  ): string {
     switch (tone) {
-      case 'formal':
-        return 'Use formal, academic language. Be precise and technical.';
-      case 'conversational':
-        return 'Use friendly, conversational language. Be approachable and engaging.';
-      case 'minimal':
-        return 'Use minimal, direct language. Be brief and to the point.';
+      case "formal":
+        return "Use formal, academic language. Be precise and technical.";
+      case "conversational":
+        return "Use friendly, conversational language. Be approachable and engaging.";
+      case "minimal":
+        return "Use minimal, direct language. Be brief and to the point.";
       default:
-        return 'Use clear, appropriate language.';
+        return "Use clear, appropriate language.";
     }
   }
 

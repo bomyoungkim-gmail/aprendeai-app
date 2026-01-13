@@ -18,8 +18,8 @@ import { ContentModeAnalyticsService } from "./content-mode-analytics.service";
 @Module({
   imports: [
     ScheduleModule.forRoot(),
-    SessionTrackingModule, 
-    TopicMasteryModule
+    SessionTrackingModule,
+    TopicMasteryModule,
   ],
   controllers: [AnalyticsController, ContentModeAnalyticsController],
   providers: [
@@ -33,6 +33,10 @@ import { ContentModeAnalyticsService } from "./content-mode-analytics.service";
     ProgressVisibilityService,
     ContentModeAnalyticsService,
   ],
-  exports: [AnalyticsService, TokenAnalyticsService, ContentModeAnalyticsService],
+  exports: [
+    AnalyticsService,
+    TokenAnalyticsService,
+    ContentModeAnalyticsService,
+  ],
 })
 export class AnalyticsModule {}

@@ -14,7 +14,6 @@ import { Language } from "@prisma/client";
 import { Transform } from "class-transformer";
 import { Gender } from "../../shared/domain/user.types";
 
-
 export class UpdateProfileDto {
   @IsOptional()
   @IsString()

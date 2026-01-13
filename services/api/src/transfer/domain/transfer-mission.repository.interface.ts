@@ -1,4 +1,4 @@
-import { TransferMissionType, ScopeType } from '@prisma/client';
+import { TransferMissionType, ScopeType } from "@prisma/client";
 
 export interface TransferMissionEntity {
   id: string;
@@ -26,8 +26,15 @@ export interface FindMissionsParams {
 }
 
 export abstract class ITransferMissionRepository {
-  abstract findAll(params: FindMissionsParams): Promise<TransferMissionEntity[]>;
+  abstract findAll(
+    params: FindMissionsParams,
+  ): Promise<TransferMissionEntity[]>;
   abstract findById(id: string): Promise<TransferMissionEntity | null>;
-  abstract create(mission: Omit<TransferMissionEntity, 'id' | 'createdAt' | 'updatedAt'>): Promise<TransferMissionEntity>;
-  abstract update(id: string, data: Partial<TransferMissionEntity>): Promise<TransferMissionEntity>;
+  abstract create(
+    mission: Omit<TransferMissionEntity, "id" | "createdAt" | "updatedAt">,
+  ): Promise<TransferMissionEntity>;
+  abstract update(
+    id: string,
+    data: Partial<TransferMissionEntity>,
+  ): Promise<TransferMissionEntity>;
 }

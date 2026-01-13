@@ -1,12 +1,12 @@
-import { SuppressReason, SuppressionContext, computeSuppressReasons } from './decision.suppress';
+import { SuppressReason, computeSuppressReasons } from "./decision.suppress";
 
-describe('Decision Suppression Logic', () => {
-  describe('computeSuppressReasons', () => {
+describe("Decision Suppression Logic", () => {
+  describe("computeSuppressReasons", () => {
     it.each([
       {
-        name: 'POLICY_DISABLED when transfer disabled',
+        name: "POLICY_DISABLED when transfer disabled",
         ctx: {
-          phase: 'POST' as const,
+          phase: "POST" as const,
           explicitAsk: false,
           lowFlow: false,
           isInHighFlow: false,
@@ -22,9 +22,9 @@ describe('Decision Suppression Logic', () => {
         expectedReasons: [SuppressReason.POLICY_DISABLED],
       },
       {
-        name: 'BUDGET_EXCEEDED when budget exceeded',
+        name: "BUDGET_EXCEEDED when budget exceeded",
         ctx: {
-          phase: 'POST' as const,
+          phase: "POST" as const,
           explicitAsk: false,
           lowFlow: false,
           isInHighFlow: false,
@@ -40,9 +40,9 @@ describe('Decision Suppression Logic', () => {
         expectedReasons: [SuppressReason.BUDGET_EXCEEDED],
       },
       {
-        name: 'PHASE_DURING_INVISIBLE when DURING phase without explicit ask',
+        name: "PHASE_DURING_INVISIBLE when DURING phase without explicit ask",
         ctx: {
-          phase: 'DURING' as const,
+          phase: "DURING" as const,
           explicitAsk: false,
           lowFlow: false,
           isInHighFlow: false,
@@ -58,9 +58,9 @@ describe('Decision Suppression Logic', () => {
         expectedReasons: [SuppressReason.PHASE_DURING_INVISIBLE],
       },
       {
-        name: 'LOW_FLOW_SILENCE when low flow',
+        name: "LOW_FLOW_SILENCE when low flow",
         ctx: {
-          phase: 'POST' as const,
+          phase: "POST" as const,
           explicitAsk: false,
           lowFlow: true,
           isInHighFlow: false,
@@ -76,9 +76,9 @@ describe('Decision Suppression Logic', () => {
         expectedReasons: [SuppressReason.LOW_FLOW_SILENCE],
       },
       {
-        name: 'COOLDOWN_ACTIVE when cooldown active',
+        name: "COOLDOWN_ACTIVE when cooldown active",
         ctx: {
-          phase: 'POST' as const,
+          phase: "POST" as const,
           explicitAsk: false,
           lowFlow: false,
           isInHighFlow: false,
@@ -94,9 +94,9 @@ describe('Decision Suppression Logic', () => {
         expectedReasons: [SuppressReason.COOLDOWN_ACTIVE],
       },
       {
-        name: 'RATE_LIMITED when rate limited',
+        name: "RATE_LIMITED when rate limited",
         ctx: {
-          phase: 'POST' as const,
+          phase: "POST" as const,
           explicitAsk: false,
           lowFlow: false,
           isInHighFlow: false,
@@ -112,9 +112,9 @@ describe('Decision Suppression Logic', () => {
         expectedReasons: [SuppressReason.RATE_LIMITED],
       },
       {
-        name: 'SAFETY_GUARD when safety guard triggered',
+        name: "SAFETY_GUARD when safety guard triggered",
         ctx: {
-          phase: 'POST' as const,
+          phase: "POST" as const,
           explicitAsk: false,
           lowFlow: false,
           isInHighFlow: false,
@@ -130,9 +130,9 @@ describe('Decision Suppression Logic', () => {
         expectedReasons: [SuppressReason.SAFETY_GUARD],
       },
       {
-        name: 'MISSING_INPUTS when inputs missing',
+        name: "MISSING_INPUTS when inputs missing",
         ctx: {
-          phase: 'POST' as const,
+          phase: "POST" as const,
           explicitAsk: false,
           lowFlow: false,
           isInHighFlow: false,
@@ -148,9 +148,9 @@ describe('Decision Suppression Logic', () => {
         expectedReasons: [SuppressReason.MISSING_INPUTS],
       },
       {
-        name: 'DEGRADED_CAPABILITY when degraded',
+        name: "DEGRADED_CAPABILITY when degraded",
         ctx: {
-          phase: 'POST' as const,
+          phase: "POST" as const,
           explicitAsk: false,
           lowFlow: false,
           isInHighFlow: false,
@@ -166,9 +166,9 @@ describe('Decision Suppression Logic', () => {
         expectedReasons: [SuppressReason.DEGRADED_CAPABILITY],
       },
       {
-        name: 'Multiple reasons in priority order',
+        name: "Multiple reasons in priority order",
         ctx: {
-          phase: 'DURING' as const,
+          phase: "DURING" as const,
           explicitAsk: false,
           lowFlow: true,
           isInHighFlow: false,
@@ -188,7 +188,7 @@ describe('Decision Suppression Logic', () => {
           SuppressReason.BUDGET_EXCEEDED,
         ],
       },
-    ])('should return $name', ({ ctx, expectedReasons }) => {
+    ])("should return $name", ({ ctx, expectedReasons }) => {
       const reasons = computeSuppressReasons(ctx);
       expect(reasons).toEqual(expectedReasons);
     });

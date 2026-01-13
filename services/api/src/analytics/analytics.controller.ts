@@ -1,4 +1,10 @@
-import { Controller, Get, UseGuards, Query, ForbiddenException } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Query,
+  ForbiddenException,
+} from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { AnalyticsService } from "./analytics.service";
 import { AuthGuard } from "@nestjs/passport";

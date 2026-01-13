@@ -1,9 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
 
 interface CurationItem {
   edgeId: string;
-  action: 'PROMOTE' | 'REJECT' | 'NEEDS_REVIEW';
+  action: "PROMOTE" | "REJECT" | "NEEDS_REVIEW";
 }
 
 interface BatchCurationDto {
@@ -28,7 +28,7 @@ export class GraphCuratorService {
   ): Promise<any> {
     const existing = await (this.prisma as any).topic_graphs.findFirst({
       where: {
-        type: 'CURATED',
+        type: "CURATED",
         scope_type: scopeType,
         scope_id: scopeId,
         content_id: contentId || null,
@@ -41,7 +41,7 @@ export class GraphCuratorService {
 
     return (this.prisma as any).topic_graphs.create({
       data: {
-        type: 'CURATED',
+        type: "CURATED",
         scope_type: scopeType,
         scope_id: scopeId,
         content_id: contentId || null,
@@ -59,7 +59,9 @@ export class GraphCuratorService {
     rejected: number;
     needsReview: number;
   }> {
-    this.logger.log(`Processing ${dto.items.length} curation items for diff: ${dto.diffId}`);
+    this.logger.log(
+      `Processing ${dto.items.length} curation items for diff: ${dto.diffId}`,
+    );
 
     let promoted = 0;
     let rejected = 0;
@@ -82,22 +84,24 @@ export class GraphCuratorService {
       }
 
       switch (item.action) {
-        case 'PROMOTE':
+        case "PROMOTE":
           await this.promoteEdge(edge, dto.curatorUserId);
           promoted++;
           break;
-        case 'REJECT':
+        case "REJECT":
           await this.rejectEdge(edge, dto.curatorUserId);
           rejected++;
           break;
-        case 'NEEDS_REVIEW':
+        case "NEEDS_REVIEW":
           await this.flagForReview(edge, dto.curatorUserId);
           needsReview++;
           break;
       }
     }
 
-    this.logger.log(`Curation complete: ${promoted} promoted, ${rejected} rejected, ${needsReview} needs review`);
+    this.logger.log(
+      `Curation complete: ${promoted} promoted, ${rejected} rejected, ${needsReview} needs review`,
+    );
 
     return { promoted, rejected, needsReview };
   }
@@ -130,7 +134,9 @@ export class GraphCuratorService {
     });
 
     if (existingEdge) {
-      this.logger.debug(`Edge already exists in curated graph: ${existingEdge.id}`);
+      this.logger.debug(
+        `Edge already exists in curated graph: ${existingEdge.id}`,
+      );
       return;
     }
 
@@ -142,7 +148,7 @@ export class GraphCuratorService {
         to_node_id: toNode.id,
         edge_type: edge.edge_type,
         confidence: Math.min(edge.confidence + 0.1, 0.9), // Boost confidence for curation
-        source: 'CURATED',
+        source: "CURATED",
         rationale_json: {
           ...edge.rationale_json,
           curatedBy: curatorUserId,
@@ -171,7 +177,9 @@ export class GraphCuratorService {
       });
     }
 
-    this.logger.debug(`Promoted edge ${edge.id} to curated graph as ${newEdge.id}`);
+    this.logger.debug(
+      `Promoted edge ${edge.id} to curated graph as ${newEdge.id}`,
+    );
   }
 
   /**
@@ -215,7 +223,10 @@ export class GraphCuratorService {
   /**
    * Find or copy node to curated graph
    */
-  private async findOrCopyNode(node: any, curatedGraphId: string): Promise<any> {
+  private async findOrCopyNode(
+    node: any,
+    curatedGraphId: string,
+  ): Promise<any> {
     const existing = await (this.prisma as any).topic_nodes.findFirst({
       where: {
         graph_id: curatedGraphId,
@@ -233,7 +244,7 @@ export class GraphCuratorService {
         canonical_label: node.canonical_label,
         slug: node.slug,
         confidence: node.confidence,
-        source: 'CURATED',
+        source: "CURATED",
       },
     });
   }
@@ -303,6 +314,8 @@ export class GraphCuratorService {
       data: { confidence: newConfidence },
     });
 
-    this.logger.debug(`Updated confidence for edge ${edgeId}: ${newConfidence}`);
+    this.logger.debug(
+      `Updated confidence for edge ${edgeId}: ${newConfidence}`,
+    );
   }
 }
